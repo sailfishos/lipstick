@@ -17,6 +17,7 @@
 #define PULSEAUDIOCONTROL_H
 
 #include <QObject>
+#include <QDBusServiceWatcher>
 #include <dbus/dbus.h>
 
 /*!
@@ -81,6 +82,11 @@ public slots:
      */
     void setVolume(int volume);
 
+private slots:
+    //! Follow PulseAudio visibility in sessionbus
+    void pulseRegistered(const QString &service);
+    void pulseUnregistered(const QString &service);
+
 private:
     //! Opens connection to PulseAudio daemon.
     void openConnection();
@@ -108,6 +114,8 @@ private:
     //! D-Bus connection structure
     DBusConnection *m_dbusConnection;
     int m_reconnectTimeout;
+
+    QDBusServiceWatcher *m_serviceWatcher;
 
     Q_DISABLE_COPY(PulseAudioControl)
 
