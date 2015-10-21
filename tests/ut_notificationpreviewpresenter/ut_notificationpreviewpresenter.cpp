@@ -522,18 +522,24 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLoc
 {
     QTest::addColumn<MeeGo::QmDisplayState::DisplayState>("displayState");
     QTest::addColumn<MeeGo::QmLocks::State>("lockState");
+    QTest::addColumn<int>("urgency");
     QTest::addColumn<int>("notifications");
     QTest::addColumn<int>("presentedCount");
-    QTest::newRow("Display on, touch screen not locked") << MeeGo::QmDisplayState::On << MeeGo::QmLocks::Unlocked << 1 << 1;
-    QTest::newRow("Display on, touch screen locked") << MeeGo::QmDisplayState::On << MeeGo::QmLocks::Locked << 1 << 1;
-    QTest::newRow("Display off, touch screen not locked") << MeeGo::QmDisplayState::Off << MeeGo::QmLocks::Unlocked << 1 << 1;
-    QTest::newRow("Display off, touch screen locked") << MeeGo::QmDisplayState::Off << MeeGo::QmLocks::Locked << 0 << 1;
+    QTest::newRow("Display on, touch screen not locked") << MeeGo::QmDisplayState::On << MeeGo::QmLocks::Unlocked << static_cast<int>(Normal) << 1 << 1;
+    QTest::newRow("Display on, touch screen locked") << MeeGo::QmDisplayState::On << MeeGo::QmLocks::Locked << static_cast<int>(Normal) << 0 << 1;
+    QTest::newRow("Display off, touch screen not locked") << MeeGo::QmDisplayState::Off << MeeGo::QmLocks::Unlocked << static_cast<int>(Normal) << 1 << 1;
+    QTest::newRow("Display off, touch screen locked") << MeeGo::QmDisplayState::Off << MeeGo::QmLocks::Locked << static_cast<int>(Normal) << 0 << 1;
+    QTest::newRow("Display on, touch screen not locked, critical") << MeeGo::QmDisplayState::On << MeeGo::QmLocks::Unlocked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display on, touch screen locked, critical") << MeeGo::QmDisplayState::On << MeeGo::QmLocks::Locked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display off, touch screen not locked, critical") << MeeGo::QmDisplayState::Off << MeeGo::QmLocks::Unlocked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display off, touch screen locked, critical") << MeeGo::QmDisplayState::Off << MeeGo::QmLocks::Locked << static_cast<int>(Critical) << 1 << 1;
 }
 
 void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLockedAndDisplayIsOff()
 {
     QFETCH(MeeGo::QmDisplayState::DisplayState, displayState);
     QFETCH(MeeGo::QmLocks::State, lockState);
+    QFETCH(int, urgency);
     QFETCH(int, notifications);
     QFETCH(int, presentedCount);
 
@@ -544,7 +550,7 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLoc
     QSignalSpy changedSpy(&presenter, SIGNAL(notificationChanged()));
     QSignalSpy presentedSpy(&presenter, SIGNAL(notificationPresented(uint)));
 
-    createNotification(1, Critical);
+    createNotification(1, static_cast<Urgency>(urgency));
     QTest::qWait(0);
     presenter.updateNotification(1);
     QCOMPARE(homeWindowVisible.count(), notifications);

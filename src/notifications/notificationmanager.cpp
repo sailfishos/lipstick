@@ -74,6 +74,7 @@ const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote
 const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
 const char *NotificationManager::HINT_USER_CLOSEABLE = "x-nemo-user-closeable";
 const char *NotificationManager::HINT_FEEDBACK = "x-nemo-feedback";
+const char *NotificationManager::HINT_FEEDBACK_SUPPRESSED = "x-nemo-feedback-suppressed";
 const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
 const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
 const char *NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY = "x-nemo-led-disabled-without-body-and-summary";
@@ -320,9 +321,12 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
             }
             hints_.insert(HINT_PRIORITY, priority.first);
             if (!priority.second.isEmpty()) {
-                hints_.insert(HINT_FEEDBACK, priority.second);
-                // Also turn the display on if required
-                hints_.insert(HINT_DISPLAY_ON, true);
+                // Add the appropriate feedback, unless it is specifically suppressed
+                if (!notification->hints().value(HINT_FEEDBACK_SUPPRESSED).toBool()) {
+                    hints_.insert(HINT_FEEDBACK, priority.second);
+                    // Also turn the display on if required
+                    hints_.insert(HINT_DISPLAY_ON, true);
+                }
             }
         } else {
             if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {

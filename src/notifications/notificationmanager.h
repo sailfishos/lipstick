@@ -93,6 +93,9 @@ public:
     //! Nemo hint: Feedback of the notification.
     static const char *HINT_FEEDBACK;
 
+    //! Nemo hint: Suppress any feedback that would otherwise be emitted.
+    static const char *HINT_FEEDBACK_SUPPRESSED;
+
     //! Nemo hint: Whether the notification is hidden.
     static const char *HINT_HIDDEN;
 
