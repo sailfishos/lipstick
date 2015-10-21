@@ -57,20 +57,25 @@ void NotificationFeedbackPlayer::addNotification(uint id)
             it = idToEventId.erase(it);
         }
 
-        // Play the feedback related to the notification if any
-        const QString feedback = notification->hints().value(NotificationManager::HINT_FEEDBACK).toString();
-        const QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
-        if (!feedbackItems.isEmpty()) {
-            QMap<QString, QVariant> properties;
-            if (notification->hints().value(NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, true).toBool() && notification->body().isEmpty() && notification->summary().isEmpty()) {
-                properties.insert("media.leds", false);
-                properties.insert("media.audio", true);
-                properties.insert("media.vibra", true);
-                properties.insert("media.backlight", true);
-            }
+        // If feedback is suppressed, ignore this notification
+        if (!notification->hints().value(NotificationManager::HINT_FEEDBACK_SUPPRESSED).toBool()) {
+            // Play the feedback related to the notification if any
+            const QString feedback = notification->hints().value(NotificationManager::HINT_FEEDBACK).toString();
+            const QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
+            if (!feedbackItems.isEmpty()) {
+                QMap<QString, QVariant> properties;
+                if (notification->hints().value(NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, true).toBool() &&
+                    notification->body().isEmpty() &&
+                    notification->summary().isEmpty()) {
+                    properties.insert("media.leds", false);
+                    properties.insert("media.audio", true);
+                    properties.insert("media.vibra", true);
+                    properties.insert("media.backlight", true);
+                }
 
-            foreach (const QString &item, feedbackItems) {
-                idToEventId.insert(notification, ngfClient->play(item, properties));
+                foreach (const QString &item, feedbackItems) {
+                    idToEventId.insert(notification, ngfClient->play(item, properties));
+                }
             }
         }
     }
