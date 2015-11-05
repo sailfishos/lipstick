@@ -747,6 +747,11 @@ void LipstickCompositor::clipboardDataChanged()
         overrideSelection(const_cast<QMimeData *>(mimeData));
 }
 
+bool LipstickCompositor::updatesEnabled() const
+{
+    return m_updatesEnabled;
+}
+
 void LipstickCompositor::setUpdatesEnabled(bool enabled)
 {
     if (m_updatesEnabled != enabled) {
@@ -781,6 +786,7 @@ void LipstickCompositor::setUpdatesEnabled(bool enabled)
                 m_onUpdatesDisabledUnfocusedWindowId = 0;
             }
         }
+        emit updatesEnabledChanged();
     }
 
     if (m_updatesEnabled && !m_completed) {

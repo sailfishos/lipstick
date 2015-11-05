@@ -61,6 +61,7 @@ class LipstickCompositorStub : public StubBase {
   virtual void readContent();
   virtual void initialize();
   virtual bool completed();
+  virtual bool updatesEnabled() const;
   virtual void timerEvent(QTimerEvent *e);
 }; 
 
@@ -258,6 +259,11 @@ void LipstickCompositorStub::initialize() {
 
 bool LipstickCompositorStub::completed() {
     stubMethodEntered("completed");
+    return true;
+}
+
+bool LipstickCompositorStub::updatesEnabled() const {
+    stubMethodEntered("updatesEnabled");
     return true;
 }
 
@@ -532,6 +538,10 @@ void LipstickCompositor::initialize() {
 
 bool LipstickCompositor::completed() {
     return gLipstickCompositorStub->completed();
+}
+
+bool LipstickCompositor::updatesEnabled() const {
+    return gLipstickCompositorStub->updatesEnabled();
 }
 
 void LipstickCompositor::timerEvent(QTimerEvent *e)

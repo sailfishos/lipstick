@@ -54,6 +54,7 @@ class LIPSTICK_EXPORT LipstickCompositor : public QQuickWindow, public QWaylandQ
     Q_PROPERTY(QVariant orientationLock READ orientationLock NOTIFY orientationLockChanged)
     Q_PROPERTY(bool displayDimmed READ displayDimmed NOTIFY displayDimmedChanged)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged)
+    Q_PROPERTY(bool updatesEnabled READ updatesEnabled NOTIFY updatesEnabledChanged)
 
 public:
     LipstickCompositor();
@@ -114,6 +115,7 @@ public:
 
     bool completed();
 
+    bool updatesEnabled() const;
     void setUpdatesEnabled(bool enabled);
     QWaylandSurfaceView *createView(QWaylandSurface *surf) Q_DECL_OVERRIDE;
 
@@ -151,6 +153,7 @@ signals:
     void displayAboutToBeOff();
 
     void completedChanged();
+    void updatesEnabledChanged();
 
     void showUnlockScreen();
 
