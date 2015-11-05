@@ -89,6 +89,14 @@ void ShutdownScreen::applySystemState(MeeGo::QmSystemState::StateIndication what
             createAndPublishNotification("x-nemo.battery.shutdown", qtTrId("qtn_shut_batt_empty"));
             break;
 
+        case MeeGo::QmSystemState::Reboot:
+            // Set shutdown mode unless already set explicitly
+            if (shutdownMode.isEmpty()) {
+                shutdownMode = "reboot";
+                window->setContextProperty("shutdownMode", shutdownMode);
+            }
+            break;
+
         default:
             break;
     }

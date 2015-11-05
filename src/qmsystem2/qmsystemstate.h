@@ -64,7 +64,8 @@ public:
         BatteryStateEmpty,	//!< Shutdown due battery empty within few seconds
         SaveData,           //!< Save data
         RebootDeniedUSB,    //!< Reboot denied because USB is connected in mass storage mode
-        ShutdownDeniedUSB   //!< Shutdown denied because USB is connected in mass storage mode
+        ShutdownDeniedUSB,  //!< Shutdown denied because USB is connected in mass storage mode
+        Reboot              //!< Reboot
     };
 
 public:

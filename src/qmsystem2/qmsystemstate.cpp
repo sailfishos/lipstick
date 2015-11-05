@@ -89,6 +89,12 @@ void QmSystemState::connectNotify(const QMetaMethod &signal) {
                                                  dsme_state_req_denied_ind,
                                                  priv,
                                                  SLOT(emitShutdownDenied(QString, QString)));
+            QDBusConnection::systemBus().connect(dsme_service,
+                                                 dsme_sig_path,
+                                                 dsme_sig_interface,
+                                                 dsme_state_change_ind,
+                                                 priv,
+                                                 SLOT(emitStateChangeInd(QString)));
             QDBusConnection::systemBus().connect(thermalmanager_service,
                                                  thermalmanager_path,
                                                  thermalmanager_interface,
@@ -134,6 +140,12 @@ void QmSystemState::disconnectNotify(const QMetaMethod &signal) {
                                                     dsme_state_req_denied_ind,
                                                     priv,
                                                     SLOT(emitShutdownDenied(QString, QString)));
+            QDBusConnection::systemBus().disconnect(dsme_service,
+                                                    dsme_sig_path,
+                                                    dsme_sig_interface,
+                                                    dsme_state_change_ind,
+                                                    priv,
+                                                    SLOT(emitStateChangeInd(QString)));
             QDBusConnection::systemBus().disconnect(thermalmanager_service,
                                                     thermalmanager_path,
                                                     thermalmanager_interface,
