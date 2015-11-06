@@ -245,6 +245,8 @@ void HwcImage::updatePolish()
     if (m_source.isEmpty()) {
         // Trigger deletion of the sg node and texture in case the source has been
         // removed.
+        m_image = QImage();
+        m_updateImage = true;
         update();
         return;
     }
