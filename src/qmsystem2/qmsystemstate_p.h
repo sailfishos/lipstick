@@ -89,6 +89,13 @@ namespace MeeGo
                 }
             }
         }
+
+        void emitStateChangeInd(QString state) {
+            // TODO: hardcoded "REBOOT"
+            if (state == "REBOOT") {
+                emit systemStateChanged(QmSystemState::Reboot);
+            }
+        }
     };
 }
 #endif // QMSYSTEMSTATE_P_H

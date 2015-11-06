@@ -123,10 +123,14 @@ void Ut_ShutdownScreen::testSystemState()
     QCOMPARE(qQuickViews.first()->resizeMode(), QQuickView::SizeRootObjectToView);
     QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("initialSize").toSize(), QGuiApplication::primaryScreen()->size());
     QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownScreen"), QVariant::fromValue(static_cast<QObject *>(shutdownScreen)));
+    QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownMode").toString(), QString(""));
 
     // Check that the window was shown
     QCOMPARE(qWindowVisible[static_cast<QWindow *>(qQuickViews.first())], true);
     QCOMPARE(spy.count(), 1);
+
+    shutdownScreen->applySystemState(MeeGo::QmSystemState::Reboot);
+    QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownMode").toString(), QString("reboot"));
 }
 
 QTEST_MAIN (Ut_ShutdownScreen)
