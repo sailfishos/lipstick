@@ -40,7 +40,7 @@ namespace {
 const QString MCE_NOTIFICATION_BEGIN(QStringLiteral("notification_begin_req"));
 const QString MCE_NOTIFICATION_END(QStringLiteral("notification_end_req"));
 
-const qint32 MCE_DURATION(4000);
+const qint32 MCE_DURATION(6000);
 const qint32 MCE_EXTEND_DURATION(2000);
 const qint32 MCE_LINGER_DURATION(1000);
 
