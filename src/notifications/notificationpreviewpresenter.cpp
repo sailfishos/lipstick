@@ -102,9 +102,11 @@ void NotificationPreviewPresenter::showNextNotification()
             if (!notificationIsCritical) {
                 show = false;
             } else {
+                const QString enabled(QStringLiteral("1"));
+
                 // Only show if notification banners are enabled within device lock
                 const QSettings settings(DEVICE_LOCK_SETTINGS_FILE, QSettings::IniFormat);
-                show = settings.value(DEVICE_LOCK_SHOW_NOTIFICATIONS).toString() == QStringLiteral("1");
+                show = settings.value(DEVICE_LOCK_SHOW_NOTIFICATIONS, enabled).toString() == enabled;
             }
         } else if (screenLocked) {
             if (!notificationIsCritical) {
