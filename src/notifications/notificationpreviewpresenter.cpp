@@ -40,7 +40,7 @@ namespace {
 const QString MCE_NOTIFICATION_BEGIN(QStringLiteral("notification_begin_req"));
 const QString MCE_NOTIFICATION_END(QStringLiteral("notification_end_req"));
 
-const qint32 MCE_DURATION(4000);
+const qint32 MCE_DURATION(6000);
 const qint32 MCE_EXTEND_DURATION(2000);
 const qint32 MCE_LINGER_DURATION(1000);
 
@@ -102,9 +102,11 @@ void NotificationPreviewPresenter::showNextNotification()
             if (!notificationIsCritical) {
                 show = false;
             } else {
+                const QString enabled(QStringLiteral("1"));
+
                 // Only show if notification banners are enabled within device lock
                 const QSettings settings(DEVICE_LOCK_SETTINGS_FILE, QSettings::IniFormat);
-                show = settings.value(DEVICE_LOCK_SHOW_NOTIFICATIONS).toString() == QStringLiteral("1");
+                show = settings.value(DEVICE_LOCK_SHOW_NOTIFICATIONS, enabled).toString() == enabled;
             }
         } else if (screenLocked) {
             if (!notificationIsCritical) {
