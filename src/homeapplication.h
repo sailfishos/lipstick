@@ -25,6 +25,7 @@ class VolumeControl;
 class USBModeSelector;
 class ShutdownScreen;
 class ConnectionSelector;
+class ScreenshotService;
 
 /*!
  * Extends QApplication with features necessary to create a desktop.
@@ -94,6 +95,8 @@ public:
      * Gets the home active flag.
      */
     bool homeActive() const;
+
+    void takeScreenshot(const QString &path);
 
 signals:
     /*!
@@ -167,6 +170,8 @@ private:
 
     //! Whether the home ready signal has been sent or not
     bool homeReadySent;
+
+    ScreenshotService *m_screenshotService;
 };
 
 #endif /* HOMEAPPLICATION_H_ */
