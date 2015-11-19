@@ -31,6 +31,8 @@ public:
     bool active() const;
     QObject *compositor() const;
 
+    Q_INVOKABLE void takeScreenshot(const QString &path = QString());
+
 signals:
     void activeChanged();
 };

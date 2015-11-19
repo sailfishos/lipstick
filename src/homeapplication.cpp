@@ -116,11 +116,11 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     registerDBusObject(systemBus, LIPSTICK_DBUS_DEVICELOCK_PATH, deviceLock);
     registerDBusObject(systemBus, LIPSTICK_DBUS_SHUTDOWN_PATH, shutdownScreen);
 
-    ScreenshotService *screenshotService = new ScreenshotService(this);
-    new ScreenshotServiceAdaptor(screenshotService);
+    m_screenshotService = new ScreenshotService(this);
+    new ScreenshotServiceAdaptor(m_screenshotService);
     QDBusConnection sessionBus = QDBusConnection::sessionBus();
 
-    registerDBusObject(sessionBus, LIPSTICK_DBUS_SCREENSHOT_PATH, screenshotService);
+    registerDBusObject(sessionBus, LIPSTICK_DBUS_SCREENSHOT_PATH, m_screenshotService);
 
     // Setting up the context and engine things
     qmlEngine->rootContext()->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
@@ -289,4 +289,9 @@ void HomeApplication::connectFrameSwappedSignal(bool mainWindowVisible)
     if (!homeReadySent && mainWindowVisible) {
         connect(LipstickCompositor::instance(), SIGNAL(frameSwapped()), this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
     }
+}
+
+void HomeApplication::takeScreenshot(const QString &path)
+{
+    m_screenshotService->saveScreenshot(path);
 }
