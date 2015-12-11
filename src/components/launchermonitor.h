@@ -44,6 +44,8 @@ public:
     QStringList iconDirectories() const;
     void setIconDirectories(const QStringList &dirs);
 
+    void reset(const QStringList &dirs);
+
 signals:
     void filesUpdated(const QStringList &added, const QStringList &modified, const QStringList &removed);
 

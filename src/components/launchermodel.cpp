@@ -246,7 +246,8 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
             // Desktop file has been updated - update launcher
             LauncherItem *item = itemInModel(filename);
             if (item != NULL) {
-                bool isValid = item->isStillValid() && item->shouldDisplay();
+                bool isValid = item->isStillValid() && item->shouldDisplay() && displayCategory(item);
+
                 if (!isValid) {
                     // File has changed in such a way (e.g. Hidden=true) that
                     // it now should become invisible again
@@ -443,8 +444,25 @@ void LauncherModel::setCategories(const QStringList &categories)
 
         if (m_initialized) {
             // Force a complete rebuild of the model.
-            m_launcherMonitor.setDirectories(QStringList());
-            m_launcherMonitor.setDirectories(m_directories);
+            m_launcherMonitor.reset(m_directories);
+        }
+    }
+}
+
+QStringList LauncherModel::blacklistedCategories() const
+{
+    return m_blacklistedCategories;
+}
+
+void LauncherModel::setBlacklistedCategories(const QStringList &categories)
+{
+    if (m_blacklistedCategories != categories) {
+        m_blacklistedCategories = categories;
+        emit blacklistedCategoriesChanged();
+
+        if (m_initialized) {
+            // Force a complete rebuild of the model.
+            m_launcherMonitor.reset(m_directories);
         }
     }
 }
@@ -760,13 +778,8 @@ LauncherItem *LauncherModel::addItemIfValid(const QString &path)
     LauncherItem *item = new LauncherItem(path, this);
 
     bool isValid = item->isValid();
-    bool shouldDisplay = item->shouldDisplay() && m_categories.isEmpty();
-    foreach (const QString &category, item->desktopCategories()) {
-        if (m_categories.contains(category)) {
-            shouldDisplay = true;
-            break;
-        }
-    }
+    bool shouldDisplay = item->shouldDisplay() && displayCategory(item);
+
     if (isValid && shouldDisplay) {
         addItem(item);
     } else {
@@ -776,6 +789,25 @@ LauncherItem *LauncherModel::addItemIfValid(const QString &path)
     }
 
     return item;
+}
+
+bool LauncherModel::displayCategory(LauncherItem *item) const
+{
+    bool display = m_categories.isEmpty();
+
+    foreach (const QString &category, item->desktopCategories()) {
+        if (m_categories.contains(category)) {
+            display = true;
+            break;
+        }
+    }
+    foreach (const QString &category, item->desktopCategories()) {
+        if (m_blacklistedCategories.contains(category)) {
+            display = false;
+            break;
+        }
+    }
+    return display;
 }
 
 void LauncherModel::setTemporary(LauncherItem *item)

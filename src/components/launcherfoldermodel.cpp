@@ -351,6 +351,7 @@ LauncherFolderModel::LauncherFolderModel(QObject *parent)
     , m_initialized(false)
 {
     connect(m_launcherModel, &LauncherModel::directoriesChanged, this, &LauncherFolderModel::directoriesChanged);
+    connect(m_launcherModel, &LauncherModel::blacklistedCategoriesChanged, this, &LauncherFolderModel::blacklistedCategoriesChanged);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::categoriesChanged, this, &LauncherFolderModel::categoriesChanged);
 
@@ -364,6 +365,7 @@ LauncherFolderModel::LauncherFolderModel(InitializationMode, QObject *parent)
     , m_initialized(false)
 {
     connect(m_launcherModel, &LauncherModel::directoriesChanged, this, &LauncherFolderModel::directoriesChanged);
+    connect(m_launcherModel, &LauncherModel::blacklistedCategoriesChanged, this, &LauncherFolderModel::blacklistedCategoriesChanged);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::categoriesChanged, this, &LauncherFolderModel::categoriesChanged);
 }
@@ -438,6 +440,16 @@ QStringList LauncherFolderModel::categories() const
 void LauncherFolderModel::setCategories(const QStringList &categories)
 {
     m_launcherModel->setCategories(categories);
+}
+
+void LauncherFolderModel::setBlacklistedCategories(const QStringList &categories)
+{
+    m_launcherModel->setBlacklistedCategories(categories);
+}
+
+QStringList LauncherFolderModel::blacklistedCategories() const
+{
+    return m_launcherModel->blacklistedCategories();
 }
 
 // Move item to folder at index. If index < 0 the item will be appended.
