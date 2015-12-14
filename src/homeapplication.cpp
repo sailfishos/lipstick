@@ -84,10 +84,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     // Initialize the QML engine
     qmlEngine = new QQmlEngine(this);
 
-    // Initialize the notification manager
-    NotificationManager::instance();
-    new NotificationPreviewPresenter(this);
-
     // Export screen size / geometry as dconf keys
     LipstickSettings::instance()->exportScreenSize();
 
@@ -107,6 +103,10 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     deviceLock = new DeviceLock(this);
     new DeviceLockAdaptor(deviceLock);
+
+    // Initialize the notification manager
+    NotificationManager::instance();
+    new NotificationPreviewPresenter(this);
 
     volumeControl = new VolumeControl;
     new BatteryNotifier(this);

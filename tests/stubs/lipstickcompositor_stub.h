@@ -5,7 +5,6 @@
 #include "homeapplication.h"
 #include <stubbase.h>
 
-
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
 class LipstickCompositorStub : public StubBase {

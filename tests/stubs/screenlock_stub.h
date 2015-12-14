@@ -45,8 +45,10 @@ class ScreenLockStub : public StubBase {
   virtual void handleBlankingPolicyChange(const QString&);
   virtual bool isScreenLocked();
   virtual bool eventFilter(QObject *, QEvent *event);
+  virtual void timerEvent(QTimerEvent*);
   virtual bool isLowPowerMode() const;
   virtual QString blankingPolicy() const;
+  virtual bool touchBlocked() const;
 }; 
 
 // 2. IMPLEMENT STUB
@@ -104,7 +106,7 @@ void ScreenLockStub::lockScreen(bool immediate) {
 }
 
 void ScreenLockStub::unlockScreen() {
-  stubMethodEntered("unlockScreen");
+    stubMethodEntered("unlockScreen");
 }
 
 void ScreenLockStub::showScreenLock() {
@@ -167,6 +169,13 @@ bool ScreenLockStub::eventFilter(QObject *object, QEvent *event) {
   return stubReturnValue<bool>("eventFilter");
 }
 
+void ScreenLockStub::timerEvent(QTimerEvent *event)
+{
+    QList<ParameterBase*> params;
+    params.append(new Parameter<QEvent *>(event));
+    stubMethodEntered("timerEvent", params);
+}
+
 bool ScreenLockStub::isLowPowerMode() const {
   stubMethodEntered("isLowPowerMode");
   return stubReturnValue<bool>("isLowPowerMode");
@@ -175,6 +184,12 @@ bool ScreenLockStub::isLowPowerMode() const {
 QString ScreenLockStub::blankingPolicy() const {
     stubMethodEntered("blankingPolicy");
     return stubReturnValue<QString>("blankingPolicy");
+}
+
+bool ScreenLockStub::touchBlocked() const
+{
+    stubMethodEntered("touchBlocked");
+    return stubReturnValue<bool>("touchBlocked");
 }
 
 // 3. CREATE A STUB INSTANCE
@@ -264,6 +279,11 @@ bool ScreenLock::eventFilter(QObject *object, QEvent *event) {
   return gScreenLockStub->eventFilter(object, event);
 }
 
+void ScreenLock::timerEvent(QTimerEvent *event)
+{
+    gScreenLockStub->timerEvent(event);
+}
+
 bool ScreenLock::isLowPowerMode() const {
   return gScreenLockStub->isLowPowerMode();
 }
@@ -272,4 +292,8 @@ QString ScreenLock::blankingPolicy() const {
   return gScreenLockStub->blankingPolicy();
 }
 
+bool ScreenLock::touchBlocked() const
+{
+    return gScreenLockStub->touchBlocked();
+}
 #endif

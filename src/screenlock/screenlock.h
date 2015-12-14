@@ -18,6 +18,7 @@
 #define SCREENLOCK_H
 
 #include <QObject>
+#include "homeapplication.h"
 
 class QDBusInterface;
 
@@ -28,6 +29,7 @@ class QDBusInterface;
 class ScreenLock : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(bool touchBlocked READ touchBlocked NOTIFY touchBlockedChanged FINAL)
 
 public:
     /*!
@@ -84,6 +86,13 @@ public:
      */
     QString blankingPolicy() const;
 
+    /*!
+     * Returns touch blocking state.
+     *
+     * \return \c true when touch is blocked, \c false otherwise
+     */
+    bool touchBlocked() const;
+
     //! \reimp
     virtual bool eventFilter(QObject *, QEvent *event);
     //! \reimp_end
@@ -124,7 +133,7 @@ private slots:
     void hideEventEater();
 
     //! Clear event eater if display is no longer dimmed
-    void handleDisplayStateChange(int displayState);
+    void handleDisplayStateChange(int oldState, int newState);
 
     //! Handles LPM events coming from mce.
     void handleLpmModeChange(const QString &state);
@@ -141,6 +150,12 @@ signals:
 
     //! Emitted when the display blanking policy changes
     void  blankingPolicyChanged(const QString &policy);
+
+    //! Emitted when touch blocking changes. Touch is blocked when display is off.
+    void touchBlockedChanged();
+
+protected:
+    void timerEvent(QTimerEvent *e) Q_DECL_OVERRIDE;
 
 private:
     enum TkLockReply {
@@ -186,6 +201,10 @@ private:
 
     //! The current blanking policy obtained from mce
     QString mceBlankingPolicy;
+
+    HomeApplication::DisplayState m_currentDisplayState;
+    bool m_waitForTouchBegin;
+    int m_touchUnblockingDelayTimer;
 
 #ifdef UNIT_TEST
     friend class Ut_ScreenLock;

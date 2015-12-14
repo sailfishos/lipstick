@@ -38,8 +38,11 @@ private slots:
     void testTkLockOpen_data();
     void testTkLockOpen();
     void testTkLockClose();
+    void testTouchBlocking();
 
 private:
+    void fakeDisplayOnAndReady();
+
     ScreenLock *screenLock;
 };
 
