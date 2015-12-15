@@ -60,7 +60,7 @@ LipstickCompositor::LipstickCompositor()
     , m_completed(false)
     , m_onUpdatesDisabledUnfocusedWindowId(0)
     , m_keymap(0)
-    , m_fakeRepaintTriggered(false)
+    , m_fakeRepaintTimerId(0)
 {
     setColor(Qt::black);
     setRetainedSelectionEnabled(true);
@@ -796,18 +796,20 @@ void LipstickCompositor::readContent()
 
 void LipstickCompositor::surfaceCommitted()
 {
-    if (!isVisible() && !m_fakeRepaintTriggered) {
-        startTimer(1000);
-        m_fakeRepaintTriggered = true;
+    if (!isVisible() && m_fakeRepaintTimerId == 0) {
+        m_fakeRepaintTimerId = startTimer(1000);
+    } else if (isVisible() && m_fakeRepaintTimerId > 0) {
+        killTimer(m_fakeRepaintTimerId);
+        m_fakeRepaintTimerId = 0;
     }
 }
 
 void LipstickCompositor::timerEvent(QTimerEvent *e)
 {
-    Q_UNUSED(e)
-
-    frameStarted();
-    sendFrameCallbacks(surfaces());
-    m_fakeRepaintTriggered = false;
-    killTimer(e->timerId());
+    if (e->timerId() == m_fakeRepaintTimerId) {
+        frameStarted();
+        sendFrameCallbacks(surfaces());
+        killTimer(e->timerId());
+        m_fakeRepaintTimerId = 0;
+    }
 }

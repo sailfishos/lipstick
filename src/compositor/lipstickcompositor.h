@@ -229,7 +229,8 @@ private:
     int m_onUpdatesDisabledUnfocusedWindowId;
     LipstickRecorderManager *m_recorder;
     LipstickKeymap *m_keymap;
-    bool m_fakeRepaintTriggered;
+    int m_fakeRepaintTimerId;
+
 };
 
 #endif // LIPSTICKCOMPOSITOR_H
