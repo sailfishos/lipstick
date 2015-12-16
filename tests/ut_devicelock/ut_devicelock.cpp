@@ -221,7 +221,7 @@ DeviceLock::LockState Ut_DeviceLock::simulateLockStateChange(DeviceLock::LockSta
     case DeviceLock::Locked:
         // can't lock if locking is disabled
         if (deviceLock->m_lockingDelay < 0)
-            lockState = DeviceLock::Unlocked;
+            lockState = deviceLock->m_deviceLockState;
         break;
     case DeviceLock::Unlocked:
         // can't unlock if display is off with immediate locking

@@ -424,22 +424,54 @@ bool DeviceLock::blankingInhibit() const
  */
 void DeviceLock::setState(int state)
 {
-    if (m_deviceLockState != (LockState)state) {
-        if (state == Locked || isPrivileged()) {
-            if (m_verbosityLevel >= 1)
-                qDebug("%s -> %s",
-                       reprLockState(m_deviceLockState),
-                       reprLockState(state));
-            m_deviceLockState = (LockState)state;
-            emit stateChanged(state);
-            emit _notifyStateChanged();
+    LockState newLockState = (LockState)state;
 
-            setStateAndSetupLockTimer();
-        } else {
-            sendErrorReply(QDBusError::AccessDenied,
-                           QString("Caller is not in privileged group"));
-        }
+    if (m_deviceLockState == newLockState) {
+        return;
     }
+
+    const char *error = 0;
+
+    switch (newLockState) {
+    case Locked:
+        if (m_lockingDelay == -1) {
+            error = "Device lock not in use";
+        }
+        break;
+    case Unlocked:
+        if (!isPrivileged()) {
+            error = "Caller is not in privileged group";
+        }
+        break;
+    case Undefined:
+        /* Allow unit tests to rewind the state back to Undefined */
+        if (!calledFromDBus()) {
+            break;
+        }
+        /* Fall through */
+    default:
+        error = "Illegal state requested";
+        break;
+    }
+
+    if (error) {
+        if (calledFromDBus()) {
+            sendErrorReply(QDBusError::AccessDenied, QString(error));
+        }
+        return;
+    }
+
+    if (m_verbosityLevel >= 1) {
+        qDebug("%s -> %s",
+               reprLockState(m_deviceLockState),
+               reprLockState(newLockState));
+    }
+
+    m_deviceLockState = newLockState;
+    emit stateChanged(m_deviceLockState);
+    emit _notifyStateChanged();
+
+    setStateAndSetupLockTimer();
 }
 
 bool DeviceLock::checkCode(const QString &code)
