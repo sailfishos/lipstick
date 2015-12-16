@@ -55,10 +55,6 @@ void HomeApplication::restoreSignalHandlers()
     signalHandlersRestored = true;
 }
 
-void HomeApplication::sendStartupNotifications()
-{
-}
-
 int argc = 1;
 char *argv[] = { (char *) "./ut_shutdownscreen", NULL };
 

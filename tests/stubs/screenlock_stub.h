@@ -40,7 +40,7 @@ class ScreenLockStub : public StubBase {
   virtual void hideScreenLockAndEventEater();
   virtual void showEventEater();
   virtual void hideEventEater();
-  virtual void handleDisplayStateChange(int);
+  virtual void handleDisplayStateChange(int oldState, int newState);
   virtual void handleLpmModeChange(const QString&);
   virtual void handleBlankingPolicyChange(const QString&);
   virtual bool isScreenLocked();
@@ -135,9 +135,10 @@ void ScreenLockStub::hideEventEater() {
   stubMethodEntered("hideEventEater");
 }
 
-void ScreenLockStub::handleDisplayStateChange(int displayState){
+void ScreenLockStub::handleDisplayStateChange(int oldState, int newState){
     QList<ParameterBase*> params;
-    params.append( new Parameter<int >(displayState));
+    params.append(new Parameter<int>(oldState));
+    params.append(new Parameter<int>(newState));
     stubMethodEntered("handleDisplayStateChange", params);
 }
 
@@ -242,8 +243,8 @@ void ScreenLock::hideEventEater() {
   gScreenLockStub->hideEventEater();
 }
 
-void ScreenLock::handleDisplayStateChange(int displayState) {
-  gScreenLockStub->handleDisplayStateChange(displayState);
+void ScreenLock::handleDisplayStateChange(int oldState, int newState) {
+  gScreenLockStub->handleDisplayStateChange(oldState, newState);
 }
 
 void

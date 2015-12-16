@@ -53,9 +53,7 @@ LipstickCompositor::LipstickCompositor()
     , m_topmostWindowOrientation(Qt::PrimaryOrientation)
     , m_screenOrientation(Qt::PrimaryOrientation)
     , m_sensorOrientation(Qt::PrimaryOrientation)
-    , m_displayState(0)
     , m_retainedSelection(0)
-    , m_currentDisplayState(MeeGo::QmDisplayState::Unknown)
     , m_updatesEnabled(true)
     , m_completed(false)
     , m_onUpdatesDisabledUnfocusedWindowId(0)
@@ -301,12 +299,7 @@ void LipstickCompositor::clearKeyboardFocus()
 
 void LipstickCompositor::setDisplayOff()
 {
-    if (!m_displayState) {
-        qWarning() << "No display";
-        return;
-    }
-
-    m_displayState->set(MeeGo::QmDisplayState::Off);
+    HomeApplication::instance()->setDisplayOff();
 }
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,2,0)
@@ -400,10 +393,10 @@ void LipstickCompositor::onSurfaceDying()
 
 void LipstickCompositor::initialize()
 {
-    m_displayState = new MeeGo::QmDisplayState(this);
-    MeeGo::QmDisplayState::DisplayState displayState = m_displayState->get();
-    reactOnDisplayStateChanges(displayState);
-    connect(m_displayState, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)), this, SLOT(reactOnDisplayStateChanges(MeeGo::QmDisplayState::DisplayState)));
+    HomeApplication *home = HomeApplication::instance();
+    reactOnDisplayStateChanges(HomeApplication::DisplayUnknown, home->displayState());
+    connect(home, SIGNAL(displayStateChanged(HomeApplication::DisplayState,HomeApplication::DisplayState)),
+            this, SLOT(reactOnDisplayStateChanges(HomeApplication::DisplayState,HomeApplication::DisplayState)));
 
     new LipstickCompositorAdaptor(this);
 
@@ -681,23 +674,16 @@ void LipstickCompositor::updateKeymap()
         defaultInputDevice()->setKeymap(QWaylandKeymap());
 }
 
-void LipstickCompositor::reactOnDisplayStateChanges(MeeGo::QmDisplayState::DisplayState state)
+void LipstickCompositor::reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState)
 {
-    if (m_currentDisplayState == state) {
-        return;
-    }
-
-    if (state == MeeGo::QmDisplayState::On) {
+    if (newState == HomeApplication::DisplayOn) {
         emit displayOn();
-    } else if (state == MeeGo::QmDisplayState::Off) {
+    } else if (newState == HomeApplication::DisplayOff) {
         QCoreApplication::postEvent(this, new QTouchEvent(QEvent::TouchCancel));
         emit displayOff();
     }
 
-    bool changeInDimming = (state == MeeGo::QmDisplayState::Dimmed) != (m_currentDisplayState == MeeGo::QmDisplayState::Dimmed);
-
-    m_currentDisplayState = state;
-
+    bool changeInDimming = (newState == HomeApplication::DisplayDimmed) != (oldState == HomeApplication::DisplayDimmed);
     if (changeInDimming) {
         emit displayDimmedChanged();
     }

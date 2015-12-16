@@ -27,18 +27,31 @@ class ShutdownScreen;
 class ConnectionSelector;
 class ScreenshotService;
 
+namespace MeeGo {
+    class QmDisplayState;
+}
+
 /*!
  * Extends QApplication with features necessary to create a desktop.
  */
 class LIPSTICK_EXPORT HomeApplication : public QGuiApplication
 {
     Q_OBJECT
+    Q_ENUMS(DisplayState)
 
     HomeWindow *_mainWindowInstance;
     QString _qmlPath;
     QString _compositorPath;
 
 public:
+
+    enum DisplayState {
+        DisplayOff = -1,   // MeeGo::QmDisplayState::Off
+        DisplayDimmed = 0, // MeeGo::QmDisplayState::Dimmed
+        DisplayOn = 1,     // MeeGo::QmDisplayState::On
+        DisplayUnknown     // MeeGo::QmDisplayState::Unknown
+    };
+
     /*!
      * Constructs an application object.
      *
@@ -96,6 +109,8 @@ public:
      */
     bool homeActive() const;
 
+    DisplayState displayState();
+    void setDisplayOff();
     void takeScreenshot(const QString &path);
 
 signals:
@@ -113,6 +128,11 @@ signals:
      * Emitted before the HomeApplication commences destruction.
      */
     void aboutToDestroy();
+
+    /*!
+     * Emitted upon display state change.
+     */
+    void displayStateChanged(HomeApplication::DisplayState oldDisplayState, HomeApplication::DisplayState newDisplayState);
 
 protected:
     virtual bool event(QEvent *);
@@ -171,6 +191,8 @@ private:
     //! Whether the home ready signal has been sent or not
     bool homeReadySent;
 
+    DisplayState m_currentDisplayState;
+    MeeGo::QmDisplayState *m_displayState;
     ScreenshotService *m_screenshotService;
 };
 

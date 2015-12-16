@@ -6,11 +6,10 @@ INCLUDEPATH += $$SCREENLOCKSRCDIR $$UTILITYSRCDIR $$SRCDIR/xtools ../../src/qmsy
 
 SOURCES += ut_screenlock.cpp \
     $$SCREENLOCKSRCDIR/screenlock.cpp \
-    ../../src/qmsystem2/qmdisplaystate.cpp \
+    $$STUBSDIR/homeapplication.cpp \
     $$STUBSDIR/stubbase.cpp
 
 HEADERS += ut_screenlock.h \
     $$SCREENLOCKSRCDIR/screenlock.h \
-    ../../src/qmsystem2/qmdisplaystate.h \
-    ../../src/qmsystem2/qmdisplaystate_p.h \
+    $$SRCDIR/homeapplication.h \
     $$UTILITYSRCDIR/closeeventeater.h

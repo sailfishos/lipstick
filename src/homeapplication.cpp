@@ -66,6 +66,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     , originalSigIntHandler(signal(SIGINT, quitSignalHandler))
     , originalSigTermHandler(signal(SIGTERM, quitSignalHandler))
     , homeReadySent(false)
+    , m_displayState(0)
+    , m_screenshotService(0)
 {
     QTranslator *engineeringEnglish = new QTranslator(this);
     engineeringEnglish->load("lipstick_eng_en", "/usr/share/translations");
@@ -88,6 +90,15 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     // Export screen size / geometry as dconf keys
     LipstickSettings::instance()->exportScreenSize();
+
+    m_displayState = new MeeGo::QmDisplayState(this);
+    connect(m_displayState, &MeeGo::QmDisplayState::displayStateChanged, this, [=](MeeGo::QmDisplayState::DisplayState state) {
+        HomeApplication::DisplayState newState = (HomeApplication::DisplayState)state;
+        if (m_currentDisplayState != newState) {
+            emit displayStateChanged(m_currentDisplayState, newState);
+            m_currentDisplayState = newState;
+        }
+    });
 
     // Create screen lock logic - not parented to "this" since destruction happens too late in that case
     screenLock = new ScreenLock;
@@ -185,6 +196,21 @@ bool HomeApplication::homeActive() const
 {
     LipstickCompositor *c = LipstickCompositor::instance();
     return c?c->homeActive():(QGuiApplication::focusWindow() != 0);
+}
+
+HomeApplication::DisplayState HomeApplication::displayState()
+{
+    return (HomeApplication::DisplayState)m_displayState->get();
+}
+
+void HomeApplication::setDisplayOff()
+{
+    if (!m_displayState) {
+        qWarning() << "No display";
+        return;
+    }
+
+    m_displayState->set(MeeGo::QmDisplayState::Off);
 }
 
 bool HomeApplication::event(QEvent *e)
