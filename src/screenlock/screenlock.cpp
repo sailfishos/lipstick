@@ -20,13 +20,30 @@
 #include <QTextStream>
 #include <QCursor>
 #include <QDebug>
+#include <QTouchEvent>
 
 #include <mce/mode-names.h>
-#include <qmdisplaystate.h>
 
 #include "homeapplication.h"
 #include "screenlock.h"
 #include "utilities/closeeventeater.h"
+
+bool userInteracting(const QEvent *event) {
+    switch(event->type()) {
+    case QEvent::TouchBegin:
+    case QEvent::TouchUpdate:
+    case QEvent::TouchEnd:
+    case QEvent::GrabMouse:
+    case QEvent::UngrabMouse:
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseMove:
+    case QEvent::MouseButtonDblClick:
+        return true;
+    default:
+        return false;
+    }
+}
 
 ScreenLock::ScreenLock(QObject* parent) :
     QObject(parent),
@@ -35,12 +52,14 @@ ScreenLock::ScreenLock(QObject* parent) :
     lockscreenVisible(false),
     eatEvents(false),
     lowPowerMode(false),
-    mceBlankingPolicy("default")
+    mceBlankingPolicy("default"),
+    m_currentDisplayState(HomeApplication::DisplayUnknown),
+    m_waitForTouchBegin(true),
+    m_touchUnblockingDelayTimer(0)
 {
     // No explicit API in tklock for disabling event eater. Monitor display
     // state changes, and remove event eater if display becomes undimmed.
-    MeeGo::QmDisplayState *displayState = new MeeGo::QmDisplayState(this);
-    connect(displayState, &MeeGo::QmDisplayState::displayStateChanged,
+    connect(HomeApplication::instance(), &HomeApplication::displayStateChanged,
             this, &ScreenLock::handleDisplayStateChange);
 
     qApp->installEventFilter(this);
@@ -177,10 +196,26 @@ void ScreenLock::hideEventEater()
     toggleEventEater(false);
 }
 
-void ScreenLock::handleDisplayStateChange(int displayState)
+void ScreenLock::handleDisplayStateChange(int oldState, int newState)
 {
-    MeeGo::QmDisplayState::DisplayState state = static_cast<MeeGo::QmDisplayState::DisplayState>(displayState);
-    if (state == MeeGo::QmDisplayState::Dimmed)
+    HomeApplication::DisplayState state = static_cast<HomeApplication::DisplayState>(newState);
+
+    // Exited display off state. Let's wait for touch begin.
+    if ((HomeApplication::DisplayState)oldState == HomeApplication::DisplayOff) {
+        // Keep on filtering touch events to avoid unwanted display on, display off
+        // sequences e.g. during a phone call.
+        m_touchUnblockingDelayTimer = startTimer(100);
+        emit touchBlockedChanged();
+    } else if (state == HomeApplication::DisplayOff) {
+        if (m_touchUnblockingDelayTimer > 0) {
+            killTimer(m_touchUnblockingDelayTimer);
+            m_touchUnblockingDelayTimer = 0;
+        }
+        m_waitForTouchBegin = true;
+    }
+
+    m_currentDisplayState = state;
+    if (state == HomeApplication::DisplayDimmed)
         return;
 
     // Eating an event is meaningful only when the display is dimmed
@@ -208,8 +243,22 @@ bool ScreenLock::isScreenLocked() const
 
 bool ScreenLock::eventFilter(QObject *, QEvent *event)
 {
-    bool eat = eatEvents && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd);
+    if (userInteracting(event)) {
+        if (touchBlocked()) {
+            event->accept();
+            return true;
+        }
 
+        if (m_waitForTouchBegin) {
+            if (event->type() != QEvent::TouchBegin) {
+                event->accept();
+                return true;
+            }
+            m_waitForTouchBegin = false;
+        }
+    }
+
+    bool eat = eatEvents && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd);
     if (eat) {
         hideEventEater();
     }
@@ -225,6 +274,12 @@ bool ScreenLock::isLowPowerMode() const
 QString ScreenLock::blankingPolicy() const
 {
     return mceBlankingPolicy;
+}
+
+bool ScreenLock::touchBlocked() const
+{
+    return (m_currentDisplayState == HomeApplication::DisplayOff ||
+            m_touchUnblockingDelayTimer > 0);
 }
 
 void ScreenLock::handleLpmModeChange(const QString &state)
@@ -246,5 +301,16 @@ void ScreenLock::handleBlankingPolicyChange(const QString &policy)
     if (mceBlankingPolicy != policy) {
         mceBlankingPolicy = policy;
         emit blankingPolicyChanged(mceBlankingPolicy);
+    }
+}
+
+void ScreenLock::timerEvent(QTimerEvent *e)
+{
+    if (e->timerId() == m_touchUnblockingDelayTimer) {
+        killTimer(m_touchUnblockingDelayTimer);
+        m_touchUnblockingDelayTimer = 0;
+        if (!touchBlocked()) {
+            emit touchBlockedChanged();
+        }
     }
 }

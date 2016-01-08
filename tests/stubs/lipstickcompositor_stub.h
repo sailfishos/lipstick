@@ -2,8 +2,8 @@
 #define LIPSTICKCOMPOSITOR_STUB
 
 #include "lipstickcompositor.h"
+#include "homeapplication.h"
 #include <stubbase.h>
-
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
@@ -51,7 +51,7 @@ class LipstickCompositorStub : public StubBase {
   virtual void windowSwapped();
   virtual void windowDestroyed();
   virtual void windowPropertyChanged(const QString &);
-  virtual void reactOnDisplayStateChanges(MeeGo::QmDisplayState::DisplayState);
+  virtual void reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState);
   virtual void setScreenOrientationFromSensor();
   virtual void clipboardDataChanged();
   virtual void onVisibleChanged(bool visible);
@@ -296,9 +296,10 @@ void LipstickCompositorStub::windowPropertyChanged(const QString &property) {
   stubMethodEntered("windowPropertyChanged",params);
 }
 
-void LipstickCompositorStub::reactOnDisplayStateChanges(MeeGo::QmDisplayState::DisplayState state) {
+void LipstickCompositorStub::reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState) {
   QList<ParameterBase*> params;
-  params.append( new Parameter<MeeGo::QmDisplayState::DisplayState >(state));
+  params.append(new Parameter<HomeApplication::DisplayState>(oldState));
+  params.append(new Parameter<HomeApplication::DisplayState>(newState));
   stubMethodEntered("reactOnDisplayStateChanges",params);
 }
 
@@ -495,8 +496,8 @@ void LipstickCompositor::windowPropertyChanged(const QString &property) {
   gLipstickCompositorStub->windowPropertyChanged(property);
 }
 
-void LipstickCompositor::reactOnDisplayStateChanges(MeeGo::QmDisplayState::DisplayState state) {
-  gLipstickCompositorStub->reactOnDisplayStateChanges(state);
+void LipstickCompositor::reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState) {
+  gLipstickCompositorStub->reactOnDisplayStateChanges(oldState, newState);
 }
 
 void LipstickCompositor::homeApplicationAboutToDestroy() {
