@@ -36,3 +36,6 @@ package:com.bsb.hike;chat,chat_exists
 
 imo;chat,chat_exists
 package:com.imo.android.imoim;chat,chat_exists
+
+Jongla;chat,chat_exists
+package:org.apache.android.xmpp;chat,chat_exists
