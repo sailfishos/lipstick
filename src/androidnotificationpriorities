@@ -27,3 +27,12 @@ package:kik.android;chat,chat_exists
 
 viber;chat,chat_exists
 package:com.viber.voip;chat,chat_exists
+
+Line;chat,chat_exists
+package:jp.naver.line.android;chat,chat_exists
+
+hike messenger;chat,chat_exists
+package:com.bsb.hike;chat,chat_exists
+
+imo;chat,chat_exists
+package:com.imo.android.imoim;chat,chat_exists
