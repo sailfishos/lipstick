@@ -43,7 +43,7 @@ public:
     bool lowPowerMode() const;
 
     QSize screenSize();
-    void exportScreenSize();
+    void exportScreenProperties();
 
     QString blankingPolicy();
 
