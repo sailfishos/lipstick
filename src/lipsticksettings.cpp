@@ -78,18 +78,25 @@ QSize LipstickSettings::screenSize()
     return QGuiApplication::primaryScreen()->size();
 }
 
-void LipstickSettings::exportScreenSize()
+void LipstickSettings::exportScreenProperties()
 {
     const int defaultValue = 0;
     MGConfItem widthConf("/lipstick/screen/primary/width");
-    if (widthConf.value(defaultValue) != QGuiApplication::primaryScreen()->size().width()) {
-        widthConf.set(QGuiApplication::primaryScreen()->size().width());
+    QScreen *primaryScreen = QGuiApplication::primaryScreen();
+    QSize primaryScreenSize = primaryScreen->size();
+    if (widthConf.value(defaultValue) != primaryScreenSize.width()) {
+        widthConf.set(primaryScreenSize.width());
         widthConf.sync();
     }
     MGConfItem heightConf("/lipstick/screen/primary/height");
-    if (heightConf.value(defaultValue) != QGuiApplication::primaryScreen()->size().height()) {
-        heightConf.set(QGuiApplication::primaryScreen()->size().height());
+    if (heightConf.value(defaultValue) != primaryScreenSize.height()) {
+        heightConf.set(primaryScreenSize.height());
         heightConf.sync();
+    }
+    MGConfItem physicalDotsPerInchConf("/lipstick/screen/primary/physicalDotsPerInch");
+    if (physicalDotsPerInchConf.value(defaultValue) != primaryScreen->physicalDotsPerInch()) {
+        physicalDotsPerInchConf.set(primaryScreen->physicalDotsPerInch());
+        physicalDotsPerInchConf.sync();
     }
 }
 

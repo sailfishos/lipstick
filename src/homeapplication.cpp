@@ -85,7 +85,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     qmlEngine = new QQmlEngine(this);
 
     // Export screen size / geometry as dconf keys
-    LipstickSettings::instance()->exportScreenSize();
+    LipstickSettings::instance()->exportScreenProperties();
 
     m_displayState = new MeeGo::QmDisplayState(this);
     connect(m_displayState, &MeeGo::QmDisplayState::displayStateChanged, this, [=](MeeGo::QmDisplayState::DisplayState state) {
