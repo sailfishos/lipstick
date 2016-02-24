@@ -48,6 +48,7 @@ private:
     bool m_coverized;
     QSize m_lastSize;
     uint32_t m_serial;
+    uint32_t m_lastSerial;
 };
 
 #endif
