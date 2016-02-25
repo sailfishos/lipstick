@@ -23,6 +23,7 @@
 const char *NotificationManager::HINT_CATEGORY = "category";
 const char *NotificationManager::HINT_URGENCY = "urgency";
 const char *NotificationManager::HINT_IMAGE_PATH = "image-path";
+const char *NotificationManager::HINT_SUPPRESS_SOUND = "suppress-sound";
 const char *NotificationManager::HINT_ICON = "x-nemo-icon";
 const char *NotificationManager::HINT_ITEM_COUNT = "x-nemo-item-count";
 const char *NotificationManager::HINT_PRIORITY = "x-nemo-priority";
@@ -237,12 +238,33 @@ void Ut_NotificationFeedbackPlayer::testSuppressedNotification()
     // Create a notification
     LipstickNotification *notification = createNotification(1);
     QVariantHash hints(notification->hints());
+    hints.insert(NotificationManager::HINT_FEEDBACK, "feedback");
     hints.insert(NotificationManager::HINT_FEEDBACK_SUPPRESSED, true);
     notification->setHints(hints);
     player->addNotification(1);
 
     // Check that NGFAdapter::play() was not called for the feedback
     QCOMPARE(gClientStub->stubCallCount("play"), 0);
+}
+
+void Ut_NotificationFeedbackPlayer::testNotificationSoundSuppressed()
+{
+    gClientStub->stubSetReturnValue("play", (quint32)1);
+
+    // Create a notification
+    LipstickNotification *notification = createNotification(1);
+    QVariantHash hints(notification->hints());
+    hints.insert(NotificationManager::HINT_SUPPRESS_SOUND, true);
+    notification->setHints(hints);
+    player->addNotification(1);
+
+    // Check that NGFAdapter::play() was called for the feedback, with audio disabled
+    QCOMPARE(gClientStub->stubCallCount("play"), 1);
+    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QString>(0), QString("feedback"));
+
+    QMap<QString, QVariant> properties(gClientStub->stubLastCallTo("play").parameter<QMap<QString, QVariant> >(1));
+    QVERIFY(properties.contains("media.audio"));
+    QCOMPARE(properties.value("media.audio").toBool(), false);
 }
 
 void Ut_NotificationFeedbackPlayer::testUpdateNotification()

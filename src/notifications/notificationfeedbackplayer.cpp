@@ -68,9 +68,25 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                     notification->body().isEmpty() &&
                     notification->summary().isEmpty()) {
                     properties.insert("media.leds", false);
-                    properties.insert("media.audio", true);
-                    properties.insert("media.vibra", true);
-                    properties.insert("media.backlight", true);
+                }
+                if (notification->hints().value(NotificationManager::HINT_SUPPRESS_SOUND, false).toBool()) {
+                    properties.insert("media.audio", false);
+                }
+
+                if (!properties.isEmpty()) {
+                    // Add any unspecified properties as true, or they are treated as false (when properties is non-empty)
+                    if (!properties.contains("media.leds")) {
+                        properties.insert("media.leds", true);
+                    }
+                    if (!properties.contains("media.audio")) {
+                        properties.insert("media.audio", true);
+                    }
+                    if (!properties.contains("media.vibra")) {
+                        properties.insert("media.vibra", true);
+                    }
+                    if (!properties.contains("media.backlight")) {
+                        properties.insert("media.backlight", true);
+                    }
                 }
 
                 foreach (const QString &item, feedbackItems) {

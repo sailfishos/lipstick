@@ -38,6 +38,7 @@ private slots:
     void testMultipleFeedbackIds();
     void testHiddenNotification();
     void testSuppressedNotification();
+    void testNotificationSoundSuppressed();
     void testUpdateNotification();
     void testUpdateNotificationAfterRestart();
     void testNotificationPreviewsDisabled_data();

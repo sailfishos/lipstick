@@ -57,6 +57,9 @@ public:
     //! Standard hint: Icon of the notification: either a file:// URL, an absolute path, or a token to be satisfied by the 'theme' image provider.
     static const char *HINT_IMAGE_PATH;
 
+    //! Standard hint: If true, audible feedback should be should be suppressed during notification feedback.
+    static const char *HINT_SUPPRESS_SOUND;
+
     //! Nemo hint: Icon of the notification. Allows the icon to be set using a category definition file without specifying it in the Notify() call.
     static const char *HINT_ICON;
 
