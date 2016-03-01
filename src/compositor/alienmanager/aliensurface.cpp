@@ -125,6 +125,28 @@ void AlienSurface::alien_surface_set_minimized(Resource *resource)
     emit surface()->lowerRequested();
 }
 
+void AlienSurface::alien_surface_set_window_type(Resource *resource, uint32_t type)
+{
+    Q_UNUSED(resource);
+
+    switch (type) {
+    case Application:
+        surface()->setWindowProperty(QStringLiteral("CATEGORY"), QString());
+        break;
+    case Dialog:
+        surface()->setWindowProperty(QStringLiteral("CATEGORY"), QStringLiteral("dialog"));
+        break;
+    case Alarm:
+        surface()->setWindowProperty(QStringLiteral("CATEGORY"), QStringLiteral("alarm"));
+        break;
+    case Call:
+        surface()->setWindowProperty(QStringLiteral("CATEGORY"), QStringLiteral("call"));
+        break;
+    default:
+        break;
+    }
+}
+
 void AlienSurface::configure(bool hasBuffer)
 {
     if (hasBuffer && m_serial == 0) {
@@ -142,6 +164,7 @@ void AlienSurface::sendConfigure(int w, int h)
     if (m_coverized) {
         states << ALIEN_SURFACE_STATE_COVER;
     }
+
     QByteArray data = QByteArray::fromRawData((char *)states.data(), states.size() * sizeof(uint32_t));
     m_serial = wl_display_next_serial(surface()->compositor()->waylandDisplay());
     m_lastSerial = m_serial;

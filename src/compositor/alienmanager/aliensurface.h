@@ -37,11 +37,19 @@ protected:
     void alien_surface_ack_configure(Resource *resource, uint32_t serial) Q_DECL_OVERRIDE;
     void alien_surface_request_state(Resource *resource, wl_array *states, uint32_t serial) Q_DECL_OVERRIDE;
     void alien_surface_set_minimized(Resource *resource) Q_DECL_OVERRIDE;
+    void alien_surface_set_window_type(Resource *resource, uint32_t type) Q_DECL_OVERRIDE;
 
 private:
     void configure(bool hasBuffer);
     void sendConfigure(int width, int height);
     void updateStates();
+
+    enum WindowType {
+        Application = 1,
+        Dialog      = 2,
+        Alarm       = 3,
+        Call        = 4
+    };
 
     AlienClient *m_client;
     bool m_hidden;

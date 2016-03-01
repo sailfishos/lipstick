@@ -214,5 +214,37 @@
                 kill it.
             </description>
         </event>
+        <enum name = "window_type">
+            <description summary="types of window surface">
+                The different types of window a surface may represent.  These must set
+                before sending a buffer as the type will not be re-evaluated after a window
+                is shown.
+            </description>
+            <entry name="application" value="1" summary="the surface is an application window">
+                The surface represents a regular application window.
+            </entry>
+            <entry name="dialog" value="2" summary="the surface is a dialog window">
+                The surface represents a dialog window.  It is displayed above applications,
+                but will not be shown over the lock screen.
+            </entry>
+            <entry name="alarm" value="3" summary="the surface is an alarm window">
+                The surface represents an alarm window. It is displayed above applications,
+                and can appear over the lock screen. If another alarm or call window is
+                visible it will not be displayed until the previous window is dismissed.
+            </entry>
+            <entry name="call" value="4" summary="the surface is a call window">
+                The surface represents a call window. It is like an alarm window in that is
+                displayed above applications and can appear over the lock screen. However it
+                will be given priority over alarm windows and will be shown even if an another
+                alarm window is visible.
+            </entry>
+        </enum>
+        <request name="set_window_type">
+            <description summary="sets a surface's window type">
+                Requests that the compositor treat the surface as a particular window type.
+                This affects the positioning and priority of a window.
+            </description>
+            <arg name="type" type="uint" summary="the window type" />
+        </request>
     </interface>
 </protocol>
