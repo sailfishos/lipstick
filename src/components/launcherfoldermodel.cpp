@@ -467,6 +467,10 @@ bool LauncherFolderModel::moveToFolder(QObject *item, LauncherFolderItem *folder
 // An app removed from system
 void LauncherFolderModel::appRemoved(QObject *item)
 {
+    if (LauncherItem *launcherItem = qobject_cast<LauncherItem*>(item)) {
+        emit applicationRemoved(launcherItem);
+    }
+
     LauncherFolderItem *folder = findContainer(item);
     if (folder) {
         folder->removeItem(item);
