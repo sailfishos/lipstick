@@ -22,6 +22,7 @@
 #include <QScreen>
 #include <QStandardPaths>
 #include <QTransform>
+#include <QLocale>
 #include <private/qquickwindow_p.h>
 
 ScreenshotService::ScreenshotService(QObject *parent) :
@@ -46,7 +47,10 @@ void ScreenshotService::saveScreenshot(const QString &path)
             grab = grab.transformed(xform, Qt::SmoothTransformation);
         }
 
-        grab.save(path.isEmpty() ? (QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/" + QDateTime::currentDateTime().toString("yyyyMMddhhmmss") + ".png") : path);
+        grab.save(path.isEmpty()
+                  ? (QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)
+                     + "/" + QLocale::c().toString(QDateTime::currentDateTime(), "yyyyMMddhhmmss") + ".png")
+                  : path);
 
         if (renderStage)
             renderStage->setBypassHwc(false);
