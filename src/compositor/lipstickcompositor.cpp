@@ -351,8 +351,7 @@ void LipstickCompositor::setTopmostWindowId(int id)
 
 QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
 {
-    QVariantMap properties = surface->windowProperties();
-    QString category = properties.value("CATEGORY").toString();
+    const QString category = surface->windowProperties().value("CATEGORY").toString();
 
     int id = m_nextWindowId++;
     LipstickCompositorWindow *item = new LipstickCompositorWindow(id, category, static_cast<QWaylandQuickSurface *>(surface));
@@ -364,18 +363,27 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
 
 static LipstickCompositorWindow *surfaceWindow(QWaylandSurface *surface)
 {
-    return surface->views().isEmpty() ? 0 : static_cast<LipstickCompositorWindow *>(surface->views().first());
+    const QString category = surface->windowProperties().value("CATEGORY").toString();
+
+    foreach (QWaylandSurfaceView *view, surface->views()) {
+        LipstickCompositorWindow * const window = static_cast<LipstickCompositorWindow *>(view);
+
+        if (window->category() == category)
+            return window;
+    }
+
+    return 0;
 }
 
 void LipstickCompositor::onSurfaceDying()
 {
     QWaylandSurface *surface = static_cast<QWaylandSurface *>(sender());
-    LipstickCompositorWindow *item = surfaceWindow(surface);
 
     if (surface == m_fullscreenSurface)
         setFullscreenSurface(0);
 
-    if (item) {
+    foreach (QWaylandSurfaceView *view, surface->views()) {
+        LipstickCompositorWindow * const item = static_cast<LipstickCompositorWindow *>(view);
         item->m_windowClosed = true;
         item->tryRemove();
     }
@@ -414,9 +422,16 @@ void LipstickCompositor::surfaceMapped()
     if (!item)
         item = static_cast<LipstickCompositorWindow *>(createView(surface));
 
+    surfaceMapped(item);
+}
+
+void LipstickCompositor::surfaceMapped(LipstickCompositorWindow *item)
+{
     // The surface was mapped for the first time
     if (item->m_mapped)
         return;
+
+    QWaylandSurface *surface = item->surface();
 
     QWaylandSurface *transientParent = surface->transientParent();
     if (transientParent) {
@@ -464,17 +479,19 @@ void LipstickCompositor::surfaceSizeChanged()
 {
     QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
 
-    LipstickCompositorWindow *window = surfaceWindow(surface);
-    if (window)
+    foreach (QWaylandSurfaceView *view, surface->views()) {
+        LipstickCompositorWindow * const window = static_cast<LipstickCompositorWindow *>(view);
         window->setSize(surface->size());
+    }
 }
 
 void LipstickCompositor::surfaceTitleChanged()
 {
     QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
-    LipstickCompositorWindow *window = surfaceWindow(surface);
 
-    if (window) {
+    foreach (QWaylandSurfaceView *view, surface->views()) {
+        LipstickCompositorWindow * const window = static_cast<LipstickCompositorWindow *>(view);
+
         emit window->titleChanged();
 
         int windowId = window->windowId();
@@ -487,20 +504,39 @@ void LipstickCompositor::surfaceTitleChanged()
 void LipstickCompositor::surfaceRaised()
 {
     QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
-    LipstickCompositorWindow *window = surfaceWindow(surface);
 
-    if (window && window->m_mapped) {
+    LipstickCompositorWindow *window = surfaceWindow(surface);
+    if (!window) {
+        window = static_cast<LipstickCompositorWindow *>(createView(surface));
+    }
+
+    if (window->m_mapped) {
         emit windowRaised(window);
+    } else {
+        surfaceMapped(window);
+    }
+
+    // If a previous view of the surface was raised under a different category lower it now.
+    const QString category = surface->windowProperties().value("CATEGORY").toString();
+
+    foreach (QWaylandSurfaceView *view, surface->views()) {
+        LipstickCompositorWindow * const window = static_cast<LipstickCompositorWindow *>(view);
+
+        if (window->category() != category) {
+            emit windowLowered(window);
+        }
     }
 }
 
 void LipstickCompositor::surfaceLowered()
 {
     QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
-    LipstickCompositorWindow *window = surfaceWindow(surface);
 
-    if (window && window->m_mapped) {
-        emit windowLowered(window);
+    foreach (QWaylandSurfaceView *view, surface->views()) {
+        LipstickCompositorWindow * const window = static_cast<LipstickCompositorWindow *>(view);
+        if (window->m_mapped) {
+            emit windowLowered(window);
+        }
     }
 }
 
@@ -539,9 +575,9 @@ void LipstickCompositor::surfaceUnmapped(QWaylandSurface *surface)
     if (surface == m_fullscreenSurface)
         setFullscreenSurface(0);
 
-    LipstickCompositorWindow *window = surfaceWindow(surface);
-    if (window)
-        emit windowHidden(window);
+    foreach (QWaylandSurfaceView *view, surface->views()) {
+        emit windowHidden(static_cast<LipstickCompositorWindow *>(view));
+    }
 }
 
 void LipstickCompositor::surfaceUnmapped(LipstickCompositorWindow *item)
