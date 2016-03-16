@@ -214,6 +214,7 @@ private:
     friend class WindowPixmapItem;
     friend class WindowProperty;
 
+    void surfaceMapped(LipstickCompositorWindow *item);
     void surfaceUnmapped(LipstickCompositorWindow *item);
 
     int windowIdForLink(QWaylandSurface *, uint) const;
