@@ -91,7 +91,7 @@ public:
 
     QVariant orientationLock() const { return m_orientationLock->value("dynamic"); }
 
-    bool displayDimmed() const { return m_currentDisplayState == HomeApplication::DisplayDimmed; }
+    bool displayDimmed() const;
 
     LipstickKeymap *keymap() const;
     void setKeymap(LipstickKeymap *keymap);
@@ -170,7 +170,7 @@ private slots:
     void windowDestroyed();
     void windowPropertyChanged(const QString &);
     bool openUrl(const QUrl &);
-    void reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState);
+    void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
     void homeApplicationAboutToDestroy();
     void setScreenOrientationFromSensor();
     void clipboardDataChanged();
@@ -222,7 +222,6 @@ private:
     QOrientationSensor* m_orientationSensor;
     QPointer<QMimeData> m_retainedSelection;
     MGConfItem *m_orientationLock;
-    HomeApplication::DisplayState m_currentDisplayState;
     bool m_updatesEnabled;
     bool m_completed;
     int m_onUpdatesDisabledUnfocusedWindowId;

@@ -18,6 +18,7 @@
 #define UT_SCREENLOCK_H
 
 #include <QObject>
+#include <qmdisplaystate.h>
 
 class ScreenLock;
 
@@ -41,10 +42,10 @@ private slots:
     void testTouchBlocking();
 
 private:
+    void updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState);
     void fakeDisplayOnAndReady();
 
     ScreenLock *screenLock;
 };
 
 #endif
-

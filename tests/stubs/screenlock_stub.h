@@ -24,7 +24,7 @@
 // FIXME - stubgen is not yet finished
 class ScreenLockStub : public StubBase {
   public:
-  virtual void ScreenLockConstructor(QObject *parent);
+  virtual void ScreenLockConstructor(TouchScreen *touchScreen, QObject *parent);
   virtual void ScreenLockDestructor();
   virtual void displayStatusChanged(const QString &mode);
   virtual int tklock_open(const QString &service, const QString &path, const QString &interface, const QString &method, uint mode, bool silent, bool flicker);
@@ -40,7 +40,6 @@ class ScreenLockStub : public StubBase {
   virtual void hideScreenLockAndEventEater();
   virtual void showEventEater();
   virtual void hideEventEater();
-  virtual void handleDisplayStateChange(int oldState, int newState);
   virtual void handleLpmModeChange(const QString&);
   virtual void handleBlankingPolicyChange(const QString&);
   virtual bool isScreenLocked();
@@ -52,9 +51,9 @@ class ScreenLockStub : public StubBase {
 }; 
 
 // 2. IMPLEMENT STUB
-void ScreenLockStub::ScreenLockConstructor(QObject *parent) {
-  Q_UNUSED(parent);
-
+void ScreenLockStub::ScreenLockConstructor(TouchScreen *touchScreen, QObject *parent) {
+    Q_UNUSED(touchScreen)
+    Q_UNUSED(parent);
 }
 void ScreenLockStub::ScreenLockDestructor() {
 
@@ -137,13 +136,6 @@ void ScreenLockStub::hideEventEater() {
   stubMethodEntered("hideEventEater");
 }
 
-void ScreenLockStub::handleDisplayStateChange(int oldState, int newState){
-    QList<ParameterBase*> params;
-    params.append(new Parameter<int>(oldState));
-    params.append(new Parameter<int>(newState));
-    stubMethodEntered("handleDisplayStateChange", params);
-}
-
 void ScreenLockStub::handleLpmModeChange(const QString &state) {
     QList<ParameterBase*> params;
     params.append(new Parameter<QString>(state));
@@ -198,8 +190,8 @@ ScreenLockStub* gScreenLockStub = &gDefaultScreenLockStub;
 
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
-ScreenLock::ScreenLock(QObject *parent) {
-  gScreenLockStub->ScreenLockConstructor(parent);
+ScreenLock::ScreenLock(TouchScreen *touchScreen, QObject *parent) {
+  gScreenLockStub->ScreenLockConstructor(touchScreen, parent);
 }
 
 ScreenLock::~ScreenLock() {
@@ -258,10 +250,6 @@ void ScreenLock::hideEventEater() {
   gScreenLockStub->hideEventEater();
 }
 
-void ScreenLock::handleDisplayStateChange(int oldState, int newState) {
-  gScreenLockStub->handleDisplayStateChange(oldState, newState);
-}
-
 void
 ScreenLock::handleLpmModeChange(const QString &enabled) {
   gScreenLockStub->handleLpmModeChange(enabled);
@@ -273,15 +261,6 @@ void ScreenLock::handleBlankingPolicyChange(const QString &policy) {
 
 bool ScreenLock::isScreenLocked() const {
   return gScreenLockStub->isScreenLocked();
-}
-
-bool ScreenLock::eventFilter(QObject *object, QEvent *event) {
-  return gScreenLockStub->eventFilter(object, event);
-}
-
-void ScreenLock::timerEvent(QTimerEvent *event)
-{
-    gScreenLockStub->timerEvent(event);
 }
 
 bool ScreenLock::isLowPowerMode() const {

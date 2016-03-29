@@ -14,8 +14,11 @@
 ****************************************************************************/
 
 #include <QtTest/QtTest>
+
 #include "screenlock_stub.h"
+#include "touchscreen_stub.h"
 #include "homeapplication.h"
+#include "touchscreen/touchscreen.h"
 #include "lipsticksettings.h"
 #include "ut_lipsticksettings.h"
 
@@ -38,7 +41,7 @@ void Ut_LipstickSettings::testSetLockScreenVisible()
     QCOMPARE(gScreenLockStub->stubCallCount("lockScreen"), 0);
 
     // Screen lock set: calling setLockscreenVisible() with a changed lock state calls the appropriate function
-    ScreenLock screenLock;
+    ScreenLock screenLock(new TouchScreen);
     settings.setScreenLock(&screenLock);
     gScreenLockStub->stubSetReturnValue("isScreenLocked", false);
     settings.setLockscreenVisible(true);

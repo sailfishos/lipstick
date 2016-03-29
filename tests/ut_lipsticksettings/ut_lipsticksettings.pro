@@ -1,6 +1,6 @@
 include(../common.pri)
 TARGET = ut_lipsticksettings
-INCLUDEPATH += $$SCREENLOCKSRCDIR
+INCLUDEPATH += $$SCREENLOCKSRCDIR $$TOUCHSCREENSRCDIR
 QT += dbus qml quick
 CONFIG += link_pkgconfig mobility
 PKGCONFIG += mce
@@ -15,4 +15,5 @@ SOURCES += \
 HEADERS += \
     ut_lipsticksettings.h \
     $$SRCDIR/lipsticksettings.h \
-    $$SCREENLOCKSRCDIR/screenlock.h
+    $$SCREENLOCKSRCDIR/screenlock.h \
+    $$TOUCHSCREENSRCDIR/touchscreen.h
