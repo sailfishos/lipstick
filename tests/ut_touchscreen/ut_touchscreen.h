@@ -1,8 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (C) 2012 Jolla Ltd.
-** Contact: Robin Burchell <robin.burchell@jollamobile.com>
+** Copyright (C) 2016 Jolla Ltd.
+** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ** This file is part of lipstick.
 **
@@ -14,15 +13,15 @@
 **
 ****************************************************************************/
 
-#ifndef UT_SCREENLOCK_H
-#define UT_SCREENLOCK_H
+#ifndef UT_TOUCHSCREEN_H
+#define UT_TOUCHSCREEN_H
 
 #include <QObject>
 #include <qmdisplaystate.h>
 
-class ScreenLock;
+class TouchScreen;
 
-class Ut_ScreenLock : public QObject
+class Ut_TouchScreen : public QObject
 {
     Q_OBJECT
 
@@ -32,19 +31,14 @@ private slots:
     void initTestCase();
     void cleanupTestCase();
 
-    void testToggleScreenLockUI();
-    void testToggleEventEater();
-    void testUnlockScreenWhenLocked();
-    void testUnlockScreenWhenNotLocked();
-    void testTkLockOpen_data();
-    void testTkLockOpen();
-    void testTkLockClose();
+    void testEnabled();
+    void testTouchBlocking();
 
 private:
     void updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState);
     void fakeDisplayOnAndReady();
 
-    ScreenLock *screenLock;
+    TouchScreen *touchScreen;
 };
 
 #endif
