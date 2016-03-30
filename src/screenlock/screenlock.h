@@ -182,25 +182,25 @@ private:
     };
 
     //! MCE callback D-Bus interface
-    QDBusInterface *callbackInterface;
+    QDBusInterface *m_callbackInterface;
 
     //! Name of the MCE callback method
-    QString callbackMethod;
+    QString m_callbackMethod;
 
     //! Whether the system is shutting down or not
-    bool shuttingDown;
+    bool m_shuttingDown;
 
     //! Whether the lockscreen is visible or not
-    bool lockscreenVisible;
+    bool m_lockscreenVisible;
 
     //! Whether events should be eaten or not
-    bool eatEvents;
+    bool m_eatEvents;
 
     //! Whether the lockscreen should be shown as low power mode
-    bool lowPowerMode;
+    bool m_lowPowerMode;
 
     //! The current blanking policy obtained from mce
-    QString mceBlankingPolicy;
+    QString m_mceBlankingPolicy;
 
     HomeApplication::DisplayState m_currentDisplayState;
     bool m_waitForTouchBegin;

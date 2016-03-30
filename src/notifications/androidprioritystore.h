@@ -49,7 +49,7 @@ public:
     PriorityDetails packageDetails(const QString &packageName) const;
 
 private:
-    QHash<QString, QString> priorityDefinitions;
+    QHash<QString, QString> m_priorityDefinitions;
 };
 
 #endif /* ANDROIDPRIORITYSTORE_H_ */

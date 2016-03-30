@@ -64,7 +64,7 @@ signals:
     void windowVisibleChanged();
 
 private:
-    HomeWindow *window;
+    HomeWindow *m_window;
 };
 
 #endif // CONNECTIONSELECTOR_H

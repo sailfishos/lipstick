@@ -24,22 +24,22 @@
 #include "usbmodeselector.h"
 #include "lipstickqmlpath.h"
 
-QMap<QString, QString> USBModeSelector::errorCodeToTranslationID;
+QMap<QString, QString> USBModeSelector::s_errorCodeToTranslationID;
 
 USBModeSelector::USBModeSelector(QObject *parent) :
     QObject(parent),
-    window(0),
-    usbMode(new QUsbModed(this)),
-    locks(new MeeGo::QmLocks(this))
+    m_window(0),
+    m_usbMode(new QUsbModed(this)),
+    m_locks(new MeeGo::QmLocks(this))
 {
-    if (errorCodeToTranslationID.isEmpty()) {
-        errorCodeToTranslationID.insert("qtn_usb_filessystem_inuse", "qtn_usb_filessystem_inuse");
-        errorCodeToTranslationID.insert("mount_failed", "qtn_usb_mount_failed");
+    if (s_errorCodeToTranslationID.isEmpty()) {
+        s_errorCodeToTranslationID.insert("qtn_usb_filessystem_inuse", "qtn_usb_filessystem_inuse");
+        s_errorCodeToTranslationID.insert("mount_failed", "qtn_usb_mount_failed");
     }
 
-    connect(usbMode, SIGNAL(currentModeChanged()), this, SLOT(applyCurrentUSBMode()));
-    connect(usbMode, SIGNAL(usbStateError(QString)), this, SLOT(showError(QString)));
-    connect(usbMode, SIGNAL(supportedModesChanged()), this, SIGNAL(supportedUSBModesChanged()));
+    connect(m_usbMode, SIGNAL(currentModeChanged()), this, SLOT(applyCurrentUSBMode()));
+    connect(m_usbMode, SIGNAL(usbStateError(QString)), this, SLOT(showError(QString)));
+    connect(m_usbMode, SIGNAL(supportedModesChanged()), this, SIGNAL(supportedUSBModesChanged()));
 
     // Lazy initialize to improve startup time
     QTimer::singleShot(500, this, SLOT(applyCurrentUSBMode()));
@@ -47,7 +47,7 @@ USBModeSelector::USBModeSelector(QObject *parent) :
 
 void USBModeSelector::applyCurrentUSBMode()
 {
-    applyUSBMode(usbMode->currentMode());
+    applyUSBMode(m_usbMode->currentMode());
 }
 
 void USBModeSelector::setWindowVisible(bool visible)
@@ -55,46 +55,46 @@ void USBModeSelector::setWindowVisible(bool visible)
     if (visible) {
         emit dialogShown();
 
-        if (window == 0) {
-            window = new HomeWindow();
-            window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-            window->setCategory(QLatin1String("dialog"));
-            window->setWindowTitle("USB Mode");
-            window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-            window->setContextProperty("usbModeSelector", this);
-            window->setContextProperty("USBMode", usbMode);
-            window->setSource(QmlPath::to("connectivity/USBModeSelector.qml"));
-            window->installEventFilter(new CloseEventEater(this));
+        if (m_window == 0) {
+            m_window = new HomeWindow();
+            m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+            m_window->setCategory(QLatin1String("dialog"));
+            m_window->setWindowTitle("USB Mode");
+            m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+            m_window->setContextProperty("usbModeSelector", this);
+            m_window->setContextProperty("USBMode", m_usbMode);
+            m_window->setSource(QmlPath::to("connectivity/USBModeSelector.qml"));
+            m_window->installEventFilter(new CloseEventEater(this));
         }
 
-        if (!window->isVisible()) {
-            window->show();
+        if (!m_window->isVisible()) {
+            m_window->show();
             emit windowVisibleChanged();
         }
-    } else if (window != 0 && window->isVisible()) {
-        window->hide();
+    } else if (m_window != 0 && m_window->isVisible()) {
+        m_window->hide();
         emit windowVisibleChanged();
     }
 }
 
 bool USBModeSelector::windowVisible() const
 {
-    return window != 0 && window->isVisible();
+    return m_window != 0 && m_window->isVisible();
 }
 
 QStringList USBModeSelector::supportedUSBModes() const
 {
-    return usbMode->supportedModes();
+    return m_usbMode->supportedModes();
 }
 
 void USBModeSelector::applyUSBMode(QString mode)
 {
     if (mode == QUsbModed::Mode::Connected) {
-        if (locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked) {
+        if (m_locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked) {
             // When the device lock is on and USB is connected, always pretend that the USB mode selection dialog is shown to unlock the touch screen lock
             emit dialogShown();
 
-            if (usbMode->configMode() != QUsbModed::Mode::Charging) {
+            if (m_usbMode->configMode() != QUsbModed::Mode::Charging) {
                 // Show a notification instead if configured USB mode is not charging only.
                 NotificationManager *manager = NotificationManager::instance();
                 QVariantHash hints;
@@ -164,17 +164,17 @@ void USBModeSelector::showNotification(QString mode)
 
 void USBModeSelector::showError(const QString &errorCode)
 {
-    if (errorCodeToTranslationID.contains(errorCode)) {
+    if (s_errorCodeToTranslationID.contains(errorCode)) {
         NotificationManager *manager = NotificationManager::instance();
         QVariantHash hints;
         hints.insert(NotificationManager::HINT_CATEGORY, "device.error");
         //% "USB connection error occurred"
-        hints.insert(NotificationManager::HINT_PREVIEW_BODY, qtTrId(errorCodeToTranslationID.value(errorCode).toUtf8().constData()));
+        hints.insert(NotificationManager::HINT_PREVIEW_BODY, qtTrId(s_errorCodeToTranslationID.value(errorCode).toUtf8().constData()));
         manager->Notify(qApp->applicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
     }
 }
 
 void USBModeSelector::setUSBMode(QString mode)
 {
-    usbMode->setCurrentMode(mode);
+    m_usbMode->setCurrentMode(mode);
 }

@@ -75,13 +75,13 @@ private:
     void createAndPublishNotification(const QString &category, const QString &body);
 
     //! The volume control window
-    HomeWindow *window;
+    HomeWindow *m_window;
 
     //! For getting the system state
-    MeeGo::QmSystemState *systemState;
+    MeeGo::QmSystemState *m_systemState;
 
     //! The shutdown mode to be communicated to the UI
-    QString shutdownMode;
+    QString m_shutdownMode;
 
 #ifdef UNIT_TEST
     friend class Ut_ShutdownScreen;

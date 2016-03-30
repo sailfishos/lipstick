@@ -73,22 +73,22 @@ void Ut_LowBatteryNotifier::cleanupTestCase()
 
 void Ut_LowBatteryNotifier::testSignalConnections()
 {
-    QCOMPARE(disconnect(m_subject->displayState, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)), m_subject, SLOT(setNotificationInterval())), true);
+    QCOMPARE(disconnect(m_subject->m_displayState, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)), m_subject, SLOT(setNotificationInterval())), true);
 
 #ifdef HAVE_CONTEXTSUBSCRIBER
-    QCOMPARE(disconnect(&m_subject->callContextItem, SIGNAL(valueChanged()), m_subject, SLOT(setNotificationInterval())), true);
+    QCOMPARE(disconnect(&m_subject->m_callContextItem, SIGNAL(valueChanged()), m_subject, SLOT(setNotificationInterval())), true);
 #endif
 
-    QCOMPARE(disconnect(m_subject->notificationTimer, SIGNAL(timeout()), m_subject, SLOT(sendLowBatteryAlert())), true);
+    QCOMPARE(disconnect(m_subject->m_notificationTimer, SIGNAL(timeout()), m_subject, SLOT(sendLowBatteryAlert())), true);
 }
 
 void Ut_LowBatteryNotifier::testSendLowBatteryAlert()
 {
     QSignalSpy spy(m_subject, SIGNAL(lowBatteryAlert()));
-    m_subject->notificationInterval = 12345;
+    m_subject->m_notificationInterval = 12345;
     m_subject->sendLowBatteryAlert();
     QCOMPARE(spy.count(), 1);
-    QCOMPARE(qTimerStartMsec, m_subject->notificationInterval);
+    QCOMPARE(qTimerStartMsec, m_subject->m_notificationInterval);
 }
 
 #ifdef HAVE_CONTEXTSUBSCRIBER
@@ -133,7 +133,7 @@ void Ut_LowBatteryNotifier::testSetNotificationInterval()
     gContextPropertyStub->stubSetReturnValue("value", QVariant(callActive ? "active" : "inactive"));
     qTimeElapsed = timeSincePreviousNotification;
     m_subject->setTouchScreenLockActive(touchScreenLockActive);
-    QCOMPARE(m_subject->notificationTimer->interval(), notificationTimerInterval);
+    QCOMPARE(m_subject->m_notificationTimer->interval(), notificationTimerInterval);
     QCOMPARE(spy.count(), lowBatteryAlertCount);
 }
 
@@ -147,10 +147,10 @@ void Ut_LowBatteryNotifier::testSetNotificationIntervalDoesNothingWhenStateDoesN
 
     // Set the timer to a new value but don't change anything else: setting the notification interval should do nothing
     QSignalSpy spy(m_subject, SIGNAL(lowBatteryAlert()));
-    m_subject->notificationTimer->setInterval(12345);
+    m_subject->m_notificationTimer->setInterval(12345);
     m_subject->setNotificationInterval();
     QCOMPARE(spy.count(), 0);
-    QCOMPARE(m_subject->notificationTimer->interval(), 12345);
+    QCOMPARE(m_subject->m_notificationTimer->interval(), 12345);
 }
 #endif
 

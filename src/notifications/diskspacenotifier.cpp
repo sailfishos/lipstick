@@ -22,7 +22,7 @@
 #include "diskspacenotifier.h"
 
 DiskSpaceNotifier::DiskSpaceNotifier(QObject *parent) : QObject(parent),
-    notificationId(0)
+    m_notificationId(0)
 {
     QDBusConnection::systemBus().connect(QString(), "/com/nokia/diskmonitor/signal", "com.nokia.diskmonitor.signal", "disk_space_change_ind", this, SLOT(handleDiskSpaceChange(QString, int)));
 
@@ -39,15 +39,15 @@ void DiskSpaceNotifier::handleDiskSpaceChange(const QString &path, int percentag
 
     if (percentage == 100) {
         // Disk space usage for path is 100%
-        if (!notificationsSentForPath[path].second) {
+        if (!m_notificationsSentForPath[path].second) {
             notificationShouldBeVisible = true;
-            notificationsSentForPath[path].second = true;
+            m_notificationsSentForPath[path].second = true;
         }
     } else {
         // Disk space usage for path is above the notification threshold
-        if (!notificationsSentForPath[path].first) {
+        if (!m_notificationsSentForPath[path].first) {
             notificationShouldBeVisible = true;
-            notificationsSentForPath[path].first = true;
+            m_notificationsSentForPath[path].first = true;
         }
     }
 
@@ -62,7 +62,7 @@ void DiskSpaceNotifier::handleDiskSpaceChange(const QString &path, int percentag
 
         // TODO go to some relevant place when clicking the notification
         NotificationManager *manager = NotificationManager::instance();
-        notificationId = manager->Notify(qApp->applicationName(), notificationId, QString(), QString(), diskLowText, QStringList(), hints, -1);
+        m_notificationId = manager->Notify(qApp->applicationName(), m_notificationId, QString(), QString(), diskLowText, QStringList(), hints, -1);
     }
 }
 

@@ -61,7 +61,7 @@ AndroidPriorityStore::AndroidPriorityStore(const QString &path, QObject *parent)
                     } else {
                         appName = line;
                     }
-                    priorityDefinitions.insert(appName, feedback);
+                    m_priorityDefinitions.insert(appName, feedback);
                 }
             }
         } else {
@@ -74,8 +74,8 @@ AndroidPriorityStore::AndroidPriorityStore(const QString &path, QObject *parent)
 
 AndroidPriorityStore::PriorityDetails AndroidPriorityStore::appDetails(const QString &appName) const
 {
-    QHash<QString, QString>::const_iterator it = priorityDefinitions.constFind(appName);
-    if (it != priorityDefinitions.constEnd()) {
+    QHash<QString, QString>::const_iterator it = m_priorityDefinitions.constFind(appName);
+    if (it != m_priorityDefinitions.constEnd()) {
         return detailsForFeedback(it.value());
     }
     return qMakePair(StandardAndroidPriority, QString());
@@ -84,8 +84,8 @@ AndroidPriorityStore::PriorityDetails AndroidPriorityStore::appDetails(const QSt
 AndroidPriorityStore::PriorityDetails AndroidPriorityStore::packageDetails(const QString &packageName) const
 {
     const QString key(QStringLiteral("package:") + packageName);
-    QHash<QString, QString>::const_iterator it = priorityDefinitions.constFind(key);
-    if (it != priorityDefinitions.constEnd()) {
+    QHash<QString, QString>::const_iterator it = m_priorityDefinitions.constFind(key);
+    if (it != m_priorityDefinitions.constEnd()) {
         return detailsForFeedback(it.value());
     }
     return qMakePair(StandardAndroidPriority, QString());

@@ -58,43 +58,43 @@ const QString DEVICE_LOCK_SHOW_NOTIFICATIONS(QStringLiteral("/desktop/nemo/devic
 
 NotificationPreviewPresenter::NotificationPreviewPresenter(QObject *parent) :
     QObject(parent),
-    window(0),
-    currentNotification(0),
-    notificationFeedbackPlayer(new NotificationFeedbackPlayer(this)),
-    locks(new MeeGo::QmLocks(this)),
-    displayState(new MeeGo::QmDisplayState(this))
+    m_window(0),
+    m_currentNotification(0),
+    m_notificationFeedbackPlayer(new NotificationFeedbackPlayer(this)),
+    m_locks(new MeeGo::QmLocks(this)),
+    m_displayState(new MeeGo::QmDisplayState(this))
 {
     connect(NotificationManager::instance(), SIGNAL(notificationAdded(uint)), this, SLOT(updateNotification(uint)));
     connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));
-    connect(this, SIGNAL(notificationPresented(uint)), notificationFeedbackPlayer, SLOT(addNotification(uint)));
+    connect(this, SIGNAL(notificationPresented(uint)), m_notificationFeedbackPlayer, SLOT(addNotification(uint)));
 
     QTimer::singleShot(0, this, SLOT(createWindowIfNecessary()));
 }
 
 NotificationPreviewPresenter::~NotificationPreviewPresenter()
 {
-    delete window;
+    delete m_window;
 }
 
 void NotificationPreviewPresenter::showNextNotification()
 {
-    if (!LipstickCompositor::instance() && !notificationQueue.isEmpty()) {
+    if (!LipstickCompositor::instance() && !m_notificationQueue.isEmpty()) {
         QTimer::singleShot(0, this, SLOT(showNextNotification()));
         return;
     }
 
-    if (notificationQueue.isEmpty()) {
+    if (m_notificationQueue.isEmpty()) {
         // No more notifications to show: hide the notification window if it's visible
-        if (window != 0 && window->isVisible()) {
-            window->hide();
+        if (m_window != 0 && m_window->isVisible()) {
+            m_window->hide();
         }
 
         setCurrentNotification(0);
     } else {
-        LipstickNotification *notification = notificationQueue.takeFirst();
+        LipstickNotification *notification = m_notificationQueue.takeFirst();
 
-        const bool screenLocked = locks->getState(MeeGo::QmLocks::TouchAndKeyboard) == MeeGo::QmLocks::Locked && displayState->get() == MeeGo::QmDisplayState::Off;
-        const bool deviceLocked = locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked;
+        const bool screenLocked = m_locks->getState(MeeGo::QmLocks::TouchAndKeyboard) == MeeGo::QmLocks::Locked && m_displayState->get() == MeeGo::QmDisplayState::Off;
+        const bool deviceLocked = m_locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked;
         const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
 
         bool show = true;
@@ -123,8 +123,8 @@ void NotificationPreviewPresenter::showNextNotification()
             showNextNotification();
         } else {
             // Show the notification window and the first queued notification in it
-            if (!window->isVisible()) {
-                window->show();
+            if (!m_window->isVisible()) {
+                m_window->show();
             }
 
             emit notificationPresented(notification->replacesId());
@@ -136,7 +136,7 @@ void NotificationPreviewPresenter::showNextNotification()
 
 LipstickNotification *NotificationPreviewPresenter::notification() const
 {
-    return currentNotification;
+    return m_currentNotification;
 }
 
 void NotificationPreviewPresenter::updateNotification(uint id)
@@ -146,11 +146,11 @@ void NotificationPreviewPresenter::updateNotification(uint id)
     if (notification != 0) {
         if (notificationShouldBeShown(notification)) {
             // Add the notification to the queue if not already there or the current notification
-            if (currentNotification != notification && !notificationQueue.contains(notification)) {
-                notificationQueue.append(notification);
+            if (m_currentNotification != notification && !m_notificationQueue.contains(notification)) {
+                m_notificationQueue.append(notification);
 
                 // Show the notification if no notification currently being shown
-                if (currentNotification == 0) {
+                if (m_currentNotification == 0) {
                     showNextNotification();
                 }
             }
@@ -160,7 +160,7 @@ void NotificationPreviewPresenter::updateNotification(uint id)
 
             removeNotification(id, true);
 
-            if (currentNotification != notification) {
+            if (m_currentNotification != notification) {
                 NotificationManager::instance()->MarkNotificationDisplayed(id);
             }
         }
@@ -173,11 +173,11 @@ void NotificationPreviewPresenter::removeNotification(uint id, bool onlyFromQueu
     LipstickNotification *notification = NotificationManager::instance()->notification(id);
 
     if (notification != 0) {
-        notificationQueue.removeAll(notification);
+        m_notificationQueue.removeAll(notification);
 
         // If the notification is currently being shown hide it - the next notification will be shown after the current one has been hidden
-        if (!onlyFromQueue && currentNotification == notification) {
-            currentNotification = 0;
+        if (!onlyFromQueue && m_currentNotification == notification) {
+            m_currentNotification = 0;
             emit notificationChanged();
         }
     }
@@ -185,20 +185,20 @@ void NotificationPreviewPresenter::removeNotification(uint id, bool onlyFromQueu
 
 void NotificationPreviewPresenter::createWindowIfNecessary()
 {
-    if (window != 0) {
+    if (m_window != 0) {
         return;
     }
 
-    window = new HomeWindow();
-    window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-    window->setCategory(QLatin1String("notification"));
-    window->setWindowTitle("Notification");
-    window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-    window->setContextProperty("LipstickSettings", LipstickSettings::instance());
-    window->setContextProperty("notificationPreviewPresenter", this);
-    window->setContextProperty("notificationFeedbackPlayer", notificationFeedbackPlayer);
-    window->setSource(QmlPath::to("notifications/NotificationPreview.qml"));
-    window->installEventFilter(new CloseEventEater(this));
+    m_window = new HomeWindow();
+    m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+    m_window->setCategory(QLatin1String("notification"));
+    m_window->setWindowTitle("Notification");
+    m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+    m_window->setContextProperty("LipstickSettings", LipstickSettings::instance());
+    m_window->setContextProperty("notificationPreviewPresenter", this);
+    m_window->setContextProperty("notificationFeedbackPlayer", m_notificationFeedbackPlayer);
+    m_window->setSource(QmlPath::to("notifications/NotificationPreview.qml"));
+    m_window->installEventFilter(new CloseEventEater(this));
 }
 
 bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotification *notification)
@@ -206,8 +206,8 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
     if (notification->hidden() || notification->restored() || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty()))
         return false;
 
-    const bool screenLocked = locks->getState(MeeGo::QmLocks::TouchAndKeyboard) == MeeGo::QmLocks::Locked;
-    const bool deviceLocked = locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked;
+    const bool screenLocked = m_locks->getState(MeeGo::QmLocks::TouchAndKeyboard) == MeeGo::QmLocks::Locked;
+    const bool deviceLocked = m_locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked;
     const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
 
     uint mode = AllNotificationsEnabled;
@@ -224,21 +224,21 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
 
 void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *notification)
 {
-    if (currentNotification != notification) {
-        if (currentNotification) {
-            const bool notificationWasCritical = currentNotification->urgency() >= 2 ||
-                                                 currentNotification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
+    if (m_currentNotification != notification) {
+        if (m_currentNotification) {
+            const bool notificationWasCritical = m_currentNotification->urgency() >= 2 ||
+                                                 m_currentNotification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
             if (notificationWasCritical) {
                 // Release our screen wake for the previous notification
                 QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_NOTIFICATION_END);
-                msg.setArguments(QVariantList() << QString::number(currentNotification->replacesId()) << MCE_LINGER_DURATION);
+                msg.setArguments(QVariantList() << QString::number(m_currentNotification->replacesId()) << MCE_LINGER_DURATION);
                 QDBusConnection::systemBus().asyncCall(msg);
             }
 
-            NotificationManager::instance()->MarkNotificationDisplayed(currentNotification->replacesId());
+            NotificationManager::instance()->MarkNotificationDisplayed(m_currentNotification->replacesId());
         }
 
-        currentNotification = notification;
+        m_currentNotification = notification;
         emit notificationChanged();
 
         if (notification) {

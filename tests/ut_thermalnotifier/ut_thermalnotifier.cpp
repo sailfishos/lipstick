@@ -62,8 +62,8 @@ void Ut_ThermalNotifier::cleanup()
 
 void Ut_ThermalNotifier::testConnections()
 {
-    QCOMPARE(disconnect(thermalNotifier->thermalState, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)), thermalNotifier, SLOT(applyThermalState(MeeGo::QmThermal::ThermalState))), true);
-    QCOMPARE(disconnect(thermalNotifier->displayState, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)), thermalNotifier, SLOT(applyDisplayState(MeeGo::QmDisplayState::DisplayState))), true);
+    QCOMPARE(disconnect(thermalNotifier->m_thermalState, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)), thermalNotifier, SLOT(applyThermalState(MeeGo::QmThermal::ThermalState))), true);
+    QCOMPARE(disconnect(thermalNotifier->m_displayState, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)), thermalNotifier, SLOT(applyDisplayState(MeeGo::QmDisplayState::DisplayState))), true);
 }
 
 void Ut_ThermalNotifier::testThermalState()

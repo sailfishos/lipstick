@@ -128,16 +128,16 @@ signals:
 
 private:
     //! The path where the category definition files are stored
-    QString categoryDefinitionsPath;
+    QString m_categoryDefinitionsPath;
 
     //! The maximum number of category definitions to keep in memory
-    uint maxStoredCategoryDefinitions;
+    uint m_maxStoredCategoryDefinitions;
 
     //! Map for storing category definitions and corresponding QSettings object
-    mutable QMap<QString, QSharedPointer<QSettings> > categoryDefinitions;
+    mutable QMap<QString, QSharedPointer<QSettings> > m_categoryDefinitions;
 
     //! List for keeping track of which category definitions have been most recently used
-    mutable QStringList categoryDefinitionUsage;
+    mutable QStringList m_categoryDefinitionUsage;
 
     //! Load the data into our internal map
     void loadSettings(const QString &category) const;
@@ -146,10 +146,10 @@ private:
     void categoryDefinitionAccessed(const QString &category) const;
 
     //! File system watcher to notice changes in installed category definitions
-    QFileSystemWatcher categoryDefinitionPathWatcher;
+    QFileSystemWatcher m_categoryDefinitionPathWatcher;
 
     //! List of available category definition files
-    QSet<QString> categoryDefinitionFiles;
+    QSet<QString> m_categoryDefinitionFiles;
 };
 
 #endif /* CATEGORYDEFINITIONSTORE_H_ */

@@ -110,16 +110,16 @@ private:
 private:
 
     //! Error code to translation ID mapping
-    static QMap<QString, QString> errorCodeToTranslationID;
+    static QMap<QString, QString> s_errorCodeToTranslationID;
 
     //! The volume control window
-    HomeWindow *window;
+    HomeWindow *m_window;
 
     //! For getting and setting the USB mode
-    QUsbModed *usbMode;
+    QUsbModed *m_usbMode;
 
     //! For getting information about the device lock state
-    MeeGo::QmLocks *locks;
+    MeeGo::QmLocks *m_locks;
 
 #ifdef UNIT_TEST
     friend class Ut_USBModeSelector;

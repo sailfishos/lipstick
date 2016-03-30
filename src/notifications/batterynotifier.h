@@ -127,7 +127,7 @@ private:
     ChargerType getCharger() const;
 
     //! Low battery notifier for getting notifications about low battery state
-    LowBatteryNotifier *lowBatteryNotifier;
+    LowBatteryNotifier *m_lowBatteryNotifier;
 
     struct QueuedNotification {
         uint number;
@@ -138,44 +138,44 @@ private:
      *  charging one at the same time) and the only one should be
      *  cancelled
      */
-    QList<QueuedNotification> notifications;
+    QList<QueuedNotification> m_notifications;
 
     //! Timer for checking whether the current notification can be removed or not
-    QElapsedTimer timeline;
+    QElapsedTimer m_timeline;
 
     //! Whether the touch screen lock is active or not
-    bool touchScreenLockActive;
+    bool m_touchScreenLockActive;
 
-    ContextProperty *batteryLevel;
-    ContextProperty *chargingState;
-    ContextProperty *chargerType;
+    ContextProperty *m_batteryLevel;
+    ContextProperty *m_chargingState;
+    ContextProperty *m_chargerType;
 
     //! To get device mode
-    ContextProperty *psm;
+    ContextProperty *m_psm;
 
     struct State {
         BatteryLevel level;
         ChargingState state;
         ChargerType charger;
     };
-    State lastState;
-    Mode mode;
+    State m_lastState;
+    Mode m_mode;
     enum ChargingCompletion {
         NeedsCharging,
         FullyCharged
     };
-    ChargingCompletion chargingCompletion;
+    ChargingCompletion m_chargingCompletion;
 
     /*! Notification is postponed by means of this timer to skip
      *  frequent state changes during energy management state
      *  changes
      */
-    QTimer preNotificationTimer;
+    QTimer m_preNotificationTimer;
 
     /*! used if charging is not signaled as started immediately after
      *  charger is inserted to check is it finally started
      */
-    QScopedPointer<QTimer> checkChargingTimer;
+    QScopedPointer<QTimer> m_checkChargingTimer;
 
 #ifdef UNIT_TEST
     friend class Ut_BatteryNotifier;

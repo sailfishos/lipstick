@@ -57,7 +57,7 @@ signals:
 
 private:
     //! Logic for locking and unlocking the screen
-    ScreenLock *screenLock;
+    ScreenLock *m_screenLock;
 };
 
 Q_DECLARE_METATYPE(LipstickSettings *)

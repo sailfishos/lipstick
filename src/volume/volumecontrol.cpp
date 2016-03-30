@@ -29,32 +29,32 @@
 
 VolumeControl::VolumeControl(QObject *parent) :
     QObject(parent),
-    window(0),
-    pulseAudioControl(new PulseAudioControl(this)),
-    hwKeyResource(new ResourcePolicy::ResourceSet("event")),
-    hwKeysAcquired(false),
-    volume_(0),
-    maximumVolume_(0),
-    audioWarning(new MGConfItem("/desktop/nemo/audiowarning", this)),
-    safeVolume_(0),
-    callActive_(false),
-    mediaState_(MediaStateUnknown)
+    m_window(0),
+    m_pulseAudioControl(new PulseAudioControl(this)),
+    m_hwKeyResource(new ResourcePolicy::ResourceSet("event")),
+    m_hwKeysAcquired(false),
+    m_volume(0),
+    m_maximumVolume(0),
+    m_audioWarning(new MGConfItem("/desktop/nemo/audiowarning", this)),
+    m_safeVolume(0),
+    m_callActive(false),
+    m_mediaState(MediaStateUnknown)
 {
-    hwKeyResource->setAlwaysReply();
-    hwKeyResource->addResourceObject(new ResourcePolicy::ScaleButtonResource);
-    connect(hwKeyResource, SIGNAL(resourcesGranted(QList<ResourcePolicy::ResourceType>)), this, SLOT(hwKeyResourceAcquired()));
-    connect(hwKeyResource, SIGNAL(lostResources()), this, SLOT(hwKeyResourceLost()));
-    hwKeyResource->acquire();
+    m_hwKeyResource->setAlwaysReply();
+    m_hwKeyResource->addResourceObject(new ResourcePolicy::ScaleButtonResource);
+    connect(m_hwKeyResource, SIGNAL(resourcesGranted(QList<ResourcePolicy::ResourceType>)), this, SLOT(hwKeyResourceAcquired()));
+    connect(m_hwKeyResource, SIGNAL(lostResources()), this, SLOT(hwKeyResourceLost()));
+    m_hwKeyResource->acquire();
 
     setWarningAcknowledged(false);
-    connect(audioWarning, SIGNAL(valueChanged()), this, SIGNAL(restrictedVolumeChanged()));
+    connect(m_audioWarning, SIGNAL(valueChanged()), this, SIGNAL(restrictedVolumeChanged()));
     connect(this, SIGNAL(maximumVolumeChanged()), this, SIGNAL(restrictedVolumeChanged()));
-    connect(pulseAudioControl, SIGNAL(volumeChanged(int,int)), this, SLOT(setVolume(int,int)));
-    connect(pulseAudioControl, SIGNAL(highVolume(int)), SLOT(handleHighVolume(int)));
-    connect(pulseAudioControl, SIGNAL(longListeningTime(int)), SLOT(handleLongListeningTime(int)));
-    connect(pulseAudioControl, SIGNAL(callActiveChanged(bool)), SLOT(handleCallActive(bool)));
-    connect(pulseAudioControl, SIGNAL(mediaStateChanged(QString)), SLOT(handleMediaStateChanged(QString)));
-    pulseAudioControl->update();
+    connect(m_pulseAudioControl, SIGNAL(volumeChanged(int,int)), this, SLOT(setVolume(int,int)));
+    connect(m_pulseAudioControl, SIGNAL(highVolume(int)), SLOT(handleHighVolume(int)));
+    connect(m_pulseAudioControl, SIGNAL(longListeningTime(int)), SLOT(handleLongListeningTime(int)));
+    connect(m_pulseAudioControl, SIGNAL(callActiveChanged(bool)), SLOT(handleCallActive(bool)));
+    connect(m_pulseAudioControl, SIGNAL(mediaStateChanged(QString)), SLOT(handleMediaStateChanged(QString)));
+    m_pulseAudioControl->update();
 
     qApp->installEventFilter(this);
     QTimer::singleShot(0, this, SLOT(createWindow()));
@@ -62,27 +62,27 @@ VolumeControl::VolumeControl(QObject *parent) :
 
 VolumeControl::~VolumeControl()
 {
-    hwKeyResource->deleteResource(ResourcePolicy::ScaleButtonType);
-    delete window;
+    m_hwKeyResource->deleteResource(ResourcePolicy::ScaleButtonType);
+    delete m_window;
 }
 
 int VolumeControl::volume() const
 {
-    return volume_;
+    return m_volume;
 }
 
 void VolumeControl::setVolume(int volume)
 {
     int newVolume = qBound(0, volume, maximumVolume());
 
-    if (!warningAcknowledged() && safeVolume_ != 0 && newVolume > safeVolume_) {
+    if (!warningAcknowledged() && m_safeVolume != 0 && newVolume > m_safeVolume) {
         emit showAudioWarning(false);
         newVolume = safeVolume();
     }
 
-    if (newVolume != volume_) {
-        volume_ = volume;
-        pulseAudioControl->setVolume(volume_);
+    if (newVolume != m_volume) {
+        m_volume = volume;
+        m_pulseAudioControl->setVolume(m_volume);
         emit volumeChanged();
     }
 
@@ -91,12 +91,12 @@ void VolumeControl::setVolume(int volume)
 
 int VolumeControl::maximumVolume() const
 {
-    return maximumVolume_;
+    return m_maximumVolume;
 }
 
 int VolumeControl::safeVolume() const
 {
-    return safeVolume_ == 0 ? maximumVolume() : safeVolume_;
+    return m_safeVolume == 0 ? maximumVolume() : m_safeVolume;
 }
 
 int VolumeControl::restrictedVolume() const
@@ -107,41 +107,41 @@ int VolumeControl::restrictedVolume() const
 void VolumeControl::setWindowVisible(bool visible)
 {
     if (visible) {
-        if (window && !window->isVisible()) {
-            window->show();
+        if (m_window && !m_window->isVisible()) {
+            m_window->show();
             emit windowVisibleChanged();
         }
-    } else if (window != 0 && window->isVisible()) {
-        window->hide();
+    } else if (m_window != 0 && m_window->isVisible()) {
+        m_window->hide();
         emit windowVisibleChanged();
     }
 }
 
 bool VolumeControl::windowVisible() const
 {
-    return window != 0 && window->isVisible();
+    return m_window != 0 && m_window->isVisible();
 }
 
 bool VolumeControl::warningAcknowledged() const
 {
-    return audioWarning->value(false).toBool();
+    return m_audioWarning->value(false).toBool();
 }
 
 void VolumeControl::setWarningAcknowledged(bool acknowledged)
 {
-    if (audioWarning->value(false).toBool() != acknowledged) {
-        audioWarning->set(acknowledged);
+    if (m_audioWarning->value(false).toBool() != acknowledged) {
+        m_audioWarning->set(acknowledged);
     }
 }
 
 bool VolumeControl::callActive() const
 {
-    return callActive_;
+    return m_callActive;
 }
 
 int VolumeControl::mediaState() const
 {
-    return mediaState_;
+    return m_mediaState;
 }
 
 void VolumeControl::setVolume(int volume, int maximumVolume)
@@ -152,13 +152,13 @@ void VolumeControl::setVolume(int volume, int maximumVolume)
     bool volumeUpdated = false;
     bool maxVolumeUpdated = false;
 
-    if (maximumVolume_ != clampedMaxVolume) {
-        maximumVolume_ = clampedMaxVolume;
+    if (m_maximumVolume != clampedMaxVolume) {
+        m_maximumVolume = clampedMaxVolume;
         maxVolumeUpdated = true;
     }
 
-    if (volume_ != clampedVolume) {
-        volume_ = clampedVolume;
+    if (m_volume != clampedVolume) {
+        m_volume = clampedVolume;
         volumeUpdated = true;
     }
 
@@ -173,26 +173,26 @@ void VolumeControl::setVolume(int volume, int maximumVolume)
 
 void VolumeControl::hwKeyResourceAcquired()
 {
-    hwKeysAcquired = true;
+    m_hwKeysAcquired = true;
 }
 
 void VolumeControl::hwKeyResourceLost()
 {
-    hwKeysAcquired = false;
-    if (upPressed_) {
-        upPressed_ = false;
+    m_hwKeysAcquired = false;
+    if (m_upPressed) {
+        m_upPressed = false;
         emit volumeKeyReleased(Qt::Key_VolumeUp);
     }
-    if (downPressed_) {
-        downPressed_ = false;
+    if (m_downPressed) {
+        m_downPressed = false;
         emit volumeKeyReleased(Qt::Key_VolumeDown);
     }
 }
 
 void VolumeControl::handleHighVolume(int safeLevel)
 {
-    if (safeVolume_ != safeLevel) {
-        safeVolume_ = safeLevel;
+    if (m_safeVolume != safeLevel) {
+        m_safeVolume = safeLevel;
         emit safeVolumeChanged();
     }
 }
@@ -210,10 +210,10 @@ void VolumeControl::handleLongListeningTime(int listeningTime)
     // If safe volume step is not defined for this route (safeVolume() returns 0), use
     // maximum volume as the upper bound, otherwise use safe volume step as the upper
     // bound.
-    int newVolume = qBound(0, volume_, safeVolume() == 0 ? maximumVolume() : safeVolume());
-    if (newVolume != volume_) {
-        volume_ = newVolume;
-        pulseAudioControl->setVolume(volume_);
+    int newVolume = qBound(0, m_volume, safeVolume() == 0 ? maximumVolume() : safeVolume());
+    if (newVolume != m_volume) {
+        m_volume = newVolume;
+        m_pulseAudioControl->setVolume(m_volume);
         emit volumeChanged();
     }
 
@@ -222,8 +222,8 @@ void VolumeControl::handleLongListeningTime(int listeningTime)
 
 void VolumeControl::handleCallActive(bool callActive)
 {
-    if (callActive_ != callActive) {
-        callActive_ = callActive;
+    if (m_callActive != callActive) {
+        m_callActive = callActive;
         emit callActiveChanged();
     }
 }
@@ -242,40 +242,40 @@ void VolumeControl::handleMediaStateChanged(const QString &state)
         newValue = MediaStateActive;
     }
 
-    if (newValue != mediaState_) {
-        mediaState_ = newValue;
+    if (newValue != m_mediaState) {
+        m_mediaState = newValue;
         emit mediaStateChanged();
     }
 }
 
 void VolumeControl::createWindow()
 {
-    window = new HomeWindow();
-    window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-    window->setCategory(QLatin1String("notification"));
-    window->setWindowTitle("Volume");
-    window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-    window->setSource(QmlPath::to("volumecontrol/VolumeControl.qml"));
-    window->installEventFilter(new CloseEventEater(this));
+    m_window = new HomeWindow();
+    m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+    m_window->setCategory(QLatin1String("notification"));
+    m_window->setWindowTitle("Volume");
+    m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+    m_window->setSource(QmlPath::to("volumecontrol/VolumeControl.qml"));
+    m_window->installEventFilter(new CloseEventEater(this));
 }
 
 bool VolumeControl::eventFilter(QObject *, QEvent *event)
 {
-    if (hwKeysAcquired && (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)) {
+    if (m_hwKeysAcquired && (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         if ((keyEvent->key() == Qt::Key_VolumeUp || keyEvent->key() == Qt::Key_VolumeDown) && !keyEvent->isAutoRepeat()) {
             if (event->type() == QEvent::KeyPress) {
                 if (keyEvent->key() == Qt::Key_VolumeUp) {
-                    upPressed_ = true;
+                    m_upPressed = true;
                 } else {
-                    downPressed_ = true;
+                    m_downPressed = true;
                 }
                 emit volumeKeyPressed(keyEvent->key());
             } else {
                 if (keyEvent->key() == Qt::Key_VolumeUp) {
-                    downPressed_ = false;
+                    m_downPressed = false;
                 } else {
-                    downPressed_ = false;
+                    m_downPressed = false;
                 }
                 emit volumeKeyReleased(keyEvent->key());
             }

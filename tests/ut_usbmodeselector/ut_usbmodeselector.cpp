@@ -97,7 +97,7 @@ void Ut_USBModeSelector::cleanupTestCase()
 void Ut_USBModeSelector::init()
 {
     usbModeSelector = new USBModeSelector;
-    usbModeSelector->usbMode->setCurrentMode(QUsbModed::Mode::Undefined);
+    usbModeSelector->m_usbMode->setCurrentMode(QUsbModed::Mode::Undefined);
 
     gNotificationManagerStub->stubReset();
     gNotificationManagerStub->stubSetReturnValue("Notify", (uint)1);
@@ -113,8 +113,8 @@ void Ut_USBModeSelector::cleanup()
 
 void Ut_USBModeSelector::testConnections()
 {
-    QCOMPARE(disconnect(usbModeSelector->usbMode, SIGNAL(currentModeChanged()), usbModeSelector, SLOT(applyCurrentUSBMode())), true);
-    QCOMPARE(disconnect(usbModeSelector->usbMode, SIGNAL(supportedModesChanged()), usbModeSelector, SIGNAL(supportedUSBModesChanged())), true);
+    QCOMPARE(disconnect(usbModeSelector->m_usbMode, SIGNAL(currentModeChanged()), usbModeSelector, SLOT(applyCurrentUSBMode())), true);
+    QCOMPARE(disconnect(usbModeSelector->m_usbMode, SIGNAL(supportedModesChanged()), usbModeSelector, SIGNAL(supportedUSBModesChanged())), true);
 }
 
 void Ut_USBModeSelector::testShowDialog_data()
@@ -130,7 +130,7 @@ void Ut_USBModeSelector::testShowDialog()
     QFETCH(QString, mode);
 
     QSignalSpy spy(usbModeSelector, SIGNAL(dialogShown()));
-    usbModeSelector->usbMode->setConfigMode(mode);
+    usbModeSelector->m_usbMode->setConfigMode(mode);
     usbModeSelector->applyUSBMode(mode);
 
     QCOMPARE(homeWindows.count(), 1);
@@ -165,7 +165,7 @@ void Ut_USBModeSelector::testHideDialog()
 {
     QFETCH(QString, mode);
 
-    usbModeSelector->usbMode->setConfigMode(QUsbModed::Mode::Ask);
+    usbModeSelector->m_usbMode->setConfigMode(QUsbModed::Mode::Ask);
     usbModeSelector->applyUSBMode(QUsbModed::Mode::Ask);
     usbModeSelector->applyUSBMode(mode);
     QCOMPARE(homeWindowVisible[homeWindows.first()], false);
@@ -240,7 +240,7 @@ void Ut_USBModeSelector::testShowError()
 void Ut_USBModeSelector::testSetUSBMode()
 {
     usbModeSelector->setUSBMode(QUsbModed::Mode::Charging);
-    QCOMPARE(usbModeSelector->usbMode->currentMode(), QUsbModed::Mode::Charging);
+    QCOMPARE(usbModeSelector->m_usbMode->currentMode(), QUsbModed::Mode::Charging);
 }
 
 QTEST_MAIN (Ut_USBModeSelector)

@@ -276,8 +276,8 @@ void Ut_NotificationManager::init()
 
 void Ut_NotificationManager::cleanup()
 {
-    delete NotificationManager::instance_;
-    NotificationManager::instance_ = 0;
+    delete NotificationManager::s_instance;
+    NotificationManager::s_instance = 0;
 }
 
 void Ut_NotificationManager::testManagerIsSingleton()
@@ -515,7 +515,7 @@ void Ut_NotificationManager::testNotificationsAreRestoredOnConstruction()
 void Ut_NotificationManager::testDatabaseCommitIsDoneOnDestruction()
 {
     delete NotificationManager::instance();
-    NotificationManager::instance_ = 0;
+    NotificationManager::s_instance = 0;
 
     QCOMPARE(qSqlDatabaseCommitCalled, true);
 }
@@ -732,7 +732,7 @@ void Ut_NotificationManager::testModifyingCategoryDefinitionUpdatesNotifications
     NotificationManager *manager = NotificationManager::instance();
 
     // Check the signal connection
-    QCOMPARE(disconnect(manager->categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)), manager, SLOT(updateNotificationsWithCategory(QString))), true);
+    QCOMPARE(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)), manager, SLOT(updateNotificationsWithCategory(QString))), true);
 
     QSignalSpy multiModifiedSpy(manager, SIGNAL(notificationsModified(QList<uint>)));
 
@@ -770,7 +770,7 @@ void Ut_NotificationManager::testUninstallingCategoryDefinitionRemovesNotificati
     NotificationManager *manager = NotificationManager::instance();
 
     // Check the signal connection
-    QCOMPARE(disconnect(manager->categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)), manager, SLOT(removeNotificationsWithCategory(QString))), true);
+    QCOMPARE(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)), manager, SLOT(removeNotificationsWithCategory(QString))), true);
 
     // Add two notifications, one with category "category1" and one with category "category2"
     QVariantHash hints1;

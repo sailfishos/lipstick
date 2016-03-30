@@ -444,43 +444,43 @@ private:
     void execSQL(const QString &command, const QVariantList &args = QVariantList());
 
     //! The singleton notification manager instance
-    static NotificationManager *instance_;
+    static NotificationManager *s_instance;
 
     //! Hash of all notifications keyed by notification IDs
-    QHash<uint, LipstickNotification*> notifications;
+    QHash<uint, LipstickNotification*> m_notifications;
 
     //! Notifications waiting to be destroyed
-    QSet<LipstickNotification *> removedNotifications;
+    QSet<LipstickNotification *> m_removedNotifications;
 
     //! Previous notification ID used
-    uint previousNotificationID;
+    uint m_previousNotificationID;
 
     //! The category definition store
-    CategoryDefinitionStore *categoryDefinitionStore;
+    CategoryDefinitionStore *m_categoryDefinitionStore;
 
     //! The Android application priority store
-    AndroidPriorityStore *androidPriorityStore;
+    AndroidPriorityStore *m_androidPriorityStore;
 
     //! Database for the notifications
-    QSqlDatabase *database;
+    QSqlDatabase *m_database;
 
     //! Whether the current database transaction has been committed to the database
-    bool committed;
+    bool m_committed;
 
     //! Timer for triggering the commit of the current database transaction
-    QTimer databaseCommitTimer;
+    QTimer m_databaseCommitTimer;
 
     //! Timer for triggering the expiration of displayed notifications
-    QTimer expirationTimer;
+    QTimer m_expirationTimer;
 
     //! Next trigger time for the expirationTimer, relative to epoch
-    qint64 nextExpirationTime;
+    qint64 m_nextExpirationTime;
 
     //! IDs of notifications modified since the last report
-    QSet<uint> modifiedIds;
+    QSet<uint> m_modifiedIds;
 
     //! Timer for triggering the reporting of modified notifications
-    QTimer modificationTimer;
+    QTimer m_modificationTimer;
 
 #ifdef UNIT_TEST
     friend class Ut_NotificationManager;

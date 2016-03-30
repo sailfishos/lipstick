@@ -47,12 +47,12 @@ bool userInteracting(const QEvent *event) {
 
 ScreenLock::ScreenLock(QObject* parent) :
     QObject(parent),
-    callbackInterface(NULL),
-    shuttingDown(false),
-    lockscreenVisible(false),
-    eatEvents(false),
-    lowPowerMode(false),
-    mceBlankingPolicy("default"),
+    m_callbackInterface(NULL),
+    m_shuttingDown(false),
+    m_lockscreenVisible(false),
+    m_eatEvents(false),
+    m_lowPowerMode(false),
+    m_mceBlankingPolicy("default"),
     m_currentDisplayState(HomeApplication::DisplayUnknown),
     m_waitForTouchBegin(true),
     m_touchUnblockingDelayTimer(0)
@@ -85,19 +85,19 @@ ScreenLock::~ScreenLock()
 
 int ScreenLock::tklock_open(const QString &service, const QString &path, const QString &interface, const QString &method, uint mode, bool, bool)
 {
-    if (shuttingDown) {
+    if (m_shuttingDown) {
         // Don't show the touch screen lock while shutting down
         return TkLockReplyOk;
     }
 
     // Create a D-Bus interface if one doesn't exist or the D-Bus callback details have changed
-    if (callbackInterface == NULL || callbackInterface->service() != service || callbackInterface->path() != path || callbackInterface->interface() != interface) {
-        delete callbackInterface;
-        callbackInterface = new QDBusInterface(service, path, interface, QDBusConnection::systemBus(), this);
+    if (m_callbackInterface == NULL || m_callbackInterface->service() != service || m_callbackInterface->path() != path || m_callbackInterface->interface() != interface) {
+        delete m_callbackInterface;
+        m_callbackInterface = new QDBusInterface(service, path, interface, QDBusConnection::systemBus(), this);
     }
 
     // Store the callback method name
-    callbackMethod = method;
+    m_callbackMethod = method;
 
     // MCE needs a response ASAP, so the actions are executed with single shot timers
     switch (mode) {
@@ -152,8 +152,8 @@ void ScreenLock::unlockScreen()
 {
     hideScreenLockAndEventEater();
 
-    if (callbackInterface != NULL && !callbackMethod.isEmpty()) {
-        callbackInterface->call(QDBus::NoBlock, callbackMethod, TkLockUnlock);
+    if (m_callbackInterface != NULL && !m_callbackMethod.isEmpty()) {
+        m_callbackInterface->call(QDBus::NoBlock, m_callbackMethod, TkLockUnlock);
     }
 }
 
@@ -225,20 +225,20 @@ void ScreenLock::handleDisplayStateChange(int oldState, int newState)
 void ScreenLock::toggleScreenLockUI(bool toggle)
 {
     // TODO Make the view a lock screen view (title? stacking layer?)
-    if (lockscreenVisible != toggle) {
-        lockscreenVisible = toggle;
+    if (m_lockscreenVisible != toggle) {
+        m_lockscreenVisible = toggle;
         emit screenIsLocked(toggle);
     }
 }
 
 void ScreenLock::toggleEventEater(bool toggle)
 {
-    eatEvents = toggle;
+    m_eatEvents = toggle;
 }
 
 bool ScreenLock::isScreenLocked() const
 {
-    return lockscreenVisible;
+    return m_lockscreenVisible;
 }
 
 bool ScreenLock::eventFilter(QObject *, QEvent *event)
@@ -258,7 +258,7 @@ bool ScreenLock::eventFilter(QObject *, QEvent *event)
         }
     }
 
-    bool eat = eatEvents && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd);
+    bool eat = m_eatEvents && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd);
     if (eat) {
         hideEventEater();
     }
@@ -268,12 +268,12 @@ bool ScreenLock::eventFilter(QObject *, QEvent *event)
 
 bool ScreenLock::isLowPowerMode() const
 {
-    return lowPowerMode;
+    return m_lowPowerMode;
 }
 
 QString ScreenLock::blankingPolicy() const
 {
-    return mceBlankingPolicy;
+    return m_mceBlankingPolicy;
 }
 
 bool ScreenLock::touchBlocked() const
@@ -290,17 +290,17 @@ void ScreenLock::handleLpmModeChange(const QString &state)
         qWarning() << "Invalid LPM state value from mce:" << state;
     }
 
-    if (lowPowerMode != enabled) {
-        lowPowerMode = enabled;
+    if (m_lowPowerMode != enabled) {
+        m_lowPowerMode = enabled;
         emit lowPowerModeChanged();
     }
 }
 
 void ScreenLock::handleBlankingPolicyChange(const QString &policy)
 {
-    if (mceBlankingPolicy != policy) {
-        mceBlankingPolicy = policy;
-        emit blankingPolicyChanged(mceBlankingPolicy);
+    if (m_mceBlankingPolicy != policy) {
+        m_mceBlankingPolicy = policy;
+        emit blankingPolicyChanged(m_mceBlankingPolicy);
     }
 }
 
