@@ -55,6 +55,7 @@ class LIPSTICK_EXPORT LauncherItem : public QObject
     Q_PROPERTY(bool isLaunching READ isLaunching WRITE setIsLaunching NOTIFY isLaunchingChanged)
     Q_PROPERTY(bool isUpdating READ isUpdating WRITE setIsUpdating NOTIFY isUpdatingChanged)
     Q_PROPERTY(bool isTemporary READ isTemporary WRITE setIsTemporary NOTIFY isTemporaryChanged)
+    Q_PROPERTY(bool dBusActivated READ dBusActivated NOTIFY itemChanged)
     Q_PROPERTY(QString packageName READ packageName WRITE setPackageName NOTIFY packageNameChanged)
     Q_PROPERTY(int updatingProgress READ updatingProgress WRITE setUpdatingProgress NOTIFY updatingProgressChanged)
 
@@ -93,6 +94,7 @@ public:
     bool isValid() const;
     bool isLaunching() const;
     bool isStillValid();
+    bool dBusActivated() const;
 
     QString getOriginalIconId() const;
     void setIconFilename(const QString &path);

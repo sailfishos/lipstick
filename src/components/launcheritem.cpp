@@ -127,6 +127,11 @@ QString LauncherItem::exec() const
     return !_desktopEntry.isNull() ? _desktopEntry->exec() : QString();
 }
 
+bool LauncherItem::dBusActivated() const
+{
+    return (!_desktopEntry.isNull() && !_desktopEntry->xMaemoService().isEmpty());
+}
+
 QString LauncherItem::title() const
 {
     if (_isTemporary) {

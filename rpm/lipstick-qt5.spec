@@ -23,7 +23,7 @@ BuildRequires:  pkgconfig(Qt5SystemInfo)
 BuildRequires:  pkgconfig(Qt5Test)
 BuildRequires:  pkgconfig(Qt5Sensors)
 BuildRequires:  pkgconfig(contentaction5)
-BuildRequires:  pkgconfig(mlite5) >= 0.0.6
+BuildRequires:  pkgconfig(mlite5) >= 0.2.19
 BuildRequires:  pkgconfig(mce) >= 1.16.0
 BuildRequires:  pkgconfig(keepalive)
 BuildRequires:  pkgconfig(dsme_dbus_if) >= 0.63.2
