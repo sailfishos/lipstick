@@ -31,20 +31,22 @@ class LIPSTICK_EXPORT LauncherWatcherModel : public QObjectListModel
 
     Q_PROPERTY(QStringList filePaths READ filePaths WRITE setFilePaths NOTIFY filePathsChanged)
 
-    QFileSystemWatcher _fileSystemWatcher;
-
-private slots:
-    void monitoredFileChanged(const QString &changedPath);
-
 public:
     explicit LauncherWatcherModel(QObject *parent = 0);
     virtual ~LauncherWatcherModel();
 
     QStringList filePaths();
-    void setFilePaths(QStringList);
+    void setFilePaths(const QStringList &paths);
 
 signals:
     void filePathsChanged();
+
+private:
+    void directoryChanged(const QString &);
+    QStringList updateItems();
+
+    QFileSystemWatcher m_fileSystemWatcher;
+    QStringList m_filePaths;
 };
 
 #endif // LAUNCHERWATCHERMODEL_H

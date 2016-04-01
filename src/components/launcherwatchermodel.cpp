@@ -19,87 +19,89 @@
 #include "launcherwatchermodel.h"
 #include "launcheritem.h"
 
-LauncherWatcherModel::LauncherWatcherModel(QObject *parent) :
-    QObjectListModel(parent),
-    _fileSystemWatcher()
+LauncherWatcherModel::LauncherWatcherModel(QObject *parent)
+    : QObjectListModel(parent)
 {
-    connect(&_fileSystemWatcher, SIGNAL(fileChanged(QString)), this, SLOT(monitoredFileChanged(QString)));
+    connect(&m_fileSystemWatcher, &QFileSystemWatcher::directoryChanged,
+            this, &LauncherWatcherModel::directoryChanged);
 }
 
 LauncherWatcherModel::~LauncherWatcherModel()
 {
 }
 
-void LauncherWatcherModel::monitoredFileChanged(const QString &changedPath)
-{
-    if (!QFile(changedPath).exists()) {
-        foreach (LauncherItem *item, *getList<LauncherItem>()) {
-            if (item->filePath() == changedPath) {
-                removeItem(item);
-                emit filePathsChanged();
-                break;
-            }
-        }
-    }
-}
-
 QStringList LauncherWatcherModel::filePaths()
 {
-    QStringList paths;
-    foreach (LauncherItem *item, *getList<LauncherItem>()) {
-        paths.append(item->filePath());
-    }
-    return paths;
+    return m_filePaths;
 }
 
-void LauncherWatcherModel::setFilePaths(QStringList paths)
+void LauncherWatcherModel::setFilePaths(const QStringList &paths)
 {
-    const QStringList oldPaths = filePaths();
+    if (m_filePaths == paths)
+        return;
 
-    int insertIndex = 0;
-    for (int i = 0; i < paths.count(); ++i) {
-        const QString path = paths.at(i);
-        bool duplicate = false;
-        for (int j = 0; j < i; ++j) {
-            if ((duplicate = paths.at(j) == path)) {
-                break;
-            }
-        }
-        if (duplicate) {
-            continue;
-        }
+    m_filePaths = paths;
 
-        int removeIndex = -1;
-        for (int j = insertIndex; j < itemCount(); ++j) {
-            if (static_cast<LauncherItem *>(get(j))->filePath() == path) {
-                removeIndex = j;
-                break;
-            }
-        }
+    const QStringList watchedDirectories = m_fileSystemWatcher.directories();
+    const QStringList directories = updateItems();
 
-        if (removeIndex > insertIndex) {
-            move(removeIndex, insertIndex);
-        } else if (removeIndex != insertIndex) {
-            LauncherItem *item = new LauncherItem(path, this);
-            if (item->isValid()) {
-                insertItem(insertIndex, item);
-                _fileSystemWatcher.addPath(path);
-            } else {
-                delete item;
-                continue;
-            }
-        }
-        ++insertIndex;
+    foreach (const QString &directory, watchedDirectories) {
+        if (!directories.contains(directory))
+            m_fileSystemWatcher.removePath(directory);
     }
 
-    while (insertIndex < itemCount()) {
-        LauncherItem *item = static_cast<LauncherItem *>(get(insertIndex));
-        _fileSystemWatcher.removePath(item->filePath());
-        removeItem(insertIndex);
+    m_fileSystemWatcher.addPaths(directories);
+
+    emit filePathsChanged();
+}
+
+void LauncherWatcherModel::directoryChanged(const QString &)
+{
+    updateItems();
+}
+
+QStringList LauncherWatcherModel::updateItems()
+{
+    QStringList directories;
+
+    int index = 0;
+    for (int i = 0; i < m_filePaths.count(); ++i) {
+        const QString filePath = m_filePaths.at(i);
+
+        if (filePath.isEmpty() || (i > 0 && m_filePaths.lastIndexOf(filePath, i - 1) != -1))
+            continue;
+
+        const QString directory = filePath.mid(0, filePath.lastIndexOf(QLatin1Char('/')));
+        if (!directories.contains(directory))
+            directories.append(directory);
+
+        if (!QFile::exists(filePath))
+            continue;
+
+        int existingIndex;
+        for (existingIndex = index; existingIndex < itemCount(); ++existingIndex) {
+            if (static_cast<LauncherItem *>(get(existingIndex))->filePath() == filePath)
+                break;
+        }
+
+        if (existingIndex >= itemCount()) {
+            QScopedPointer<LauncherItem> item(new LauncherItem(filePath, this));
+            if (item->isValid()) {
+                insertItem(index, item.take());
+            } else {
+                continue;
+            }
+        } else if (existingIndex > index) {
+            move(existingIndex, index);
+        }
+        ++index;
+    }
+
+    while (itemCount() > index) {
+        QObject * const item = get(index);
+        removeItem(index);
         delete item;
     }
 
-    if (filePaths() != oldPaths) {
-        emit filePathsChanged();
-    }
+    return directories;
 }
