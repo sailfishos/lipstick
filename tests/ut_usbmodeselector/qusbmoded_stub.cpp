@@ -173,3 +173,35 @@ void QUsbModed::onUsbStateChanged(QString)
 void QUsbModed::onUsbSupportedModesChanged(QString)
 {
 }
+
+void QUsbModed::onHideModeFinished(QDBusPendingCallWatcher*)
+{
+}
+
+void QUsbModed::onUnhideModeFinished(QDBusPendingCallWatcher*)
+{
+}
+
+void QUsbModed::onGetHiddenFinished(QDBusPendingCallWatcher*)
+{
+}
+
+void QUsbModed::onUsbHiddenModesChanged(QString)
+{
+}
+
+bool QUsbModed::hideMode(QString)
+{
+    return true;
+}
+
+bool QUsbModed::unhideMode(QString)
+{
+    return true;
+}
+
+QStringList QUsbModed::hiddenModes() const
+{
+    return QStringList();
+}
+
