@@ -217,5 +217,6 @@ androidpriorities.files = androidnotificationpriorities
 androidpriorities.path = /usr/share/lipstick/
 
 INSTALLS += androidpriorities
+OTHER_FILES += androidnotificationpriorities
 
 include(notificationcategories/notificationcategories.pri)
