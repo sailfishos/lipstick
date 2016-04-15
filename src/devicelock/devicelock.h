@@ -22,10 +22,12 @@
 #include <QDBusPendingCallWatcher>
 #include <keepalive/backgroundactivity.h>
 
+#include "lipstickglobal.h"
+
 class MGConfItem;
 class QTimer;
 
-class DeviceLock : public QObject, protected QDBusContext
+class LIPSTICK_EXPORT DeviceLock : public QObject, protected QDBusContext
 {
     Q_OBJECT
     Q_ENUMS(LockState)

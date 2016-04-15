@@ -32,6 +32,7 @@
 #include <compositor/windowmodel.h>
 #include <compositor/windowpixmapitem.h>
 #include <compositor/windowproperty.h>
+#include <devicelock/devicelock.h>
 #include <lipstickapi.h>
 #include <hwcimage.h>
 
@@ -58,6 +59,7 @@ void LipstickPlugin::registerTypes(const char *uri)
     qmlRegisterType<LauncherFolderItem>("org.nemomobile.lipstick", 0, 1, "LauncherFolderItem");
     qmlRegisterType<HwcImage>("org.nemomobile.lipstick", 0, 1, "HwcImage");
 
+    qmlRegisterUncreatableType<DeviceLock>("org.nemomobile.lipstick", 0, 1, "DeviceLock", "This type is initialized by HomeApplication");
     qmlRegisterUncreatableType<NotificationPreviewPresenter>("org.nemomobile.lipstick", 0, 1, "NotificationPreviewPresenter", "This type is initialized by HomeApplication");
     qmlRegisterUncreatableType<NotificationFeedbackPlayer>("org.nemomobile.lipstick", 0, 1, "NotificationFeedbackPlayer", "This type is initialized by HomeApplication");
     qmlRegisterUncreatableType<VolumeControl>("org.nemomobile.lipstick", 0, 1, "VolumeControl", "This type is initialized by HomeApplication");
