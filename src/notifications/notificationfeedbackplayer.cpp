@@ -90,6 +90,7 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                 }
 
                 foreach (const QString &item, feedbackItems) {
+                    ngfClient->stop(item);
                     idToEventId.insert(notification, ngfClient->play(item, properties));
                 }
             }
