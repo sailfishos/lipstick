@@ -94,69 +94,69 @@ Q_GLOBAL_STATIC(LauncherDBus, _launcherDBus);
 
 LauncherModel::LauncherModel(QObject *parent) :
     QObjectListModel(parent),
-    _directories(defaultDirectories()),
-    _iconDirectories(LAUNCHER_ICONS_PATH),
-    _fileSystemWatcher(),
-    _launcherSettings("nemomobile", "lipstick"),
-    _globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat),
-    _launcherOrderPrefix(QStringLiteral("LauncherOrder/")),
-    _dbusWatcher(this),
-    _packageNameToDBusService(),
-    _temporaryLaunchers(),
-    _initialized(false)
+    m_directories(defaultDirectories()),
+    m_iconDirectories(LAUNCHER_ICONS_PATH),
+    m_fileSystemWatcher(),
+    m_launcherSettings("nemomobile", "lipstick"),
+    m_globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat),
+    m_launcherOrderPrefix(QStringLiteral("LauncherOrder/")),
+    m_dbusWatcher(this),
+    m_packageNameToDBusService(),
+    m_temporaryLaunchers(),
+    m_initialized(false)
 {
     initialize();
 }
 
 LauncherModel::LauncherModel(InitializationMode, QObject *parent) :
     QObjectListModel(parent),
-    _directories(defaultDirectories()),
-    _iconDirectories(LAUNCHER_ICONS_PATH),
-    _fileSystemWatcher(),
-    _launcherSettings("nemomobile", "lipstick"),
-    _globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat),
-    _launcherOrderPrefix(QStringLiteral("LauncherOrder/")),
-    _dbusWatcher(this),
-    _packageNameToDBusService(),
-    _temporaryLaunchers(),
-    _initialized(false)
+    m_directories(defaultDirectories()),
+    m_iconDirectories(LAUNCHER_ICONS_PATH),
+    m_fileSystemWatcher(),
+    m_launcherSettings("nemomobile", "lipstick"),
+    m_globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat),
+    m_launcherOrderPrefix(QStringLiteral("LauncherOrder/")),
+    m_dbusWatcher(this),
+    m_packageNameToDBusService(),
+    m_temporaryLaunchers(),
+    m_initialized(false)
 {
 }
 
 void LauncherModel::initialize()
 {
-    if (_initialized)
+    if (m_initialized)
         return;
-    _initialized = true;
+    m_initialized = true;
 
     _launcherDBus()->registerModel(this);
 
-    QStringList iconDirectories = _iconDirectories;
+    QStringList iconDirectories = m_iconDirectories;
     if (!iconDirectories.contains(LAUNCHER_ICONS_PATH))
         iconDirectories << LAUNCHER_ICONS_PATH;
 
-    _launcherMonitor.setDirectories(_directories);
-    _launcherMonitor.setIconDirectories(iconDirectories);
+    m_launcherMonitor.setDirectories(m_directories);
+    m_launcherMonitor.setIconDirectories(iconDirectories);
 
     // Set up the monitor for icon and desktop file changes
-    connect(&_launcherMonitor, SIGNAL(filesUpdated(const QStringList &, const QStringList &, const QStringList &)),
+    connect(&m_launcherMonitor, SIGNAL(filesUpdated(const QStringList &, const QStringList &, const QStringList &)),
             this, SLOT(onFilesUpdated(const QStringList &, const QStringList &, const QStringList &)));
 
     // Start monitoring
-    _launcherMonitor.start();
+    m_launcherMonitor.start();
 
     // Save order of icons when model is changed
     connect(this, SIGNAL(rowsMoved(const QModelIndex&,int,int,const QModelIndex&,int)), this, SLOT(savePositions()));
 
     // Watch for changes to the item order settings file
-    _fileSystemWatcher.addPath(_launcherSettings.fileName());
-    connect(&_fileSystemWatcher, SIGNAL(fileChanged(QString)), this, SLOT(monitoredFileChanged(QString)));
+    m_fileSystemWatcher.addPath(m_launcherSettings.fileName());
+    connect(&m_fileSystemWatcher, SIGNAL(fileChanged(QString)), this, SLOT(monitoredFileChanged(QString)));
 
     // Used to watch for owner changes during installation progress
-    _dbusWatcher.setConnection(QDBusConnection::sessionBus());
-    _dbusWatcher.setWatchMode(QDBusServiceWatcher::WatchForUnregistration);
+    m_dbusWatcher.setConnection(QDBusConnection::sessionBus());
+    m_dbusWatcher.setWatchMode(QDBusServiceWatcher::WatchForUnregistration);
 
-    connect(&_dbusWatcher, SIGNAL(serviceUnregistered(const QString &)),
+    connect(&m_dbusWatcher, SIGNAL(serviceUnregistered(const QString &)),
             this, SLOT(onServiceUnregistered(const QString &)));
 }
 
@@ -172,7 +172,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
 
     // First, remove all removed launcher items before adding new ones
     foreach (const QString &filename, removed) {
-        if (isDesktopFile(_directories, filename)) {
+        if (isDesktopFile(m_directories, filename)) {
             // Desktop file has been removed - remove launcher
             LauncherItem *item = itemInModel(filename);
             if (item != NULL) {
@@ -187,7 +187,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
     }
 
     foreach (const QString &filename, added) {
-        if (isDesktopFile(_directories, filename)) {
+        if (isDesktopFile(m_directories, filename)) {
             // New desktop file appeared - add launcher
             LauncherItem *item = itemInModel(filename);
 
@@ -215,7 +215,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
 
                 if (item != NULL) {
                     // Try to look up an already-installed icon in the icons directory
-                    foreach (const QString &iconPath, _launcherMonitor.iconDirectories()) {
+                    foreach (const QString &iconPath, m_launcherMonitor.iconDirectories()) {
                         QString iconname = filenameFromIconId(item->getOriginalIconId(), iconPath);
                         if (QFile(iconname).exists()) {
                             LAUNCHER_DEBUG("Loading existing icon:" << iconname);
@@ -242,7 +242,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
     }
 
     foreach (const QString &filename, modifiedAndNeedUpdating) {
-        if (isDesktopFile(_directories, filename)) {
+        if (isDesktopFile(m_directories, filename)) {
             // Desktop file has been updated - update launcher
             LauncherItem *item = itemInModel(filename);
             if (item != NULL) {
@@ -256,7 +256,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
                     // File has been updated and is still valid; check if we
                     // might need to auto-update the icon file
                     if (item->iconFilename().isEmpty()) {
-                        foreach (const QString &iconPath, _launcherMonitor.iconDirectories()) {
+                        foreach (const QString &iconPath, m_launcherMonitor.iconDirectories()) {
                             QString filename = filenameFromIconId(item->getOriginalIconId(), iconPath);
                             LAUNCHER_DEBUG("Desktop file changed, checking for:" << filename);
                             if (QFile(filename).exists()) {
@@ -309,7 +309,7 @@ void LauncherModel::updateItemsWithIcon(const QString &filename, bool existing)
 
 void LauncherModel::monitoredFileChanged(const QString &changedPath)
 {
-    if (changedPath == _launcherSettings.fileName()) {
+    if (changedPath == m_launcherSettings.fileName()) {
         loadPositions();
     } else {
         qWarning() << "Unknown monitored file in LauncherModel:" << changedPath;
@@ -318,7 +318,7 @@ void LauncherModel::monitoredFileChanged(const QString &changedPath)
 
 void LauncherModel::loadPositions()
 {
-    _launcherSettings.sync();
+    m_launcherSettings.sync();
     reorderItems();
 }
 
@@ -380,7 +380,7 @@ void LauncherModel::reorderItems()
 
 QStringList LauncherModel::directories() const
 {
-    return _directories;
+    return m_directories;
 }
 
 static QStringList suffixDirectories(const QStringList &directories)
@@ -398,72 +398,72 @@ void LauncherModel::setDirectories(QStringList newDirectories)
 {
     newDirectories = suffixDirectories(newDirectories);
 
-    if (_directories != newDirectories) {
-        _directories = newDirectories;
+    if (m_directories != newDirectories) {
+        m_directories = newDirectories;
         emit directoriesChanged();
 
-        if (_initialized) {
-            _launcherMonitor.setDirectories(_directories);
+        if (m_initialized) {
+            m_launcherMonitor.setDirectories(m_directories);
         }
     }
 }
 
 QStringList LauncherModel::iconDirectories() const
 {
-    return _iconDirectories;
+    return m_iconDirectories;
 }
 
 void LauncherModel::setIconDirectories(QStringList newDirectories)
 {
     newDirectories = suffixDirectories(newDirectories);
 
-    if (_iconDirectories != newDirectories) {
-        _iconDirectories = newDirectories;
+    if (m_iconDirectories != newDirectories) {
+        m_iconDirectories = newDirectories;
         emit iconDirectoriesChanged();
 
-        if (_initialized) {
-            newDirectories = _iconDirectories;
+        if (m_initialized) {
+            newDirectories = m_iconDirectories;
             if (!newDirectories.contains(LAUNCHER_ICONS_PATH))
                 newDirectories << LAUNCHER_ICONS_PATH;
-            _launcherMonitor.setIconDirectories(newDirectories);
+            m_launcherMonitor.setIconDirectories(newDirectories);
         }
     }
 }
 
 QStringList LauncherModel::categories() const
 {
-    return _categories;
+    return m_categories;
 }
 
 void LauncherModel::setCategories(const QStringList &categories)
 {
-    if (_categories != categories) {
-        _categories = categories;
+    if (m_categories != categories) {
+        m_categories = categories;
         emit categoriesChanged();
 
-        if (_initialized) {
+        if (m_initialized) {
             // Force a complete rebuild of the model.
-            _launcherMonitor.setDirectories(QStringList());
-            _launcherMonitor.setDirectories(_directories);
+            m_launcherMonitor.setDirectories(QStringList());
+            m_launcherMonitor.setDirectories(m_directories);
         }
     }
 }
 
 QString LauncherModel::scope() const
 {
-    return _scope;
+    return m_scope;
 }
 
 void LauncherModel::setScope(const QString &scope)
 {
-    if (_scope != scope) {
-        _scope = scope;
-        _launcherOrderPrefix = !_scope.isEmpty()
+    if (m_scope != scope) {
+        m_scope = scope;
+        m_launcherOrderPrefix = !m_scope.isEmpty()
                 ? scope + QStringLiteral("/LauncherOrder/")
                 : QStringLiteral("LauncherOrder/");
         emit scopeChanged();
 
-        if (_initialized) {
+        if (m_initialized) {
             loadPositions();
         }
     }
@@ -491,11 +491,11 @@ void LauncherModel::updatingStarted(const QString &packageName, const QString &l
 
     // Remember which service notified us about this package, so we can
     // clean up existing updates when the service vanishes from D-Bus.
-    _packageNameToDBusService[packageName] = serviceName;
-    _dbusWatcher.addWatchedService(serviceName);
+    m_packageNameToDBusService[packageName] = serviceName;
+    m_dbusWatcher.addWatchedService(serviceName);
 
     if (desktopFile.isEmpty()) {
-        desktopFile = desktopFileFromPackageName(_directories, packageName);
+        desktopFile = desktopFileFromPackageName(m_directories, packageName);
     }
 
     LauncherItem *item = itemInModel(desktopFile);
@@ -516,7 +516,7 @@ void LauncherModel::updatingStarted(const QString &packageName, const QString &l
             item->setIconFilename(iconPath);
         }
 
-        if (!desktopFile.isEmpty() && isDesktopFile(_directories, desktopFile)) {
+        if (!desktopFile.isEmpty() && isDesktopFile(m_directories, desktopFile)) {
             // Only update the .desktop file name if we actually consider
             // it a .desktop file in the paths we monitor for changes (JB#29427)
             item->setFilePath(desktopFile);
@@ -531,7 +531,7 @@ void LauncherModel::updatingStarted(const QString &packageName, const QString &l
         }
     }
 
-    if (!item && isDesktopFile(_directories, desktopFile)) {
+    if (!item && isDesktopFile(m_directories, desktopFile)) {
         // Newly-installed package: Create temporary icon with label and icon
         item = new LauncherItem(packageName, label, iconPath, desktopFile, this);
         setTemporary(item);
@@ -550,7 +550,7 @@ void LauncherModel::updatingProgress(const QString &packageName, int progress,
 {
     LAUNCHER_DEBUG("Update progress:" << packageName << progress);
 
-    QString expectedServiceName = _packageNameToDBusService[packageName];
+    QString expectedServiceName = m_packageNameToDBusService[packageName];
     if (expectedServiceName != serviceName) {
         qWarning() << "Got update from" << serviceName <<
                       "but expected update from" << expectedServiceName;
@@ -572,19 +572,19 @@ void LauncherModel::updatingFinished(const QString &packageName,
 {
     LAUNCHER_DEBUG("Update finished:" << packageName);
 
-    QString expectedServiceName = _packageNameToDBusService[packageName];
+    QString expectedServiceName = m_packageNameToDBusService[packageName];
     if (expectedServiceName != serviceName) {
         qWarning() << "Got update from" << serviceName <<
                       "but expected update from" << expectedServiceName;
     }
 
-    _packageNameToDBusService.remove(packageName);
+    m_packageNameToDBusService.remove(packageName);
     updateWatchedDBusServices();
 
     LauncherItem *item = packageInModel(packageName);
 
     if (!item) {
-        if (_directories.contains(LAUNCHER_APPS_PATH)) {
+        if (m_directories.contains(LAUNCHER_APPS_PATH)) {
             qWarning() << "Package not found in model:" << packageName;
         }
         return;
@@ -613,12 +613,12 @@ void LauncherModel::notifyLaunching(const QString &desktopFile)
 
 void LauncherModel::updateWatchedDBusServices()
 {
-    QStringList requiredServices = _packageNameToDBusService.values();
+    QStringList requiredServices = m_packageNameToDBusService.values();
 
-    foreach (const QString &service, _dbusWatcher.watchedServices()) {
+    foreach (const QString &service, m_dbusWatcher.watchedServices()) {
         if (!requiredServices.contains(service)) {
             LAUNCHER_DEBUG("Don't need to watch service anymore:" << service);
-            _dbusWatcher.removeWatchedService(service);
+            m_dbusWatcher.removeWatchedService(service);
         }
     }
 }
@@ -626,11 +626,11 @@ void LauncherModel::updateWatchedDBusServices()
 void LauncherModel::onServiceUnregistered(const QString &serviceName)
 {
     qWarning() << "Service" << serviceName << "vanished";
-    _dbusWatcher.removeWatchedService(serviceName);
+    m_dbusWatcher.removeWatchedService(serviceName);
 
     QStringList packagesToRemove;
     QMap<QString, QString>::iterator it;
-    for (it = _packageNameToDBusService.begin(); it != _packageNameToDBusService.end(); ++it) {
+    for (it = m_packageNameToDBusService.begin(); it != m_packageNameToDBusService.end(); ++it) {
         if (it.value() == serviceName) {
             qWarning() << "Service" << serviceName << "was active for" << it.key();
             packagesToRemove << it.key();
@@ -645,7 +645,7 @@ void LauncherModel::onServiceUnregistered(const QString &serviceName)
 
 void LauncherModel::removeTemporaryLaunchers()
 {
-    QList<LauncherItem *> iterationCopy = _temporaryLaunchers;
+    QList<LauncherItem *> iterationCopy = m_temporaryLaunchers;
     foreach (LauncherItem *item, iterationCopy) {
         if (!item->isUpdating()) {
             // Temporary item that is not updating at the moment
@@ -665,19 +665,19 @@ void LauncherModel::requestLaunch(const QString &packageName)
 
 void LauncherModel::savePositions()
 {
-    _fileSystemWatcher.removePath(_launcherSettings.fileName());
+    m_fileSystemWatcher.removePath(m_launcherSettings.fileName());
 
-    _launcherSettings.remove(_launcherOrderPrefix.left(_launcherOrderPrefix.count() - 1));
+    m_launcherSettings.remove(m_launcherOrderPrefix.left(m_launcherOrderPrefix.count() - 1));
     QList<LauncherItem *> *currentLauncherList = getList<LauncherItem>();
 
     int pos = 0;
     foreach (LauncherItem *item, *currentLauncherList) {
-        _launcherSettings.setValue(_launcherOrderPrefix + item->filePath(), pos);
+        m_launcherSettings.setValue(m_launcherOrderPrefix + item->filePath(), pos);
         ++pos;
     }
 
-    _launcherSettings.sync();
-    _fileSystemWatcher.addPath(_launcherSettings.fileName());
+    m_launcherSettings.sync();
+    m_fileSystemWatcher.addPath(m_launcherSettings.fileName());
 }
 
 int LauncherModel::findItem(const QString &path, LauncherItem **item)
@@ -724,19 +724,19 @@ LauncherItem *LauncherModel::packageInModel(const QString &packageName)
     }
 
     // Fall back to trying to find the launcher via the .desktop file
-    return itemInModel(desktopFileFromPackageName(_directories, packageName));
+    return itemInModel(desktopFileFromPackageName(m_directories, packageName));
 }
 
 QVariant LauncherModel::launcherPos(const QString &path)
 {
-    QString key = _launcherOrderPrefix + path;
+    QString key = m_launcherOrderPrefix + path;
 
-    if (_launcherSettings.contains(key)) {
-        return _launcherSettings.value(key);
+    if (m_launcherSettings.contains(key)) {
+        return m_launcherSettings.value(key);
     }
 
     // fall back to vendor configuration if the user hasn't specified a location
-    return _globalSettings.value(key);
+    return m_globalSettings.value(key);
 }
 
 LauncherItem *LauncherModel::addItemIfValid(const QString &path)
@@ -745,9 +745,9 @@ LauncherItem *LauncherModel::addItemIfValid(const QString &path)
     LauncherItem *item = new LauncherItem(path, this);
 
     bool isValid = item->isValid();
-    bool shouldDisplay = item->shouldDisplay() && _categories.isEmpty();
+    bool shouldDisplay = item->shouldDisplay() && m_categories.isEmpty();
     foreach (const QString &category, item->desktopCategories()) {
-        if (_categories.contains(category)) {
+        if (m_categories.contains(category)) {
             shouldDisplay = true;
             break;
         }
@@ -767,7 +767,7 @@ void LauncherModel::setTemporary(LauncherItem *item)
 {
     if (!item->isTemporary()) {
         item->setIsTemporary(true);
-        _temporaryLaunchers.append(item);
+        m_temporaryLaunchers.append(item);
     }
 }
 
@@ -775,18 +775,18 @@ void LauncherModel::unsetTemporary(LauncherItem *item)
 {
     if (item->isTemporary()) {
         item->setIsTemporary(false);
-        _temporaryLaunchers.removeOne(item);
+        m_temporaryLaunchers.removeOne(item);
     }
 }
 
 LauncherItem *LauncherModel::temporaryItemToReplace()
 {
     LauncherItem *item = NULL;
-    if (_temporaryLaunchers.count() == 1) {
+    if (m_temporaryLaunchers.count() == 1) {
         // Only one item. It must be this.
-        item = _temporaryLaunchers.first();
+        item = m_temporaryLaunchers.first();
     } else {
-        foreach(LauncherItem *tempItem, _temporaryLaunchers) {
+        foreach(LauncherItem *tempItem, m_temporaryLaunchers) {
             if (!tempItem->isUpdating()) {
                 if (!item) {
                     // Pick the finished item.

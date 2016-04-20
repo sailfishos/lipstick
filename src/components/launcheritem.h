@@ -59,17 +59,6 @@ class LIPSTICK_EXPORT LauncherItem : public QObject
     Q_PROPERTY(QString packageName READ packageName WRITE setPackageName NOTIFY packageNameChanged)
     Q_PROPERTY(int updatingProgress READ updatingProgress WRITE setUpdatingProgress NOTIFY updatingProgressChanged)
 
-    QSharedPointer<MDesktopEntry> _desktopEntry;
-    QBasicTimer _launchingTimeout;
-    bool _isLaunching;
-    bool _isUpdating;
-    bool _isTemporary;
-    QString _packageName;
-    int _updatingProgress;
-    QString _customTitle;
-    QString _customIconFilename;
-    int _serial;
-
 public slots:
     void setIsLaunching(bool isLaunching = false);
 
@@ -102,16 +91,16 @@ public:
 
     Q_INVOKABLE void launchApplication();
 
-    bool isUpdating() const { return _isUpdating; }
+    bool isUpdating() const { return m_isUpdating; }
     void setIsUpdating(bool isUpdating);
 
-    bool isTemporary() const { return _isTemporary; }
+    bool isTemporary() const { return m_isTemporary; }
     void setIsTemporary(bool isTemporary);
 
-    QString packageName() const { return _packageName; }
+    QString packageName() const { return m_packageName; }
     void setPackageName(QString packageName);
 
-    int updatingProgress() const { return _updatingProgress; }
+    int updatingProgress() const { return m_updatingProgress; }
     void setUpdatingProgress(int updatingProgress);
 
     void setCustomTitle(QString customTitle);
@@ -128,6 +117,18 @@ signals:
 
 protected:
     void timerEvent(QTimerEvent *event);
+
+private:
+    QSharedPointer<MDesktopEntry> m_desktopEntry;
+    QBasicTimer m_launchingTimeout;
+    bool m_isLaunching;
+    bool m_isUpdating;
+    bool m_isTemporary;
+    QString m_packageName;
+    int m_updatingProgress;
+    QString m_customTitle;
+    QString m_customIconFilename;
+    int m_serial;
 };
 
 #endif // LAUNCHERITEM_H

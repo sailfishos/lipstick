@@ -82,11 +82,11 @@ private slots:
     void handleRemoved(QObject*);
 
 private:
-    QString mTitle;
-    QString mIconId;
-    QString mDirectoryFile;
-    QSharedPointer<MDesktopEntry> mDesktopEntry;
-    QPointer<LauncherFolderItem> mParentFolder;
+    QString m_title;
+    QString m_iconId;
+    QString m_directoryFile;
+    QSharedPointer<MDesktopEntry> m_desktopEntry;
+    QPointer<LauncherFolderItem> m_parentFolder;
 };
 
 class DeferredLauncherModel;
@@ -147,10 +147,10 @@ private slots:
 private:
     void saveFolder(QXmlStreamWriter &xml, LauncherFolderItem *folder);
 
-    DeferredLauncherModel *mLauncherModel;
-    QTimer mSaveTimer;
-    bool mLoading;
-    bool mInitialized;
+    DeferredLauncherModel *m_launcherModel;
+    QTimer m_saveTimer;
+    bool m_loading;
+    bool m_initialized;
 };
 
 #endif

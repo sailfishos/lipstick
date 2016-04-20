@@ -84,7 +84,7 @@ void Ut_ShutdownScreen::cleanup()
 
 void Ut_ShutdownScreen::testConnections()
 {
-    QCOMPARE(disconnect(shutdownScreen->systemState, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)), shutdownScreen, SLOT(applySystemState(MeeGo::QmSystemState::StateIndication))), true);
+    QCOMPARE(disconnect(shutdownScreen->m_systemState, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)), shutdownScreen, SLOT(applySystemState(MeeGo::QmSystemState::StateIndication))), true);
 }
 
 void Ut_ShutdownScreen::testSystemState()

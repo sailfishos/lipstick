@@ -34,14 +34,14 @@
 
 LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
     : QObject(parent)
-    , _isLaunching(false)
-    , _isUpdating(false)
-    , _isTemporary(false)
-    , _packageName("")
-    , _updatingProgress(-1)
-    , _customTitle("")
-    , _customIconFilename("")
-    , _serial(0)
+    , m_isLaunching(false)
+    , m_isUpdating(false)
+    , m_isTemporary(false)
+    , m_packageName("")
+    , m_updatingProgress(-1)
+    , m_customTitle("")
+    , m_customIconFilename("")
+    , m_serial(0)
 {
     if (!filePath.isEmpty()) {
         setFilePath(filePath);
@@ -54,14 +54,14 @@ LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
 LauncherItem::LauncherItem(const QString &packageName, const QString &label,
         const QString &iconPath, const QString &desktopFile, QObject *parent)
     : QObject(parent)
-    , _isLaunching(false)
-    , _isUpdating(false)
-    , _isTemporary(false)
-    , _packageName(packageName)
-    , _updatingProgress(-1)
-    , _customTitle(label)
-    , _customIconFilename(iconPath)
-    , _serial(0)
+    , m_isLaunching(false)
+    , m_isUpdating(false)
+    , m_isTemporary(false)
+    , m_packageName(packageName)
+    , m_updatingProgress(-1)
+    , m_customTitle(label)
+    , m_customIconFilename(iconPath)
+    , m_serial(0)
 {
     if (!desktopFile.isEmpty()) {
         setFilePath(desktopFile);
@@ -80,9 +80,9 @@ LauncherModel::ItemType LauncherItem::type() const
 void LauncherItem::setFilePath(const QString &filePath)
 {
     if (!filePath.isEmpty() && QFile(filePath).exists()) {
-        _desktopEntry = QSharedPointer<MDesktopEntry>(new MDesktopEntry(filePath));
+        m_desktopEntry = QSharedPointer<MDesktopEntry>(new MDesktopEntry(filePath));
     } else {
-        _desktopEntry.clear();
+        m_desktopEntry.clear();
     }
 
     emit this->itemChanged();
@@ -90,19 +90,19 @@ void LauncherItem::setFilePath(const QString &filePath)
 
 QString LauncherItem::filePath() const
 {
-    return !_desktopEntry.isNull() ? _desktopEntry->fileName() : QString();
+    return !m_desktopEntry.isNull() ? m_desktopEntry->fileName() : QString();
 }
 
 QString LauncherItem::fileID() const
 {
-    if (_desktopEntry.isNull()) {
+    if (m_desktopEntry.isNull()) {
         return QString();
     }
 
     // Retrieve the file ID according to
     // http://standards.freedesktop.org/desktop-entry-spec/latest/ape.html
     QRegularExpression re(".*applications/(.*.desktop)");
-    QRegularExpressionMatch match = re.match(_desktopEntry->fileName());
+    QRegularExpressionMatch match = re.match(m_desktopEntry->fileName());
     if (!match.hasMatch()) {
         return filename();
     }
@@ -124,32 +124,32 @@ QString LauncherItem::filename() const
 
 QString LauncherItem::exec() const
 {
-    return !_desktopEntry.isNull() ? _desktopEntry->exec() : QString();
+    return !m_desktopEntry.isNull() ? m_desktopEntry->exec() : QString();
 }
 
 bool LauncherItem::dBusActivated() const
 {
-    return (!_desktopEntry.isNull() && !_desktopEntry->xMaemoService().isEmpty());
+    return (!m_desktopEntry.isNull() && !m_desktopEntry->xMaemoService().isEmpty());
 }
 
 QString LauncherItem::title() const
 {
-    if (_isTemporary) {
-        return _customTitle;
+    if (m_isTemporary) {
+        return m_customTitle;
     }
 
-    return !_desktopEntry.isNull() ? _desktopEntry->name() : QString();
+    return !m_desktopEntry.isNull() ? m_desktopEntry->name() : QString();
 }
 
 QString LauncherItem::entryType() const
 {
-    return !_desktopEntry.isNull() ? _desktopEntry->type() : QString();
+    return !m_desktopEntry.isNull() ? m_desktopEntry->type() : QString();
 }
 
 QString LauncherItem::iconId() const
 {
-    if (!_customIconFilename.isEmpty()) {
-        return QString("%1#serial=%2").arg(_customIconFilename).arg(_serial);
+    if (!m_customIconFilename.isEmpty()) {
+        return QString("%1#serial=%2").arg(m_customIconFilename).arg(m_serial);
     }
 
     return getOriginalIconId();
@@ -157,96 +157,96 @@ QString LauncherItem::iconId() const
 
 QStringList LauncherItem::desktopCategories() const
 {
-    return !_desktopEntry.isNull() ? _desktopEntry->categories() : QStringList();
+    return !m_desktopEntry.isNull() ? m_desktopEntry->categories() : QStringList();
 }
 
 QString LauncherItem::titleUnlocalized() const
 {
-    if (_isTemporary) {
-        return _customTitle;
+    if (m_isTemporary) {
+        return m_customTitle;
     }
 
-    return !_desktopEntry.isNull() ? _desktopEntry->nameUnlocalized() : QString();
+    return !m_desktopEntry.isNull() ? m_desktopEntry->nameUnlocalized() : QString();
 }
 
 bool LauncherItem::shouldDisplay() const
 {
-    if (_desktopEntry.isNull()) {
-        return _isTemporary;
+    if (m_desktopEntry.isNull()) {
+        return m_isTemporary;
     } else {
-        return !_desktopEntry->noDisplay() && !_desktopEntry->notShowIn().contains(QStringLiteral("X-MeeGo"));
+        return !m_desktopEntry->noDisplay() && !m_desktopEntry->notShowIn().contains(QStringLiteral("X-MeeGo"));
     }
 }
 
 bool LauncherItem::isValid() const
 {
-    return !_desktopEntry.isNull() ? _desktopEntry->isValid() : _isTemporary;
+    return !m_desktopEntry.isNull() ? m_desktopEntry->isValid() : m_isTemporary;
 }
 
 bool LauncherItem::isLaunching() const
 {
-    return _isLaunching;
+    return m_isLaunching;
 }
 
 void LauncherItem::setIsLaunching(bool isLaunching)
 {
     if (isLaunching) {
         // This is a failsafe to allow launching again after 5 seconds in case the application crashes on startup and no window is ever created
-        _launchingTimeout.start(5000, this);
+        m_launchingTimeout.start(5000, this);
     } else {
-        _launchingTimeout.stop();
+        m_launchingTimeout.stop();
     }
-    if (_isLaunching != isLaunching) {
-        _isLaunching = isLaunching;
+    if (m_isLaunching != isLaunching) {
+        m_isLaunching = isLaunching;
         emit this->isLaunchingChanged();
     }
 }
 
 void LauncherItem::setIsUpdating(bool isUpdating)
 {
-    if (_isUpdating != isUpdating) {
-        _isUpdating = isUpdating;
+    if (m_isUpdating != isUpdating) {
+        m_isUpdating = isUpdating;
         emit isUpdatingChanged();
     }
 }
 
 void LauncherItem::setIsTemporary(bool isTemporary)
 {
-    if (_isTemporary != isTemporary) {
-        _isTemporary = isTemporary;
+    if (m_isTemporary != isTemporary) {
+        m_isTemporary = isTemporary;
         emit isTemporaryChanged();
     }
 }
 
 void LauncherItem::launchApplication()
 {
-    if (_isUpdating) {
+    if (m_isUpdating) {
         LauncherModel *model = static_cast<LauncherModel *>(parent());
-        model->requestLaunch(_packageName);
+        model->requestLaunch(m_packageName);
         return;
     }
 
-    if (_desktopEntry.isNull())
+    if (m_desktopEntry.isNull())
         return;
 
 #if defined(HAVE_CONTENTACTION)
-    LAUNCHER_DEBUG("launching content action for" << _desktopEntry->name());
-    ContentAction::Action action = ContentAction::Action::launcherAction(_desktopEntry, QStringList());
+    LAUNCHER_DEBUG("launching content action for" << m_desktopEntry->name());
+    ContentAction::Action action = ContentAction::Action::launcherAction(m_desktopEntry, QStringList());
     action.trigger();
 #else
-    LAUNCHER_DEBUG("launching exec line for" << _desktopEntry->name());
+    LAUNCHER_DEBUG("launching exec line for" << m_desktopEntry->name());
 
     // Get the command text from the desktop entry
-    QString commandText = _desktopEntry->exec();
+    QString commandText = m_desktopEntry->exec();
 
     // Take care of the freedesktop standards things
 
     commandText.replace(QRegExp("%k"), filePath());
-    commandText.replace(QRegExp("%c"), _desktopEntry->name());
+    commandText.replace(QRegExp("%c"), m_desktopEntry->name());
     commandText.remove(QRegExp("%[fFuU]"));
 
-    if (!_desktopEntry->icon().isEmpty())
-        commandText.replace(QRegExp("%i"), QString("--icon ") + _desktopEntry->icon());
+    if (!m_desktopEntry->icon().isEmpty())
+        commandText.replace(QRegExp("%i"), QString("--icon ") + m_desktopEntry->icon());
 
     // DETAILS: http://standards.freedesktop.org/desktop-entry-spec/latest/index.html
     // DETAILS: http://standards.freedesktop.org/desktop-entry-spec/latest/ar01s06.html
@@ -260,69 +260,69 @@ void LauncherItem::launchApplication()
 
 bool LauncherItem::isStillValid()
 {
-    if (_isTemporary) {
+    if (m_isTemporary) {
         return true;
     }
 
-    // Force a reload of _desktopEntry
+    // Force a reload of m_desktopEntry
     setFilePath(filePath());
     return isValid();
 }
 
 QString LauncherItem::getOriginalIconId() const
 {
-    return !_desktopEntry.isNull() ? _desktopEntry->icon() : QString();
+    return !m_desktopEntry.isNull() ? m_desktopEntry->icon() : QString();
 }
 
 void LauncherItem::setIconFilename(const QString &path)
 {
-    _customIconFilename = path;
+    m_customIconFilename = path;
     if (!path.isEmpty()) {
-        _serial++;
+        m_serial++;
     }
     emit itemChanged();
 }
 
 QString LauncherItem::iconFilename() const
 {
-    return _customIconFilename;
+    return m_customIconFilename;
 }
 
 void LauncherItem::setPackageName(QString packageName)
 {
-    if (_packageName != packageName) {
-        _packageName = packageName;
+    if (m_packageName != packageName) {
+        m_packageName = packageName;
         emit packageNameChanged();
     }
 }
 
 void LauncherItem::setUpdatingProgress(int updatingProgress)
 {
-    if (_updatingProgress != updatingProgress) {
-        _updatingProgress = updatingProgress;
+    if (m_updatingProgress != updatingProgress) {
+        m_updatingProgress = updatingProgress;
         emit updatingProgressChanged();
     }
 }
 
 void LauncherItem::setCustomTitle(QString customTitle)
 {
-    if (_customTitle != customTitle) {
-        _customTitle = customTitle;
+    if (m_customTitle != customTitle) {
+        m_customTitle = customTitle;
         emit itemChanged();
     }
 }
 
 QString LauncherItem::readValue(const QString &key) const
 {
-    if (_desktopEntry.isNull())
+    if (m_desktopEntry.isNull())
         return QString();
 
-    return _desktopEntry->value("Desktop Entry", key);
+    return m_desktopEntry->value("Desktop Entry", key);
 }
 
 void LauncherItem::timerEvent(QTimerEvent *event)
 {
-    if (event->timerId() == _launchingTimeout.timerId()) {
+    if (event->timerId() == m_launchingTimeout.timerId()) {
         setIsLaunching(false);
     } else {
         QObject::timerEvent(event);

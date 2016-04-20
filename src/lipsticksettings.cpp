@@ -26,7 +26,7 @@ Q_GLOBAL_STATIC(LipstickSettings, settingsInstance)
 
 LipstickSettings::LipstickSettings()
     : QObject()
-    , screenLock(0)
+    , m_screenLock(0)
 {
 }
 
@@ -39,7 +39,7 @@ void LipstickSettings::setScreenLock(ScreenLock *screenLock)
 {
     // TODO: Disconnect from previous screenlock signals?
 
-    this->screenLock = screenLock;
+    m_screenLock = screenLock;
     connect(screenLock, SIGNAL(screenIsLocked(bool)), this, SIGNAL(lockscreenVisibleChanged()));
     connect(screenLock, SIGNAL(lowPowerModeChanged()), this, SIGNAL(lowPowerModeChanged()));
     connect(screenLock, SIGNAL(blankingPolicyChanged(QString)), this, SIGNAL(blankingPolicyChanged()));
@@ -47,29 +47,29 @@ void LipstickSettings::setScreenLock(ScreenLock *screenLock)
 
 bool LipstickSettings::lockscreenVisible() const
 {
-    return screenLock != 0 ? screenLock->isScreenLocked() : false;
+    return m_screenLock != 0 ? m_screenLock->isScreenLocked() : false;
 }
 
 void LipstickSettings::setLockscreenVisible(bool lockscreenVisible)
 {
-    if (screenLock != 0 && lockscreenVisible != screenLock->isScreenLocked()) {
+    if (m_screenLock != 0 && lockscreenVisible != m_screenLock->isScreenLocked()) {
         if (lockscreenVisible) {
-            screenLock->lockScreen();
+            m_screenLock->lockScreen();
         } else {
-            screenLock->unlockScreen();
+            m_screenLock->unlockScreen();
         }
     }
 }
 
 bool LipstickSettings::lowPowerMode() const
 {
-    return (screenLock && screenLock->isLowPowerMode());
+    return (m_screenLock && m_screenLock->isLowPowerMode());
 }
 
 void LipstickSettings::lockScreen(bool immediate)
 {
-    if (screenLock != 0 && (!screenLock->isScreenLocked() || immediate)) {
-        screenLock->lockScreen(immediate);
+    if (m_screenLock != 0 && (!m_screenLock->isScreenLocked() || immediate)) {
+        m_screenLock->lockScreen(immediate);
     }
 }
 
@@ -102,8 +102,8 @@ void LipstickSettings::exportScreenProperties()
 
 QString LipstickSettings::blankingPolicy()
 {
-    if (screenLock) {
-        return screenLock->blankingPolicy();
+    if (m_screenLock) {
+        return m_screenLock->blankingPolicy();
     }
 
     return "default";

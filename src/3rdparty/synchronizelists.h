@@ -84,7 +84,7 @@ public:
             int &c,
             const ReferenceList &reference,
             int &r)
-        : agent(agent), cache(cache), c(c), reference(reference), r(r)
+        : m_agent(agent), m_cache(cache), m_cacheIndex(c), m_reference(reference), m_referenceIndex(r)
     {
         int lastEqualC = c;
         int lastEqualR = r;
@@ -162,11 +162,11 @@ private:
     // and inserts any items in the reference set found to to not be in the cache.
     bool cacheMatch(int i, int count, ReferenceItem referenceItem)
     {
-        if (compareIdentity(cache.at(c + i),  referenceItem)) {
+        if (compareIdentity(m_cache.at(m_cacheIndex + i),  referenceItem)) {
             if (i > 0)
-                c += removeRange(agent, c, i);
-            c += insertRange(agent, c, count, reference, r);
-            r += count;
+                m_cacheIndex += removeRange(m_agent, m_cacheIndex, i);
+            m_cacheIndex += insertRange(m_agent, m_cacheIndex, count, m_reference, m_referenceIndex);
+            m_referenceIndex += count;
             return true;
         } else {
             return false;
@@ -179,22 +179,22 @@ private:
     // reference list.
     bool referenceMatch(int i, int count, CacheItem cacheItem)
     {
-        if (compareIdentity(reference.at(r + i), cacheItem)) {
-            c += removeRange(agent, c, count);
+        if (compareIdentity(m_reference.at(m_referenceIndex + i), cacheItem)) {
+            m_cacheIndex += removeRange(m_agent, m_cacheIndex, count);
             if (i > 0)
-                c += insertRange(agent, c, i, reference, r);
-            r += i;
+                m_cacheIndex += insertRange(m_agent, m_cacheIndex, i, m_reference, m_referenceIndex);
+            m_referenceIndex += i;
             return true;
         } else {
             return false;
         }
     }
 
-    Agent * const agent;
-    const CacheList &cache;
-    int &c;
-    const ReferenceList &reference;
-    int &r;
+    Agent * const m_agent;
+    const CacheList &m_cache;
+    int &m_cacheIndex;
+    const ReferenceList &m_reference;
+    int &m_referenceIndex;
 };
 
 template <typename Agent, typename CacheList, typename ReferenceList>

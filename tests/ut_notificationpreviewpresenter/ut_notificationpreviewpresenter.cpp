@@ -227,7 +227,7 @@ void Ut_NotificationPreviewPresenter::testSignalConnections()
     NotificationPreviewPresenter presenter;
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationAdded(uint)), &presenter, SLOT(updateNotification(uint))), true);
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), &presenter, SLOT(removeNotification(uint))), true);
-    QCOMPARE(disconnect(&presenter, SIGNAL(notificationPresented(uint)), presenter.notificationFeedbackPlayer, SLOT(addNotification(uint))), true);
+    QCOMPARE(disconnect(&presenter, SIGNAL(notificationPresented(uint)), presenter.m_notificationFeedbackPlayer, SLOT(addNotification(uint))), true);
 }
 
 void Ut_NotificationPreviewPresenter::testAddNotificationWhenWindowNotOpen()
@@ -250,7 +250,7 @@ void Ut_NotificationPreviewPresenter::testAddNotificationWhenWindowNotOpen()
     QCOMPARE(homeWindowTitle[homeWindows.first()], QString("Notification"));
     QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("initialSize").toSize(), QGuiApplication::primaryScreen()->size());
     QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("notificationPreviewPresenter"), QVariant::fromValue(static_cast<QObject *>(&presenter)));
-    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("notificationFeedbackPlayer"), QVariant::fromValue(static_cast<QObject *>(presenter.notificationFeedbackPlayer)));
+    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("notificationFeedbackPlayer"), QVariant::fromValue(static_cast<QObject *>(presenter.m_notificationFeedbackPlayer)));
     QCOMPARE(homeWindowContextProperties[homeWindows.first()].contains("LipstickSettings"), true);
     QCOMPARE(homeWindowCategories[homeWindows.first()], QString("notification"));
 

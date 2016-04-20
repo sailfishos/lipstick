@@ -34,23 +34,23 @@ static const char *VOLUME_INTERFACE = "com.Meego.MainVolume2";
 
 PulseAudioControl::PulseAudioControl(QObject *parent) :
     QObject(parent),
-    dbusConnection(NULL),
-    reconnectTimeout(2000) // first reconnect after 2000ms
+    m_dbusConnection(NULL),
+    m_reconnectTimeout(2000) // first reconnect after 2000ms
 {
 }
 
 PulseAudioControl::~PulseAudioControl()
 {
-    if (dbusConnection != NULL) {
-        dbus_connection_remove_filter(dbusConnection, PulseAudioControl::signalHandler, (void *)this);
-        dbus_connection_unref(dbusConnection);
+    if (m_dbusConnection != NULL) {
+        dbus_connection_remove_filter(m_dbusConnection, PulseAudioControl::signalHandler, (void *)this);
+        dbus_connection_unref(m_dbusConnection);
     }
 }
 
 void PulseAudioControl::openConnection()
 {
     //! If the connection already exists, do nothing
-    if ((dbusConnection != NULL) && (dbus_connection_get_is_connected(dbusConnection))) {
+    if ((m_dbusConnection != NULL) && (dbus_connection_get_is_connected(m_dbusConnection))) {
         return;
     }
 
@@ -72,21 +72,21 @@ void PulseAudioControl::openConnection()
         DBusError dbus_err;
         dbus_error_init(&dbus_err);
 
-        dbusConnection = dbus_connection_open(pa_bus_address, &dbus_err);
+        m_dbusConnection = dbus_connection_open(pa_bus_address, &dbus_err);
 
         DBUS_ERR_CHECK(dbus_err);
     }
 
-    if (dbusConnection != NULL) {
-        dbus_connection_setup_with_g_main(dbusConnection, NULL);
-        dbus_connection_add_filter(dbusConnection, PulseAudioControl::signalHandler, (void *)this, NULL);
+    if (m_dbusConnection != NULL) {
+        dbus_connection_setup_with_g_main(m_dbusConnection, NULL);
+        dbus_connection_add_filter(m_dbusConnection, PulseAudioControl::signalHandler, (void *)this, NULL);
 
         addSignalMatch();
     }
 
-    if (!dbusConnection) {
-        QTimer::singleShot(reconnectTimeout, this, SLOT(update()));
-        reconnectTimeout += 5000; // next reconnects wait for 5000ms more
+    if (!m_dbusConnection) {
+        QTimer::singleShot(m_reconnectTimeout, this, SLOT(update()));
+        m_reconnectTimeout += 5000; // next reconnects wait for 5000ms more
     }
 }
 
@@ -94,7 +94,7 @@ void PulseAudioControl::update()
 {
     openConnection();
 
-    if (dbusConnection == NULL) {
+    if (m_dbusConnection == NULL) {
         return;
     }
 
@@ -106,7 +106,7 @@ void PulseAudioControl::update()
     if (msg != NULL) {
         dbus_message_append_args(msg, DBUS_TYPE_STRING, &VOLUME_INTERFACE, DBUS_TYPE_INVALID);
 
-        reply = dbus_connection_send_with_reply_and_block(dbusConnection, msg, -1, &error);
+        reply = dbus_connection_send_with_reply_and_block(m_dbusConnection, msg, -1, &error);
 
         DBUS_ERR_CHECK (error);
 
@@ -195,7 +195,7 @@ void PulseAudioControl::addSignalMatch()
             char **emptyarray = { NULL };
             dbus_message_append_args(message, DBUS_TYPE_STRING, &signalPtr, DBUS_TYPE_ARRAY, DBUS_TYPE_OBJECT_PATH,
                                      &emptyarray, 0, DBUS_TYPE_INVALID);
-            dbus_connection_send(dbusConnection, message, NULL);
+            dbus_connection_send(m_dbusConnection, message, NULL);
             dbus_message_unref(message);
         }
     }
@@ -257,7 +257,7 @@ void PulseAudioControl::setVolume(int volume)
     openConnection();
 
     // Don't try to set the volume via D-bus when it isn't available
-    if (dbusConnection == NULL) {
+    if (m_dbusConnection == NULL) {
         return;
     }
 
@@ -278,7 +278,7 @@ void PulseAudioControl::setVolume(int volume)
             dbus_message_iter_close_container(&append, &sub);
 
             // Send/flush the message immediately:
-            dbus_connection_send(dbusConnection, message, NULL);
+            dbus_connection_send(m_dbusConnection, message, NULL);
         }
 
         dbus_message_unref(message);

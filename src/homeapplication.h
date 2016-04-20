@@ -39,10 +39,6 @@ class LIPSTICK_EXPORT HomeApplication : public QGuiApplication
     Q_OBJECT
     Q_ENUMS(DisplayState)
 
-    HomeWindow *_mainWindowInstance;
-    QString _qmlPath;
-    QString _compositorPath;
-
 public:
 
     enum DisplayState {
@@ -161,35 +157,39 @@ private:
     //! A signal handler that quits the QApplication
     static void quitSignalHandler(int);
 
+    HomeWindow *m_mainWindowInstance;
+    QString m_qmlPath;
+    QString m_compositorPath;
+
     //! The original SIGINT handler
-    sighandler_t originalSigIntHandler;
+    sighandler_t m_originalSigIntHandler;
 
     //! The original SIGTERM handler
-    sighandler_t originalSigTermHandler;
+    sighandler_t m_originalSigTermHandler;
 
     //! QML Engine instance
-    QQmlEngine *qmlEngine;
+    QQmlEngine *m_qmlEngine;
 
     //! Logic for locking and unlocking the screen
-    ScreenLock *screenLock;
+    ScreenLock *m_screenLock;
 
     //! Logic for locking and unlocking the device
-    DeviceLock *deviceLock;
+    DeviceLock *m_deviceLock;
 
     //! Logic for setting the device volume
-    VolumeControl *volumeControl;
+    VolumeControl *m_volumeControl;
 
     //! Logic for showing the USB mode selection dialog
-    USBModeSelector *usbModeSelector;
+    USBModeSelector *m_usbModeSelector;
 
     //! Logic for showing the shutdown screen and related notifications
-    ShutdownScreen *shutdownScreen;
+    ShutdownScreen *m_shutdownScreen;
 
     //! Login for showing the connection selector
-    ConnectionSelector *connectionSelector;
+    ConnectionSelector *m_connectionSelector;
 
     //! Whether the home ready signal has been sent or not
-    bool homeReadySent;
+    bool m_homeReadySent;
 
     DisplayState m_currentDisplayState;
     MeeGo::QmDisplayState *m_displayState;

@@ -239,33 +239,33 @@ private:
     void updateHintValues();
 
     //! Name of the application sending the notification
-    QString appName_;
+    QString m_appName;
 
     //! The ID of the notification
-    uint replacesId_;
+    uint m_replacesId;
 
     //! Icon ID of the application sending the notification
-    QString appIcon_;
+    QString m_appIcon;
 
     //! Summary text for the notification
-    QString summary_;
+    QString m_summary;
 
     //! Body text for the notification
-    QString body_;
+    QString m_body;
 
     //! Actions for the notification as a list of identifier/string pairs
-    QStringList actions_;
+    QStringList m_actions;
 
     //! Hints for the notification
-    QVariantHash hints_;
-    QVariantMap hintValues_;
+    QVariantHash m_hints;
+    QVariantMap m_hintValues;
 
     //! Expiration timeout for the notification
-    int expireTimeout_;
+    int m_expireTimeout;
 
     // Cached values for speeding up comparisons:
-    int priority_;
-    quint64 timestamp_;
+    int m_priority;
+    quint64 m_timestamp;
 };
 
 // Order notifications by descending priority then timestamp:
@@ -284,7 +284,7 @@ public:
     friend const QDBusArgument &operator>>(const QDBusArgument &, NotificationList &);
 
 private:
-    QList<LipstickNotification *> notificationList;
+    QList<LipstickNotification *> m_notificationList;
 };
 
 Q_DECLARE_METATYPE(NotificationList)

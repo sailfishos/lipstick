@@ -79,13 +79,13 @@ private:
     bool isEnabled(LipstickNotification *notification);
 
     //! Non-graphical feedback player
-    Ngf::Client *ngfClient;
+    Ngf::Client *m_ngfClient;
 
     //! A mapping between notification IDs and NGF play IDs.
-    QMultiHash<LipstickNotification *, uint> idToEventId;
+    QMultiHash<LipstickNotification *, uint> m_idToEventId;
 
     //! The minimum priority of notifications for which a feedback should be played
-    int minimumPriority_;
+    int m_minimumPriority;
 
 #ifdef UNIT_TEST
     friend class Ut_NotificationFeedbackPlayer;

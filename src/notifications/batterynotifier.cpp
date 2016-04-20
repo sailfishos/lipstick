@@ -42,26 +42,26 @@ static inline QString propertyString(ContextProperty *p)
 
 BatteryNotifier::BatteryNotifier(QObject *parent) :
     QObject(parent),
-    lowBatteryNotifier(0),
-    touchScreenLockActive(false),
-    batteryLevel(new ContextProperty("Battery.Level", this)),
-    chargingState(new ContextProperty("Battery.ChargingState", this)),
-    chargerType(new ContextProperty("Battery.ChargerType", this)),
-    psm(new ContextProperty("System.PowerSaveMode", this)),
-    lastState({BatteryUnknown, StateUnknown, ChargerNo}),
-    mode(ModeNormal),
-    chargingCompletion(NeedsCharging)
+    m_lowBatteryNotifier(0),
+    m_touchScreenLockActive(false),
+    m_batteryLevel(new ContextProperty("Battery.Level", this)),
+    m_chargingState(new ContextProperty("Battery.ChargingState", this)),
+    m_chargerType(new ContextProperty("Battery.ChargerType", this)),
+    m_psm(new ContextProperty("System.PowerSaveMode", this)),
+    m_lastState({BatteryUnknown, StateUnknown, ChargerNo}),
+    m_mode(ModeNormal),
+    m_chargingCompletion(NeedsCharging)
 {
-    connect(batteryLevel, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
-    connect(chargingState, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
-    connect(chargerType, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
-    connect(psm, SIGNAL(valueChanged()), this, SLOT(onPowerSaveModeChanged()));
+    connect(m_batteryLevel, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
+    connect(m_chargingState, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
+    connect(m_chargerType, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
+    connect(m_psm, SIGNAL(valueChanged()), this, SLOT(onPowerSaveModeChanged()));
 
-    timeline.start();
+    m_timeline.start();
 
-    preNotificationTimer.setInterval(1000);
-    preNotificationTimer.setSingleShot(true);
-    connect(&preNotificationTimer, SIGNAL(timeout()),
+    m_preNotificationTimer.setInterval(1000);
+    m_preNotificationTimer.setSingleShot(true);
+    connect(&m_preNotificationTimer, SIGNAL(timeout()),
             this, SLOT(prepareNotification()));
 
     QTimer::singleShot(0, this, SLOT(initBattery()));
@@ -88,9 +88,9 @@ void BatteryNotifier::prepareNotification()
     newState.level = getLevel();
     newState.charger = getCharger();
 
-    bool isStateChanged = newState.state != lastState.state,
-        isLevelChanged = newState.level != lastState.level,
-        isChargerChanged = newState.charger != lastState.charger,
+    bool isStateChanged = newState.state != m_lastState.state,
+        isLevelChanged = newState.level != m_lastState.level,
+        isChargerChanged = newState.charger != m_lastState.charger,
         isAnyChargingState = (newState.state == StateCharging
                           || newState.state == StateIdle);
     NotificationList toRemove;
@@ -99,7 +99,7 @@ void BatteryNotifier::prepareNotification()
     if (isStateChanged) {
         if (newState.state == StateIdle) {
             stopLowBatteryNotifier();
-            if (chargingCompletion == NeedsCharging) {
+            if (m_chargingCompletion == NeedsCharging) {
                 toRemove << NotificationCharging;
                 toSend << NotificationChargingComplete;
             }
@@ -108,7 +108,7 @@ void BatteryNotifier::prepareNotification()
             toRemove << NotificationRemoveCharger
                      << NotificationChargingComplete
                      << NotificationLowBattery;
-            if (chargingCompletion == NeedsCharging) {
+            if (m_chargingCompletion == NeedsCharging) {
                 toSend << NotificationCharging;
             }
         } else {
@@ -123,7 +123,7 @@ void BatteryNotifier::prepareNotification()
         if (newState.level == BatteryLow) {
             startLowBatteryNotifier();
             toSend << NotificationLowBattery;
-        } else if (isLevelChanged && lastState.state == StateDischarging) {
+        } else if (isLevelChanged && m_lastState.state == StateDischarging) {
             toRemove << NotificationLowBattery;
 
             if (newState.level == BatteryEmpty) {
@@ -137,32 +137,32 @@ void BatteryNotifier::prepareNotification()
 
     if (isChargerChanged) {
         if (newState.charger == ChargerNo) {
-            checkChargingTimer.reset();
+            m_checkChargingTimer.reset();
             toRemove << NotificationCharging
                      << NotificationChargingComplete;
 
-            if (lastState.charger == ChargerWall)
+            if (m_lastState.charger == ChargerWall)
                 toSend << NotificationRemoveCharger;
-        } else if (lastState.charger == ChargerNo && !isAnyChargingState) {
+        } else if (m_lastState.charger == ChargerNo && !isAnyChargingState) {
             // charger is inserted but battery is still discharging
-            checkChargingTimer.reset(new QTimer());
-            checkChargingTimer->setSingleShot(true);
+            m_checkChargingTimer.reset(new QTimer());
+            m_checkChargingTimer->setSingleShot(true);
             // unknown charger is also checked after wall charger
             // timeout
             int timeout = (newState.charger == ChargerUsb
                            ? checkChargingStartedTimeoutUsb
                            : checkChargingStartedTimeoutWall);
-            checkChargingTimer->setInterval(timeout);
-            connect(checkChargingTimer.data(), SIGNAL(timeout()),
+            m_checkChargingTimer->setInterval(timeout);
+            connect(m_checkChargingTimer.data(), SIGNAL(timeout()),
                     this, SLOT(checkIsChargingStarted()));
-            checkChargingTimer->start();
+            m_checkChargingTimer->start();
         }
     }
     if (isStateChanged) {
         if (!isAnyChargingState) {
-            chargingCompletion = NeedsCharging;
+            m_chargingCompletion = NeedsCharging;
         } else if (newState.state == StateIdle) {
-            chargingCompletion = FullyCharged;
+            m_chargingCompletion = FullyCharged;
         }
     }
 
@@ -172,31 +172,31 @@ void BatteryNotifier::prepareNotification()
     foreach(NotificationID id, toSend)
         sendNotification(id);
 
-    lastState = newState;
+    m_lastState = newState;
 }
 
 void BatteryNotifier::checkIsChargingStarted()
 {
-    if (lastState.charger != ChargerNo && lastState.state == StateDischarging) {
+    if (m_lastState.charger != ChargerNo && m_lastState.state == StateDischarging) {
         sendNotification(NotificationChargingNotStarted);
     }
 }
 
 void BatteryNotifier::onPropertyChanged()
 {
-    if (!preNotificationTimer.isActive()) {
-        preNotificationTimer.start();
+    if (!m_preNotificationTimer.isActive()) {
+        m_preNotificationTimer.start();
     }
 }
 
 void BatteryNotifier::onPowerSaveModeChanged()
 {
-    Mode newMode = psm->value().toInt() ? ModePSM : ModeNormal;
-    if (mode != newMode) {
+    Mode newMode = m_psm->value().toInt() ? ModePSM : ModeNormal;
+    if (m_mode != newMode) {
         sendNotification(newMode == ModePSM
                          ? NotificationEnteringPSM
                          : NotificationExitingPSM);
-        mode = newMode;
+        m_mode = newMode;
     }
 }
 
@@ -255,18 +255,18 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationID id)
     queued.number = manager->Notify(qApp->applicationName(), 0, info.icon,
                                     QString(), QString(), QStringList(), hints, -1);
     queued.id = id;
-    queued.time = timeline.elapsed();
-    if (notifications.size() == 3) // saves only last 3
-        notifications.pop_front();
-    notifications.push_back(queued);
+    queued.time = m_timeline.elapsed();
+    if (m_notifications.size() == 3) // saves only last 3
+        m_notifications.pop_front();
+    m_notifications.push_back(queued);
 }
 
 void BatteryNotifier::removeNotification(const NotificationList &ids)
 {
     NotificationManager *manager = NotificationManager::instance();
-    qint64 now = timeline.elapsed();
-    for (QList<QueuedNotification>::iterator it = notifications.begin();
-         it != notifications.end();) {
+    qint64 now = m_timeline.elapsed();
+    for (QList<QueuedNotification>::iterator it = m_notifications.begin();
+         it != m_notifications.end();) {
         // inherited: notification is shown for < 5 sec?
         if (now - it->time < 5000) {
             if (!ids.contains(it->id)) {
@@ -276,40 +276,40 @@ void BatteryNotifier::removeNotification(const NotificationList &ids)
 
             manager->CloseNotification(it->number);
         }
-        it = notifications.erase(it);
+        it = m_notifications.erase(it);
     }
 }
 
 void BatteryNotifier::setTouchScreenLockActive(bool active)
 {
-    touchScreenLockActive = active;
-    if (lowBatteryNotifier != NULL) {
-        lowBatteryNotifier->setTouchScreenLockActive(active);
+    m_touchScreenLockActive = active;
+    if (m_lowBatteryNotifier != NULL) {
+        m_lowBatteryNotifier->setTouchScreenLockActive(active);
     }
 }
 
 void BatteryNotifier::startLowBatteryNotifier()
 {
-    if (lowBatteryNotifier == NULL) {
-        lowBatteryNotifier = new LowBatteryNotifier();
-        connect(lowBatteryNotifier, SIGNAL(lowBatteryAlert()), this, SLOT(lowBatteryAlert()));
+    if (m_lowBatteryNotifier == NULL) {
+        m_lowBatteryNotifier = new LowBatteryNotifier();
+        connect(m_lowBatteryNotifier, SIGNAL(lowBatteryAlert()), this, SLOT(lowBatteryAlert()));
     }
 
-    lowBatteryNotifier->setTouchScreenLockActive(touchScreenLockActive);
-    lowBatteryNotifier->sendLowBatteryAlert();
+    m_lowBatteryNotifier->setTouchScreenLockActive(m_touchScreenLockActive);
+    m_lowBatteryNotifier->sendLowBatteryAlert();
 }
 
 void BatteryNotifier::stopLowBatteryNotifier()
 {
-    if (lowBatteryNotifier != NULL) {
-        delete lowBatteryNotifier;
-        lowBatteryNotifier = NULL;
+    if (m_lowBatteryNotifier != NULL) {
+        delete m_lowBatteryNotifier;
+        m_lowBatteryNotifier = NULL;
     }
 }
 
 BatteryNotifier::BatteryLevel BatteryNotifier::getLevel() const
 {
-    QString name(propertyString(batteryLevel));
+    QString name(propertyString(m_batteryLevel));
     return (name == "normal"
             ? BatteryNormal
             : (name == "low"
@@ -321,7 +321,7 @@ BatteryNotifier::BatteryLevel BatteryNotifier::getLevel() const
 
 BatteryNotifier::ChargingState BatteryNotifier::getState() const
 {
-    QString name(propertyString(chargingState));
+    QString name(propertyString(m_chargingState));
     return (name == "charging"
             ? StateCharging
             : (name == "discharging"
@@ -333,7 +333,7 @@ BatteryNotifier::ChargingState BatteryNotifier::getState() const
 
 BatteryNotifier::ChargerType BatteryNotifier::getCharger() const
 {
-    QString name(propertyString(chargerType));
+    QString name(propertyString(m_chargerType));
     return ((name == "dcp" || name == "cdp")
             ? ChargerWall
             : (name == "usb"

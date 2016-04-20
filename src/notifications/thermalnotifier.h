@@ -51,13 +51,13 @@ private:
     void createAndPublishNotification(const QString &category, const QString &body);
 
     //! For getting the thermal state
-    MeeGo::QmThermal *thermalState;
+    MeeGo::QmThermal *m_thermalState;
 
     //! For getting the display state
-    MeeGo::QmDisplayState *displayState;
+    MeeGo::QmDisplayState *m_displayState;
 
     //! Thermal state for which a notification has been displayed while the screen was on
-    MeeGo::QmThermal::ThermalState thermalStateNotifiedWhileScreenIsOn;
+    MeeGo::QmThermal::ThermalState m_thermalStateNotifiedWhileScreenIsOn;
 
 #ifdef UNIT_TEST
     friend class Ut_ThermalNotifier;

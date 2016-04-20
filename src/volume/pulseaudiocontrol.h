@@ -106,8 +106,8 @@ private:
     static DBusHandlerResult signalHandler(DBusConnection *conn, DBusMessage *message, void *control);
 
     //! D-Bus connection structure
-    DBusConnection *dbusConnection;
-    int reconnectTimeout;
+    DBusConnection *m_dbusConnection;
+    int m_reconnectTimeout;
 
     Q_DISABLE_COPY(PulseAudioControl)
 

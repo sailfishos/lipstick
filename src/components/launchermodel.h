@@ -42,21 +42,6 @@ class LIPSTICK_EXPORT LauncherModel : public QObjectListModel
 
     Q_ENUMS(ItemType)
 
-    QStringList _directories;
-    QStringList _iconDirectories;
-    QStringList _categories;
-    QFileSystemWatcher _fileSystemWatcher;
-    QSettings _launcherSettings;
-    QSettings _globalSettings;
-    LauncherMonitor _launcherMonitor;
-    QString _scope;
-    QString _launcherOrderPrefix;
-
-    QDBusServiceWatcher _dbusWatcher;
-    QMap<QString, QString> _packageNameToDBusService;
-    QList<LauncherItem *> _temporaryLaunchers;
-    bool _initialized;
-
 private slots:
     void monitoredFileChanged(const QString &changedPath);
     void onFilesUpdated(const QStringList &added, const QStringList &modified, const QStringList &removed);
@@ -125,6 +110,21 @@ private:
     void setTemporary(LauncherItem *item);
     void unsetTemporary(LauncherItem *item);
     LauncherItem *temporaryItemToReplace();
+
+    QStringList m_directories;
+    QStringList m_iconDirectories;
+    QStringList m_categories;
+    QFileSystemWatcher m_fileSystemWatcher;
+    QSettings m_launcherSettings;
+    QSettings m_globalSettings;
+    LauncherMonitor m_launcherMonitor;
+    QString m_scope;
+    QString m_launcherOrderPrefix;
+
+    QDBusServiceWatcher m_dbusWatcher;
+    QMap<QString, QString> m_packageNameToDBusService;
+    QList<LauncherItem *> m_temporaryLaunchers;
+    bool m_initialized;
 
     friend class Ut_LauncherModel;
 };

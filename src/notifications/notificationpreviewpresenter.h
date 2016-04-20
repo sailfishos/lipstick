@@ -103,22 +103,22 @@ private:
     void setCurrentNotification(LipstickNotification *notification);
 
     //! The notification window
-    HomeWindow *window;
+    HomeWindow *m_window;
 
     //! Notifications to be shown
-    QList<LipstickNotification *> notificationQueue;
+    QList<LipstickNotification *> m_notificationQueue;
 
     //! Notification currently being shown
-    LipstickNotification *currentNotification;
+    LipstickNotification *m_currentNotification;
 
     //! Player for notification feedbacks
-    NotificationFeedbackPlayer *notificationFeedbackPlayer;
+    NotificationFeedbackPlayer *m_notificationFeedbackPlayer;
 
     //! For getting information about the touch screen lock state
-    MeeGo::QmLocks *locks;
+    MeeGo::QmLocks *m_locks;
 
     //! For getting information about the display state
-    MeeGo::QmDisplayState *displayState;
+    MeeGo::QmDisplayState *m_displayState;
 
 #ifdef UNIT_TEST
     friend class Ut_NotificationPreviewPresenter;

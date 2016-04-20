@@ -53,10 +53,10 @@ private slots:
 
 private:
     //! Notifications sent for each path. The first bool in the pair is whether the threshold notification was sent, second whether the 100% notification was sent.
-    QMap<QString, QPair<bool, bool> > notificationsSentForPath;
+    QMap<QString, QPair<bool, bool> > m_notificationsSentForPath;
 
     //! The disk space notification
-    uint notificationId;
+    uint m_notificationId;
 
 #ifdef UNIT_TEST
     friend class Ut_DiskSpaceNotifier;

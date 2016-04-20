@@ -192,12 +192,12 @@ const char *NotificationManager::HINT_OWNER = "x-nemo-owner";
 const char *NotificationManager::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
 const char *NotificationManager::HINT_RESTORED = "x-nemo-restored";
 
-NotificationManager *NotificationManager::instance_ = 0;
+NotificationManager *NotificationManager::s_instance = 0;
 NotificationManager * NotificationManager::instance(bool owner) {
-  if (instance_ == 0) {
-    instance_ = new NotificationManager(qApp, owner);
+  if (s_instance == 0) {
+    s_instance = new NotificationManager(qApp, owner);
   }
-  return instance_;
+  return s_instance;
 }
 
 LipstickNotification * NotificationManager::notification(uint id) const {

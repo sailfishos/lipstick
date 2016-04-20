@@ -218,14 +218,14 @@ void Ut_BatteryNotifier::testLowBatteryNotifierConnection()
     setNewStubState("normal", "charging", "usb");
 
     /* LowBatteryNotifier shouldn't be instantiated at first */
-    QCOMPARE(batteryNotifier->lowBatteryNotifier, (LowBatteryNotifier *)NULL);
+    QCOMPARE(batteryNotifier->m_lowBatteryNotifier, (LowBatteryNotifier *)NULL);
 
     /* Simulate battery-state-low change */
     batteryNotifier->setTouchScreenLockActive(true);
     setNewStubState("low", "discharging", "");
 
     /* LowBatteryNotifier should be exists now... */
-    QVERIFY(batteryNotifier->lowBatteryNotifier != NULL);
+    QVERIFY(batteryNotifier->m_lowBatteryNotifier != NULL);
     QCOMPARE(gLowBatteryNotifierStub->stubCallCount("setTouchScreenLockActive"), 1);
     QCOMPARE(gLowBatteryNotifierStub->stubLastCallTo("setTouchScreenLockActive").parameter<bool>(0), true);
 
@@ -236,15 +236,15 @@ void Ut_BatteryNotifier::testLowBatteryNotifierConnection()
     setNewStubState(QString(), "charging", "usb");
 
     /* After this call LowBatteryNotifier should be destroyed */
-    QCOMPARE(batteryNotifier->lowBatteryNotifier, (LowBatteryNotifier *)NULL);
+    QCOMPARE(batteryNotifier->m_lowBatteryNotifier, (LowBatteryNotifier *)NULL);
 
     /* State OK should stop notifications */
     setNewStubState("low", "discharging", "");
-    QVERIFY(batteryNotifier->lowBatteryNotifier != NULL);
+    QVERIFY(batteryNotifier->m_lowBatteryNotifier != NULL);
     QCOMPARE(gLowBatteryNotifierStub->stubCallCount("sendLowBatteryAlert"), 2);
     setStubProperty("Battery.Level", "normal");
     batteryNotifier->prepareNotification();
-    QCOMPARE(batteryNotifier->lowBatteryNotifier, (LowBatteryNotifier *)NULL);
+    QCOMPARE(batteryNotifier->m_lowBatteryNotifier, (LowBatteryNotifier *)NULL);
 }
 
 void Ut_BatteryNotifier::testWhenChargingStopsThenNotificationRemoved()
@@ -279,15 +279,15 @@ void Ut_BatteryNotifier::testWhenChargingStopsAndBatteryIsLowNotifierIsCreated()
 {
     setNewStubState("low", "charging", "dcp");
     setNewStubState(QString(), "discharging", "");
-    QVERIFY(batteryNotifier->lowBatteryNotifier != NULL);
+    QVERIFY(batteryNotifier->m_lowBatteryNotifier != NULL);
 }
 
 void Ut_BatteryNotifier::testWhenStateChargingLowBatteryNotificationRemoved()
 {
     setNewStubState("low", "discharging", "");
-    QVERIFY(batteryNotifier->lowBatteryNotifier != NULL);
+    QVERIFY(batteryNotifier->m_lowBatteryNotifier != NULL);
     gNotificationManagerStub->stubReset();
-    batteryNotifier->notifications.clear();
+    batteryNotifier->m_notifications.clear();
     batteryNotifier->lowBatteryAlert();
     setNewStubState("low", "charging", "usb");
     QCOMPARE(gNotificationManagerStub->stubCallCount("CloseNotification"), 1);

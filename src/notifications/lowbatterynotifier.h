@@ -68,30 +68,30 @@ signals:
 
 private:
     //! For getting the display state
-    MeeGo::QmDisplayState *displayState;
+    MeeGo::QmDisplayState *m_displayState;
 
 #ifdef HAVE_CONTEXTSUBSCRIBER
     //! Call state context framework key
-    ContextProperty callContextItem;
+    ContextProperty m_callContextItem;
 #endif
 
     //! Timer for sending low battery alerts
-    QTimer *notificationTimer;
+    QTimer *m_notificationTimer;
 
     //! Time of the previous notification
-    QTime previousNotificationTime;
+    QTime m_previousNotificationTime;
 
     //! Notification interval in milliseconds based on the device and call state
-    int notificationInterval;
+    int m_notificationInterval;
 
     //! Whether the device is currently inactive or not
-    bool deviceInactive;
+    bool m_deviceInactive;
 
     //! Whether the touch screen lock is active or not
-    bool touchScreenLockActive;
+    bool m_touchScreenLockActive;
 
     //! Whether a call is in progress or not
-    bool callActive;
+    bool m_callActive;
 
 #ifdef UNIT_TEST
     friend class Ut_LowBatteryNotifier;

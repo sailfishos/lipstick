@@ -200,36 +200,36 @@ private:
     bool warningAcknowledged() const;
 
     //! The volume control window
-    HomeWindow *window;
+    HomeWindow *m_window;
 
     //! PulseAudio volume controller
-    PulseAudioControl *pulseAudioControl;
+    PulseAudioControl *m_pulseAudioControl;
 
     //! A resource object for access to the volume keys
-    ResourcePolicy::ResourceSet *hwKeyResource;
+    ResourcePolicy::ResourceSet *m_hwKeyResource;
 
     //! Whether to react to volume key presses
-    bool hwKeysAcquired;
+    bool m_hwKeysAcquired;
 
     //! The current volume
-    int volume_;
+    int m_volume;
 
     //! The maximum volume
-    int maximumVolume_;
+    int m_maximumVolume;
 
     //! Stores audio warning acknowledgement state
-    MGConfItem *audioWarning;
+    MGConfItem *m_audioWarning;
 
     //! The current safe volume
-    int safeVolume_;
+    int m_safeVolume;
 
     //! Call active status
-    bool callActive_;
+    bool m_callActive;
 
-    bool upPressed_;
-    bool downPressed_;
+    bool m_upPressed;
+    bool m_downPressed;
 
-    int mediaState_;
+    int m_mediaState;
 
 #ifdef UNIT_TEST
     friend class Ut_VolumeControl;
