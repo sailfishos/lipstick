@@ -88,6 +88,12 @@ MDesktopEntry::noDisplay() const
     return false;
 }
 
+QStringList
+MDesktopEntry::notShowIn() const
+{
+    return QStringList();
+}
+
 bool
 MDesktopEntry::isValid() const
 {
