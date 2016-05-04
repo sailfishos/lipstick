@@ -25,8 +25,7 @@ QMAKE_CXXFLAGS += \
     -std=c++0x \
     -fPIC \
     -fvisibility=hidden \
-    -fvisibility-inlines-hidden \
-    -Wno-error=format-security
+    -fvisibility-inlines-hidden
 
 target.path = /opt/tests/lipstick-tests
 INSTALLS += target
