@@ -17,6 +17,7 @@
 #include <QDBusMessage>
 #include <QDBusConnection>
 #include <QDBusArgument>
+#include <QDBusServiceWatcher>
 #include <dbus/dbus-glib-lowlevel.h>
 #include <QTimer>
 #include <QDebug>
@@ -32,10 +33,13 @@ static const char *VOLUME_SERVICE = "com.Meego.MainVolume2";
 static const char *VOLUME_PATH = "/com/meego/mainvolume2";
 static const char *VOLUME_INTERFACE = "com.Meego.MainVolume2";
 
+#define PA_RECONNECT_TIMEOUT_MS (2000)
+
 PulseAudioControl::PulseAudioControl(QObject *parent) :
     QObject(parent),
     m_dbusConnection(NULL),
-    m_reconnectTimeout(2000) // first reconnect after 2000ms
+    m_reconnectTimeout(PA_RECONNECT_TIMEOUT_MS),
+    m_serviceWatcher(0)
 {
 }
 
@@ -47,8 +51,38 @@ PulseAudioControl::~PulseAudioControl()
     }
 }
 
+void PulseAudioControl::pulseRegistered(const QString &service)
+{
+    Q_UNUSED(service);
+    openConnection();
+}
+
+void PulseAudioControl::pulseUnregistered(const QString &service)
+{
+    Q_UNUSED(service);
+    dbus_connection_unref(m_dbusConnection);
+    m_dbusConnection = NULL;
+    m_reconnectTimeout = PA_RECONNECT_TIMEOUT_MS;
+}
+
 void PulseAudioControl::openConnection()
 {
+    // For the first time connection is opened connect to session bus
+    // for tracking PulseAudio server state and to do the peer to peer
+    // address lookup later
+    if (!m_serviceWatcher) {
+        m_serviceWatcher = new QDBusServiceWatcher(QStringLiteral("org.pulseaudio.Server"),
+                                                   QDBusConnection::sessionBus(),
+                                                   QDBusServiceWatcher::WatchForRegistration |
+                                                     QDBusServiceWatcher::WatchForUnregistration,
+                                                   this);
+
+        connect(m_serviceWatcher, SIGNAL(serviceRegistered(const QString&)),
+                this, SLOT(pulseRegistered(const QString&)));
+        connect(m_serviceWatcher, SIGNAL(serviceUnregistered(const QString&)),
+                this, SLOT(pulseUnregistered(const QString&)));
+    }
+
     //! If the connection already exists, do nothing
     if ((m_dbusConnection != NULL) && (dbus_connection_get_is_connected(m_dbusConnection))) {
         return;
@@ -86,7 +120,7 @@ void PulseAudioControl::openConnection()
 
     if (!m_dbusConnection) {
         QTimer::singleShot(m_reconnectTimeout, this, SLOT(update()));
-        m_reconnectTimeout += 5000; // next reconnects wait for 5000ms more
+        m_reconnectTimeout += PA_RECONNECT_TIMEOUT_MS; // next reconnect waits for reconnect timeout longer
     }
 }
 

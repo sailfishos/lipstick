@@ -27,6 +27,8 @@ class PulseAudioControlStub : public StubBase {
   virtual void PulseAudioControlDestructor();
   virtual void update();
   virtual void setVolume(int volume);
+  virtual void pulseRegistered(const QString &service);
+  virtual void pulseUnregistered(const QString &service);
   virtual void openConnection();
   virtual void setSteps(quint32 currentStep, quint32 stepCount);
   virtual void addSignalMatch();
@@ -50,6 +52,18 @@ void PulseAudioControlStub::setVolume(int volume) {
   QList<ParameterBase*> params;
   params.append( new Parameter<int >(volume));
   stubMethodEntered("setVolume",params);
+}
+
+void PulseAudioControlStub::pulseRegistered(const QString &service)
+{
+  Q_UNUSED(service);
+  stubMethodEntered("pulseRegistered");
+}
+
+void PulseAudioControlStub::pulseUnregistered(const QString &service)
+{
+  Q_UNUSED(service);
+  stubMethodEntered("pulseUnregistered");
 }
 
 void PulseAudioControlStub::openConnection() {
@@ -98,6 +112,13 @@ void PulseAudioControl::update() {
 
 void PulseAudioControl::setVolume(int volume) {
   gPulseAudioControlStub->setVolume(volume);
+}
+
+void PulseAudioControl::pulseRegistered(const QString &service) {
+  gPulseAudioControlStub->pulseRegistered(service);
+}
+void PulseAudioControl::pulseUnregistered(const QString &service) {
+  gPulseAudioControlStub->pulseUnregistered(service);
 }
 
 void PulseAudioControl::openConnection() {
