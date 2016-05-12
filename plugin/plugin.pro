@@ -11,9 +11,15 @@ qmldirfile.files = qmldir
 qmldirfile.path = $$[QT_INSTALL_QML]/org/nemomobile/lipstick
 target.path = $$[QT_INSTALL_QML]/org/nemomobile/lipstick
 
-DEPENDPATH += "../src"
-INCLUDEPATH += "../src" "../src/utilities" "../src/xtools" "../src/compositor" "../src/qmsystem2"
-LIBS += -L"../src" -llipstick-qt5
+DEPENDPATH += ../src
+INCLUDEPATH += ../src \
+    ../src/utilities \
+    ../src/xtools \
+    ../src/compositor \
+    ../src/qmsystem2 \
+    ../src/touchscreen
+
+LIBS += -L../src -llipstick-qt5
 
 HEADERS += \
     lipstickplugin.h

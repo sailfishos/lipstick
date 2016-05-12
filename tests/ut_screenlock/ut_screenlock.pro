@@ -2,7 +2,7 @@ include(../common.pri)
 TARGET = ut_screenlock
 QT += dbus qml quick
 
-INCLUDEPATH += $$SCREENLOCKSRCDIR $$UTILITYSRCDIR $$SRCDIR/xtools $$QMSYSTEM2
+INCLUDEPATH += $$SCREENLOCKSRCDIR $$UTILITYSRCDIR $$TOUCHSCREENSRCDIR $$SRCDIR/xtools $$QMSYSTEM2
 
 SOURCES += ut_screenlock.cpp \
     $$SCREENLOCKSRCDIR/screenlock.cpp \

@@ -1,7 +1,7 @@
 include(../common.pri)
 TARGET = ut_diskspacenotifier
 QT += dbus
-INCLUDEPATH += $$NOTIFICATIONSRCDIR
+INCLUDEPATH += $$NOTIFICATIONSRCDIR $$TOUCHSCREENSRCDIR
 
 # unit test and unit
 SOURCES += \
