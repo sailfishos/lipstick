@@ -25,9 +25,13 @@
 
 #include "ut_screenlock.h"
 #include "screenlock.h"
+#include "touchscreen/touchscreen.h"
 #include "homeapplication.h"
 #include "closeeventeater_stub.h"
+#include "qmdisplaystate_stub.h"
 #include "lipsticktest.h"
+
+TouchScreen *gTouchScreen = 0;
 
 QDBus::CallMode qDbusAbstractInterfaceCallMode;
 QVariant qDbusAbstractInterfaceCallArg1;
@@ -66,9 +70,15 @@ HomeApplication *HomeApplication::instance()
     return qobject_cast<HomeApplication *>(qApp);
 }
 
+TouchScreen *HomeApplication::touchScreen() const
+{
+    return gTouchScreen;
+}
+
 void Ut_ScreenLock::init()
 {
-    screenLock = new ScreenLock;
+    gTouchScreen = new TouchScreen;
+    screenLock = new ScreenLock(gTouchScreen);
 }
 
 void Ut_ScreenLock::cleanup()
@@ -117,10 +127,11 @@ void Ut_ScreenLock::testToggleEventEater()
 
     // Make sure the screen locking signals are sent and the eater UI is shown/hidden
     screenLock->toggleEventEater(true);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
+    TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
+    QCOMPARE(touchScreen->eventFilter(0, &event), true);
 
     screenLock->toggleEventEater(false);
-    QCOMPARE(screenLock->eventFilter(0, &event), false);
+    QCOMPARE(touchScreen->eventFilter(0, &event), false);
 }
 
 void Ut_ScreenLock::testUnlockScreenWhenLocked()
@@ -191,7 +202,8 @@ void Ut_ScreenLock::testTkLockOpen()
 
     if (eventEaterWindowVisibilityModified) {
         QMouseEvent event(QEvent::MouseButtonPress, QPointF(), Qt::NoButton, 0, 0);
-        QCOMPARE(screenLock->eventFilter(0, &event), eventEaterWindowVisible);
+        TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
+        QCOMPARE(touchScreen->eventFilter(0, &event), eventEaterWindowVisible);
     }
 }
 
@@ -213,94 +225,28 @@ void Ut_ScreenLock::testTkLockClose()
 
     // Events should still be eaten
     QMouseEvent event(QEvent::MouseButtonPress, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
+    TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
+    QCOMPARE(touchScreen->eventFilter(0, &event), true);
 }
 
-void Ut_ScreenLock::testTouchBlocking()
+void Ut_ScreenLock::updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState)
 {
-    // Hide event eater
-    screenLock->hideEventEater();
-
-    HomeApplication *home = HomeApplication::instance();
-    emit home->displayStateChanged(HomeApplication::DisplayUnknown, HomeApplication::DisplayOff);
-    QVERIFY(screenLock->touchBlocked());
-
-    QMouseEvent event(QEvent::MouseButtonPress, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    event = QMouseEvent(QEvent::MouseMove, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    event = QMouseEvent(QEvent::MouseButtonRelease, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    event = QMouseEvent(QEvent::MouseButtonDblClick, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    QTouchEvent touch(QEvent::TouchBegin);
-    QCOMPARE(screenLock->eventFilter(0, &touch), true);
-
-    touch = QTouchEvent(QEvent::TouchUpdate);
-    QCOMPARE(screenLock->eventFilter(0, &touch), true);
-
-    touch = QTouchEvent(QEvent::TouchEnd);
-    QCOMPARE(screenLock->eventFilter(0, &touch), true);
-
-    // Do not filter TouchCancel.
-    touch = QTouchEvent(QEvent::TouchCancel);
-    QCOMPARE(screenLock->eventFilter(0, &touch), false);
-
-    emit home->displayStateChanged(HomeApplication::DisplayOff, HomeApplication::DisplayOn);
-    QVERIFY(screenLock->touchBlocked());
-    QSignalSpy touchBlockingSpy(screenLock, SIGNAL(touchBlockedChanged()));
-    touchBlockingSpy.wait();
-    QVERIFY(!screenLock->touchBlocked());
-
-    event = QMouseEvent(QEvent::MouseButtonPress, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    event = QMouseEvent(QEvent::MouseMove, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    event = QMouseEvent(QEvent::MouseButtonRelease, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    event = QMouseEvent(QEvent::MouseButtonDblClick, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), true);
-
-    touch = QTouchEvent(QEvent::TouchUpdate);
-    QCOMPARE(screenLock->eventFilter(0, &touch), true);
-
-    touch = QTouchEvent(QEvent::TouchEnd);
-    QCOMPARE(screenLock->eventFilter(0, &touch), true);
-
-    // New touch sequence starts after turning display on.
-    touch = QTouchEvent(QEvent::TouchBegin);
-    QCOMPARE(screenLock->eventFilter(0, &touch), false);
-
-    touch = QTouchEvent(QEvent::TouchUpdate);
-    QCOMPARE(screenLock->eventFilter(0, &touch), false);
-
-    touch = QTouchEvent(QEvent::TouchEnd);
-    QCOMPARE(screenLock->eventFilter(0, &touch), false);
-
-    event = QMouseEvent(QEvent::MouseButtonPress, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), false);
-
-    event = QMouseEvent(QEvent::MouseMove, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), false);
-
-    event = QMouseEvent(QEvent::MouseButtonRelease, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(screenLock->eventFilter(0, &event), false);
+    emit gQmDisplayStateStub->displayState->displayStateChanged(oldState);
+    emit gQmDisplayStateStub->displayState->displayStateChanged(newState);
 }
 
 void Ut_ScreenLock::fakeDisplayOnAndReady()
 {
     // Fake display state change.
-    emit HomeApplication::instance()->displayStateChanged(HomeApplication::DisplayOff, HomeApplication::DisplayOn);
+    TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
+    updateDisplayState(MeeGo::QmDisplayState::Off, MeeGo::QmDisplayState::On);
     QSignalSpy touchBlockingSpy(screenLock, SIGNAL(touchBlockedChanged()));
     touchBlockingSpy.wait();
-    screenLock->m_waitForTouchBegin = false;
+
+    QVERIFY(!screenLock->touchBlocked());
+    touchScreen->setEnabled(true);
+    QTouchEvent touch(QEvent::TouchBegin);
+    QCOMPARE(touchScreen->eventFilter(0, &touch), false);
 }
 
 LIPSTICK_TEST_MAIN(Ut_ScreenLock)

@@ -36,6 +36,8 @@ class QmDisplayStateStub : public StubBase {
   virtual bool set(MeeGo::QmDisplayState::DisplayState state);
   virtual void connectNotify(const QMetaMethod &signal);
   virtual void disconnectNotify(const QMetaMethod &signal);
+
+  MeeGo::QmDisplayState *displayState;
 }; 
 
 // 2. IMPLEMENT STUB
@@ -87,6 +89,7 @@ namespace MeeGo {
 // 4. CREATE A PROXY WHICH CALLS THE STUB
 QmDisplayState::QmDisplayState(QObject *parent) {
   gQmDisplayStateStub->QmDisplayStateConstructor(parent);
+  gQmDisplayStateStub->displayState = this;
 }
 
 QmDisplayState::~QmDisplayState() {

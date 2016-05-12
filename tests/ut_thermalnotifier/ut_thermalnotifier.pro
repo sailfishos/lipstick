@@ -1,7 +1,7 @@
 include(../common.pri)
 TARGET = ut_thermalnotifier
 CONFIG += link_pkgconfig
-INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$XTOOLSRCDIR ../../src/qmsystem2
+INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$XTOOLSRCDIR $$QMSYSTEM2
 QT += qml quick dbus
 
 # unit test and unit
@@ -17,6 +17,6 @@ HEADERS += \
     $$NOTIFICATIONSRCDIR/notificationmanager.h \
     $$NOTIFICATIONSRCDIR/lipsticknotification.h \
     $$SRCDIR/homeapplication.h \
-    ../../src/qmsystem2/qmthermal.h \
-    ../../src/qmsystem2/qmdisplaystate.h \
+    $$QMSYSTEM2/qmthermal.h \
+    $$QMSYSTEM2/qmdisplaystate.h \
     ut_thermalnotifier.h

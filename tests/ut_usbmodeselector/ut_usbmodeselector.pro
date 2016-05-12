@@ -1,7 +1,7 @@
 include(../common.pri)
 TARGET = ut_usbmodeselector
 USBMODEDQTINCLUDEDIR = $$system(pkg-config --cflags-only-I usb-moded-qt5 | sed s/^-I//g)
-INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$USBMODEDQTINCLUDEDIR ../../src/qmsystem2
+INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$USBMODEDQTINCLUDEDIR $$QMSYSTEM2
 PKGCONFIG += usb_moded
 QT += qml quick dbus
 
@@ -20,6 +20,6 @@ HEADERS += \
     $$UTILITYSRCDIR/closeeventeater.h \
     $$USBMODEDQTINCLUDEDIR/qusbmoded.h \
     $$USBMODEDQTINCLUDEDIR/qusbmode.h \
-    ../../src/qmsystem2/qmlocks.h \
+    $$QMSYSTEM2/qmlocks.h \
     ut_usbmodeselector.h \
     $$SRCDIR/homewindow.h \

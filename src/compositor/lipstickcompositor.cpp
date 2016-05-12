@@ -25,6 +25,7 @@
 #include <QMimeData>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 #include "homeapplication.h"
+#include "touchscreen/touchscreen.h"
 #include "windowmodel.h"
 #include "lipstickcompositorprocwindow.h"
 #include "lipstickcompositor.h"
@@ -393,10 +394,9 @@ void LipstickCompositor::onSurfaceDying()
 
 void LipstickCompositor::initialize()
 {
-    HomeApplication *home = HomeApplication::instance();
-    reactOnDisplayStateChanges(HomeApplication::DisplayUnknown, home->displayState());
-    connect(home, SIGNAL(displayStateChanged(HomeApplication::DisplayState,HomeApplication::DisplayState)),
-            this, SLOT(reactOnDisplayStateChanges(HomeApplication::DisplayState,HomeApplication::DisplayState)));
+    TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
+    reactOnDisplayStateChanges(TouchScreen::DisplayUnknown, touchScreen->currentDisplayState());
+    connect(touchScreen, &TouchScreen::displayStateChanged, this, &LipstickCompositor::reactOnDisplayStateChanges);
 
     new LipstickCompositorAdaptor(this);
 
@@ -632,6 +632,12 @@ void LipstickCompositor::setScreenOrientation(Qt::ScreenOrientation screenOrient
     }
 }
 
+bool LipstickCompositor::displayDimmed() const
+{
+    TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
+    return touchScreen->currentDisplayState() == TouchScreen::DisplayDimmed;
+}
+
 LipstickKeymap *LipstickCompositor::keymap() const
 {
     return m_keymap;
@@ -674,16 +680,16 @@ void LipstickCompositor::updateKeymap()
         defaultInputDevice()->setKeymap(QWaylandKeymap());
 }
 
-void LipstickCompositor::reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState)
+void LipstickCompositor::reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState)
 {
-    if (newState == HomeApplication::DisplayOn) {
+    if (newState == TouchScreen::DisplayOn) {
         emit displayOn();
-    } else if (newState == HomeApplication::DisplayOff) {
+    } else if (newState == TouchScreen::DisplayOff) {
         QCoreApplication::postEvent(this, new QTouchEvent(QEvent::TouchCancel));
         emit displayOff();
     }
 
-    bool changeInDimming = (newState == HomeApplication::DisplayDimmed) != (oldState == HomeApplication::DisplayDimmed);
+    bool changeInDimming = (newState == TouchScreen::DisplayDimmed) != (oldState == TouchScreen::DisplayDimmed);
     if (changeInDimming) {
         emit displayDimmedChanged();
     }

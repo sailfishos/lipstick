@@ -1,6 +1,6 @@
 include(../common.pri)
 TARGET = ut_shutdownscreen
-INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$XTOOLSRCDIR ../../src/qmsystem2
+INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$XTOOLSRCDIR $$QMSYSTEM2
 QT += qml quick dbus
 
 CONFIG += link_pkgconfig
@@ -13,8 +13,8 @@ SOURCES += \
     $$STUBSDIR/stubbase.cpp \
     $$STUBSDIR/homewindow.cpp \
     $$STUBSDIR/homeapplication.cpp \
-    ../../src/qmsystem2/qmsystemstate.cpp \
-    ../../src/qmsystem2/qmipcinterface.cpp \
+    $$QMSYSTEM2/qmsystemstate.cpp \
+    $$QMSYSTEM2/qmipcinterface.cpp \
     ut_shutdownscreen.cpp
 
 HEADERS += \
@@ -24,7 +24,7 @@ HEADERS += \
     $$UTILITYSRCDIR/closeeventeater.h \
     $$SRCDIR/homeapplication.h \
     $$SRCDIR/homewindow.h \
-    ../../src/qmsystem2/qmsystemstate.h \
-    ../../src/qmsystem2/qmsystemstate_p.h \
-    ../../src/qmsystem2/qmipcinterface_p.h \
+    $$QMSYSTEM2/qmsystemstate.h \
+    $$QMSYSTEM2/qmsystemstate_p.h \
+    $$QMSYSTEM2/qmipcinterface_p.h \
     ut_shutdownscreen.h

@@ -2,7 +2,7 @@
 #define LIPSTICKCOMPOSITOR_STUB
 
 #include "lipstickcompositor.h"
-#include "homeapplication.h"
+#include "touchscreen/touchscreen.h"
 #include <stubbase.h>
 
 // 1. DECLARE STUB
@@ -26,6 +26,7 @@ class LipstickCompositorStub : public StubBase {
   virtual void setTopmostWindowId(int id);
   virtual void setTopmostWindowOrientation(Qt::ScreenOrientation topmostWindowOrientation);
   virtual void setScreenOrientation(Qt::ScreenOrientation screenOrientation);
+  virtual bool displayDimmed() const;
   virtual LipstickKeymap *keymap() const;
   virtual void setKeymap(LipstickKeymap *keymap);
   virtual void updateKeymap();
@@ -51,7 +52,7 @@ class LipstickCompositorStub : public StubBase {
   virtual void windowSwapped();
   virtual void windowDestroyed();
   virtual void windowPropertyChanged(const QString &);
-  virtual void reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState);
+  virtual void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
   virtual void setScreenOrientationFromSensor();
   virtual void clipboardDataChanged();
   virtual void onVisibleChanged(bool visible);
@@ -154,6 +155,12 @@ void LipstickCompositorStub::setScreenOrientation(Qt::ScreenOrientation screenOr
   QList<ParameterBase*> params;
   params.append( new Parameter<Qt::ScreenOrientation >(screenOrientation));
   stubMethodEntered("setScreenOrientation",params);
+}
+
+bool LipstickCompositorStub::displayDimmed() const
+{
+  stubMethodEntered("displayDimmed");
+  return stubReturnValue<bool>("displayDimmed");
 }
 
 LipstickKeymap *LipstickCompositorStub::keymap() const {
@@ -296,10 +303,10 @@ void LipstickCompositorStub::windowPropertyChanged(const QString &property) {
   stubMethodEntered("windowPropertyChanged",params);
 }
 
-void LipstickCompositorStub::reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState) {
+void LipstickCompositorStub::reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState) {
   QList<ParameterBase*> params;
-  params.append(new Parameter<HomeApplication::DisplayState>(oldState));
-  params.append(new Parameter<HomeApplication::DisplayState>(newState));
+  params.append(new Parameter<TouchScreen::DisplayState>(oldState));
+  params.append(new Parameter<TouchScreen::DisplayState>(newState));
   stubMethodEntered("reactOnDisplayStateChanges",params);
 }
 
@@ -404,6 +411,11 @@ void LipstickCompositor::setScreenOrientation(Qt::ScreenOrientation screenOrient
   gLipstickCompositorStub->setScreenOrientation(screenOrientation);
 }
 
+bool LipstickCompositor::displayDimmed() const
+{
+  return gLipstickCompositorStub->displayDimmed();
+}
+
 LipstickKeymap *LipstickCompositor::keymap() const {
   return gLipstickCompositorStub->keymap();
 }
@@ -496,7 +508,7 @@ void LipstickCompositor::windowPropertyChanged(const QString &property) {
   gLipstickCompositorStub->windowPropertyChanged(property);
 }
 
-void LipstickCompositor::reactOnDisplayStateChanges(HomeApplication::DisplayState oldState, HomeApplication::DisplayState newState) {
+void LipstickCompositor::reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState) {
   gLipstickCompositorStub->reactOnDisplayStateChanges(oldState, newState);
 }
 

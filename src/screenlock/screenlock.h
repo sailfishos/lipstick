@@ -18,7 +18,7 @@
 #define SCREENLOCK_H
 
 #include <QObject>
-#include "homeapplication.h"
+#include "touchscreen/touchscreen.h"
 
 class QDBusInterface;
 
@@ -37,7 +37,7 @@ public:
      *
      * \param parent the parent QObject for the logic
      */
-    ScreenLock(QObject *parent = NULL);
+    explicit ScreenLock(TouchScreen *touchScreen, QObject *parent = 0);
 
     /*!
      * Destroys the screen lock business logic.
@@ -93,9 +93,7 @@ public:
      */
     bool touchBlocked() const;
 
-    //! \reimp
-    virtual bool eventFilter(QObject *, QEvent *event);
-    //! \reimp_end
+    TouchScreen::DisplayState displayState() const;
 
 public slots:
     //! Shows the screen lock window and calls the MCE's lock function.
@@ -132,9 +130,6 @@ private slots:
     //! Hides the event eater window.
     void hideEventEater();
 
-    //! Clear event eater if display is no longer dimmed
-    void handleDisplayStateChange(int oldState, int newState);
-
     //! Handles LPM events coming from mce.
     void handleLpmModeChange(const QString &state);
 
@@ -153,9 +148,6 @@ signals:
 
     //! Emitted when touch blocking changes. Touch is blocked when display is off.
     void touchBlockedChanged();
-
-protected:
-    void timerEvent(QTimerEvent *e) Q_DECL_OVERRIDE;
 
 private:
     enum TkLockReply {
@@ -184,6 +176,8 @@ private:
     //! MCE callback D-Bus interface
     QDBusInterface *m_callbackInterface;
 
+    TouchScreen *m_touchScreen;
+
     //! Name of the MCE callback method
     QString m_callbackMethod;
 
@@ -193,18 +187,11 @@ private:
     //! Whether the lockscreen is visible or not
     bool m_lockscreenVisible;
 
-    //! Whether events should be eaten or not
-    bool m_eatEvents;
-
     //! Whether the lockscreen should be shown as low power mode
     bool m_lowPowerMode;
 
     //! The current blanking policy obtained from mce
     QString m_mceBlankingPolicy;
-
-    HomeApplication::DisplayState m_currentDisplayState;
-    bool m_waitForTouchBegin;
-    int m_touchUnblockingDelayTimer;
 
 #ifdef UNIT_TEST
     friend class Ut_ScreenLock;

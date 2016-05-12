@@ -30,6 +30,7 @@
 #include "notifications/thermalnotifier.h"
 #include "screenlock/screenlock.h"
 #include "screenlock/screenlockadaptor.h"
+#include "touchscreen/touchscreen.h"
 #include "devicelock/devicelock.h"
 #include "devicelock/devicelockadaptor.h"
 #include "lipsticksettings.h"
@@ -66,7 +67,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     , m_originalSigIntHandler(signal(SIGINT, quitSignalHandler))
     , m_originalSigTermHandler(signal(SIGTERM, quitSignalHandler))
     , m_homeReadySent(false)
-    , m_displayState(0)
     , m_screenshotService(0)
 {
     QTranslator *engineeringEnglish = new QTranslator(this);
@@ -87,17 +87,12 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     // Export screen size / geometry as dconf keys
     LipstickSettings::instance()->exportScreenProperties();
 
-    m_displayState = new MeeGo::QmDisplayState(this);
-    connect(m_displayState, &MeeGo::QmDisplayState::displayStateChanged, this, [=](MeeGo::QmDisplayState::DisplayState state) {
-        HomeApplication::DisplayState newState = (HomeApplication::DisplayState)state;
-        if (m_currentDisplayState != newState) {
-            emit displayStateChanged(m_currentDisplayState, newState);
-            m_currentDisplayState = newState;
-        }
-    });
+    // Create touch screen and register for the screen lock.
+    m_touchScreen = new TouchScreen(this);
+    connect(m_touchScreen, &TouchScreen::displayStateChanged, this, &HomeApplication::displayStateChanged);
 
     // Create screen lock logic - not parented to "this" since destruction happens too late in that case
-    m_screenLock = new ScreenLock;
+    m_screenLock = new ScreenLock(m_touchScreen);
     LipstickSettings::instance()->setScreenLock(m_screenLock);
     new ScreenLockAdaptor(m_screenLock);
 
@@ -198,19 +193,21 @@ bool HomeApplication::homeActive() const
     return c?c->homeActive():(QGuiApplication::focusWindow() != 0);
 }
 
-HomeApplication::DisplayState HomeApplication::displayState()
+TouchScreen *HomeApplication::touchScreen() const
 {
-    return (HomeApplication::DisplayState)m_displayState->get();
+    return m_touchScreen;
+}
+
+TouchScreen::DisplayState HomeApplication::displayState()
+{
+    Q_ASSERT(m_touchScreen);
+    return m_touchScreen->currentDisplayState();
 }
 
 void HomeApplication::setDisplayOff()
 {
-    if (!m_displayState) {
-        qWarning() << "No display";
-        return;
-    }
-
-    m_displayState->set(MeeGo::QmDisplayState::Off);
+    Q_ASSERT(m_touchScreen);
+    m_touchScreen->setDisplayOff();
 }
 
 bool HomeApplication::event(QEvent *e)
