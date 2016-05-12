@@ -1,7 +1,7 @@
 include(../common.pri)
 TARGET = ut_devicelock
 
-INCLUDEPATH += $$DEVICELOCKSRCDIR
+INCLUDEPATH += $$DEVICELOCKSRCDIR $$TOUCHSCREENSRCDIR
 
 QT += dbus
 

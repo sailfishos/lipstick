@@ -16,7 +16,7 @@
 #include <signal.h>
 #include <QGuiApplication>
 #include "lipstickglobal.h"
-#include "touchscreen/touchscreen.h"
+#include <touchscreen.h>
 
 class QQmlEngine;
 class HomeWindow;
