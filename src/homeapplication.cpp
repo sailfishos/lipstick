@@ -30,8 +30,6 @@
 #include "notifications/thermalnotifier.h"
 #include "screenlock/screenlock.h"
 #include "screenlock/screenlockadaptor.h"
-#include "devicelock/devicelock.h"
-#include "devicelock/devicelockadaptor.h"
 #include "lipsticksettings.h"
 #include "homeapplication.h"
 #include "homewindow.h"
@@ -101,9 +99,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     LipstickSettings::instance()->setScreenLock(m_screenLock);
     new ScreenLockAdaptor(m_screenLock);
 
-    m_deviceLock = new DeviceLock(this);
-    new DeviceLockAdaptor(m_deviceLock);
-
     // Initialize the notification manager
     NotificationManager::instance();
     new NotificationPreviewPresenter(this);
@@ -124,7 +119,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     }
 
     registerDBusObject(systemBus, LIPSTICK_DBUS_SCREENLOCK_PATH, m_screenLock);
-    registerDBusObject(systemBus, LIPSTICK_DBUS_DEVICELOCK_PATH, m_deviceLock);
     registerDBusObject(systemBus, LIPSTICK_DBUS_SHUTDOWN_PATH, m_shutdownScreen);
 
     m_screenshotService = new ScreenshotService(this);
@@ -137,7 +131,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     m_qmlEngine->rootContext()->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
     m_qmlEngine->rootContext()->setContextProperty("lipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("LipstickSettings", LipstickSettings::instance());
-    m_qmlEngine->rootContext()->setContextProperty("deviceLock", m_deviceLock);
     m_qmlEngine->rootContext()->setContextProperty("volumeControl", m_volumeControl);
 
     connect(this, SIGNAL(homeReady()), this, SLOT(sendStartupNotifications()));
