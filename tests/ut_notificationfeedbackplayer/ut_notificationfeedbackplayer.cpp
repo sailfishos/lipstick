@@ -164,16 +164,20 @@ void Ut_NotificationFeedbackPlayer::testAddAndRemoveNotification()
     QCOMPARE(gClientStub->stubCallCount("play"), 1);
     QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QString>(0), QString("feedback"));
 
+    // Stop has been called as well
+    QCOMPARE(gClientStub->stubCallCount("stop"), 1);
+    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<QString>(0), QString("feedback"));
+
     // Remove the notification
     player->removeNotification(1);
 
     // Check that NGFAdapter::stop() was called for the notification
-    QCOMPARE(gClientStub->stubCallCount("stop"), 1);
-    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<quint32>(0), (quint32)1);
+    QCOMPARE(gClientStub->stubCallCount("stop"), 2);
+    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<quint32>(0), 1u);
 
     // Check that NGFAdapter::stop() is not called for an already stopped notification
     player->removeNotification(1);
-    QCOMPARE(gClientStub->stubCallCount("stop"), 1);
+    QCOMPARE(gClientStub->stubCallCount("stop"), 2);
 }
 
 void Ut_NotificationFeedbackPlayer::testWithoutFeedbackId()
@@ -205,7 +209,7 @@ void Ut_NotificationFeedbackPlayer::testMultipleFeedbackIds()
     events.insert(gClientStub->stubCallsTo("play").at(1)->parameter<QString>(0));
     QCOMPARE(events, QSet<QString>() << QString("feedback") << QString("foldback"));
 
-    QCOMPARE(gClientStub->stubCallsTo("stop").count(), 0);
+    QCOMPARE(gClientStub->stubCallsTo("stop").count(), 2);
 
     // Remove the notification
     player->removeNotification(1);
@@ -213,10 +217,10 @@ void Ut_NotificationFeedbackPlayer::testMultipleFeedbackIds()
     QCOMPARE(gClientStub->stubCallsTo("play").count(), 2);
 
     // Check that NGFAdapter::stop() was called for the events
-    QCOMPARE(gClientStub->stubCallsTo("stop").count(), 2);
+    QCOMPARE(gClientStub->stubCallsTo("stop").count(), 4);
     QSet<quint32> eventIds;
-    eventIds.insert(gClientStub->stubCallsTo("stop").at(0)->parameter<quint32>(0));
-    eventIds.insert(gClientStub->stubCallsTo("stop").at(1)->parameter<quint32>(0));
+    eventIds.insert(gClientStub->stubCallsTo("stop").at(2)->parameter<quint32>(0));
+    eventIds.insert(gClientStub->stubCallsTo("stop").at(3)->parameter<quint32>(0));
     QCOMPARE(eventIds, QSet<quint32>() << 1 << 2);
 }
 
@@ -279,12 +283,14 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotification()
     QCOMPARE(gClientStub->stubCallCount("play"), 1);
     QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QString>(0), QString("feedback"));
 
+    QCOMPARE(gClientStub->stubCallCount("stop"), 1);
+
     // Update the notification
     player->addNotification(1);
 
     // Check that NGFAdapter::stop() was called for the notification
-    QCOMPARE(gClientStub->stubCallCount("stop"), 1);
-    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<quint32>(0), (quint32)1);
+    QCOMPARE(gClientStub->stubCallCount("stop"), 3);
+    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<QString>(0), QString("feedback"));
 
     // Check that NGFAdapter::play() was called again for the feedback
     QCOMPARE(gClientStub->stubCallCount("play"), 2);
@@ -297,8 +303,8 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotification()
     player->addNotification(1);
 
     // Check that NGFAdapter::stop() was called again
-    QCOMPARE(gClientStub->stubCallCount("stop"), 2);
-    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<quint32>(0), (quint32)1);
+    QCOMPARE(gClientStub->stubCallCount("stop"), 5);
+    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<QString>(0), QString("foldback"));
 
     // Check that NGFAdapter::play() was called again
     QCOMPARE(gClientStub->stubCallCount("play"), 3);
@@ -311,8 +317,8 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotification()
     player->addNotification(1);
 
     // Check that NGFAdapter::stop() was called again
-    QCOMPARE(gClientStub->stubCallCount("stop"), 3);
-    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<quint32>(0), (quint32)1);
+    QCOMPARE(gClientStub->stubCallCount("stop"), 6);
+    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<quint32>(0), 1u);
 
     // Check that NGFAdapter::play() was not called again
     QCOMPARE(gClientStub->stubCallCount("play"), 3);
