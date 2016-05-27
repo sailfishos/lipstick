@@ -19,9 +19,10 @@
 #include <QDBusArgument>
 #include <QtDebug>
 
-LipstickNotification::LipstickNotification(const QString &appName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout, QObject *parent) :
+LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout, QObject *parent) :
     QObject(parent),
     m_appName(appName),
+    m_disambiguatedAppName(disambiguatedAppName),
     m_replacesId(replacesId),
     m_appIcon(appIcon),
     m_summary(summary),
@@ -47,6 +48,7 @@ LipstickNotification::LipstickNotification(QObject *parent) :
 LipstickNotification::LipstickNotification(const LipstickNotification &notification) :
     QObject(notification.parent()),
     m_appName(notification.m_appName),
+    m_disambiguatedAppName(notification.m_disambiguatedAppName),
     m_replacesId(notification.m_replacesId),
     m_appIcon(notification.m_appIcon),
     m_summary(notification.m_summary),
@@ -65,9 +67,19 @@ QString LipstickNotification::appName() const
     return m_appName;
 }
 
+QString LipstickNotification::disambiguatedAppName() const
+{
+    return m_disambiguatedAppName;
+}
+
 void LipstickNotification::setAppName(const QString &appName)
 {
     m_appName = appName;
+}
+
+void LipstickNotification::setDisambiguatedAppName(const QString &disambiguatedAppName)
+{
+    m_disambiguatedAppName = disambiguatedAppName;
 }
 
 uint LipstickNotification::replacesId() const

@@ -113,7 +113,7 @@ LipstickNotification *createNotification(uint id, int urgency = 0, QVariant prio
     if (priority.isValid()) {
         hints.insert(NotificationManager::HINT_PRIORITY, priority);
     }
-    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", id, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", "", id, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(id, notification);
     return notification;
 }
@@ -430,9 +430,9 @@ void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody()
     if (disableHint.isValid()) {
         hints.insert(NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, disableHint);
     }
-    LipstickNotification *notification1 = new LipstickNotification("ut_notificationfeedbackplayer", 1, "", "", "", QStringList(), hints, -1);
-    LipstickNotification *notification2 = new LipstickNotification("ut_notificationfeedbackplayer", 2, "", "summary", "", QStringList(), hints, -1);
-    LipstickNotification *notification3 = new LipstickNotification("ut_notificationfeedbackplayer", 3, "", "", "body", QStringList(), hints, -1);
+    LipstickNotification *notification1 = new LipstickNotification("ut_notificationfeedbackplayer", "", 1, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification2 = new LipstickNotification("ut_notificationfeedbackplayer", "", 2, "", "summary", "", QStringList(), hints, -1);
+    LipstickNotification *notification3 = new LipstickNotification("ut_notificationfeedbackplayer", "", 3, "", "", "body", QStringList(), hints, -1);
     notificationManagerNotification.insert(1, notification1);
     notificationManagerNotification.insert(2, notification2);
     notificationManagerNotification.insert(3, notification3);

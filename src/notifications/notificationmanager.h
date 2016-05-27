@@ -424,6 +424,15 @@ private:
     bool setSchemaVersion(int version);
 
     /*!
+     * Returns true if all listed columns are present in the table in the database.
+     *
+     * \param tableName the name of the table to be verified
+     * \param columnNames the list of columns that should be present in the table
+     * \return \c true if the columns are all present, \c false otherwise
+     */
+    bool verifyTableColumns(const QString &tableName, const QStringList &columnNames);
+
+    /*!
      * Recreates a table in the database.
      *
      * \param tableName the name of the table to be created
