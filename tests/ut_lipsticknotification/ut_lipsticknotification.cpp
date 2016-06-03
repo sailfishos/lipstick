@@ -22,6 +22,7 @@
 void Ut_Notification::testGettersAndSetters()
 {
     QString appName = "appName1";
+    QString disambiguatedAppName = "appName1-2-3";
     uint replacesId = 1;
     QString appIcon = "appIcon1";
     QString summary = "summary1";
@@ -50,8 +51,9 @@ void Ut_Notification::testGettersAndSetters()
     int expireTimeout = 1;
 
     // Ensure that the constructor puts things in place
-    LipstickNotification notification(appName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
+    LipstickNotification notification(appName, disambiguatedAppName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
     QCOMPARE(notification.appName(), appName);
+    QCOMPARE(notification.disambiguatedAppName(), disambiguatedAppName);
     QCOMPARE(notification.replacesId(), replacesId);
     QCOMPARE(notification.appIcon(), appIcon);
     QCOMPARE(notification.summary(), summary);
@@ -74,6 +76,7 @@ void Ut_Notification::testGettersAndSetters()
     QCOMPARE(notification.hintValues().value("x-nemo.testing.custom-hint-value").toDouble(), M_PI);
 
     appName = "appName2";
+    disambiguatedAppName = "appName2-2-3";
     appIcon = "appIcon2";
     summary = "summary2";
     body = "body2";
@@ -96,6 +99,7 @@ void Ut_Notification::testGettersAndSetters()
     hints.insert(NotificationManager::HINT_CATEGORY, category);
     expireTimeout = 2;
     notification.setAppName(appName);
+    notification.setDisambiguatedAppName(disambiguatedAppName);
     notification.setAppIcon(appIcon);
     notification.setSummary(summary);
     notification.setBody(body);
@@ -103,6 +107,7 @@ void Ut_Notification::testGettersAndSetters()
     notification.setHints(hints);
     notification.setExpireTimeout(expireTimeout);
     QCOMPARE(notification.appName(), appName);
+    QCOMPARE(notification.disambiguatedAppName(), disambiguatedAppName);
     QCOMPARE(notification.appIcon(), appIcon);
     QCOMPARE(notification.summary(), summary);
     QCOMPARE(notification.body(), body);
@@ -164,10 +169,10 @@ void Ut_Notification::testIcon()
     }
 
     // The 'icon' properly used to fallback to appIcon if required; but no longer
-    LipstickNotification notification1(QString(), 0, appIcon, QString(), QString(), QStringList(), hints, 0);
+    LipstickNotification notification1(QString(), QString(), 0, appIcon, QString(), QString(), QStringList(), hints, 0);
     QCOMPARE(notification1.appIcon(), appIcon);
     QCOMPARE(notification1.icon(), icon);
-    LipstickNotification notification2(QString(), 0, QString(), QString(), QString(), QStringList(), QVariantHash(), 0);
+    LipstickNotification notification2(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), QVariantHash(), 0);
     notification2.setAppIcon(appIcon);
     notification2.setHints(hints);
     QCOMPARE(notification2.appIcon(), appIcon);
@@ -177,7 +182,7 @@ void Ut_Notification::testIcon()
 void Ut_Notification::testSignals()
 {
     QVariantHash hints;
-    LipstickNotification notification(QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
+    LipstickNotification notification(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
     QSignalSpy summarySpy(&notification, SIGNAL(summaryChanged()));
     QSignalSpy bodySpy(&notification, SIGNAL(bodyChanged()));
     QSignalSpy iconSpy(&notification, SIGNAL(iconChanged()));
@@ -242,7 +247,7 @@ void Ut_Notification::testSerialization()
     hints.insert(NotificationManager::HINT_TIMESTAMP, timestamp);
     int expireTimeout = 1;
 
-    LipstickNotification n1(appName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
+    LipstickNotification n1(appName, appName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
     LipstickNotification n2;
 
     // Transfer a Notification from n1 to n2 by serializing it to a QDBusArgument and unserializing it
@@ -259,6 +264,9 @@ void Ut_Notification::testSerialization()
     QCOMPARE(n2.expireTimeout(), n1.expireTimeout());
     QCOMPARE(n2.icon(), n1.icon());
     QCOMPARE(n2.timestamp(), n1.timestamp());
+
+    // Disambiguated app name is internal only
+    QVERIFY(n2.disambiguatedAppName() != n1.appName());
 }
 
 QTEST_MAIN(Ut_Notification)

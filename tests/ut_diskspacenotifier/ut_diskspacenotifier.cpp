@@ -127,7 +127,7 @@ void Ut_DiskSpaceNotifier::testConstruction()
     // Check that the constructor destroys only any previous notifications of type x-nemo.system.diskspace
     QVariantHash hints;
     hints.insert(NotificationManager::HINT_CATEGORY, "x-nemo.system.diskspace");
-    LipstickNotification notification(qApp->applicationName(), 1, QString(), QString(), QString(), QStringList(), hints, -1);
+    LipstickNotification notification(qApp->applicationName(), qApp->applicationName(), 1, QString(), QString(), QString(), QStringList(), hints, -1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1u << 1u);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     m_subject = new DiskSpaceNotifier();

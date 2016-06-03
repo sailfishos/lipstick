@@ -26,6 +26,7 @@ private slots:
     void cleanup();
     void testManagerIsSingleton();
     void testDatabaseConnectionSucceedsAndTablesAreOk();
+    void testDatabaseConnectionUpgradeToVersion2();
     void testDatabaseConnectionSucceedsAndTablesAreNotOk();
     void testFirstDatabaseConnectionFails();
     void testNotEnoughDiskSpaceToOpenDatabase();
