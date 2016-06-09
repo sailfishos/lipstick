@@ -580,7 +580,7 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
     }
 
     // Add the notification, its actions and its hints to the database
-    execSQL("INSERT INTO notifications VALUES (?, ?, ?, ?, ?, ?, ?)", QVariantList() << id << notification->appName() << notification->disambiguatedAppName() << notification->appIcon() << notification->summary() << notification->body() << notification->expireTimeout());
+    execSQL("INSERT INTO notifications VALUES (?, ?, ?, ?, ?, ?, ?)", QVariantList() << id << notification->appName() << notification->appIcon() << notification->summary() << notification->body() << notification->expireTimeout() << notification->disambiguatedAppName());
     foreach (const QString &action, notification->actions()) {
         execSQL("INSERT INTO actions VALUES (?, ?)", QVariantList() << id << action);
     }
@@ -699,7 +699,7 @@ bool NotificationManager::checkTableValidity()
             recreateNotificationsTable = true;
         }
     } else if (databaseVersion == 2) {
-        recreateNotificationsTable = !verifyTableColumns("notifications", QStringList() << "id" << "app_name" << "disambiguated_app_name" << "app_icon" << "summary" << "body" << "expire_timeout");
+        recreateNotificationsTable = !verifyTableColumns("notifications", QStringList() << "id" << "app_name" << "app_icon" << "summary" << "body" << "expire_timeout" << "disambiguated_app_name");
         recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action");
         recreateHintsTable = !verifyTableColumns("hints", QStringList() << "id" << "hint" << "value");
         recreateExpirationTable = !verifyTableColumns("expiration", QStringList() << "id" << "expire_at");
@@ -707,7 +707,7 @@ bool NotificationManager::checkTableValidity()
 
     if (recreateNotificationsTable) {
         qWarning() << "Recreating notifications table";
-        result &= recreateTable("notifications", "id INTEGER PRIMARY KEY, app_name TEXT, disambiguated_app_name TEXT, app_icon TEXT, summary TEXT, body TEXT, expire_timeout INTEGER");
+        result &= recreateTable("notifications", "id INTEGER PRIMARY KEY, app_name TEXT, app_icon TEXT, summary TEXT, body TEXT, expire_timeout INTEGER, disambiguated_app_name TEXT");
     }
     if (recreateActionsTable) {
         qWarning() << "Recreating actions table";
@@ -763,9 +763,12 @@ bool NotificationManager::verifyTableColumns(const QString &tableName, const QSt
     QSqlTableModel tableModel(0, *m_database);
     tableModel.setTable(tableName);
 
+    // The order of the columns must be correct
+    int index = 0;
     foreach (const QString &columnName, columnNames) {
-        if (tableModel.fieldIndex(columnName) == -1)
+        if (tableModel.fieldIndex(columnName) != index)
             return false;
+        ++index;
     }
 
     return true;
