@@ -763,9 +763,12 @@ bool NotificationManager::verifyTableColumns(const QString &tableName, const QSt
     QSqlTableModel tableModel(0, *m_database);
     tableModel.setTable(tableName);
 
+    // The order of the columns must be correct
+    int index = 0;
     foreach (const QString &columnName, columnNames) {
-        if (tableModel.fieldIndex(columnName) == -1)
+        if (tableModel.fieldIndex(columnName) != index)
             return false;
+        ++index;
     }
 
     return true;
