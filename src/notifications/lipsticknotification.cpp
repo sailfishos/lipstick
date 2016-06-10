@@ -17,6 +17,7 @@
 #include "lipsticknotification.h"
 
 #include <QDBusArgument>
+#include <QDataStream>
 #include <QtDebug>
 
 LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout, QObject *parent) :
