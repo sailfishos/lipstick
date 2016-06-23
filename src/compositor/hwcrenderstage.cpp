@@ -24,6 +24,7 @@
 
 #include <qsgnode.h>
 #include <qsgtexturematerial.h>
+#include <private/qsgrenderer_p.h>
 
 #include <EGL/egl.h>
 
