@@ -30,7 +30,8 @@ USBModeSelector::USBModeSelector(QObject *parent) :
     QObject(parent),
     m_window(0),
     m_usbMode(new QUsbModed(this)),
-    m_locks(new MeeGo::QmLocks(this))
+    m_locks(new MeeGo::QmLocks(this)),
+    m_previousNotificationId(0)
 {
     if (s_errorCodeToTranslationID.isEmpty()) {
         s_errorCodeToTranslationID.insert("qtn_usb_filessystem_inuse", "qtn_usb_filessystem_inuse");
@@ -40,6 +41,8 @@ USBModeSelector::USBModeSelector(QObject *parent) :
     connect(m_usbMode, SIGNAL(currentModeChanged()), this, SLOT(applyCurrentUSBMode()));
     connect(m_usbMode, SIGNAL(usbStateError(QString)), this, SLOT(showError(QString)));
     connect(m_usbMode, SIGNAL(supportedModesChanged()), this, SIGNAL(supportedUSBModesChanged()));
+    connect(NotificationManager::instance(), &NotificationManager::NotificationClosed,
+            this, &USBModeSelector::notificationClosed);
 
     // Lazy initialize to improve startup time
     QTimer::singleShot(500, this, SLOT(applyCurrentUSBMode()));
@@ -159,7 +162,10 @@ void USBModeSelector::showNotification(QString mode)
     QVariantHash hints;
     hints.insert(NotificationManager::HINT_CATEGORY, category);
     hints.insert(NotificationManager::HINT_PREVIEW_BODY, body);
-    manager->Notify(qApp->applicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
+    if (m_previousNotificationId != 0) {
+        manager->CloseNotification(m_previousNotificationId);
+    }
+    m_previousNotificationId = manager->Notify(qApp->applicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
 }
 
 void USBModeSelector::showError(const QString &errorCode)
@@ -177,4 +183,11 @@ void USBModeSelector::showError(const QString &errorCode)
 void USBModeSelector::setUSBMode(QString mode)
 {
     m_usbMode->setCurrentMode(mode);
+}
+
+void USBModeSelector::notificationClosed(uint id)
+{
+    if (m_previousNotificationId == id) {
+        m_previousNotificationId = 0;
+    }
 }
