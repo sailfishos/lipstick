@@ -107,6 +107,8 @@ private:
      */
     void showNotification(QString mode);
 
+    void notificationClosed(uint id);
+
 private:
 
     //! Error code to translation ID mapping
@@ -120,6 +122,8 @@ private:
 
     //! For getting information about the device lock state
     MeeGo::QmLocks *m_locks;
+
+    uint m_previousNotificationId;
 
 #ifdef UNIT_TEST
     friend class Ut_USBModeSelector;
