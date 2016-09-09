@@ -35,4 +35,6 @@
 #define LIPSTICK_DBUS_SHUTDOWN_PATH "/shutdown"
 #define LIPSTICK_DBUS_SCREENSHOT_PATH "/org/nemomobile/lipstick/screenshot"
 
+#define LIPSTICK_DBUS_VPNAGENT_PATH "/org/nemomobile/lipstick/vpnagent"
+
 #endif /* LIPSTICK_DBUS_H */

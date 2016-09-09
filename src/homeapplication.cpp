@@ -45,6 +45,9 @@
 #include "connectionselector.h"
 #include "screenshotservice.h"
 #include "screenshotserviceadaptor.h"
+#include "vpnagent.h"
+#include "connmanvpnagent.h"
+#include "connmanvpnproxy.h"
 
 void HomeApplication::quitSignalHandler(int)
 {
@@ -122,6 +125,15 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     registerDBusObject(sessionBus, LIPSTICK_DBUS_SCREENSHOT_PATH, m_screenshotService);
 
+    // Respond to requests for VPN user input
+    m_vpnAgent = new VpnAgent(this);
+    new ConnmanVpnAgentAdaptor(m_vpnAgent);
+
+    registerDBusObject(systemBus, LIPSTICK_DBUS_VPNAGENT_PATH, m_vpnAgent);
+
+    m_connmanVpn = new ConnmanVpnProxy("net.connman.vpn", "/", systemBus, this);
+    m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+
     // Setting up the context and engine things
     m_qmlEngine->rootContext()->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
     m_qmlEngine->rootContext()->setContextProperty("lipstickSettings", LipstickSettings::instance());
@@ -133,6 +145,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
 HomeApplication::~HomeApplication()
 {
+    m_connmanVpn->UnregisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+
     emit aboutToDestroy();
 
     delete m_volumeControl;
