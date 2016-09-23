@@ -401,11 +401,11 @@ void LipstickCompositor::initialize()
     new LipstickCompositorAdaptor(this);
 
     QDBusConnection systemBus = QDBusConnection::systemBus();
-    if (!systemBus.registerService("org.nemomobile.compositor")) {
-        qWarning("Unable to register D-Bus service org.nemomobile.compositor: %s", systemBus.lastError().message().toUtf8().constData());
-    }
     if (!systemBus.registerObject("/", this)) {
         qWarning("Unable to register object at path /: %s", systemBus.lastError().message().toUtf8().constData());
+    }
+    if (!systemBus.registerService("org.nemomobile.compositor")) {
+        qWarning("Unable to register D-Bus service org.nemomobile.compositor: %s", systemBus.lastError().message().toUtf8().constData());
     }
 }
 
