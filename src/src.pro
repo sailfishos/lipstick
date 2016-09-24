@@ -4,6 +4,8 @@ system(qdbusxml2cpp screenshotservice.xml -a screenshotserviceadaptor -c Screens
 system(qdbusxml2cpp shutdownscreen.xml -a shutdownscreenadaptor -c ShutdownScreenAdaptor -l ShutdownScreen -i shutdownscreen.h)
 system(qdbusxml2cpp net.connman.vpn.Agent.xml -a connmanvpnagent -c ConnmanVpnAgentAdaptor -l VpnAgent -i vpnagent.h)
 system(qdbusxml2cpp -c ConnmanVpnProxy -p connmanvpnproxy net.connman.vpn.xml -i qdbusxml2cpp_dbus_types.h)
+system(qdbusxml2cpp -c ConnmanManagerProxy -p connmanmanagerproxy net.connman.manager.xml -i qdbusxml2cpp_dbus_types.h)
+system(qdbusxml2cpp -c ConnmanServiceProxy -p connmanserviceproxy net.connman.service.xml -i qdbusxml2cpp_dbus_types.h)
 
 TEMPLATE = lib
 TARGET = lipstick-qt5
@@ -58,6 +60,7 @@ PUBLICHEADERS += \
     qmsystem2/qmthermal.h \
     qmsystem2/system_global.h \
     vpnagent.h \
+    connectivitymonitor.h \
     connectionselector.h
 
 INSTALLS += publicheaderfiles dbus_policy
@@ -89,6 +92,8 @@ HEADERS += \
     qdbusxml2cpp_dbus_types.h \
     connmanvpnagent.h \
     connmanvpnproxy.h \
+    connmanmanagerproxy.h \
+    connmanserviceproxy.h \
     notifications/thermalnotifier.h \
     qmsystem2/qmsystemstate_p.h \
     qmsystem2/qmdisplaystate_p.h \
@@ -131,8 +136,11 @@ SOURCES += \
     shutdownscreen.cpp \
     shutdownscreenadaptor.cpp \
     vpnagent.cpp \
+    connectivitymonitor.cpp \
     connmanvpnagent.cpp \
     connmanvpnproxy.cpp \
+    connmanmanagerproxy.cpp \
+    connmanserviceproxy.cpp \
     connectionselector.cpp \
     lipstickapi.cpp \
     screenshotservice.cpp \

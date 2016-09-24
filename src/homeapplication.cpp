@@ -48,6 +48,7 @@
 #include "vpnagent.h"
 #include "connmanvpnagent.h"
 #include "connmanvpnproxy.h"
+#include "connectivitymonitor.h"
 
 void HomeApplication::quitSignalHandler(int)
 {
@@ -69,6 +70,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     , m_originalSigTermHandler(signal(SIGTERM, quitSignalHandler))
     , m_homeReadySent(false)
     , m_screenshotService(0)
+    , m_online(false)
 {
     QTranslator *engineeringEnglish = new QTranslator(this);
     engineeringEnglish->load("lipstick_eng_en", "/usr/share/translations");
@@ -134,11 +136,22 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     m_connmanVpn = new ConnmanVpnProxy("net.connman.vpn", "/", systemBus, this);
     m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
 
+    // Bring automatic VPNs up and down when connectivity state changes
+    m_connectivityMonitor = new ConnectivityMonitor(this);
+    connect(m_connectivityMonitor, &ConnectivityMonitor::connectivityChanged, this, [this](const QList<QString> &activeTypes) {
+        const bool state(!activeTypes.isEmpty());
+        if (state != m_online) {
+            m_online = state;
+            QProcess::startDetached("systemctl", QStringList() << "--user" << (m_online ? "start" : "stop") << "vpn-updown");
+        }
+    });
+
     // Setting up the context and engine things
     m_qmlEngine->rootContext()->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
     m_qmlEngine->rootContext()->setContextProperty("lipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("LipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("volumeControl", m_volumeControl);
+    m_qmlEngine->rootContext()->setContextProperty("connectivityMonitor", m_connectivityMonitor);
 
     connect(this, SIGNAL(homeReady()), this, SLOT(sendStartupNotifications()));
 }
