@@ -29,6 +29,7 @@ class ConnectionSelector;
 class ScreenshotService;
 class VpnAgent;
 class ConnmanVpnProxy;
+class ConnectivityMonitor;
 
 /*!
  * Extends QApplication with features necessary to create a desktop.
@@ -186,6 +187,8 @@ private:
 
     VpnAgent *m_vpnAgent;
     ConnmanVpnProxy * m_connmanVpn;
+    ConnectivityMonitor *m_connectivityMonitor;
+    bool m_online;
 };
 
 #endif /* HOMEAPPLICATION_H_ */
