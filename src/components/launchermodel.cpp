@@ -504,30 +504,45 @@ void LauncherModel::updatingStarted(const QString &packageName, const QString &l
         item = packageInModel(packageName);
     }
 
-    // Calling updatingStarted on an existing temporary icon should
-    // update the internal state of the temporary icon (and if the
-    // .desktop file exists, make the icon non-temporary).
-    if (item && item->isTemporary()) {
-        if (!label.isEmpty()) {
-            item->setCustomTitle(label);
-        }
+    if (item) {
+        if (item->isTemporary()) {
+            // Calling updatingStarted on an existing temporary icon should
+            // update the internal state of the temporary icon (and if the
+            // .desktop file exists, make the icon non-temporary).
+            if (!label.isEmpty()) {
+                item->setCustomTitle(label);
+            }
 
-        if (!iconPath.isEmpty()) {
-            item->setIconFilename(iconPath);
-        }
+            if (!iconPath.isEmpty()) {
+                item->setIconFilename(iconPath);
+            }
 
-        if (!desktopFile.isEmpty() && isDesktopFile(m_directories, desktopFile)) {
-            // Only update the .desktop file name if we actually consider
-            // it a .desktop file in the paths we monitor for changes (JB#29427)
-            item->setFilePath(desktopFile);
-            // XXX: Changing the .desktop file path might hide the icon;
-            // we don't handle this here, but expect onFilesUpdated() to be
-            // called with the correct file names via the filesystem monitor
-        }
+            if (!desktopFile.isEmpty() && isDesktopFile(m_directories, desktopFile)) {
+                // Only update the .desktop file name if we actually consider
+                // it a .desktop file in the paths we monitor for changes (JB#29427)
+                item->setFilePath(desktopFile);
+                // XXX: Changing the .desktop file path might hide the icon;
+                // we don't handle this here, but expect onFilesUpdated() to be
+                // called with the correct file names via the filesystem monitor
+            }
 
-        if (QFile(desktopFile).exists()) {
-            // The file has appeared - remove temporary flag
-            unsetTemporary(item);
+            if (QFile(desktopFile).exists()) {
+                // The file has appeared - remove temporary flag
+                unsetTemporary(item);
+            }
+        } else {
+            // if there's first update notification without desktop file info and the guess made here fails,
+            // a temporary item will be created.
+            // if then after that there's update notification with both desktop file and package name,
+            // need to remove the temporary one.
+            foreach (LauncherItem *item, m_temporaryLaunchers) {
+                if (item->packageName() == packageName) {
+                    // Will remove it from _temporaryLaunchers
+                    unsetTemporary(item);
+                    removeItem(item);
+                    break;
+                }
+            }
         }
     }
 
