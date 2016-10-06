@@ -49,8 +49,9 @@ void WindowProperty::setWindowId(int window)
     if (c) m_surface = c->surfaceForId(window);
 
     if (m_surface) {
+        // this must use a queued connection in order to avoid QTBUG-32859
         QObject::connect(m_surface, SIGNAL(windowPropertyChanged(QString,QVariant)), 
-                         this, SLOT(windowPropertyChanged(QString)));
+                         this, SLOT(windowPropertyChanged(QString)), Qt::QueuedConnection);
         QObject::connect(m_surface, SIGNAL(destroyed(QObject *)),
                          this, SIGNAL(valueChanged()));
     }
