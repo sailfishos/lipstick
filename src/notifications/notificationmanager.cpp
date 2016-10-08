@@ -174,8 +174,8 @@ NotificationManager::NotificationManager(QObject *parent, bool owner) :
         qDBusRegisterMetaType<NotificationList>();
 
         new NotificationManagerAdaptor(this);
-        QDBusConnection::sessionBus().registerService("org.freedesktop.Notifications");
         QDBusConnection::sessionBus().registerObject("/org/freedesktop/Notifications", this);
+        QDBusConnection::sessionBus().registerService("org.freedesktop.Notifications");
 
         connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)), this, SLOT(removeNotificationsWithCategory(QString)));
         connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)), this, SLOT(updateNotificationsWithCategory(QString)));
