@@ -39,3 +39,15 @@ package:com.imo.android.imoim;chat,chat_exists
 
 Jongla;chat,chat_exists
 package:org.apache.android.xmpp;chat,chat_exists
+
+TextSecure;chat,chat_exists
+package:org.thoughtcrime.securesms;chat,chat_exists
+
+Threema;chat,chat_exists
+package:ch.threema.app;chat,chat_exists
+
+Conversations;chat,chat_exists
+package:eu.siacs.conversations;chat,chat_exists
+
+K9-Mail;email,email_exists
+package:com.fsck.k9;email,email_exists
