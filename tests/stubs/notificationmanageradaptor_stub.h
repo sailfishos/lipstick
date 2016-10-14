@@ -30,6 +30,7 @@ class NotificationManagerAdaptorStub : public StubBase {
   virtual QString GetServerInformation(QString &name, QString &vendor, QString &version);
   virtual uint Notify(const QString &app_name, uint replaces_id, const QString &app_icon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expire_timeout);
   virtual NotificationList GetNotifications(const QString &app_name);
+  virtual NotificationList GetNotificationsByCategory(const QString &category);
 };
 
 // 2. IMPLEMENT STUB
@@ -82,6 +83,12 @@ NotificationList NotificationManagerAdaptorStub::GetNotifications(const QString 
 }
 
 
+NotificationList NotificationManagerAdaptorStub::GetNotificationsByCategory(const QString &category) {
+  QList<ParameterBase*> params;
+  params.append( new Parameter<QString >(category));
+  stubMethodEntered("GetNotificationsByCategory",params);
+  return stubReturnValue<NotificationList >("GetNotificationsByCategory");
+}
 
 // 3. CREATE A STUB INSTANCE
 NotificationManagerAdaptorStub gDefaultNotificationManagerAdaptorStub;
@@ -115,6 +122,10 @@ uint NotificationManagerAdaptor::Notify(const QString &app_name, uint replaces_i
 
 NotificationList NotificationManagerAdaptor::GetNotifications(const QString &app_name) {
   return gNotificationManagerAdaptorStub->GetNotifications(app_name);
+}
+
+NotificationList NotificationManagerAdaptor::GetNotificationsByCategory(const QString &category) {
+  return gNotificationManagerAdaptorStub->GetNotificationsByCategory(category);
 }
 
 

@@ -471,6 +471,21 @@ NotificationList NotificationManager::GetNotifications(const QString &owner)
     return NotificationList(notificationList);
 }
 
+NotificationList NotificationManager::GetNotificationsByCategory(const QString &category)
+{
+    QList<LipstickNotification *> notificationList;
+    if (isPrivileged()) {
+        QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
+        for ( ; it != end; ++it) {
+            LipstickNotification *notification = it.value();
+            if (notification->category() == category) {
+                notificationList.append(notification);
+            }
+        }
+    }
+    return NotificationList(notificationList);
+}
+
 uint NotificationManager::nextAvailableNotificationID()
 {
     bool idIncreased = false;
@@ -1008,6 +1023,22 @@ uint NotificationManager::callerProcessId() const
     } else {
         return QCoreApplication::applicationPid();
     }
+}
+
+bool NotificationManager::isPrivileged() const
+{
+    uint pid = callerProcessId();
+    QFileInfo info(QString("/proc/%1").arg(pid));
+    if (info.group() != QLatin1String("privileged") && info.owner() != QLatin1String("root")) {
+        QString errorString = QString("PID %1 is not in privileged group").arg(pid);
+        if (calledFromDBus()) {
+            sendErrorReply(QDBusError::AccessDenied, errorString);
+        } else {
+            qWarning() << errorString;
+        }
+        return false;
+    }
+    return true;
 }
 
 void NotificationManager::invokeAction(const QString &action)

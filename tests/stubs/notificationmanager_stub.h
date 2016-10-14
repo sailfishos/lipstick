@@ -33,6 +33,7 @@ class NotificationManagerStub : public StubBase {
   virtual void MarkNotificationDisplayed(uint id);
   virtual QString GetServerInformation(QString &name, QString &vendor, QString &version);
   virtual NotificationList GetNotifications(const QString &appName);
+  virtual NotificationList GetNotificationsByCategory(const QString &category);
   virtual void removeNotificationsWithCategory(const QString &category);
   virtual void updateNotificationsWithCategory(const QString &category);
   virtual void commit();
@@ -111,6 +112,13 @@ NotificationList NotificationManagerStub::GetNotifications(const QString &appNam
   params.append( new Parameter<QString >(appName));
   stubMethodEntered("GetNotifications",params);
   return stubReturnValue<NotificationList>("GetNotifications");
+}
+
+NotificationList NotificationManagerStub::GetNotificationsByCategory(const QString &category) {
+  QList<ParameterBase*> params;
+  params.append( new Parameter<QString >(category));
+  stubMethodEntered("GetNotificationsByCategory",params);
+  return stubReturnValue<NotificationList>("GetNotificationsByCategory");
 }
 
 void NotificationManagerStub::removeNotificationsWithCategory(const QString &category) {
@@ -230,6 +238,10 @@ QString NotificationManager::GetServerInformation(QString &name, QString &vendor
 
 NotificationList NotificationManager::GetNotifications(const QString &appName) {
   return gNotificationManagerStub->GetNotifications(appName);
+}
+
+NotificationList NotificationManager::GetNotificationsByCategory(const QString &category) {
+  return gNotificationManagerStub->GetNotificationsByCategory(category);
 }
 
 void NotificationManager::removeNotificationsWithCategory(const QString &category) {
