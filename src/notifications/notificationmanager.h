@@ -452,6 +452,8 @@ private:
      */
     void execSQL(const QString &command, const QVariantList &args = QVariantList());
 
+    uint callerProcessId() const;
+
     //! The singleton notification manager instance
     static NotificationManager *s_instance;
 
