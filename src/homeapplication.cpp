@@ -109,17 +109,15 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     // MCE and usb-moded expect services to be registered on the system bus
     QDBusConnection systemBus = QDBusConnection::systemBus();
+    registerDBusObject(systemBus, LIPSTICK_DBUS_SCREENLOCK_PATH, m_screenLock);
+    registerDBusObject(systemBus, LIPSTICK_DBUS_SHUTDOWN_PATH, m_shutdownScreen);
     if (!systemBus.registerService(LIPSTICK_DBUS_SERVICE_NAME)) {
         qWarning("Unable to register D-Bus service %s: %s", LIPSTICK_DBUS_SERVICE_NAME, systemBus.lastError().message().toUtf8().constData());
     }
 
-    registerDBusObject(systemBus, LIPSTICK_DBUS_SCREENLOCK_PATH, m_screenLock);
-    registerDBusObject(systemBus, LIPSTICK_DBUS_SHUTDOWN_PATH, m_shutdownScreen);
-
     m_screenshotService = new ScreenshotService(this);
     new ScreenshotServiceAdaptor(m_screenshotService);
     QDBusConnection sessionBus = QDBusConnection::sessionBus();
-
     registerDBusObject(sessionBus, LIPSTICK_DBUS_SCREENSHOT_PATH, m_screenshotService);
 
     // Setting up the context and engine things
