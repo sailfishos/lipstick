@@ -41,5 +41,10 @@
       <arg name="notifications" type="a(sussasa{sv}i)" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="NotificationList"/>
     </method>
+    <method name="GetNotificationsByCategory">
+      <arg name="category" type="s" direction="in"/>
+      <arg name="notifications" type="a(sussasa{sv}i)" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="NotificationList"/>
+    </method>
   </interface>
 </node>

@@ -95,6 +95,20 @@ const int DefaultNotificationPriority = 50;
 const int CommitDelay = 10 * 1000;
 const int PublicationDelay = 1000;
 
+QString getProcessName(uint pid)
+{
+    if (pid > 1) {
+        const QString procFilename(QString::fromLatin1("/proc/%1/cmdline").arg(QString::number(pid)));
+        QFile procFile(procFilename);
+        if (procFile.open(QIODevice::ReadOnly)) {
+            const QByteArray cmdLine = procFile.readAll();
+            QString processNameWithPath = QFile::decodeName(cmdLine.left(cmdLine.indexOf('\0')));
+            return QFileInfo(processNameWithPath).fileName();
+        }
+    }
+    return QString();
+}
+
 QPair<QString, QString> processProperties(uint pid)
 {
     // Cache resolution of process name to properties:
@@ -105,35 +119,27 @@ QPair<QString, QString> processProperties(uint pid)
     if (pid == QCoreApplication::applicationPid()) {
         // This notification comes from our process
         rv.first = QCoreApplication::applicationName();
-    } else if (pid > 1) {
-        const QString procFilename(QString::fromLatin1("/proc/%1/cmdline").arg(QString::number(pid)));
-        QFile procFile(procFilename);
-        if (procFile.open(QIODevice::ReadOnly)) {
-            const QByteArray cmdLine = procFile.readAll();
-            const QString processName = QString::fromUtf8(cmdLine.left(cmdLine.indexOf('\0')));
-            if (!processName.isEmpty()) {
-                const QString basename(QFileInfo(processName).fileName());
-                if (!basename.isEmpty()) {
-                    QHash<QString, QPair<QString, QString> >::iterator it = nameProperties.find(basename);
-                    if (it == nameProperties.end()) {
-                        // Look up the desktop entry for this process name
-                        MDesktopEntry desktopEntry(DESKTOP_ENTRY_PATH + basename + ".desktop");
-                        if (desktopEntry.isValid()) {
-                            it = nameProperties.insert(basename, qMakePair(desktopEntry.name(), desktopEntry.icon()));
-                        } else {
-                            qWarning() << "No desktop entry for process name:" << processName;
-                            // Fallback to the basename for application name
-                            it = nameProperties.insert(basename, qMakePair(basename, QString()));
-                        }
-                    }
-                    if (it != nameProperties.end()) {
-                        rv.first = it->first;
-                        rv.second = it->second;
-                    }
+    } else {
+        const QString processName = getProcessName(pid);
+        if (!processName.isEmpty()) {
+            QHash<QString, QPair<QString, QString> >::iterator it = nameProperties.find(processName);
+            if (it == nameProperties.end()) {
+                // Look up the desktop entry for this process name
+                MDesktopEntry desktopEntry(DESKTOP_ENTRY_PATH + processName + ".desktop");
+                if (desktopEntry.isValid()) {
+                    it = nameProperties.insert(processName, qMakePair(desktopEntry.name(), desktopEntry.icon()));
+                } else {
+                    qWarning() << "No desktop entry for process name:" << processName;
+                    // Fallback to the processName for application name
+                    it = nameProperties.insert(processName, qMakePair(processName, QString()));
                 }
             }
+            if (it != nameProperties.end()) {
+                rv.first = it->first;
+                rv.second = it->second;
+            }
         } else {
-            qWarning() << "Unable to retrieve command line for pid:" << pid;
+            qWarning() << "Unable to retrieve process name for pid:" << pid;
         }
     }
 
@@ -451,15 +457,32 @@ QString NotificationManager::GetServerInformation(QString &name, QString &vendor
 
 NotificationList NotificationManager::GetNotifications(const QString &owner)
 {
+    uint pid = callerProcessId();
+    QString callerProcessName = getProcessName(pid);
     QList<LipstickNotification *> notificationList;
     QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
     for ( ; it != end; ++it) {
         LipstickNotification *notification = it.value();
-        if (notification->owner() == owner) {
+        if (notification->owner() == owner || (!callerProcessName.isEmpty() && (notification->owner() == callerProcessName))) {
             notificationList.append(notification);
         }
     }
 
+    return NotificationList(notificationList);
+}
+
+NotificationList NotificationManager::GetNotificationsByCategory(const QString &category)
+{
+    QList<LipstickNotification *> notificationList;
+    if (isPrivileged()) {
+        QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
+        for ( ; it != end; ++it) {
+            LipstickNotification *notification = it.value();
+            if (notification->category() == category) {
+                notificationList.append(notification);
+            }
+        }
+    }
     return NotificationList(notificationList);
 }
 
@@ -991,6 +1014,31 @@ void NotificationManager::execSQL(const QString &command, const QVariantList &ar
     }
 
     m_databaseCommitTimer.start();
+}
+
+uint NotificationManager::callerProcessId() const
+{
+    if (calledFromDBus()) {
+        return connection().interface()->servicePid(message().service()).value();
+    } else {
+        return QCoreApplication::applicationPid();
+    }
+}
+
+bool NotificationManager::isPrivileged() const
+{
+    uint pid = callerProcessId();
+    QFileInfo info(QString("/proc/%1").arg(pid));
+    if (info.group() != QLatin1String("privileged") && info.owner() != QLatin1String("root")) {
+        QString errorString = QString("PID %1 is not in privileged group").arg(pid);
+        if (calledFromDBus()) {
+            sendErrorReply(QDBusError::AccessDenied, errorString);
+        } else {
+            qWarning() << errorString;
+        }
+        return false;
+    }
+    return true;
 }
 
 void NotificationManager::invokeAction(const QString &action)

@@ -226,6 +226,14 @@ public:
      */
     NotificationList GetNotifications(const QString &owner);
 
+    /*!
+     * Returns notifications that match to the specified category.
+     * This requires privileged access rights.
+     * \param category notification category
+     * \return a list of notifications
+     */
+    NotificationList GetNotificationsByCategory(const QString &category);
+
 signals:
     /*!
      * A completed notification is one that has timed out, or has been dismissed by the user.
@@ -451,6 +459,9 @@ private:
      * \param args list of values to be bound to the positional placeholders ('?' -character) in the command.
      */
     void execSQL(const QString &command, const QVariantList &args = QVariantList());
+
+    uint callerProcessId() const;
+    bool isPrivileged() const;
 
     //! The singleton notification manager instance
     static NotificationManager *s_instance;
