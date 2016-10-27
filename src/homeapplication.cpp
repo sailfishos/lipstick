@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <QDBusMessage>
 #include <QDBusConnection>
+#include <QDBusServiceWatcher>
 #include <QIcon>
 #include <QTranslator>
 #include <QDebug>
@@ -70,6 +71,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     , m_originalSigTermHandler(signal(SIGTERM, quitSignalHandler))
     , m_homeReadySent(false)
     , m_screenshotService(0)
+    , m_connmanVpnWatcher(0)
+    , m_connmanVpn(0)
     , m_online(false)
 {
     QTranslator *engineeringEnglish = new QTranslator(this);
@@ -131,8 +134,11 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     registerDBusObject(systemBus, LIPSTICK_DBUS_VPNAGENT_PATH, m_vpnAgent);
 
-    m_connmanVpn = new ConnmanVpnProxy("net.connman.vpn", "/", systemBus, this);
-    m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+    m_connmanVpnWatcher = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus, QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration, this);
+    connect(m_connmanVpnWatcher, &QDBusServiceWatcher::serviceRegistered, this, &HomeApplication::registerVpnAgent);
+    connect(m_connmanVpnWatcher, &QDBusServiceWatcher::serviceUnregistered, this, &HomeApplication::unregisterVpnAgent);
+
+    registerVpnAgent(QString());
 
     // Bring automatic VPNs up and down when connectivity state changes
     m_connectivityMonitor = new ConnectivityMonitor(this);
@@ -156,7 +162,10 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
 HomeApplication::~HomeApplication()
 {
-    m_connmanVpn->UnregisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+    if (m_connmanVpn) {
+        m_connmanVpn->UnregisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+        delete m_connmanVpn;
+    }
 
     emit aboutToDestroy();
 
@@ -336,3 +345,24 @@ void HomeApplication::takeScreenshot(const QString &path)
 {
     m_screenshotService->saveScreenshot(path);
 }
+
+void HomeApplication::registerVpnAgent(const QString &)
+{
+    qWarning() << " ------------------------- registerVpnAgent:" << (void*)m_connmanVpn << " m_agent:" << (void*)m_vpnAgent << " ss:" << (void*)m_screenshotService;
+    if (!m_connmanVpn) {
+        if (QDBusConnection::systemBus().interface()->isServiceRegistered(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE)) {
+            m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, "/", QDBusConnection::systemBus());
+            m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+            qWarning() << " ------------------------- connman-vpn agent registered:" << m_connmanVpn;
+        }
+    }
+}
+
+void HomeApplication::unregisterVpnAgent(const QString &)
+{
+    qWarning() << " ------------------------- unregisterVpnAgent:" << (void*)m_connmanVpn << " m_agent:" << (void*)m_vpnAgent << " ss:" << (void*)m_screenshotService;
+    //delete m_connmanVpn;
+    m_connmanVpn = 0;
+    qWarning() << " ------------------------- done unregisterVpnAgent";
+}
+

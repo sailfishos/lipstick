@@ -30,6 +30,7 @@ class ScreenshotService;
 class VpnAgent;
 class ConnmanVpnProxy;
 class ConnectivityMonitor;
+class QDBusServiceWatcher;
 
 /*!
  * Extends QApplication with features necessary to create a desktop.
@@ -144,6 +145,9 @@ private slots:
      */
     void connectFrameSwappedSignal(bool mainWindowVisible);
 
+    void registerVpnAgent(const QString &);
+    void unregisterVpnAgent(const QString &);
+
 private:
     friend class LipstickApi;
 
@@ -186,6 +190,7 @@ private:
     ScreenshotService *m_screenshotService;
 
     VpnAgent *m_vpnAgent;
+    QDBusServiceWatcher *m_connmanVpnWatcher;
     ConnmanVpnProxy * m_connmanVpn;
     ConnectivityMonitor *m_connectivityMonitor;
     bool m_online;

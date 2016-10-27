@@ -38,3 +38,11 @@ void HomeApplication::sendStartupNotifications()
 void HomeApplication::connectFrameSwappedSignal(bool)
 {
 }
+
+void HomeApplication::registerVpnAgent(const QString &)
+{
+}
+
+void HomeApplication::unregisterVpnAgent(const QString &)
+{
+}
