@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <QDBusMessage>
 #include <QDBusConnection>
+#include <QDBusServiceWatcher>
 #include <QIcon>
 #include <QTranslator>
 #include <QDebug>
@@ -69,6 +70,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     , m_originalSigTermHandler(signal(SIGTERM, quitSignalHandler))
     , m_homeReadySent(false)
     , m_screenshotService(0)
+    , m_connmanVpn(0)
 {
     QTranslator *engineeringEnglish = new QTranslator(this);
     engineeringEnglish->load("lipstick_eng_en", "/usr/share/translations");
@@ -129,8 +131,24 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     registerDBusObject(systemBus, LIPSTICK_DBUS_VPNAGENT_PATH, m_vpnAgent);
 
-    m_connmanVpn = new ConnmanVpnProxy("net.connman.vpn", "/", systemBus, this);
-    m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+    auto registerVpnAgent = [this]() {
+        if (!m_connmanVpn) {
+            if (QDBusConnection::systemBus().interface()->isServiceRegistered(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE)) {
+                m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, "/", QDBusConnection::systemBus());
+                m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+            }
+        }
+    };
+    auto unregisterVpnAgent = [this]() {
+        delete m_connmanVpn;
+        m_connmanVpn = 0;
+    };
+
+    QDBusServiceWatcher *connmanVpnWatcher = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus, QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration, this);
+    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceRegistered, this, [registerVpnAgent](const QString &){ registerVpnAgent(); });
+    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [unregisterVpnAgent](const QString &){ unregisterVpnAgent(); });
+
+    registerVpnAgent();
 
     // Setting up the context and engine things
     m_qmlEngine->rootContext()->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
@@ -143,7 +161,10 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
 HomeApplication::~HomeApplication()
 {
-    m_connmanVpn->UnregisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+    if (m_connmanVpn) {
+        m_connmanVpn->UnregisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+        delete m_connmanVpn;
+    }
 
     emit aboutToDestroy();
 
