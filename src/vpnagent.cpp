@@ -28,7 +28,8 @@
 
 VpnAgent::VpnAgent(QObject *parent) :
     QObject(parent),
-    m_window(0)
+    m_window(0),
+    m_connections(new VpnModel(this))
 {
     QTimer::singleShot(0, this, SLOT(createWindow()));
 }
@@ -70,16 +71,29 @@ bool VpnAgent::windowVisible() const
 
 void VpnAgent::respond(const QString &path, const QVariantMap &details)
 {
+    bool storeCredentials = false;
+
     // Marshall our response
     QVariantMap response;
     for (QVariantMap::const_iterator it = details.cbegin(), end = details.cend(); it != end; ++it) {
-        const QVariantMap &field(it.value().value<QVariantMap>());
-        const QVariant fieldValue = field.value(QStringLiteral("Value"));
-        const QString fieldRequirement = field.value(QStringLiteral("Requirement")).toString();
-        if (fieldRequirement == QStringLiteral("mandatory") ||
-            (fieldRequirement != QStringLiteral("informational") && fieldValue.isValid())) {
-            response.insert(it.key(), fieldValue);
+        const QString name(it.key());
+        if (name == QStringLiteral("storeCredentials")) {
+            storeCredentials = it.value().value<bool>();
+        } else {
+            const QVariantMap &field(it.value().value<QVariantMap>());
+            const QVariant fieldValue = field.value(QStringLiteral("Value"));
+            const QString fieldRequirement = field.value(QStringLiteral("Requirement")).toString();
+            if (fieldRequirement == QStringLiteral("mandatory") ||
+                (fieldRequirement != QStringLiteral("informational") && fieldValue.isValid())) {
+                response.insert(it.key(), fieldValue);
+            }
         }
+    }
+
+    if (storeCredentials) {
+        m_connections->setConnectionCredentials(path, response);
+    } else {
+        m_connections->disableConnectionCredentials(path);
     }
 
     QList<Request>::iterator it = m_pending.begin(), end = m_pending.end();
@@ -154,10 +168,49 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
         *it = extract<QVariantMap>(it.value().value<QDBusArgument>());
     }
 
+    // Can we supply the requested data from stored credentials?
+    const QString objectPath(path.path());
+    const bool storeCredentials(m_connections->connectionCredentialsEnabled(objectPath));
+    if (storeCredentials) {
+        const QVariantMap credentials(m_connections->connectionCredentials(objectPath));
+
+        bool satisfied(true);
+        QVariantMap response;
+
+        for (QVariantMap::iterator it = extracted.begin(), end = extracted.end(); it != end; ++it) {
+            QVariantMap field(it.value().value<QVariantMap>());
+
+            const QString fieldRequirement = field.value(QStringLiteral("Requirement")).toString();
+            const bool mandatory(fieldRequirement == QStringLiteral("mandatory"));
+            if (fieldRequirement != QStringLiteral("informational")) {
+                const QString &name(it.key());
+                auto cit = credentials.find(name);
+                const QString storedValue(cit == credentials.end() ? QString() : cit->toString());
+                if (storedValue.isEmpty()) {
+                    if (mandatory) {
+                        satisfied = false;
+                    }
+                } else {
+                    response.insert(name, storedValue);
+
+                    field.insert(QStringLiteral("Value"), QVariant::fromValue(storedValue));
+                    *it = QVariant::fromValue(field);
+                }
+            }
+        }
+
+        if (satisfied) {
+            // We can respond immediately
+            return response;
+        }
+    }
+
+    extracted.insert(QStringLiteral("storeCredentials"), QVariant::fromValue(storeCredentials));
+
     // Inform the caller that the reponse will be asynchronous
     QDBusContext::setDelayedReply(true);
 
-    m_pending.append(Request(path.path(), extracted, QDBusContext::message()));
+    m_pending.append(Request(objectPath, extracted, QDBusContext::message()));
     Request &newRequest(m_pending.back());
 
     if (m_pending.size() == 1) {

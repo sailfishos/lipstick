@@ -22,6 +22,8 @@
 #include <QDBusObjectPath>
 #include <QList>
 
+#include "vpnmodel.h"
+
 #include "lipstickglobal.h"
 
 class HomeWindow;
@@ -84,6 +86,7 @@ signals:
 
 private:
     HomeWindow *m_window;
+    VpnModel *m_connections;
 
     struct Request {
         Request(const QString &path, const QVariantMap &details, const QDBusMessage &request);
