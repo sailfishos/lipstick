@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="net.connman.vpn.Manager">
+    <method name="Create">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
+      <arg name="properties" type="a{sv}" direction="in"/>
+      <arg name="path" type="o" direction="out"/>
+    </method>
+    <method name="Remove">
+      <arg name="identifier" type="o" direction="in"/>
+    </method>
+    <method name="GetConnections">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="PathPropertiesArray"/>
+      <arg name="connections" type="a(oa{sv})" direction="out"/>
+    </method>
+    <method name="RegisterAgent">
+      <arg name="path" type="o" direction="in"/>
+    </method>
+    <method name="UnregisterAgent">
+      <arg name="path" type="o" direction="in"/>
+    </method>
+    <signal name="ConnectionAdded">
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+      <arg name="identifier" type="o"/>
+      <arg name="properties" type="a{sv}"/>
+    </signal>
+    <signal name="ConnectionRemoved">
+      <arg name="identifier" type="o"/>
+    </signal>
+  </interface>
+</node>

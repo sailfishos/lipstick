@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <QDBusMessage>
 #include <QDBusConnection>
+#include <QDBusServiceWatcher>
 #include <QIcon>
 #include <QTranslator>
 #include <QDebug>
@@ -45,6 +46,10 @@
 #include "connectionselector.h"
 #include "screenshotservice.h"
 #include "screenshotserviceadaptor.h"
+#include "vpnagent.h"
+#include "connmanvpnagent.h"
+#include "connmanvpnproxy.h"
+#include "connectivitymonitor.h"
 
 void HomeApplication::quitSignalHandler(int)
 {
@@ -66,6 +71,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     , m_originalSigTermHandler(signal(SIGTERM, quitSignalHandler))
     , m_homeReadySent(false)
     , m_screenshotService(0)
+    , m_connmanVpn(0)
+    , m_online(false)
 {
     QTranslator *engineeringEnglish = new QTranslator(this);
     engineeringEnglish->load("lipstick_eng_en", "/usr/share/translations");
@@ -120,17 +127,64 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     QDBusConnection sessionBus = QDBusConnection::sessionBus();
     registerDBusObject(sessionBus, LIPSTICK_DBUS_SCREENSHOT_PATH, m_screenshotService);
 
+    // Bring automatic VPNs up and down when connectivity state changes
+    auto performUpDown = [this](const QList<QString> &activeTypes) {
+        const bool state(!activeTypes.isEmpty());
+        if (state != m_online) {
+            m_online = state;
+            QProcess::startDetached("systemctl", QStringList() << "--user" << (m_online ? "start" : "stop") << "vpn-updown");
+        }
+    };
+
+    m_connectivityMonitor = new ConnectivityMonitor(this);
+    connect(m_connectivityMonitor, &ConnectivityMonitor::connectivityChanged, this, [performUpDown](const QList<QString> &activeTypes){ performUpDown(activeTypes); });
+
+    // Respond to requests for VPN user input
+    m_vpnAgent = new VpnAgent(this);
+    new ConnmanVpnAgentAdaptor(m_vpnAgent);
+
+    registerDBusObject(systemBus, LIPSTICK_DBUS_VPNAGENT_PATH, m_vpnAgent);
+
+    auto registerVpnAgent = [this, performUpDown]() {
+        if (!m_connmanVpn) {
+            if (QDBusConnection::systemBus().interface()->isServiceRegistered(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE)) {
+                m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, "/", QDBusConnection::systemBus());
+                m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+
+                // Connman has restarted - VPNs must be brought up if possible
+                performUpDown(QList<QString>());
+                performUpDown(m_connectivityMonitor->activeConnectionTypes());
+            }
+        }
+    };
+    auto unregisterVpnAgent = [this]() {
+        delete m_connmanVpn;
+        m_connmanVpn = 0;
+    };
+
+    QDBusServiceWatcher *connmanVpnWatcher = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus, QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration, this);
+    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceRegistered, this, [registerVpnAgent](const QString &){ registerVpnAgent(); });
+    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [unregisterVpnAgent](const QString &){ unregisterVpnAgent(); });
+
+    registerVpnAgent();
+
     // Setting up the context and engine things
     m_qmlEngine->rootContext()->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
     m_qmlEngine->rootContext()->setContextProperty("lipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("LipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("volumeControl", m_volumeControl);
+    m_qmlEngine->rootContext()->setContextProperty("connectivityMonitor", m_connectivityMonitor);
 
     connect(this, SIGNAL(homeReady()), this, SLOT(sendStartupNotifications()));
 }
 
 HomeApplication::~HomeApplication()
 {
+    if (m_connmanVpn) {
+        m_connmanVpn->UnregisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
+        delete m_connmanVpn;
+    }
+
     emit aboutToDestroy();
 
     delete m_volumeControl;
