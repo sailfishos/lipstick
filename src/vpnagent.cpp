@@ -177,13 +177,16 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
         bool satisfied(true);
         QVariantMap response;
 
+        QList<QPair<QVariantMap::iterator, QString> > storedValues;
+        QVariantMap::iterator failureIt = extracted.end();
+
         for (QVariantMap::iterator it = extracted.begin(), end = extracted.end(); it != end; ++it) {
             QVariantMap field(it.value().value<QVariantMap>());
 
+            const QString &name(it.key());
             const QString fieldRequirement = field.value(QStringLiteral("Requirement")).toString();
             const bool mandatory(fieldRequirement == QStringLiteral("mandatory"));
             if (fieldRequirement != QStringLiteral("informational")) {
-                const QString &name(it.key());
                 auto cit = credentials.find(name);
                 const QString storedValue(cit == credentials.end() ? QString() : cit->toString());
                 if (storedValue.isEmpty()) {
@@ -192,16 +195,36 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
                     }
                 } else {
                     response.insert(name, storedValue);
-
-                    field.insert(QStringLiteral("Value"), QVariant::fromValue(storedValue));
-                    *it = QVariant::fromValue(field);
+                    storedValues.append(qMakePair(it, storedValue));
+                }
+            } else {
+                if (name == "VpnAgent.AuthFailure") {
+                    // Our previous attempt failed, do not use the stored values
+                    m_connections->setConnectionCredentials(objectPath, QVariantMap());
+                    failureIt = it;
+                    break;
                 }
             }
         }
 
-        if (satisfied) {
-            // We can respond immediately
-            return response;
+        if (failureIt != extracted.end()) {
+            // Hide this property from the user agent
+            extracted.erase(failureIt);
+        } else {
+            if (satisfied) {
+                // We can respond immediately
+                return response;
+            }
+
+            // Store the values we previously held
+            for (auto vit = storedValues.cbegin(), vend = storedValues.cend(); vit != vend; ++vit) {
+                QVariantMap::iterator it = vit->first;
+                QString storedValue = vit->second;
+
+                QVariantMap field(it.value().value<QVariantMap>());
+                field.insert(QStringLiteral("Value"), QVariant::fromValue(storedValue));
+                *it = QVariant::fromValue(field);
+            }
         }
     }
 
