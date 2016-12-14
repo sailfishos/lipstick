@@ -236,133 +236,134 @@ QStringList NotificationManager::GetCapabilities()
                          << "x-nemo-get-notifications";
 }
 
-uint NotificationManager::Notify(const QString &appName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout)
+uint NotificationManager::Notify(const QString &appName, uint replacesId, const QString &appIcon,
+                                 const QString &summary, const QString &body, const QStringList &actions,
+                                 const QVariantHash &hints, int expireTimeout)
 {
     NOTIFICATIONS_DEBUG("NOTIFY:" << appName << replacesId << appIcon << summary << body << actions << hints << expireTimeout);
+    if (replacesId != 0 && !m_notifications.contains(replacesId)) {
+        replacesId = 0;
+    }
+
     uint id = replacesId != 0 ? replacesId : nextAvailableNotificationID();
 
-    if (replacesId == 0 || m_notifications.contains(id)) {
-        QVariantHash hints_(hints);
+    QVariantHash hints_(hints);
 
-        // Ensure the hints contain a timestamp, and convert to UTC if required
-        QString timestamp(hints_.value(HINT_TIMESTAMP).toString());
-        if (!timestamp.isEmpty()) {
-            QDateTime tsValue(QDateTime::fromString(timestamp, Qt::ISODate));
-            if (tsValue.isValid()) {
-                if (tsValue.timeSpec() != Qt::UTC) {
-                    tsValue = tsValue.toUTC();
-                }
-                timestamp = tsValue.toString(Qt::ISODate);
-            } else {
-                timestamp = QString();
+    // Ensure the hints contain a timestamp, and convert to UTC if required
+    QString timestamp(hints_.value(HINT_TIMESTAMP).toString());
+    if (!timestamp.isEmpty()) {
+        QDateTime tsValue(QDateTime::fromString(timestamp, Qt::ISODate));
+        if (tsValue.isValid()) {
+            if (tsValue.timeSpec() != Qt::UTC) {
+                tsValue = tsValue.toUTC();
             }
-        }
-        if (timestamp.isEmpty()) {
-            timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
-        }
-        hints_.insert(HINT_TIMESTAMP, timestamp);
-
-        QPair<QString, QString> pidProperties;
-        bool androidOrigin(false);
-        if (calledFromDBus()) {
-            // Look up the properties of the originating process
-            const QString callerService(message().service());
-            const QDBusReply<uint> pidReply(connection().interface()->servicePid(callerService));
-            if (pidReply.isValid()) {
-                pidProperties = processProperties(pidReply.value());
-                androidOrigin = (pidProperties.first == QString::fromLatin1(ANDROID_BRIDGE_PROCESS));
-            }
-        }
-
-        // Allow notifications originating from android to be differentiated from native app notifications
-        QString disambiguatedAppName(appName);
-        if (androidOrigin) {
-            disambiguatedAppName.append("-android");
-        }
-
-        LipstickNotification *notification = 0;
-        if (replacesId == 0) {
-            // Create a new notification
-            notification = new LipstickNotification(appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints_, expireTimeout, this);
-            connect(notification, SIGNAL(actionInvoked(QString)), this, SLOT(invokeAction(QString)), Qt::QueuedConnection);
-            connect(notification, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
-            m_notifications.insert(id, notification);
+            timestamp = tsValue.toString(Qt::ISODate);
         } else {
-            // Only replace an existing notification if it really exists
-            notification = m_notifications.value(id);
-            notification->setAppName(appName);
-            notification->setDisambiguatedAppName(disambiguatedAppName);
-            notification->setAppIcon(appIcon);
-            notification->setSummary(summary);
-            notification->setBody(body);
-            notification->setActions(actions);
-            notification->setHints(hints_);
-            notification->setExpireTimeout(expireTimeout);
+            timestamp = QString();
         }
-
-        // Apply a category definition, if any
-        applyCategoryDefinition(notification);
-        hints_ = notification->hints();
-
-        if (androidOrigin) {
-            // The app icon should also be the nemo icon
-            const QString icon(hints_.value(HINT_ICON).toString());
-            if (icon.isEmpty()) {
-                hints_.insert(HINT_ICON, appIcon);
-            }
-
-            // If this notification includes a preview, ensure it has a non-empty body and summary
-            const QString previewSummary(hints_.value(HINT_PREVIEW_SUMMARY).toString());
-            const QString previewBody(hints_.value(HINT_PREVIEW_BODY).toString());
-            if (!previewSummary.isEmpty()) {
-                if (previewBody.isEmpty()) {
-                    hints_.insert(HINT_PREVIEW_BODY, QStringLiteral(" "));
-                }
-            }
-            if (!previewBody.isEmpty()) {
-                if (previewSummary.isEmpty()) {
-                    hints_.insert(HINT_PREVIEW_SUMMARY, QStringLiteral(" "));
-                }
-            }
-
-            // See if this notification has elevated priority and feedback
-            AndroidPriorityStore::PriorityDetails priority;
-            const QString packageName(hints_.value(HINT_ORIGIN_PACKAGE).toString());
-            if (!packageName.isEmpty()) {
-                priority = m_androidPriorityStore->packageDetails(packageName);
-            } else {
-                priority = m_androidPriorityStore->appDetails(appName);
-            }
-            hints_.insert(HINT_PRIORITY, priority.first);
-            if (!priority.second.isEmpty()) {
-                // Add the appropriate feedback, unless it is specifically suppressed
-                if (!notification->hints().value(HINT_FEEDBACK_SUPPRESSED).toBool()) {
-                    hints_.insert(HINT_FEEDBACK, priority.second);
-                    // Also turn the display on if required
-                    hints_.insert(HINT_DISPLAY_ON, true);
-                }
-            }
-        } else {
-            if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {
-                notification->setAppName(pidProperties.first);
-            }
-            if (notification->appIcon().isEmpty() && !pidProperties.second.isEmpty()) {
-                notification->setAppIcon(pidProperties.second);
-            }
-
-            // Unspecified priority should result in medium priority to permit low priorities
-            if (!hints_.contains(HINT_PRIORITY)) {
-                hints_.insert(HINT_PRIORITY, DefaultNotificationPriority);
-            }
-        }
-
-        notification->setHints(hints_);
-
-        publish(notification, replacesId);
-    } else {
-        // Return the ID 0 when trying to update a notification which doesn't exist
-        id = 0;
     }
+    if (timestamp.isEmpty()) {
+        timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+    }
+    hints_.insert(HINT_TIMESTAMP, timestamp);
+
+    QPair<QString, QString> pidProperties;
+    bool androidOrigin(false);
+    if (calledFromDBus()) {
+        // Look up the properties of the originating process
+        const QString callerService(message().service());
+        const QDBusReply<uint> pidReply(connection().interface()->servicePid(callerService));
+        if (pidReply.isValid()) {
+            pidProperties = processProperties(pidReply.value());
+            androidOrigin = (pidProperties.first == QString::fromLatin1(ANDROID_BRIDGE_PROCESS));
+        }
+    }
+
+    // Allow notifications originating from android to be differentiated from native app notifications
+    QString disambiguatedAppName(appName);
+    if (androidOrigin) {
+        disambiguatedAppName.append("-android");
+    }
+
+    LipstickNotification *notification = 0;
+    if (replacesId == 0) {
+        // Create a new notification
+        notification = new LipstickNotification(appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints_, expireTimeout, this);
+        connect(notification, SIGNAL(actionInvoked(QString)), this, SLOT(invokeAction(QString)), Qt::QueuedConnection);
+        connect(notification, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
+        m_notifications.insert(id, notification);
+    } else {
+        // Only replace an existing notification if it really exists
+        notification = m_notifications.value(id);
+        notification->setAppName(appName);
+        notification->setDisambiguatedAppName(disambiguatedAppName);
+        notification->setAppIcon(appIcon);
+        notification->setSummary(summary);
+        notification->setBody(body);
+        notification->setActions(actions);
+        notification->setHints(hints_);
+        notification->setExpireTimeout(expireTimeout);
+    }
+
+    // Apply a category definition, if any
+    applyCategoryDefinition(notification);
+    hints_ = notification->hints();
+
+    if (androidOrigin) {
+        // The app icon should also be the nemo icon
+        const QString icon(hints_.value(HINT_ICON).toString());
+        if (icon.isEmpty()) {
+            hints_.insert(HINT_ICON, appIcon);
+        }
+
+        // If this notification includes a preview, ensure it has a non-empty body and summary
+        const QString previewSummary(hints_.value(HINT_PREVIEW_SUMMARY).toString());
+        const QString previewBody(hints_.value(HINT_PREVIEW_BODY).toString());
+        if (!previewSummary.isEmpty()) {
+            if (previewBody.isEmpty()) {
+                hints_.insert(HINT_PREVIEW_BODY, QStringLiteral(" "));
+            }
+        }
+        if (!previewBody.isEmpty()) {
+            if (previewSummary.isEmpty()) {
+                hints_.insert(HINT_PREVIEW_SUMMARY, QStringLiteral(" "));
+            }
+        }
+
+        // See if this notification has elevated priority and feedback
+        AndroidPriorityStore::PriorityDetails priority;
+        const QString packageName(hints_.value(HINT_ORIGIN_PACKAGE).toString());
+        if (!packageName.isEmpty()) {
+            priority = m_androidPriorityStore->packageDetails(packageName);
+        } else {
+            priority = m_androidPriorityStore->appDetails(appName);
+        }
+        hints_.insert(HINT_PRIORITY, priority.first);
+        if (!priority.second.isEmpty()) {
+            // Add the appropriate feedback, unless it is specifically suppressed
+            if (!notification->hints().value(HINT_FEEDBACK_SUPPRESSED).toBool()) {
+                hints_.insert(HINT_FEEDBACK, priority.second);
+                // Also turn the display on if required
+                hints_.insert(HINT_DISPLAY_ON, true);
+            }
+        }
+    } else {
+        if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {
+            notification->setAppName(pidProperties.first);
+        }
+        if (notification->appIcon().isEmpty() && !pidProperties.second.isEmpty()) {
+            notification->setAppIcon(pidProperties.second);
+        }
+
+        // Unspecified priority should result in medium priority to permit low priorities
+        if (!hints_.contains(HINT_PRIORITY)) {
+            hints_.insert(HINT_PRIORITY, DefaultNotificationPriority);
+        }
+    }
+
+    notification->setHints(hints_);
+
+    publish(notification, replacesId);
 
     return id;
 }
