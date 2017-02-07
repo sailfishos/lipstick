@@ -153,8 +153,22 @@ SOURCES += \
 
 CONFIG += link_pkgconfig mobility qt warn_on depend_includepath qmake_cache target_qt
 CONFIG -= link_prl
-PKGCONFIG += mlite5 mce keepalive dbus-1 dbus-glib-1 libresourceqt5 ngf-qt5 Qt5SystemInfo libsystemd-daemon contextkit-statefs dsme_dbus_if thermalmanager_dbus_if usb-moded-qt5
-PKGCONFIG += systemsettings
+PKGCONFIG += \
+    contextkit-statefs \
+    dbus-1 \
+    dbus-glib-1 \
+    dsme_dbus_if \
+    keepalive \
+    libresourceqt5 \
+    libsystemd-daemon \
+    mlite5 \
+    mce \
+    nemodevicelock \
+    ngf-qt5 \
+    Qt5SystemInfo \
+    systemsettings \
+    thermalmanager_dbus_if \
+    usb-moded-qt5
 
 LIBS += -lrt -lEGL
 

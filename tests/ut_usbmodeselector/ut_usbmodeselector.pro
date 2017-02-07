@@ -21,5 +21,6 @@ HEADERS += \
     $$USBMODEDQTINCLUDEDIR/qusbmoded.h \
     $$USBMODEDQTINCLUDEDIR/qusbmode.h \
     $$QMSYSTEM2/qmlocks.h \
+    $$STUBSDIR/nemo-devicelock/devicelock.h \
     ut_usbmodeselector.h \
     $$SRCDIR/homewindow.h \

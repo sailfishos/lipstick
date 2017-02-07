@@ -26,6 +26,8 @@
 #include "homewindow.h"
 #include "lipstickqmlpath_stub.h"
 
+#include <nemo-devicelock/devicelock.h>
+
 HomeWindow::HomeWindow()
 {
 }
@@ -96,7 +98,8 @@ void Ut_USBModeSelector::cleanupTestCase()
 
 void Ut_USBModeSelector::init()
 {
-    usbModeSelector = new USBModeSelector;
+    deviceLock = new NemoDeviceLock::DeviceLock(this);
+    usbModeSelector = new USBModeSelector(deviceLock);
     usbModeSelector->m_usbMode->setCurrentMode(QUsbModed::Mode::Undefined);
 
     gNotificationManagerStub->stubReset();
@@ -106,6 +109,7 @@ void Ut_USBModeSelector::init()
 void Ut_USBModeSelector::cleanup()
 {
     delete usbModeSelector;
+    delete deviceLock;
     homeWindows.clear();
     homeWindowVisible.clear();
     gNotificationManagerStub->stubReset();
@@ -206,19 +210,19 @@ Q_DECLARE_METATYPE(MeeGo::QmLocks::State)
 
 void Ut_USBModeSelector::testConnectingUSBWhenDeviceIsLockedEmitsDialogShown_data()
 {
-    QTest::addColumn<MeeGo::QmLocks::State>("deviceLocked");
+    QTest::addColumn<NemoDeviceLock::DeviceLock::LockState>("deviceLocked");
     QTest::addColumn<int>("dialogShownCount");
-    QTest::newRow("Device locked") << MeeGo::QmLocks::Locked << 1;
-    QTest::newRow("Device not locked") << MeeGo::QmLocks::Unlocked << 0;
+    QTest::newRow("Device locked") << NemoDeviceLock::DeviceLock::Locked << 1;
+    QTest::newRow("Device not locked") << NemoDeviceLock::DeviceLock::Unlocked << 0;
 }
 
 void Ut_USBModeSelector::testConnectingUSBWhenDeviceIsLockedEmitsDialogShown()
 {
-    QFETCH(MeeGo::QmLocks::State, deviceLocked);
+    QFETCH(NemoDeviceLock::DeviceLock::LockState, deviceLocked);
     QFETCH(int, dialogShownCount);
 
     QSignalSpy spy(usbModeSelector, SIGNAL(dialogShown()));
-    gQmLocksStub->stubSetReturnValue("getState", deviceLocked);
+    deviceLock->setState(deviceLocked);
     usbModeSelector->applyUSBMode(QUsbModed::Mode::Connected);
     QCOMPARE(spy.count(), dialogShownCount);
 }
