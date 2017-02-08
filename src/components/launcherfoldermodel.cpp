@@ -44,6 +44,22 @@ static QString absoluteConfigPath(const QString &fileName)
     return configDir() + fileName;
 }
 
+static QString buildBlacklistValue(const QString &directoryId, int i)
+{
+    QString indexStr = QString::number(i);
+    return QString(directoryId.isEmpty() ? indexStr : (directoryId + "-" + indexStr));
+}
+
+static void getDirAndIndex(const QString &positionId, QString &directoryId, int &index)
+{
+    QStringList parts = positionId.split("-");
+    QString strIndex = parts.takeLast();
+    if (!parts.isEmpty()) {
+        directoryId = parts.join("");
+    }
+    index = strIndex.toInt();
+}
+
 // This is modeled after the freedesktop.org menu files http://standards.freedesktop.org/menu-spec/latest/
 // but handles only the basic elements, i.e. no merging, filtering, layout, etc. is supported.
 
@@ -351,7 +367,8 @@ LauncherFolderModel::LauncherFolderModel(QObject *parent)
     , m_initialized(false)
 {
     connect(m_launcherModel, &LauncherModel::directoriesChanged, this, &LauncherFolderModel::directoriesChanged);
-    connect(m_launcherModel, &LauncherModel::blacklistedCategoriesChanged, this, &LauncherFolderModel::blacklistedCategoriesChanged);
+    connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::blacklistedApplicationsChanged);
+    connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::updateblacklistedApplications);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::categoriesChanged, this, &LauncherFolderModel::categoriesChanged);
 
@@ -365,7 +382,8 @@ LauncherFolderModel::LauncherFolderModel(InitializationMode, QObject *parent)
     , m_initialized(false)
 {
     connect(m_launcherModel, &LauncherModel::directoriesChanged, this, &LauncherFolderModel::directoriesChanged);
-    connect(m_launcherModel, &LauncherModel::blacklistedCategoriesChanged, this, &LauncherFolderModel::blacklistedCategoriesChanged);
+    connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::blacklistedApplicationsChanged);
+    connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::updateblacklistedApplications);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::categoriesChanged, this, &LauncherFolderModel::categoriesChanged);
 }
@@ -442,14 +460,99 @@ void LauncherFolderModel::setCategories(const QStringList &categories)
     m_launcherModel->setCategories(categories);
 }
 
-void LauncherFolderModel::setBlacklistedCategories(const QStringList &categories)
+void LauncherFolderModel::blacklistApps(LauncherFolderItem *folder, const QString &directoryId)
 {
-    m_launcherModel->setBlacklistedCategories(categories);
+    for (int i = 0; i < folder->rowCount(); ++i) {
+        LauncherItem *item = qobject_cast<LauncherItem*>(folder->get(i));
+        if (item && m_launcherModel->isBlacklisted(item)) {
+            item->setIsBlacklisted(true);
+            if (!m_loading) {
+                m_blacklistedApplications.insert(item->filePath(), buildBlacklistValue(directoryId, i));
+            }
+        } else if (LauncherFolderItem *subFolder = qobject_cast<LauncherFolderItem*>(folder->get(i))) {
+            blacklistApps(subFolder, subFolder->directoryFile());
+        }
+    }
 }
 
-QStringList LauncherFolderModel::blacklistedCategories() const
+void LauncherFolderModel::removeAppsFromBlacklist()
 {
-    return m_launcherModel->blacklistedCategories();
+    QMap<QString, QString>::iterator i = m_blacklistedApplications.begin();
+    while (i != m_blacklistedApplications.end()) {
+        LauncherItem* item = m_launcherModel->itemInModel(i.key());
+        if (!item) {
+            i = m_blacklistedApplications.erase(i);
+        } else if (!m_launcherModel->isBlacklisted(item)) {
+            QString positionId = i.value();
+            QString directory;
+            int index = -1;
+            getDirAndIndex(positionId, directory, index);
+
+            LauncherFolderItem *folder = nullptr;
+            if (!directory.isEmpty()) {
+                folder = findContainerFolder(directory);
+            }
+
+            if (folder) {
+                folder->insertItem(index, item);
+            } else {
+                insertItem(index, item);
+            }
+            item->setIsBlacklisted(false);
+            i = m_blacklistedApplications.erase(i);
+        } else {
+            ++i;
+        }
+    }
+}
+
+void LauncherFolderModel::updateAppsInBlacklistedFolders()
+{
+    QMap<QString, QString> tmpDesktopFiles;
+    QMap<QString, QString>::iterator i = m_blacklistedApplications.begin();
+    while (i != m_blacklistedApplications.end()) {
+        QString positionId = i.value();
+        QString directory;
+        int index = -1;
+        getDirAndIndex(positionId, directory, index);
+        if (!findContainerFolder(directory) && positionId.startsWith(directory)) {
+            positionId.remove(directory + "-");
+            tmpDesktopFiles.insert(i.key(), positionId);
+            i = m_blacklistedApplications.erase(i);
+        } else {
+            ++i;
+        }
+    }
+
+    i = tmpDesktopFiles.begin();
+    while (i != tmpDesktopFiles.end()) {
+        m_blacklistedApplications.insert(i.key(), i.value());
+        ++i;
+    }
+}
+
+LauncherFolderItem *LauncherFolderModel::findContainerFolder(const QString &directoryId) const
+{
+    LauncherFolderModel *me = const_cast<LauncherFolderModel*>(this);
+    for (int i = 0; i < rowCount(); ++i) {
+        QObject *obj = me->get(i);
+        LauncherFolderItem *folder = qobject_cast<LauncherFolderItem*>(obj);
+        if (folder && (folder->directoryFile() == directoryId)) {
+            return folder;
+        }
+    }
+
+    return 0;
+}
+
+void LauncherFolderModel::setBlacklistedApplications(const QStringList &applications)
+{
+    m_launcherModel->setBlacklistedApplications(applications);
+}
+
+QStringList LauncherFolderModel::blacklistedApplications() const
+{
+    return m_launcherModel->blacklistedApplications();
 }
 
 // Move item to folder at index. If index < 0 the item will be appended.
@@ -463,7 +566,6 @@ bool LauncherFolderModel::moveToFolder(QObject *item, LauncherFolderItem *folder
         return false;
 
     source->removeItem(item);
-
     if (index >= 0)
         folder->insertItem(index, item);
     else
@@ -495,6 +597,27 @@ void LauncherFolderModel::appAdded(QObject *item)
 {
     addItem(item);
     scheduleSave();
+}
+
+void LauncherFolderModel::updateblacklistedApplications()
+{
+    // Remove apps from blacklist that are no longer blacklisted.
+    removeAppsFromBlacklist();
+
+    QString positionId;
+    blacklistApps(this, positionId);
+
+    QMap<QString, QString>::iterator i = m_blacklistedApplications.begin();
+    while (i != m_blacklistedApplications.end()) {
+        LauncherItem *item = m_launcherModel->itemInModel(i.key());
+        LauncherFolderItem *folder = findContainer(item);
+        if (folder) {
+            folder->removeItem(item);
+        } else {
+            removeItem(item);
+        }
+        ++i;
+    }
 }
 
 void LauncherFolderModel::import()
@@ -531,14 +654,20 @@ void LauncherFolderModel::save()
         return;
     }
 
+    // Folder might have been removed. Let's update blacklisted apps and their folders.
+    // When folder is removed, an app is shifted back to main level.
+    updateAppsInBlacklistedFolders();
+
     QXmlStreamWriter xml(&file);
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
-    saveFolder(xml, this);
+
+    QString directoryId;
+    saveFolder(xml, this, directoryId);
     xml.writeEndDocument();
 }
 
-void LauncherFolderModel::saveFolder(QXmlStreamWriter &xml, LauncherFolderItem *folder)
+void LauncherFolderModel::saveFolder(QXmlStreamWriter &xml, LauncherFolderItem *folder, const QString &directoryId)
 {
     xml.writeStartElement("Menu");
     xml.writeTextElement("Name", folder->title());
@@ -547,11 +676,42 @@ void LauncherFolderModel::saveFolder(QXmlStreamWriter &xml, LauncherFolderItem *
 
     for (int i = 0; i < folder->rowCount(); ++i) {
         LauncherItem *item = qobject_cast<LauncherItem*>(folder->get(i));
-        if (item) {
-            if (!item->isTemporary())
+        LauncherFolderItem *subFolder = qobject_cast<LauncherFolderItem*>(folder->get(i));
+
+        QString currentPosId = buildBlacklistValue(directoryId, i);
+
+        // Blacklisted apps have been removed from the LauncherFolderModel already over here.
+        // Populate the menu still so that it contains also blacklisted apps.
+        QStringList desktopFiles;
+        if (!m_blacklistedApplications.key(currentPosId).isEmpty()) {
+            desktopFiles = m_blacklistedApplications.keys(currentPosId);
+        } else if (folder && !folder->directoryFile().isEmpty()) {
+            // If app is in out of bounds indexes of the current folder.
+            QMap<QString, QString>::const_iterator iter = m_blacklistedApplications.constBegin();
+            while (iter != m_blacklistedApplications.constEnd()) {
+                QString positionId = iter.value();
+                QString directory;
+                int folderIndex;
+                getDirAndIndex(positionId, directory, folderIndex);
+                if (positionId.startsWith(directoryId) && folderIndex >= i && (i == (folder->rowCount() - 1))) {
+                    desktopFiles.append(iter.key());
+                }
+                ++iter;
+            }
+        }
+
+        for (const QString &desktopFile : desktopFiles) {
+            if (LauncherItem * item = m_launcherModel->itemInModel(desktopFile)) {
                 xml.writeTextElement("Filename", item->filename());
-        } else if (LauncherFolderItem *subFolder = qobject_cast<LauncherFolderItem*>(folder->get(i))) {
-            saveFolder(xml, subFolder);
+            }
+        }
+
+        if (item) {
+            if (!item->isTemporary()) {
+                xml.writeTextElement("Filename", item->filename());
+            }
+        } else if (subFolder) {
+            saveFolder(xml, subFolder, subFolder->directoryFile());
         }
     }
     xml.writeEndElement();
@@ -574,7 +734,6 @@ void LauncherFolderModel::load()
     loadedItems.fill(false);
     QStack<LauncherFolderItem*> menus;
     QString textData;
-    int loadedCount = 0;
 
     QXmlStreamReader xml(&file);
     while (!xml.atEnd()) {
@@ -611,9 +770,21 @@ void LauncherFolderModel::load()
                         loadedItems[idx] = true;
                         LauncherItem *item = qobject_cast<LauncherItem*>(m_launcherModel->get(idx));
                         if (item) {
-                            loadedCount++;
                             LauncherFolderItem *folder = menus.top();
-                            folder->addItem(item);
+                            if (!item->isBlacklisted()) {
+                                folder->addItem(item);
+                            } else {
+                                QString positionId;
+                                // Current count == normal index.
+                                int lastIndex = folder->itemCount();
+                                if (!folder->parentFolder()) {
+                                    positionId = QString::number(lastIndex);
+                                } else {
+                                    positionId = QString("%1-%2").arg(folder->directoryFile()).arg(lastIndex);
+                                }
+
+                                m_blacklistedApplications.insert(item->filePath(), positionId);
+                            }
                         }
                     }
                 }

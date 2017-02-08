@@ -25,6 +25,7 @@
 
 // Define DEBUG_LAUNCHER if you'd like to see debug messages from the launcher
 // #define DEBUG_LAUNCHER
+
 #ifdef DEBUG_LAUNCHER
 #include <QDebug>
 #define LAUNCHER_DEBUG(things) qDebug() << Q_FUNC_INFO << things
@@ -59,6 +60,7 @@ class LIPSTICK_EXPORT LauncherItem : public QObject
     Q_PROPERTY(bool dBusActivated READ dBusActivated NOTIFY itemChanged)
     Q_PROPERTY(QString packageName READ packageName WRITE setPackageName NOTIFY packageNameChanged)
     Q_PROPERTY(int updatingProgress READ updatingProgress WRITE setUpdatingProgress NOTIFY updatingProgressChanged)
+    Q_PROPERTY(bool isBlacklisted READ isBlacklisted WRITE setIsBlacklisted NOTIFY isBlacklistedChanged)
 
 public slots:
     void setIsLaunching(bool isLaunching = false);
@@ -104,6 +106,9 @@ public:
     int updatingProgress() const { return m_updatingProgress; }
     void setUpdatingProgress(int updatingProgress);
 
+    bool isBlacklisted() const;
+    void setIsBlacklisted(bool isBlacklisted);
+
     void setCustomTitle(QString customTitle);
 
     Q_INVOKABLE QString readValue(const QString &key) const;
@@ -115,6 +120,7 @@ signals:
     void isTemporaryChanged();
     void packageNameChanged();
     void updatingProgressChanged();
+    void isBlacklistedChanged();
 
 protected:
     void timerEvent(QTimerEvent *event);
@@ -130,6 +136,7 @@ private:
     QString m_customTitle;
     QString m_customIconFilename;
     int m_serial;
+    bool m_isBlacklisted;
 };
 
 #endif // LAUNCHERITEM_H
