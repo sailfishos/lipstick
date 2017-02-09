@@ -102,7 +102,7 @@ void NotificationPreviewPresenter::showNextNotification()
             if (!notificationIsCritical) {
                 show = false;
             } else {
-                 show = m_deviceLock->showNotifications();
+                show = m_deviceLock->showNotifications();
             }
         } else if (screenLocked) {
             if (!notificationIsCritical) {
@@ -111,8 +111,10 @@ void NotificationPreviewPresenter::showNextNotification()
         }
 
         if (!show) {
-            // Don't show the notification but just remove it from the queue
-            emit notificationPresented(notification->replacesId());
+            if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) { // Suppress feedback if locked out.
+                // Don't show the notification but just remove it from the queue
+                emit notificationPresented(notification->replacesId());
+            }
 
             setCurrentNotification(0);
 
