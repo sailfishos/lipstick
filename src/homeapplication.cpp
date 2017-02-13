@@ -50,6 +50,8 @@
 #include "connmanvpnproxy.h"
 #include "connectivitymonitor.h"
 
+#include <nemo-devicelock/devicelock.h>
+
 void HomeApplication::quitSignalHandler(int)
 {
     qApp->quit();
@@ -100,14 +102,16 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     LipstickSettings::instance()->setScreenLock(m_screenLock);
     new ScreenLockAdaptor(m_screenLock);
 
+    NemoDeviceLock::DeviceLock *deviceLock = new NemoDeviceLock::DeviceLock(this);
+
     // Initialize the notification manager
     NotificationManager::instance();
-    new NotificationPreviewPresenter(this);
+    new NotificationPreviewPresenter(m_screenLock, deviceLock, this);
 
     m_volumeControl = new VolumeControl;
     new BatteryNotifier(this);
     new ThermalNotifier(this);
-    m_usbModeSelector = new USBModeSelector(this);
+    m_usbModeSelector = new USBModeSelector(deviceLock, this);
     m_shutdownScreen = new ShutdownScreen(this);
     new ShutdownScreenAdaptor(m_shutdownScreen);
     m_connectionSelector = new ConnectionSelector(this);

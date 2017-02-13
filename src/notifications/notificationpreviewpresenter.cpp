@@ -25,8 +25,10 @@
 
 #include <qmdisplaystate.h>
 #include <qmlocks.h>
+#include "screenlock/screenlock.h"
 
 #include <mce/dbus-names.h>
+#include <nemo-devicelock/devicelock.h>
 
 #include <QDBusMessage>
 #include <QDBusConnection>
@@ -51,18 +53,16 @@ enum PreviewMode {
     AllNotificationsDisabled
 };
 
-const QString DEVICE_LOCK_SETTINGS_FILE(QStringLiteral("/usr/share/lipstick/devicelock/devicelock_settings.conf"));
-const QString DEVICE_LOCK_SHOW_NOTIFICATIONS(QStringLiteral("/desktop/nemo/devicelock/show_notification"));
-
 }
 
-NotificationPreviewPresenter::NotificationPreviewPresenter(QObject *parent) :
+NotificationPreviewPresenter::NotificationPreviewPresenter(
+        ScreenLock *screenLock, NemoDeviceLock::DeviceLock *deviceLock, QObject *parent) :
     QObject(parent),
     m_window(0),
     m_currentNotification(0),
     m_notificationFeedbackPlayer(new NotificationFeedbackPlayer(this)),
-    m_locks(new MeeGo::QmLocks(this)),
-    m_displayState(new MeeGo::QmDisplayState(this))
+    m_screenLock(screenLock),
+    m_deviceLock(deviceLock)
 {
     connect(NotificationManager::instance(), SIGNAL(notificationAdded(uint)), this, SLOT(updateNotification(uint)));
     connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));
@@ -93,8 +93,8 @@ void NotificationPreviewPresenter::showNextNotification()
     } else {
         LipstickNotification *notification = m_notificationQueue.takeFirst();
 
-        const bool screenLocked = m_locks->getState(MeeGo::QmLocks::TouchAndKeyboard) == MeeGo::QmLocks::Locked && m_displayState->get() == MeeGo::QmDisplayState::Off;
-        const bool deviceLocked = m_locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked;
+        const bool screenLocked = m_screenLock->isScreenLocked() && m_screenLock->displayState() == TouchScreen::DisplayOff;
+        const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
         const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
 
         bool show = true;
@@ -102,11 +102,7 @@ void NotificationPreviewPresenter::showNextNotification()
             if (!notificationIsCritical) {
                 show = false;
             } else {
-                const QString enabled(QStringLiteral("1"));
-
-                // Only show if notification banners are enabled within device lock
-                const QSettings settings(DEVICE_LOCK_SETTINGS_FILE, QSettings::IniFormat);
-                show = settings.value(DEVICE_LOCK_SHOW_NOTIFICATIONS, enabled).toString() == enabled;
+                show = m_deviceLock->showNotifications();
             }
         } else if (screenLocked) {
             if (!notificationIsCritical) {
@@ -115,8 +111,10 @@ void NotificationPreviewPresenter::showNextNotification()
         }
 
         if (!show) {
-            // Don't show the notification but just remove it from the queue
-            emit notificationPresented(notification->replacesId());
+            if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) { // Suppress feedback if locked out.
+                // Don't show the notification but just remove it from the queue
+                emit notificationPresented(notification->replacesId());
+            }
 
             setCurrentNotification(0);
 
@@ -206,8 +204,8 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
     if (notification->hidden() || notification->restored() || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty()))
         return false;
 
-    const bool screenLocked = m_locks->getState(MeeGo::QmLocks::TouchAndKeyboard) == MeeGo::QmLocks::Locked;
-    const bool deviceLocked = m_locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked;
+    const bool screenLocked = m_screenLock->isScreenLocked();
+    const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
     const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
 
     uint mode = AllNotificationsEnabled;

@@ -18,6 +18,11 @@
 
 #include <QObject>
 
+namespace NemoDeviceLock
+{
+class DeviceLock;
+}
+
 class USBModeSelector;
 
 class Ut_USBModeSelector : public QObject {
@@ -50,6 +55,7 @@ private slots:
     void testSetUSBMode();
 
 private:
+    NemoDeviceLock::DeviceLock *deviceLock;
     USBModeSelector *usbModeSelector;
 };
 

@@ -24,8 +24,8 @@
 class HomeWindow;
 class QUsbModed;
 
-namespace MeeGo {
-class QmLocks;
+namespace NemoDeviceLock {
+class DeviceLock;
 }
 
 class LIPSTICK_EXPORT USBModeSelector : public QObject
@@ -36,7 +36,7 @@ class LIPSTICK_EXPORT USBModeSelector : public QObject
 
 public:
 
-    explicit USBModeSelector(QObject *parent = 0);
+    explicit USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent = 0);
     
     /*!
      * Returns whether the window is visible or not.
@@ -121,7 +121,7 @@ private:
     QUsbModed *m_usbMode;
 
     //! For getting information about the device lock state
-    MeeGo::QmLocks *m_locks;
+    NemoDeviceLock::DeviceLock *m_deviceLock;
 
     uint m_previousNotificationId;
 

@@ -18,12 +18,20 @@
 
 #include <QObject>
 
+namespace NemoDeviceLock {
+class DeviceLock;
+}
+
+class ScreenLock;
+class TouchScreen;
+
 class Ut_NotificationPreviewPresenter : public QObject
 {
     Q_OBJECT
 
 private slots:
     void initTestCase();
+    void init();
     void cleanup();
     void testSignalConnections();
     void testAddNotificationWhenWindowNotOpen();
@@ -41,6 +49,11 @@ private slots:
     void testCriticalNotificationIsMarkedAfterShowing();
     void testNotificationPreviewsDisabled_data();
     void testNotificationPreviewsDisabled();
+
+private:
+    TouchScreen *touchScreen;
+    ScreenLock *screenLock;
+    NemoDeviceLock::DeviceLock *deviceLock;
 };
 
 #endif

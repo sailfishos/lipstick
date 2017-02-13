@@ -24,13 +24,15 @@
 #include "usbmodeselector.h"
 #include "lipstickqmlpath.h"
 
+#include <nemo-devicelock/devicelock.h>
+
 QMap<QString, QString> USBModeSelector::s_errorCodeToTranslationID;
 
-USBModeSelector::USBModeSelector(QObject *parent) :
+USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent) :
     QObject(parent),
     m_window(0),
     m_usbMode(new QUsbModed(this)),
-    m_locks(new MeeGo::QmLocks(this)),
+    m_deviceLock(deviceLock),
     m_previousNotificationId(0)
 {
     if (s_errorCodeToTranslationID.isEmpty()) {
@@ -93,7 +95,7 @@ QStringList USBModeSelector::supportedUSBModes() const
 void USBModeSelector::applyUSBMode(QString mode)
 {
     if (mode == QUsbModed::Mode::Connected) {
-        if (m_locks->getState(MeeGo::QmLocks::Device) == MeeGo::QmLocks::Locked) {
+        if (m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked) {
             // When the device lock is on and USB is connected, always pretend that the USB mode selection dialog is shown to unlock the touch screen lock
             emit dialogShown();
 

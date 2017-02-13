@@ -19,14 +19,14 @@
 #include "lipstickglobal.h"
 #include <QObject>
 
+namespace NemoDeviceLock {
+class DeviceLock;
+}
+
 class HomeWindow;
 class LipstickNotification;
 class NotificationFeedbackPlayer;
-
-namespace MeeGo {
-class QmLocks;
-class QmDisplayState;
-}
+class ScreenLock;
 
 /*!
  * \class NotificationPreviewPresenter
@@ -47,7 +47,8 @@ public:
      *
      * \param parent the parent object
      */
-    explicit NotificationPreviewPresenter(QObject *parent = 0);
+    explicit NotificationPreviewPresenter(
+            ScreenLock *screenLock, NemoDeviceLock::DeviceLock *deviceLock, QObject *parent = 0);
 
     /*!
      * Destroys the notification preview presenter.
@@ -115,10 +116,9 @@ private:
     NotificationFeedbackPlayer *m_notificationFeedbackPlayer;
 
     //! For getting information about the touch screen lock state
-    MeeGo::QmLocks *m_locks;
+    ScreenLock *m_screenLock;
 
-    //! For getting information about the display state
-    MeeGo::QmDisplayState *m_displayState;
+    NemoDeviceLock::DeviceLock *m_deviceLock;
 
 #ifdef UNIT_TEST
     friend class Ut_NotificationPreviewPresenter;

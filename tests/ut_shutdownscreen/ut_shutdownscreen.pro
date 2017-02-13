@@ -27,4 +27,5 @@ HEADERS += \
     $$QMSYSTEM2/qmsystemstate.h \
     $$QMSYSTEM2/qmsystemstate_p.h \
     $$QMSYSTEM2/qmipcinterface_p.h \
+    $$STUBSDIR/nemo-devicelock/devicelock.h \
     ut_shutdownscreen.h
