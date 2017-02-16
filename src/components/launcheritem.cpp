@@ -15,7 +15,6 @@
 // Copyright (c) 2011, Robin Burchell
 // Copyright (c) 2012, Timur Kristóf <venemo@fedoraproject.org>
 
-#include <QDebug>
 #include <QProcess>
 #include <QFile>
 #include <QDir>
@@ -42,6 +41,7 @@ LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
     , m_customTitle("")
     , m_customIconFilename("")
     , m_serial(0)
+    , m_isBlacklisted(false)
 {
     if (!filePath.isEmpty()) {
         setFilePath(filePath);
@@ -301,6 +301,18 @@ void LauncherItem::setUpdatingProgress(int updatingProgress)
     if (m_updatingProgress != updatingProgress) {
         m_updatingProgress = updatingProgress;
         emit updatingProgressChanged();
+    }
+}
+
+bool LauncherItem::isBlacklisted() const
+{
+    return m_isBlacklisted;
+}
+
+void LauncherItem::setIsBlacklisted(bool isBlacklisted) {
+    if (m_isBlacklisted != isBlacklisted) {
+        m_isBlacklisted = isBlacklisted;
+        emit isBlacklistedChanged();
     }
 }
 

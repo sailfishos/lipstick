@@ -38,6 +38,7 @@ class LIPSTICK_EXPORT LauncherModel : public QObjectListModel
     Q_PROPERTY(QStringList directories READ directories WRITE setDirectories NOTIFY directoriesChanged)
     Q_PROPERTY(QStringList iconDirectories READ iconDirectories WRITE setIconDirectories NOTIFY iconDirectoriesChanged)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories NOTIFY categoriesChanged)
+    Q_PROPERTY(QStringList blacklistedApplications READ blacklistedApplications WRITE setBlacklistedApplications NOTIFY blacklistedApplicationsChanged)
     Q_PROPERTY(QString scope READ scope WRITE setScope NOTIFY scopeChanged)
 
     Q_ENUMS(ItemType)
@@ -63,7 +64,11 @@ public:
     void setIconDirectories(QStringList);
 
     QStringList categories() const;
-    void setCategories(const QStringList &types);
+    void setCategories(const QStringList &categories);
+
+    QStringList blacklistedApplications() const;
+    void setBlacklistedApplications(const QStringList &blacklistedApplications);
+    bool isBlacklisted(LauncherItem *item) const;
 
     QString scope() const;
     void setScope(const QString &scope);
@@ -86,6 +91,7 @@ signals:
     void directoriesChanged();
     void iconDirectoriesChanged();
     void categoriesChanged();
+    void blacklistedApplicationsChanged();
     void scopeChanged();
     void notifyLaunching(LauncherItem *item);
 
@@ -101,6 +107,7 @@ protected:
 private:
     void reorderItems();
     void loadPositions();
+    bool displayCategory(LauncherItem *item) const;
     int findItem(const QString &path, LauncherItem **item);
     LauncherItem *packageInModel(const QString &packageName);
     QVariant launcherPos(const QString &path);
@@ -114,6 +121,7 @@ private:
     QStringList m_directories;
     QStringList m_iconDirectories;
     QStringList m_categories;
+    QStringList m_blacklistedApplications;
     QFileSystemWatcher m_fileSystemWatcher;
     QSettings m_launcherSettings;
     QSettings m_globalSettings;

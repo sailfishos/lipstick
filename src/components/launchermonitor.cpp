@@ -133,6 +133,13 @@ void LauncherMonitor::setDirectories(const QStringList &newDirs, QStringList &ta
         onDirectoryChanged(path);
 }
 
+void LauncherMonitor::reset(const QStringList &dirs)
+{
+    setDirectories(QStringList(), m_desktopFilesPaths);
+    m_knownFiles.clear();
+    setDirectories(dirs, m_desktopFilesPaths);
+}
+
 void LauncherMonitor::onDirectoryChanged(const QString &path)
 {
     QDir dir(path);
