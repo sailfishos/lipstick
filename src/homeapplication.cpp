@@ -257,9 +257,10 @@ void HomeApplication::restoreSignalHandlers()
 
 void HomeApplication::sendHomeReadySignalIfNotAlreadySent()
 {
+
     if (!m_homeReadySent) {
         m_homeReadySent = true;
-        disconnect(LipstickCompositor::instance(), SIGNAL(frameSwapped()), this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
+        disconnect(LipstickCompositor::instance()->quickWindow(), SIGNAL(frameSwapped()), this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
 
         emit homeReady();
     }
@@ -359,11 +360,15 @@ void HomeApplication::setCompositorPath(const QString &path)
         return;
     } 
 
-    QObject *compositor = component.beginCreate(m_qmlEngine->rootContext());
-    if (compositor) {
+    QScopedPointer<QObject> object(component.beginCreate(m_qmlEngine->rootContext()));
+    if (!object) {
+        qWarning() << "HomeApplication: Error constructing compositor from" << path;
+        qWarning() << component.errors();
+    } else if (LipstickCompositor *compositor = qobject_cast<LipstickCompositor*>(object.data())) {
         compositor->setParent(this);
+
         if (LipstickCompositor::instance()) {
-            LipstickCompositor::instance()->setGeometry(QRect(QPoint(0, 0), QGuiApplication::primaryScreen()->size()));
+            LipstickCompositor::instance()->quickWindow()->setGeometry(QRect(QPoint(0, 0), QGuiApplication::primaryScreen()->size()));
             connect(m_usbModeSelector, SIGNAL(showUnlockScreen()),
                     LipstickCompositor::instance(), SIGNAL(showUnlockScreen()));
         }
@@ -372,11 +377,13 @@ void HomeApplication::setCompositorPath(const QString &path)
 
         if (!m_qmlEngine->incubationController() && LipstickCompositor::instance()) {
             // install default incubation controller
-            m_qmlEngine->setIncubationController(LipstickCompositor::instance()->incubationController());
+            m_qmlEngine->setIncubationController(LipstickCompositor::instance()->quickWindow()->incubationController());
         }
+        object.take();
     } else {
-        qWarning() << "HomeApplication: Error creating compositor from" << path;
-        qWarning() << component.errors();
+        component.completeCreate();
+
+        qWarning() << "HomeApplication:" << path << "is not a a compositor" << object.data();
     }
 }
 
@@ -406,7 +413,7 @@ QQmlEngine *HomeApplication::engine() const
 void HomeApplication::connectFrameSwappedSignal(bool mainWindowVisible)
 {
     if (!m_homeReadySent && mainWindowVisible) {
-        connect(LipstickCompositor::instance(), SIGNAL(frameSwapped()), this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
+        connect(LipstickCompositor::instance()->quickWindow(), SIGNAL(frameSwapped()), this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
     }
 }
 

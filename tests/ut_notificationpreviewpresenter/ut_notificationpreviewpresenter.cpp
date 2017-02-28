@@ -23,6 +23,7 @@
 #include "notificationpreviewpresenter.h"
 #include "notificationfeedbackplayer_stub.h"
 #include "lipstickcompositor_stub.h"
+#include "lipstickcompositorwindow.h"
 #include "closeeventeater_stub.h"
 #include "qmdisplaystate_stub.h"
 #include "lipstickqmlpath_stub.h"
@@ -190,7 +191,7 @@ LipstickNotification *createNotification(uint id, Urgency urgency = Normal)
 }
 
 QVariantMap qWaylandSurfaceWindowProperties;
-QVariantMap QWaylandSurface::windowProperties() const
+QVariantMap LipstickCompositorWindow::windowProperties()
 {
     return qWaylandSurfaceWindowProperties;
 }

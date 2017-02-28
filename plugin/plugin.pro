@@ -3,7 +3,7 @@ TARGET = lipstickplugin
 VERSION = 0.1
 
 CONFIG += qt plugin link_pkgconfig
-QT += core gui qml quick compositor dbus
+QT += core gui qml quick waylandcompositor dbus
 PKGCONFIG += mlite5 dsme_dbus_if thermalmanager_dbus_if usb-moded-qt5
 
 INSTALLS = target qmldirfile

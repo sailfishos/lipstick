@@ -14,6 +14,7 @@
 ****************************************************************************/
 
 #include <QDBusConnection>
+#include <QtWaylandCompositor/private/qwlextendedsurface_p.h>
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositor.h"
 #include "windowmodel.h"
@@ -68,7 +69,7 @@ QVariant WindowModel::data(const QModelIndex &index, int role) const
         return m_items.at(idx);
     } else if (role == Qt::UserRole + 2) {
         QWaylandSurface *s = c->surfaceForId(m_items.at(idx));
-        return s?s->processId():0;
+        return s?s->client()->processId():0;
     } else if (role == Qt::UserRole + 3) {
         LipstickCompositorWindow *w = static_cast<LipstickCompositorWindow *>(c->windowForId(m_items.at(idx)));
         return w->title();
@@ -101,7 +102,7 @@ void WindowModel::componentComplete()
 */
 bool WindowModel::approveWindow(LipstickCompositorWindow *window)
 {
-    return window->isInProcess() == false && 
+    return window && window->isInProcess() == false &&
         window->category() != QLatin1String("overlay");
 }
 
@@ -219,7 +220,7 @@ void WindowModel::launchProcess(const QString &binaryName)
         }
 
         if (match) {
-            win->surface()->raiseRequested();
+            emit win->extendedSurface()->raiseRequested();
             break;
         }
     }

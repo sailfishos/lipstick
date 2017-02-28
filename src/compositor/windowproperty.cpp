@@ -17,6 +17,8 @@
 
 #include "lipstickcompositor.h"
 
+#include <private/qwlextendedsurface_p.h>
+
 WindowProperty::WindowProperty()
 : m_windowId(0), m_waitingRefProperty(false)
 {
@@ -36,24 +38,26 @@ void WindowProperty::setWindowId(int window)
         return;
 
     m_windowId = window;
-
+    m_waylandSurface = nullptr;
     if (m_surface) {
-        QObject::disconnect(m_surface, SIGNAL(windowPropertyChanged(QString,QVariant)), 
-                            this, SLOT(windowPropertyChanged(QString)));
-        QObject::disconnect(m_surface, SIGNAL(destroyed(QObject *)),
-                            this, SIGNAL(valueChanged()));
-        m_surface = 0;
+        disconnect(m_surface.data(), &QtWayland::ExtendedSurface::windowPropertyChanged,
+                    this, &WindowProperty::windowPropertyChanged);
+        disconnect(m_surface.data(), &QObject::destroyed, this, &WindowProperty::valueChanged);
+        m_surface = nullptr;
     }
 
-    LipstickCompositor *c = LipstickCompositor::instance();
-    if (c) m_surface = c->surfaceForId(window);
+    if (LipstickCompositor *c = LipstickCompositor::instance()) {
+        if (LipstickCompositorWindow *w = c->windowForId(window)) {
+            m_surface = w->extendedSurface();
+            m_waylandSurface = w->surface();
+        }
+    }
 
     if (m_surface) {
         // this must use a queued connection in order to avoid QTBUG-32859
-        QObject::connect(m_surface, SIGNAL(windowPropertyChanged(QString,QVariant)), 
-                         this, SLOT(windowPropertyChanged(QString)), Qt::QueuedConnection);
-        QObject::connect(m_surface, SIGNAL(destroyed(QObject *)),
-                         this, SIGNAL(valueChanged()));
+        connect(m_surface.data(), &QtWayland::ExtendedSurface::windowPropertyChanged,
+                    this, &WindowProperty::windowPropertyChanged, Qt::QueuedConnection);
+        connect(m_surface.data(), &QObject::destroyed, this, &WindowProperty::valueChanged);
     }
 
     emit windowIdChanged();
@@ -103,7 +107,7 @@ QVariant WindowProperty::value()
         connectRef();
 
         if (id) {
-            int win = LipstickCompositor::instance()->windowIdForLink(m_surface, id);
+            int win = LipstickCompositor::instance()->windowIdForLink(m_waylandSurface.data(), id);
             return QVariant(win);
         } else {
             return QVariant(0);

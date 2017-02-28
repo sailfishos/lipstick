@@ -19,6 +19,7 @@
 #include <QDBusArgument>
 #include <QDataStream>
 #include <QtDebug>
+#include <QDataStream>
 
 const char *LipstickNotification::HINT_URGENCY = "urgency";
 const char *LipstickNotification::HINT_CATEGORY = "category";

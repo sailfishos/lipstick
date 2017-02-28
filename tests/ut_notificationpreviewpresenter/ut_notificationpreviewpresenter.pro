@@ -1,7 +1,15 @@
 include(../common.pri)
 TARGET = ut_notificationpreviewpresenter
-INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$TOUCHSCREENSRCDIR $$SRCDIR/compositor $$QMSYSTEM2 $$SCREENLOCKSRCDIR
-QT += qml quick dbus compositor
+
+QT += qml quick dbus waylandcompositor
+INCLUDEPATH += \
+    $$SRCDIR \
+    $$NOTIFICATIONSRCDIR \
+    $$UTILITYSRCDIR \
+    $$TOUCHSCREENSRCDIR \
+    $$SRCDIR/compositor \
+    $$QMSYSTEM2 \
+    $$SCREENLOCKSRCDIR
 
 # unit test and unit
 SOURCES += \

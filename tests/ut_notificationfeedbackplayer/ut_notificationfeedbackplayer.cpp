@@ -17,6 +17,7 @@
 #include "notificationmanager.h"
 #include "notificationfeedbackplayer.h"
 #include "lipstickcompositor_stub.h"
+#include "lipstickcompositorwindow.h"
 #include "lipsticknotification.h"
 #include "ngfclient_stub.h"
 #include "ut_notificationfeedbackplayer.h"
@@ -95,12 +96,6 @@ LipstickNotification *createNotification(uint id, int urgency = 0, QVariant prio
     return notification;
 }
 
-QVariantMap qWaylandSurfaceWindowProperties;
-QVariantMap QWaylandSurface::windowProperties() const
-{
-    return qWaylandSurfaceWindowProperties;
-}
-
 void QTimer::singleShot(int, const QObject *receiver, const char *member)
 {
     // The "member" string is of form "1member()", so remove the trailing 1 and the ()
@@ -109,6 +104,12 @@ void QTimer::singleShot(int, const QObject *receiver, const char *member)
     strncpy(modifiedMember, member + 1, memberLength);
     modifiedMember[memberLength] = 0;
     QMetaObject::invokeMethod(const_cast<QObject *>(receiver), modifiedMember, Qt::DirectConnection);
+}
+
+QVariantMap qWaylandSurfaceWindowProperties;
+QVariantMap LipstickCompositorWindow::windowProperties()
+{
+    return qWaylandSurfaceWindowProperties;
 }
 
 void Ut_NotificationFeedbackPlayer::initTestCase()

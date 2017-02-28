@@ -19,9 +19,11 @@
 #include <QObject>
 #include <QPointer>
 #include <QVariant>
-#include "lipstickglobal.h"
+#include "lipstickcompositorwindow.h"
+
 
 class QWaylandSurface;
+
 
 class LIPSTICK_EXPORT WindowProperty : public QObject
 {
@@ -54,7 +56,8 @@ private:
     bool m_waitingRefProperty;
     void connectRef();
     QString m_property;
-    QPointer<QWaylandSurface> m_surface;
+    QPointer<QtWayland::ExtendedSurface> m_surface;
+    QPointer<QWaylandSurface> m_waylandSurface;
 };
 
 #endif // WINDOWPROPERTY_H
