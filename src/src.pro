@@ -24,7 +24,6 @@ MOC_DIR = .moc
 INCLUDEPATH += utilities touchscreen components xtools 3rdparty qmsystem2
 
 include(compositor/compositor.pri)
-include(compositor/alienmanager/alienmanager.pri)
 
 PUBLICHEADERS += \
     utilities/qobjectlistmodel.h \

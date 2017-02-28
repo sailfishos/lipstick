@@ -63,7 +63,7 @@ HomeWindowPrivate::HomeWindowPrivate()
         // XXX
         // window->setResizeMode(QQuickView::SizeRootObjectToView);
     } else {
-        window = LipstickCompositor::instance();
+        window = LipstickCompositor::instance()->quickWindow();
     }
 }
 

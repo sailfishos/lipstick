@@ -28,7 +28,7 @@ LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &t
 {
     int id = m_nextWindowId++;
 
-    LipstickCompositorProcWindow *item = new LipstickCompositorProcWindow(id, category, contentItem());
+    LipstickCompositorProcWindow *item = new LipstickCompositorProcWindow(id, category, m_window->contentItem());
     item->setSize(g.size());
     item->setTitle(title);
     item->setRootItem(rootItem);

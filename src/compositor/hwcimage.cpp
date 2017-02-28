@@ -18,6 +18,7 @@
 
 #include <QRunnable>
 #include <QThreadPool>
+#include <QCoreApplication>
 
 #include <QQuickWindow>
 #include <QSGSimpleTextureNode>
@@ -27,6 +28,8 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+
+#include <math.h>
 
 static bool hwcimage_is_enabled();
 
@@ -536,12 +539,12 @@ extern "C" {
     typedef EGLBoolean (EGLAPIENTRYP _eglHybrisReleaseNativeBuffer)(EGLClientBuffer buffer);
     typedef EGLBoolean (EGLAPIENTRYP _eglHybrisNativeBufferHandle)(EGLDisplay dpy, EGLClientBuffer buffer, void **handle);
 
-    typedef void (EGLAPIENTRYP _glEGLImageTargetTexture2DOES)(GLenum target, EGLImageKHR image);
+    typedef void (EGLAPIENTRYP _glEGLImageTargetTexture2DOESlipstick)(GLenum target, EGLImageKHR image);
     typedef EGLImageKHR (EGLAPIENTRYP _eglCreateImageKHR)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attribs);
     typedef EGLBoolean (EGLAPIENTRYP _eglDestroyImageKHR)(EGLDisplay dpy, EGLImageKHR image);
 }
 
-static _glEGLImageTargetTexture2DOES glEGLImageTargetTexture2DOES = 0;
+static _glEGLImageTargetTexture2DOESlipstick glEGLImageTargetTexture2DOESlipstick = 0;
 static _eglCreateImageKHR eglCreateImageKHR = 0;
 static _eglDestroyImageKHR eglDestroyImageKHR = 0;
 
@@ -558,7 +561,7 @@ static void hwcimage_initialize()
         return;
     initialized = true;
 
-    glEGLImageTargetTexture2DOES = (_glEGLImageTargetTexture2DOES) eglGetProcAddress("glEGLImageTargetTexture2DOES");
+    glEGLImageTargetTexture2DOESlipstick = (_glEGLImageTargetTexture2DOESlipstick) eglGetProcAddress("glEGLImageTargetTexture2DOES");
     eglCreateImageKHR = (_eglCreateImageKHR) eglGetProcAddress("eglCreateImageKHR");
     eglDestroyImageKHR = (_eglDestroyImageKHR) eglGetProcAddress("eglDestroyImageKHR");
     eglHybrisCreateNativeBuffer = (_eglHybrisCreateNativeBuffer) eglGetProcAddress("eglHybrisCreateNativeBuffer");
@@ -661,7 +664,7 @@ void HwcImageTexture::bind()
     updateBindOptions(!m_bound);
     if (!m_bound) {
         m_bound = true;
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_image);
+        glEGLImageTargetTexture2DOESlipstick(GL_TEXTURE_2D, m_image);
     }
 }
 

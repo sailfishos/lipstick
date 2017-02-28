@@ -16,6 +16,7 @@
 #include <NgfClient>
 #include <QWaylandSurface>
 #include "lipstickcompositor.h"
+#include "lipstickcompositorwindow.h"
 #include "notificationmanager.h"
 #include "lipsticknotification.h"
 #include "notificationfeedbackplayer.h"
@@ -109,9 +110,9 @@ bool NotificationFeedbackPlayer::isEnabled(LipstickNotification *notification)
         return false;
 
     uint mode = AllNotificationsEnabled;
-    QWaylandSurface *surface = LipstickCompositor::instance()->surfaceForId(LipstickCompositor::instance()->topmostWindowId());
-    if (surface != 0) {
-        mode = surface->windowProperties().value("NOTIFICATION_PREVIEWS_DISABLED", uint(AllNotificationsEnabled)).toUInt();
+    LipstickCompositorWindow *win = LipstickCompositor::instance()->m_windows.value(LipstickCompositor::instance()->topmostWindowId());
+    if (win != 0) {
+        mode = win->windowProperties().value("NOTIFICATION_PREVIEWS_DISABLED", uint(AllNotificationsEnabled)).toUInt();
     }
 
     int urgency = notification->urgency();

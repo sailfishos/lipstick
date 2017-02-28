@@ -26,6 +26,7 @@ Tom Swindell - initial work on a pretty UX
 Vesa Halttunen - various functionality additions, guidance, working it towards a product
 Aaron Kennedy - work on Wayland port
 Mikko Harju - work on Wayland issues/port
+Florent Revest - upgraded to QtWaylandCompositor 5.8 APIs
 
 ... and many others. If you feel like you belong here, you probably do. Submit a
 pull request.

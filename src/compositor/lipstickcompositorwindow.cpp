@@ -15,7 +15,7 @@
 
 #include <QCoreApplication>
 #include <QWaylandCompositor>
-#include <QWaylandInputDevice>
+#include <QWaylandSeat>
 #include <QTimer>
 #include <sys/types.h>
 #include <signal.h>
@@ -25,29 +25,29 @@
 #include "hwcimage.h"
 #include "hwcrenderstage.h"
 #include <EGL/egl.h>
-#include <private/qwlsurface_p.h>
+#include <private/qwaylandsurface_p.h>
 #include <private/qquickwindow_p.h>
+#include <QtWaylandCompositor/private/qwlextendedsurface_p.h>
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
-                                                   QWaylandQuickSurface *surface, QQuickItem *parent)
-: QWaylandSurfaceItem(surface, parent), m_windowId(windowId), m_isAlien(false), m_category(category),
-  m_delayRemove(false), m_windowClosed(false), m_removePosted(false), m_mouseRegionValid(false),
+                                                   QWaylandSurface *surface, QQuickItem *parent)
+: QWaylandQuickItem(), m_windowId(windowId), m_category(category),
+  m_delayRemove(false), m_windowClosed(false), m_removePosted(false),
   m_interceptingTouch(false), m_mapped(false), m_noHardwareComposition(false),
   m_focusOnTouch(false), m_hasVisibleReferences(false)
 {
     setFlags(QQuickItem::ItemIsFocusScope | flags());
-    refreshMouseRegion();
 
     // Handle ungrab situations
     connect(this, SIGNAL(visibleChanged()), SLOT(handleTouchCancel()));
     connect(this, SIGNAL(enabledChanged()), SLOT(handleTouchCancel()));
     connect(this, SIGNAL(touchEventsEnabledChanged()), SLOT(handleTouchCancel()));
-    connect(this, &QWaylandSurfaceItem::surfaceDestroyed, this, &QObject::deleteLater);
 
-    if (surface) {
-        m_isAlien = surface->property("alienSurface").toBool();
+    if(surface) {
+        connect(surface, SIGNAL(surfaceDestroyed()), this, SLOT(deleteLater()));
+        setSurface(surface);
     }
-
+    Q_UNUSED(parent)
     connectSurfaceSignals();
 }
 
@@ -85,7 +85,7 @@ bool LipstickCompositorWindow::isAlien() const
 qint64 LipstickCompositorWindow::processId() const
 {
     if (surface())
-        return surface()->processId();
+        return surface()->client()->processId();
     else return 0;
 }
 
@@ -101,9 +101,9 @@ void LipstickCompositorWindow::setDelayRemove(bool delay)
 
     m_delayRemove = delay;
     if (m_delayRemove)
-        disconnect(this, &QWaylandSurfaceItem::surfaceDestroyed, this, &QObject::deleteLater);
+        disconnect(surface(), SIGNAL(surfaceDestroyed()), this, SLOT(deleteLater()));
     else
-        connect(this, &QWaylandSurfaceItem::surfaceDestroyed, this, &QObject::deleteLater);
+        connect(surface(), SIGNAL(surfaceDestroyed()), this, SLOT(deleteLater()));
 
     emit delayRemoveChanged();
 
@@ -115,11 +115,40 @@ QString LipstickCompositorWindow::category() const
     return m_category;
 }
 
+QtWayland::ExtendedSurface *LipstickCompositorWindow::extendedSurface()
+{
+    return m_extSurface;
+}
+
+void LipstickCompositorWindow::setExtendedSurface(QtWayland::ExtendedSurface *extSurface)
+{
+    m_extSurface = extSurface;
+    connect(m_extSurface, SIGNAL(windowFlagsChanged()), this, SIGNAL(windowFlagsChanged()));
+}
+
+qint16 LipstickCompositorWindow::windowFlags()
+{
+    if (m_extSurface) {
+        return m_extSurface->windowFlags();
+    }
+    return 0;
+}
+
+QVariantMap LipstickCompositorWindow::windowProperties()
+{
+    if (m_extSurface)
+        return m_extSurface->windowProperties();
+    return QVariantMap();
+}
+
+void LipstickCompositorWindow::setTitle(QString title)
+{
+    m_title = title;
+}
+
 QString LipstickCompositorWindow::title() const
 {
-    if (surface())
-        return surface()->title();
-    return QString();
+    return m_title;
 }
 
 void LipstickCompositorWindow::imageAddref(QQuickItem *item)
@@ -150,58 +179,6 @@ void LipstickCompositorWindow::tryRemove()
     }
 }
 
-QRect LipstickCompositorWindow::mouseRegionBounds() const
-{
-    if (m_mouseRegionValid)
-        return m_mouseRegion.boundingRect();
-    else
-        return QRect(0, 0, width(), height());
-}
-
-void LipstickCompositorWindow::refreshMouseRegion()
-{
-    QWaylandSurface *s = surface();
-    if (s) {
-        QVariantMap properties = s->windowProperties();
-        if (properties.contains(QLatin1String("MOUSE_REGION"))) {
-            m_mouseRegion = s->windowProperties().value("MOUSE_REGION").value<QRegion>();
-            m_mouseRegionValid = true;
-            if (LipstickCompositor::instance()->debug())
-                qDebug() << "Window" << windowId() << "mouse region set:" << m_mouseRegion;
-        } else {
-            m_mouseRegionValid = false;
-            if (LipstickCompositor::instance()->debug())
-                qDebug() << "Window" << windowId() << "mouse region cleared";
-        }
-
-        emit mouseRegionBoundsChanged();
-    }
-}
-
-void LipstickCompositorWindow::refreshGrabbedKeys()
-{
-    QWaylandSurface *s = surface();
-    if (s) {
-        const QStringList grabbedKeys = s->windowProperties().value(
-                    QLatin1String("GRABBED_KEYS")).value<QStringList>();
-
-        if (m_grabbedKeys.isEmpty() && !grabbedKeys.isEmpty()) {
-            qApp->installEventFilter(this);
-        } else if (!m_grabbedKeys.isEmpty() && grabbedKeys.isEmpty() && m_pressedGrabbedKeys.keys.isEmpty()) {
-            // we don't remove the event filter if m_pressedGrabbedKeys.keys contains still some key.
-            // we wait the key release for that.
-            qApp->removeEventFilter(this);
-        }
-
-        m_grabbedKeys.clear();
-        foreach (const QString &key, grabbedKeys)
-            m_grabbedKeys.append(key.toInt());
-
-        if (LipstickCompositor::instance()->debug())
-            qDebug() << "Window" << windowId() << "grabbed keys changed:" << grabbedKeys;
-    }
-}
-
 bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == window() && m_interceptingTouch) {
@@ -228,25 +205,13 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         QWaylandSurface *m_surface = surface();
-        if (m_surface && (m_grabbedKeys.contains(ke->key()) || m_pressedGrabbedKeys.keys.contains(ke->key())) && !ke->isAutoRepeat()) {
-            QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
-            if (event->type() == QEvent::KeyPress) {
-                if (m_pressedGrabbedKeys.keys.isEmpty()) {
-                    QWaylandSurface *old = inputDevice->keyboardFocus();
-                    m_pressedGrabbedKeys.oldFocus = old;
-                    inputDevice->setKeyboardFocus(m_surface);
-                }
-                m_pressedGrabbedKeys.keys << ke->key();
-            }
+        if (m_surface) {
+            QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(ke);
+            if (event->type() == QEvent::KeyPress)
+                inputDevice->setKeyboardFocus(m_surface);
             inputDevice->sendFullKeyEvent(ke);
-            if (event->type() == QEvent::KeyRelease) {
-                m_pressedGrabbedKeys.keys.removeOne(ke->key());
-                if (m_pressedGrabbedKeys.keys.isEmpty()) {
-                    inputDevice->setKeyboardFocus(m_pressedGrabbedKeys.oldFocus.data());
-                    if (m_grabbedKeys.isEmpty())
-                        qApp->removeEventFilter(this);
-                }
-            }
+            if (event->type() == QEvent::KeyRelease)
+                qApp->removeEventFilter(this);
             return true;
         }
     }
@@ -272,12 +237,12 @@ void LipstickCompositorWindow::itemChange(ItemChange change, const ItemChangeDat
         }
 
     }
-    QWaylandSurfaceItem::itemChange(change, data);
+    QWaylandQuickItem::itemChange(change, data);
 }
 
 bool LipstickCompositorWindow::event(QEvent *e)
 {
-    bool rv = QWaylandSurfaceItem::event(e);
+    bool rv = QWaylandQuickItem::event(e);
     if (e->type() == QEvent::User) {
         m_removePosted = false;
         if (canRemove()) delete this;
@@ -288,16 +253,16 @@ bool LipstickCompositorWindow::event(QEvent *e)
 void LipstickCompositorWindow::mousePressEvent(QMouseEvent *event)
 {
     QWaylandSurface *m_surface = surface();
-    if (m_surface && (!m_mouseRegionValid || m_mouseRegion.contains(event->pos())) &&
-        m_surface->inputRegionContains(event->pos()) && event->source() != Qt::MouseEventSynthesizedByQt) {
-        QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
-        if (inputDevice->mouseFocus() != this) {
-            inputDevice->setMouseFocus(this, event->pos(), event->globalPos());
+    if (m_surface && m_surface->inputRegionContains(event->pos()) && event->source() != Qt::MouseEventSynthesizedByQt) {
+        QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(event);
+        QWaylandView *v = view();
+        if (inputDevice->mouseFocus() != v) {
+            inputDevice->setMouseFocus(v);
             if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
                 takeFocus();
             }
         }
-        inputDevice->sendMousePressEvent(event->button(), event->pos(), event->globalPos());
+        inputDevice->sendMousePressEvent(event->button());
     } else {
         event->ignore();
     }
@@ -307,8 +272,9 @@ void LipstickCompositorWindow::mouseMoveEvent(QMouseEvent *event)
 {
     QWaylandSurface *m_surface = surface();
     if (m_surface && event->source() != Qt::MouseEventSynthesizedByQt) {
-        QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
-        inputDevice->sendMouseMoveEvent(this, event->pos(), event->globalPos());
+        QWaylandView *v = view();
+        QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(event);
+        inputDevice->sendMouseMoveEvent(v, event->localPos(), event->globalPos());
     } else {
         event->ignore();
     }
@@ -318,8 +284,8 @@ void LipstickCompositorWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     QWaylandSurface *m_surface = surface();
     if (m_surface && event->source() != Qt::MouseEventSynthesizedByQt) {
-        QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
-        inputDevice->sendMouseReleaseEvent(event->button(), event->pos(), event->globalPos());
+        QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(event);
+        inputDevice->sendMouseReleaseEvent(event->button());
     } else {
         event->ignore();
     }
@@ -329,7 +295,7 @@ void LipstickCompositorWindow::wheelEvent(QWheelEvent *event)
 {
     QWaylandSurface *m_surface = surface();
     if (m_surface) {
-        QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
+        QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(event);
         inputDevice->sendMouseWheelEvent(event->orientation(), event->delta());
     } else {
         event->ignore();
@@ -366,28 +332,33 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
 
     if (event->touchPointStates() & Qt::TouchPointPressed) {
         foreach (const QTouchEvent::TouchPoint &p, points) {
-            if ((m_mouseRegionValid && !m_mouseRegion.contains(p.pos().toPoint())) ||
-                !m_surface->inputRegionContains(p.pos().toPoint())) {
+            if (!m_surface->inputRegionContains(p.pos().toPoint())) {
                 event->ignore();
                 return;
             }
         }
     }
 
-    QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
+    QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(event);
     event->accept();
 
-    if (inputDevice->mouseFocus() != this) {
+    QWaylandView *vview = view();
+    if (vview && (!vview->surface() || vview->surface()->isCursorSurface()))
+        vview = Q_NULLPTR;
+    inputDevice->setMouseFocus(vview);
+
+    QWaylandView *v = view();
+    if (inputDevice->mouseFocus() != v) {
         QPoint pointPos;
         if (!points.isEmpty())
             pointPos = points.at(0).pos().toPoint();
-        inputDevice->setMouseFocus(this, pointPos, pointPos);
+        inputDevice->setMouseFocus(v);
 
         if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
             takeFocus();
         }
     }
-    inputDevice->sendFullTouchEvent(event);
+    inputDevice->sendFullTouchEvent(surface(), event);
 }
 
 void LipstickCompositorWindow::handleTouchCancel()
@@ -395,11 +366,12 @@ void LipstickCompositorWindow::handleTouchCancel()
     QWaylandSurface *m_surface = surface();
     if (!m_surface)
         return;
-    QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
-    if (inputDevice->mouseFocus() == this &&
+    QWaylandSeat *inputDevice = m_surface->compositor()->defaultSeat();
+    QWaylandView *v = view();
+    if (inputDevice->mouseFocus() == v &&
             (!isVisible() || !isEnabled() || !touchEventsEnabled())) {
-        inputDevice->sendTouchCancelEvent();
-        inputDevice->setMouseFocus(0, QPointF());
+        inputDevice->sendTouchCancelEvent(surface()->client());
+        inputDevice->setMouseFocus(0);
     }
     if (QWindow *w = window())
         w->removeEventFilter(this);
@@ -431,7 +403,6 @@ void LipstickCompositorWindow::connectSurfaceSignals()
 
     m_surfaceConnections.clear();
     if (surface()) {
-        m_surfaceConnections << connect(surface(), SIGNAL(titleChanged()), SIGNAL(titleChanged()));
         m_surfaceConnections << connect(surface(), &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
     }
 }
@@ -445,18 +416,13 @@ static Ptr_eglHybrisAcquireNativeBufferWL eglHybrisAcquireNativeBufferWL;
 static Ptr_eglHybrisNativeBufferHandle eglHybrisNativeBufferHandle;
 static Ptr_eglHybrisReleaseNativeBuffer eglHybrisReleaseNativeBuffer;
 
-struct QWlSurface_Accessor : public QtWayland::Surface {
-    QtWayland::SurfaceBuffer *surfaceBuffer() const { return m_buffer; };
-    wl_resource *surfaceBufferHandle() const { return m_buffer ? m_buffer->waylandBufferHandle() : 0; }
-};
-
 class LipstickCompositorWindowHwcNode : public HwcNode
 {
 public:
     LipstickCompositorWindowHwcNode(QQuickWindow *window) : HwcNode(window), eglBuffer(0) { }
     ~LipstickCompositorWindowHwcNode();
 
-    void update(QWlSurface_Accessor *s, EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode);
+    void update(QWaylandSurfacePrivate *s, EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode);
 
     EGLClientBuffer eglBuffer;
     QWaylandBufferRef waylandBuffer;
@@ -484,7 +450,7 @@ void LipstickCompositorWindow::onSync()
 QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data)
 {
     if (!hwc_windowsurface_is_enabled() || m_noHardwareComposition)
-        return QWaylandSurfaceItem::updatePaintNode(old, data);
+        return QWaylandQuickItem::updatePaintNode(old, data);
 
     // qCDebug(LIPSTICK_LOG_HWC, "LipstickCompositorWindow(%p)::updatePaintNode(), old=%p", this, old);
 
@@ -497,17 +463,19 @@ QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNode
     // Added to this logic, we have the case of a window surface suddenly
     // appearing with a shm buffer. We then need to switch to normal
     // composition.
-    bool hwBuffer = surface() && surface()->type() == QWaylandSurface::Texture;
+
+                               // TODO: a327ca8d8a1f6e0a44a3aa6bd4dac716911c434e
+    bool hwBuffer = surface(); // TODO && surface()->type() == QWaylandSurface::Texture;
     int wantedNodeType = m_hasVisibleReferences || !hwBuffer ? QSGNode::GeometryNodeType : QSG_HWC_NODE_TYPE;
     if (old && old->type() != wantedNodeType) {
         delete old;
         old = 0;
     }
     if (m_hasVisibleReferences || !hwBuffer)
-        return QWaylandSurfaceItem::updatePaintNode(old, data);
+        return QWaylandQuickItem::updatePaintNode(old, data);
 
     // No surface, abort..
-    if (!surface() || !surface()->handle() || !surface()->isMapped() || !textureProvider()->texture()) {
+    if (!surface() || !QWaylandSurfacePrivate::get(surface()) || !surface()->hasContent() || !textureProvider()->texture()) {
         delete old;
         return 0;
     }
@@ -515,8 +483,9 @@ QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNode
     // Follow the unmaplock logic inside QtWayland. If a surface is still
     // visible but has a null buffer attached, we retain the copy we have
     // until further notice...
-    QWlSurface_Accessor *s = static_cast<QWlSurface_Accessor *>(surface()->handle());
-    if (!s->surfaceBufferHandle() && s->mapped()) {
+    QWaylandSurfacePrivate *s = QWaylandSurfacePrivate::get(surface());
+    wl_resource *surfaceBufferHandle = s->bufferRef.hasBuffer() ? s->bufferRef.wl_buffer() : 0;
+    if (!surfaceBufferHandle && surface()->hasContent()) {
         qCDebug(LIPSTICK_LOG_HWC, " - visible with attached 'null' buffer, reusing previous buffer");
         return old;
     }
@@ -525,7 +494,7 @@ QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNode
     // surface item. If this results in a null node, we abort.
     LipstickCompositorWindowHwcNode *hwcNode = old ? static_cast<LipstickCompositorWindowHwcNode *>(old) : 0;
     QSGNode *oldContentNode = hwcNode ? hwcNode->firstChild() : 0;
-    QSGNode *newContentNode = QWaylandSurfaceItem::updatePaintNode(oldContentNode, data);
+    QSGNode *newContentNode = QWaylandQuickItem::updatePaintNode(oldContentNode, data);
     if (!newContentNode) {
         delete old;
         return 0;
@@ -536,11 +505,11 @@ QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNode
     EGLDisplay display = eglGetCurrentDisplay();
     EGLClientBuffer eglBuffer = 0;
     void *hwcHandle = 0;
-    if (!eglHybrisAcquireNativeBufferWL(display, s->surfaceBufferHandle(), &eglBuffer)) {
+    if (!eglHybrisAcquireNativeBufferWL(display, surfaceBufferHandle, &eglBuffer)) {
         qCDebug(LIPSTICK_LOG_HWC, " - failed to acquire native buffer (buffers are probably not allocated server-side)");
         m_noHardwareComposition = true;
         delete old;
-        return QWaylandSurfaceItem::updatePaintNode(0, data);
+        return QWaylandQuickItem::updatePaintNode(0, data);
     }
     eglHybrisNativeBufferHandle(eglGetCurrentDisplay(), eglBuffer, &hwcHandle);
     Q_ASSERT(hwcHandle);
@@ -552,7 +521,7 @@ QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNode
 
     // Add the new content node. The old one, if present would already have
     // been removed because it was deleted in the
-    // QWaylandSurfaceItem::updatePaintNode() call above.
+    // QWaylandQuickItem::updatePaintNode() call above.
     if (newContentNode != hwcNode->firstChild())
         hwcNode->appendChildNode(newContentNode);
 
@@ -643,7 +612,7 @@ void hwc_windowsurface_release_native_buffer(void *, void *callbackData)
     QCoreApplication::postEvent(e->eventTarget, e);
 }
 
-void LipstickCompositorWindowHwcNode::update(QWlSurface_Accessor *s, EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode)
+void LipstickCompositorWindowHwcNode::update(QWaylandSurfacePrivate *s, EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode)
 {
     // If we're taking a new buffer into use when there already was
     // one, set up the old to be removed.
@@ -655,7 +624,7 @@ void LipstickCompositorWindowHwcNode::update(QWlSurface_Accessor *s, EGLClientBu
     }
     // qCDebug(LIPSTICK_LOG_HWC, " - setting buffers on HwcNode, EGLClientBuffer=%p, gralloc=%p", newBuffer, newHandle);
     eglBuffer = newBuffer;
-    waylandBuffer = QWaylandBufferRef(s->surfaceBuffer());
+    waylandBuffer = QWaylandBufferRef(s->bufferRef);
 
     Q_ASSERT(contentNode->type() == QSGNode::GeometryNodeType);
     HwcNode::update(static_cast<QSGGeometryNode *>(contentNode), newHandle);

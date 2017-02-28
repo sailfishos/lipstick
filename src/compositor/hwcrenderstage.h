@@ -17,6 +17,7 @@
 #define HWCRENDERSTAGE
 
 #include <private/qquickwindow_p.h>
+#include <private/qsgrenderer_p.h>
 
 Q_DECLARE_LOGGING_CATEGORY(LIPSTICK_LOG_HWC)
 

@@ -136,7 +136,7 @@ void HwcRenderStage::initialize(LipstickCompositor *lipstick)
         return;
     }
     Q_ASSERT(compositor);
-    QQuickWindowPrivate::get(lipstick)->customRenderStage = new HwcRenderStage(lipstick, compositor);
+    QQuickWindowPrivate::get(lipstick->quickWindow())->customRenderStage = new HwcRenderStage(lipstick, compositor);
     qDebug() << "Hardware Compositor support is enabled";
     m_hwcEnabled = true;
 }
@@ -194,7 +194,7 @@ static void hwc_renderstage_dump_layerlist(HwcInterface::LayerList *list)
 
 HwcRenderStage::HwcRenderStage(LipstickCompositor *lipstick, void *compositorHandle)
     : m_lipstick(lipstick)
-    , m_window(lipstick)
+    , m_window(lipstick->quickWindow())
     , m_hwc(reinterpret_cast<HwcInterface::Compositor *>(compositorHandle))
     , m_hwcBypass(0)
     , m_invalidated(0)

@@ -33,12 +33,12 @@ ScreenshotService::ScreenshotService(QObject *parent) :
 void ScreenshotService::saveScreenshot(const QString &path)
 {
     if (LipstickCompositor *compositor = LipstickCompositor::instance()) {
-        QQuickWindowPrivate *wd = QQuickWindowPrivate::get(compositor);
+        QQuickWindowPrivate *wd = QQuickWindowPrivate::get(compositor->quickWindow());
         HwcRenderStage *renderStage = (HwcRenderStage *) wd->customRenderStage;
         if (renderStage)
             renderStage->setBypassHwc(true);
 
-        QImage grab(compositor->grabWindow());
+        QImage grab(compositor->quickWindow()->grabWindow());
 
         int rotation(QGuiApplication::primaryScreen()->angleBetween(Qt::PrimaryOrientation, compositor->topmostWindowOrientation()));
         if (rotation != 0) {
