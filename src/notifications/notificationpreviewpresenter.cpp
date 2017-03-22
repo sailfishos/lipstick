@@ -232,7 +232,9 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
             // Ask mce to turn the screen on if requested
             const bool notificationIsCritical = notification->urgency() >= 2 ||
                                                 notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
-            if (notificationIsCritical) {
+            const bool  notificationCanUnblank = !notification->hints().value(NotificationManager::HINT_SUPPRESS_DISPLAY_ON).toBool();
+
+            if (notificationIsCritical && notificationCanUnblank) {
                 QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->replacesId());
                 QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_NOTIFICATION_BEGIN);
                 msg.setArguments(QVariantList() << mceIdToAdd << MCE_DURATION << MCE_EXTEND_DURATION);

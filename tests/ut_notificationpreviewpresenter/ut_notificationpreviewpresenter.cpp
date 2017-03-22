@@ -113,6 +113,7 @@ const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote
 const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
 const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
 const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
+const char *NotificationManager::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
 const char *NotificationManager::HINT_ORIGIN = "x-nemo-origin";
 const char *NotificationManager::HINT_OWNER = "x-nemo-owner";
 const char *NotificationManager::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
