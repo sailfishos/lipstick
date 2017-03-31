@@ -44,7 +44,6 @@ const QString MCE_NOTIFICATION_END(QStringLiteral("notification_end_req"));
 
 const qint32 MCE_DURATION(6000);
 const qint32 MCE_EXTEND_DURATION(2000);
-const qint32 MCE_LINGER_DURATION(1000);
 
 enum PreviewMode {
     AllNotificationsEnabled = 0,
@@ -224,18 +223,8 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
 {
     if (m_currentNotification != notification) {
         if (m_currentNotification) {
-            const bool notificationWasCritical = m_currentNotification->urgency() >= 2 ||
-                                                 m_currentNotification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
-            if (notificationWasCritical) {
-                // Release our screen wake for the previous notification
-                QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_NOTIFICATION_END);
-                msg.setArguments(QVariantList() << QString::number(m_currentNotification->replacesId()) << MCE_LINGER_DURATION);
-                QDBusConnection::systemBus().asyncCall(msg);
-            }
-
             NotificationManager::instance()->MarkNotificationDisplayed(m_currentNotification->replacesId());
         }
-
         m_currentNotification = notification;
         emit notificationChanged();
 
@@ -243,9 +232,12 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
             // Ask mce to turn the screen on if requested
             const bool notificationIsCritical = notification->urgency() >= 2 ||
                                                 notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
-            if (notificationIsCritical) {
+            const bool  notificationCanUnblank = !notification->hints().value(NotificationManager::HINT_SUPPRESS_DISPLAY_ON).toBool();
+
+            if (notificationIsCritical && notificationCanUnblank) {
+                QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->replacesId());
                 QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_NOTIFICATION_BEGIN);
-                msg.setArguments(QVariantList() << QString::number(notification->replacesId()) << MCE_DURATION << MCE_EXTEND_DURATION);
+                msg.setArguments(QVariantList() << mceIdToAdd << MCE_DURATION << MCE_EXTEND_DURATION);
                 QDBusConnection::systemBus().asyncCall(msg);
             }
         }
