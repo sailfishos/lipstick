@@ -33,6 +33,9 @@ public:
 
     virtual bool eventFilter(QObject *, QEvent *);
     virtual void timerEvent(QTimerEvent *);
+
+    virtual void inputPolicyChanged(const QString &status);
+    virtual void inputPolicyReply(QDBusPendingCallWatcher *watcher);
 };
 
 // 2. IMPLEMENT STUB
@@ -80,6 +83,18 @@ void TouchScreenStub::timerEvent(QTimerEvent *)
     stubMethodEntered("timerEvent");
 }
 
+void TouchScreenStub::inputPolicyChanged(const QString &status)
+{
+    Q_UNUSED(status);
+    stubMethodEntered("inputPolicyChanged");
+}
+
+void TouchScreenStub::inputPolicyReply(QDBusPendingCallWatcher *watcher)
+{
+    Q_UNUSED(watcher);
+    stubMethodEntered("inputPolicyReply");
+}
+
 // 3. CREATE A STUB INSTANCE
 TouchScreenStub gDefaultTouchScreenStub;
 TouchScreenStub* gTouchScreenStub = &gDefaultTouchScreenStub;
@@ -123,5 +138,14 @@ void TouchScreen::timerEvent(QTimerEvent *e)
     gTouchScreenStub->timerEvent(e);
 }
 
+void TouchScreen::inputPolicyChanged(const QString &status)
+{
+    gTouchScreenStub->inputPolicyChanged(status);
+}
+
+void TouchScreen::inputPolicyReply(QDBusPendingCallWatcher *watcher)
+{
+    gTouchScreenStub->inputPolicyReply(watcher);
+}
 
 #endif // TOUCHSCREEN_STUB_H

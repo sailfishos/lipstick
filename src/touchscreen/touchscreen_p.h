@@ -21,19 +21,25 @@
 #include "touchscreen.h"
 #include "homeapplication.h"
 
+class QDBusInterface;
 
 class TouchScreenPrivate {
 public:
     explicit TouchScreenPrivate(TouchScreen *q);
 
+    void handleInputPolicyChange(bool inputEnabled);
     void handleDisplayStateChange(TouchScreen::DisplayState state);
     bool touchBlocked() const;
+    void evaluateTouchBlocked();
 
     bool eatEvents;
     TouchScreen::DisplayState currentDisplayState;
     bool waitForTouchBegin;
+    bool inputEnabled;
+    bool touchBlockedState;
     int touchUnblockingDelayTimer;
     MeeGo::QmDisplayState *displayState;
+    QDBusInterface *mceRequest;
 
     TouchScreen *q_ptr;
 
