@@ -26,6 +26,11 @@
 #include "pulseaudiocontrol.h"
 #include "volumecontrol.h"
 #include "lipstickqmlpath.h"
+#include <QDBusInterface>
+#include <QDBusPendingReply>
+#include <QDBusPendingCallWatcher>
+#include <mce/dbus-names.h>
+#include <mce/mode-names.h>
 
 VolumeControl::VolumeControl(QObject *parent) :
     QObject(parent),
@@ -33,11 +38,14 @@ VolumeControl::VolumeControl(QObject *parent) :
     m_pulseAudioControl(new PulseAudioControl(this)),
     m_hwKeyResource(new ResourcePolicy::ResourceSet("event")),
     m_hwKeysAcquired(false),
+    m_hwKeysEnabled(true),
+    m_hwKeysActive(false),
     m_volume(0),
     m_maximumVolume(0),
     m_audioWarning(new MGConfItem("/desktop/nemo/audiowarning", this)),
     m_safeVolume(0),
     m_callActive(false),
+    m_mceRequest(0),
     m_mediaState(MediaStateUnknown)
 {
     m_hwKeyResource->setAlwaysReply();
@@ -58,12 +66,59 @@ VolumeControl::VolumeControl(QObject *parent) :
 
     qApp->installEventFilter(this);
     QTimer::singleShot(0, this, SLOT(createWindow()));
+
+    QDBusConnection systemBus = QDBusConnection::systemBus();
+
+    systemBus.connect(MCE_SERVICE,
+                      MCE_SIGNAL_PATH,
+                      MCE_SIGNAL_IF,
+                      MCE_VOLKEY_INPUT_POLICY_SIG,
+                      this, SLOT(inputPolicyChanged(QString)));
+
+    m_mceRequest = new QDBusInterface(MCE_SERVICE,
+                                      MCE_REQUEST_PATH,
+                                      MCE_REQUEST_IF,
+                                      systemBus);
+
+    QDBusPendingReply<QString> inputPolicy = m_mceRequest->asyncCall(MCE_VOLKEY_INPUT_POLICY_GET);
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(inputPolicy, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished,
+            this, &VolumeControl::inputPolicyReply);
+
+    evaluateKeyState();
 }
 
 VolumeControl::~VolumeControl()
 {
+    delete m_mceRequest;
+    m_mceRequest = 0;
+
     m_hwKeyResource->deleteResource(ResourcePolicy::ScaleButtonType);
     delete m_window;
+}
+
+void VolumeControl::inputPolicyChanged(const QString &status)
+{
+    bool inputEnabled = (status != MCE_INPUT_POLICY_DISABLED);
+
+    if (inputEnabled) {
+        hwKeysEnabled();
+    } else {
+        hwKeysDisabled();
+    }
+}
+
+void VolumeControl::inputPolicyReply(QDBusPendingCallWatcher *watcher)
+{
+    QDBusPendingReply<QString> reply = *watcher;
+    if (reply.isError()) {
+        qWarning() << MCE_VOLKEY_INPUT_POLICY_GET"() failed!" << reply.error().name() << reply.error().message();
+        /* Do not leave input disabled in error situations */
+        inputPolicyChanged(QString(MCE_INPUT_POLICY_ENABLED));
+    } else {
+        inputPolicyChanged(reply.value());
+    }
+    watcher->deleteLater();
 }
 
 int VolumeControl::volume() const
@@ -171,21 +226,71 @@ void VolumeControl::setVolume(int volume, int maximumVolume)
     }
 }
 
+void VolumeControl::setVolumeUpKeyState(bool pressed)
+{
+    if (m_upPressed != pressed) {
+        m_upPressed = pressed;
+        if (m_upPressed) {
+            emit volumeKeyPressed(Qt::Key_VolumeUp);
+        } else {
+            emit volumeKeyReleased(Qt::Key_VolumeUp);
+        }
+    }
+}
+
+void VolumeControl::setVolumeDownKeyState(bool pressed)
+{
+    if (m_upPressed != pressed) {
+        m_upPressed = pressed;
+        if (m_upPressed) {
+            emit volumeKeyPressed(Qt::Key_VolumeDown);
+        } else {
+            emit volumeKeyReleased(Qt::Key_VolumeDown);
+        }
+    }
+}
+
+void VolumeControl::evaluateKeyState()
+{
+    bool hwKeysActive = m_hwKeysAcquired && m_hwKeysEnabled;
+
+    if (m_hwKeysActive != hwKeysActive) {
+        m_hwKeysActive = hwKeysActive;
+        if (!m_hwKeysActive) {
+            setVolumeUpKeyState(false);
+            setVolumeDownKeyState(false);
+        }
+    }
+}
+
+void VolumeControl::hwKeysEnabled()
+{
+    if (!m_hwKeysEnabled) {
+        m_hwKeysEnabled = true;
+        evaluateKeyState();
+    }
+}
+void VolumeControl::hwKeysDisabled()
+{
+    if (m_hwKeysEnabled) {
+        m_hwKeysEnabled = false;
+        evaluateKeyState();
+    }
+}
+
 void VolumeControl::hwKeyResourceAcquired()
 {
-    m_hwKeysAcquired = true;
+    if (!m_hwKeysAcquired ) {
+        m_hwKeysAcquired = true;
+        evaluateKeyState();
+    }
 }
 
 void VolumeControl::hwKeyResourceLost()
 {
-    m_hwKeysAcquired = false;
-    if (m_upPressed) {
-        m_upPressed = false;
-        emit volumeKeyReleased(Qt::Key_VolumeUp);
-    }
-    if (m_downPressed) {
-        m_downPressed = false;
-        emit volumeKeyReleased(Qt::Key_VolumeDown);
+    if (m_hwKeysAcquired) {
+        m_hwKeysAcquired = false;
+        evaluateKeyState();
     }
 }
 
@@ -261,26 +366,29 @@ void VolumeControl::createWindow()
 
 bool VolumeControl::eventFilter(QObject *, QEvent *event)
 {
-    if (m_hwKeysAcquired && (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)) {
+    bool handled = false;
+
+    if (m_hwKeysActive && (event->type() == QEvent::KeyPress ||
+                           event->type() == QEvent::KeyRelease)) {
+        bool pressed = (event->type() == QEvent::KeyPress);
+
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        if ((keyEvent->key() == Qt::Key_VolumeUp || keyEvent->key() == Qt::Key_VolumeDown) && !keyEvent->isAutoRepeat()) {
-            if (event->type() == QEvent::KeyPress) {
-                if (keyEvent->key() == Qt::Key_VolumeUp) {
-                    m_upPressed = true;
-                } else {
-                    m_downPressed = true;
-                }
-                emit volumeKeyPressed(keyEvent->key());
-            } else {
-                if (keyEvent->key() == Qt::Key_VolumeUp) {
-                    m_downPressed = false;
-                } else {
-                    m_downPressed = false;
-                }
-                emit volumeKeyReleased(keyEvent->key());
-            }
-            return true;
+
+        switch (keyEvent->key()) {
+        case Qt::Key_VolumeUp:
+            setVolumeUpKeyState(pressed);
+            handled = true;
+            break;
+
+        case Qt::Key_VolumeDown:
+            setVolumeDownKeyState(pressed);
+            handled = true;
+            break;
+
+        default:
+            break;
         }
     }
-    return false;
+
+    return handled;
 }
