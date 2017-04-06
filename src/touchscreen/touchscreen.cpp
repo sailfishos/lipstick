@@ -17,6 +17,14 @@
 #include "touchscreen_p.h"
 
 #include <QTimerEvent>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusPendingReply>
+#include <QDBusPendingCallWatcher>
+#include <QDebug>
+
+#include <mce/dbus-names.h>
+#include <mce/mode-names.h>
 
 bool userInteracting(const QEvent *event) {
     switch(event->type()) {
@@ -39,8 +47,11 @@ TouchScreenPrivate::TouchScreenPrivate(TouchScreen *q)
     : eatEvents(false)
     , currentDisplayState(TouchScreen::DisplayUnknown)
     , waitForTouchBegin(true)
+    , inputEnabled(true)
+    , touchBlockedState(false)
     , touchUnblockingDelayTimer(0)
     , displayState(new MeeGo::QmDisplayState(q))
+    , mceRequest(0)
     , q_ptr(q)
 {
 }
@@ -48,23 +59,6 @@ TouchScreenPrivate::TouchScreenPrivate(TouchScreen *q)
 void TouchScreenPrivate::handleDisplayStateChange(TouchScreen::DisplayState state)
 {
     Q_Q(TouchScreen);
-
-    // Exited display off state. Let's wait for touch begin.
-    if (currentDisplayState == TouchScreen::DisplayOff) {
-        // Keep on filtering touch events to avoid unwanted display on, display off
-        // sequences e.g. during a phone call.
-        bool wasTouchBlocked = touchBlocked();
-        touchUnblockingDelayTimer = q->startTimer(100);
-        if (!wasTouchBlocked) {
-            emit q->touchBlockedChanged();
-        }
-    } else if (state == TouchScreen::DisplayOff) {
-        if (touchUnblockingDelayTimer > 0) {
-            q->killTimer(touchUnblockingDelayTimer);
-            touchUnblockingDelayTimer = 0;
-        }
-        waitForTouchBegin = true;
-    }
 
     currentDisplayState = state;
     if (state == TouchScreen::DisplayDimmed)
@@ -74,9 +68,43 @@ void TouchScreenPrivate::handleDisplayStateChange(TouchScreen::DisplayState stat
     eatEvents = false;
 }
 
+void TouchScreenPrivate::handleInputPolicyChange(bool inputEnabled)
+{
+    Q_Q(TouchScreen);
+
+    if (this->inputEnabled != inputEnabled) {
+        this->inputEnabled = inputEnabled;
+
+        if (touchUnblockingDelayTimer > 0) {
+            q->killTimer(touchUnblockingDelayTimer);
+            touchUnblockingDelayTimer = 0;
+        }
+
+        if (this->inputEnabled) {
+            touchUnblockingDelayTimer = q->startTimer(100);
+        } else {
+            waitForTouchBegin = true;
+        }
+
+        evaluateTouchBlocked();
+    }
+}
+
+void TouchScreenPrivate::evaluateTouchBlocked()
+{
+    Q_Q(TouchScreen);
+
+    bool blocked = !inputEnabled || touchUnblockingDelayTimer > 0;
+
+    if (touchBlockedState != blocked) {
+        touchBlockedState = blocked;
+        emit q->touchBlockedChanged();
+    }
+}
+
 bool TouchScreenPrivate::touchBlocked() const
 {
-    return (currentDisplayState == TouchScreen::DisplayOff || touchUnblockingDelayTimer > 0);
+    return touchBlockedState;
 }
 
 TouchScreen::TouchScreen(QObject *parent)
@@ -93,6 +121,24 @@ TouchScreen::TouchScreen(QObject *parent)
         }
     });
 
+    QDBusConnection systemBus = QDBusConnection::systemBus();
+
+    systemBus.connect(MCE_SERVICE,
+                      MCE_SIGNAL_PATH,
+                      MCE_SIGNAL_IF,
+                      MCE_TOUCH_INPUT_POLICY_SIG,
+                      this, SLOT(inputPolicyChanged(QString)));
+
+    d->mceRequest = new QDBusInterface(MCE_SERVICE,
+                                       MCE_REQUEST_PATH,
+                                       MCE_REQUEST_IF,
+                                       systemBus);
+
+    QDBusPendingReply<QString> query = d->mceRequest->asyncCall(MCE_TOUCH_INPUT_POLICY_GET);
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(query, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished,
+            this, &TouchScreen::inputPolicyReply);
+
     qApp->installEventFilter(this);
 }
 
@@ -102,8 +148,33 @@ TouchScreen::~TouchScreen()
     delete d->displayState;
     d->displayState = 0;
 
+    delete d->mceRequest;
+    d->mceRequest = 0;
+
     delete d;
     d_ptr = 0;
+}
+
+void TouchScreen::inputPolicyChanged(const QString &status)
+{
+    Q_D(TouchScreen);
+
+    bool inputEnabled = (status != MCE_INPUT_POLICY_DISABLED);
+
+    d->handleInputPolicyChange(inputEnabled);
+}
+
+void TouchScreen::inputPolicyReply(QDBusPendingCallWatcher *watcher)
+{
+    QDBusPendingReply<QString> reply = *watcher;
+    if (reply.isError()) {
+        qWarning() << MCE_TOUCH_INPUT_POLICY_GET"() failed!" << reply.error().name() << reply.error().message();
+        /* Do not leave input disabled in error situations */
+        inputPolicyChanged(QString(MCE_INPUT_POLICY_ENABLED));
+    } else {
+        inputPolicyChanged(reply.value());
+    }
+    watcher->deleteLater();
 }
 
 bool TouchScreen::touchBlocked() const
@@ -166,9 +237,6 @@ void TouchScreen::timerEvent(QTimerEvent *e)
     if (e->timerId() == d->touchUnblockingDelayTimer) {
         killTimer(d->touchUnblockingDelayTimer);
         d->touchUnblockingDelayTimer = 0;
-        if (!touchBlocked()) {
-            emit touchBlockedChanged();
-        }
+        d->evaluateTouchBlocked();
     }
 }
-
