@@ -5,7 +5,7 @@ Name:       lipstick-qt5
 %define icondirectory %{_datadir}/icons/hicolor/86x86/apps
 
 Summary:    QML toolkit for homescreen creation
-Version:    0.30.8
+Version:    0.31.0
 Release:    1
 Group:      System/Libraries
 License:    LGPLv2.1
