@@ -25,6 +25,9 @@ class PulseAudioControl;
 class VolumeKeyListener;
 class MGConfItem;
 
+class QDBusPendingCallWatcher;
+class QDBusInterface;
+
 namespace ResourcePolicy {
     class ResourceSet;
 }
@@ -182,6 +185,9 @@ private slots:
     //! An internal slot to handle the case when we lost the hardware volume keys resource
     void hwKeyResourceLost();
 
+    void hwKeysEnabled();
+    void hwKeysDisabled();
+
     //! Used to capture safe volume level and reset it to safe when needed.
     void handleHighVolume(int safeLevel);
 
@@ -195,7 +201,14 @@ private slots:
 
     void createWindow();
 
+    void inputPolicyChanged(const QString &status);
+    void inputPolicyReply(QDBusPendingCallWatcher *watcher);
+
 private:
+    void setVolumeUpKeyState(bool pressed);
+    void setVolumeDownKeyState(bool pressed);
+    void evaluateKeyState();
+
     //! Returns whether the audio warning has been acknowledged by user.
     bool warningAcknowledged() const;
 
@@ -210,6 +223,8 @@ private:
 
     //! Whether to react to volume key presses
     bool m_hwKeysAcquired;
+    bool m_hwKeysEnabled;
+    bool m_hwKeysActive;
 
     //! The current volume
     int m_volume;
@@ -229,6 +244,7 @@ private:
     bool m_upPressed;
     bool m_downPressed;
 
+    QDBusInterface *m_mceRequest;
     int m_mediaState;
 
 #ifdef UNIT_TEST

@@ -1,6 +1,8 @@
 include(../common.pri)
 TARGET = ut_touchscreen
 QT += dbus qml quick
+CONFIG += link_pkgconfig
+PKGCONFIG += mce
 
 INCLUDEPATH += $$TOUCHSCREENSRCDIR $$UTILITYSRCDIR $$SRCDIR/xtools $$QMSYSTEM2
 

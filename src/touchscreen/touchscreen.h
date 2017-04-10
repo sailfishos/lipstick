@@ -21,6 +21,7 @@
 
 class TouchScreenPrivate;
 class QTimerEvent;
+class QDBusPendingCallWatcher;
 
 class LIPSTICK_EXPORT TouchScreen : public QObject
 {
@@ -52,6 +53,10 @@ public:
 
     DisplayState currentDisplayState() const;
 
+private slots:
+  void inputPolicyChanged(const QString &status);
+  void inputPolicyReply(QDBusPendingCallWatcher *watcher);
+
 signals:
     //! Emitted when touch blocking changes. Touch is blocked when display is off.
     void touchBlockedChanged();
@@ -64,7 +69,6 @@ signals:
 protected:
     bool eventFilter(QObject *, QEvent *);
     void timerEvent(QTimerEvent *);
-
 
 private:
     TouchScreenPrivate *d_ptr;
