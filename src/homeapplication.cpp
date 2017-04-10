@@ -134,7 +134,14 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
         const bool state(!activeTypes.isEmpty());
         if (state != m_online) {
             m_online = state;
-            QProcess::startDetached("systemctl", QStringList() << "--user" << (m_online ? "start" : "stop") << "vpn-updown");
+            QDBusConnection sessionBus = QDBusConnection::sessionBus();
+            QDBusInterface systemd(QStringLiteral("org.freedesktop.systemd1"),
+                                   QStringLiteral("/org/freedesktop/systemd1"),
+                                   QStringLiteral("org.freedesktop.systemd1.Manager"),
+                                   sessionBus);
+            systemd.call(QDBus::NoBlock, (m_online ? QStringLiteral("StartUnit") : QStringLiteral("StopUnit")),
+                         QStringLiteral("vpn-updown.service"),
+                         QStringLiteral("replace"));
         }
     };
 
