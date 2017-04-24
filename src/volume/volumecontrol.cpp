@@ -45,6 +45,8 @@ VolumeControl::VolumeControl(QObject *parent) :
     m_audioWarning(new MGConfItem("/desktop/nemo/audiowarning", this)),
     m_safeVolume(0),
     m_callActive(false),
+    m_upPressed(false),
+    m_downPressed(false),
     m_mceRequest(0),
     m_mediaState(MediaStateUnknown)
 {
@@ -240,9 +242,9 @@ void VolumeControl::setVolumeUpKeyState(bool pressed)
 
 void VolumeControl::setVolumeDownKeyState(bool pressed)
 {
-    if (m_upPressed != pressed) {
-        m_upPressed = pressed;
-        if (m_upPressed) {
+    if (m_downPressed != pressed) {
+        m_downPressed = pressed;
+        if (m_downPressed) {
             emit volumeKeyPressed(Qt::Key_VolumeDown);
         } else {
             emit volumeKeyReleased(Qt::Key_VolumeDown);
