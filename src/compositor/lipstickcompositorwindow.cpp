@@ -238,7 +238,7 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
             if (event->type() == QEvent::KeyRelease) {
                 m_pressedGrabbedKeys.keys.removeOne(ke->key());
                 if (m_pressedGrabbedKeys.keys.isEmpty()) {
-                    inputDevice->setKeyboardFocus(m_pressedGrabbedKeys.oldFocus);
+                    inputDevice->setKeyboardFocus(m_pressedGrabbedKeys.oldFocus.data());
                     if (m_grabbedKeys.isEmpty())
                         qApp->removeEventFilter(this);
                 }
