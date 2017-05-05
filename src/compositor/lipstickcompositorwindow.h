@@ -18,6 +18,7 @@
 
 #include <QWaylandSurfaceItem>
 #include <QWaylandBufferRef>
+#include <QPointer>
 #include "lipstickglobal.h"
 
 class LipstickCompositorWindowHwcNode;
@@ -119,7 +120,7 @@ private:
     QRegion m_mouseRegion;
     QList<int> m_grabbedKeys;
     struct {
-        QWaylandSurface *oldFocus;
+        QPointer<QWaylandSurface> oldFocus;
         QList<int> keys;
     } m_pressedGrabbedKeys;
     QList<QMetaObject::Connection> m_surfaceConnections;
