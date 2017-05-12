@@ -60,6 +60,18 @@ static void getDirAndIndex(const QString &positionId, QString &directoryId, int 
     index = strIndex.toInt();
 }
 
+struct FolderItem {
+    FolderItem(LauncherFolderItem *folder, LauncherItem *item)
+        : folder(folder)
+        , item(item)
+    {
+
+    }
+
+    LauncherFolderItem *folder;
+    LauncherItem *item;
+};
+
 // This is modeled after the freedesktop.org menu files http://standards.freedesktop.org/menu-spec/latest/
 // but handles only the basic elements, i.e. no merging, filtering, layout, etc. is supported.
 
@@ -478,6 +490,10 @@ void LauncherFolderModel::blacklistApps(LauncherFolderItem *folder, const QStrin
 void LauncherFolderModel::removeAppsFromBlacklist()
 {
     QMap<QString, QString>::iterator i = m_blacklistedApplications.begin();
+
+    // Same index can exist in subfolders. Thus, multimap.
+    QMultiMap<int, FolderItem*> unblacklistedItems;
+
     while (i != m_blacklistedApplications.end()) {
         LauncherItem* item = m_launcherModel->itemInModel(i.key());
         if (!item) {
@@ -493,16 +509,28 @@ void LauncherFolderModel::removeAppsFromBlacklist()
                 folder = findContainerFolder(directory);
             }
 
-            if (folder) {
-                folder->insertItem(index, item);
-            } else {
-                insertItem(index, item);
-            }
+            unblacklistedItems.insert(index, new FolderItem(folder, item));
             item->setIsBlacklisted(false);
             i = m_blacklistedApplications.erase(i);
         } else {
             ++i;
         }
+    }
+
+    QMultiMap<int, FolderItem*>::iterator unblacklistIterator = unblacklistedItems.begin();
+    while (unblacklistIterator != unblacklistedItems.end()) {
+        int index = unblacklistIterator.key();
+        FolderItem *folderItem = unblacklistIterator.value();
+        if (folderItem) {
+            if (folderItem->folder) {
+                folderItem->folder->insertItem(index, folderItem->item);
+            } else {
+                insertItem(index, folderItem->item);
+            }
+        }
+
+        delete folderItem;
+        unblacklistIterator = unblacklistedItems.erase(unblacklistIterator);
     }
 }
 
