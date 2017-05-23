@@ -67,6 +67,8 @@ NotificationPreviewPresenter::NotificationPreviewPresenter(
     connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));
     connect(this, SIGNAL(notificationPresented(uint)), m_notificationFeedbackPlayer, SLOT(addNotification(uint)));
 
+    connect(NotificationManager::instance(), &NotificationManager::aboutToUpdateNotification,
+            this, &NotificationPreviewPresenter::updateNotification);
     QTimer::singleShot(0, this, SLOT(createWindowIfNecessary()));
 }
 
