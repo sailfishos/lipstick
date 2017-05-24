@@ -21,6 +21,7 @@
 #include "touchscreen/touchscreen.h"
 
 class QDBusInterface;
+class QTimer;
 
 /*!
  * The screen lock business logic is responsible for showing and hiding
@@ -99,6 +100,25 @@ public slots:
     //! Shows the screen lock window and calls the MCE's lock function.
     void lockScreen(bool immediate = false);
 
+    /*!
+     * Register interaction expected -state
+     *
+     * The lockscreen implementation should set this to true when the
+     * ui state is such that no specific user interaction is expected,
+     * and false when exit from such state is made.
+     *
+     * As an concrete example: When display is woken up and lockscreen
+     * is shown -> set to true. When user swipes the lockscreen away
+     * or to lock code entry view -> set to false.
+     *
+     * Primary consumer of this state data is mce - which uses it as an
+     * input for display blanking policy.
+     */
+    void interactionExpected(bool expected);
+
+    //! Timer callback for broadcasting interaction expected -state
+    void interactionExpectedBroadcast();
+
     //! Hides the screen lock window and calls the MCE's unlock callback function.
     void unlockScreen();
 
@@ -149,6 +169,13 @@ signals:
     //! Emitted when touch blocking changes. Touch is blocked when display is off.
     void touchBlockedChanged();
 
+    /*! Emitted when interaction expected -state changes.
+     *
+     * Uses under_score naming convention to maintain consistency with
+     * other things already present in the dbus interface.
+     */
+    void interaction_expected(bool expected);
+
 private:
     enum TkLockReply {
         TkLockReplyFailed = 0,
@@ -192,6 +219,15 @@ private:
 
     //! The current blanking policy obtained from mce
     QString m_mceBlankingPolicy;
+
+    //! Timer object for delayed interaction expected -state broadcasting
+    QTimer *m_interactionExpectedTimer;
+
+    //! Current internally cached interaction expected -state
+    bool m_interactionExpectedCurrent;
+
+    //! Latest interaction expected -state broadcasted over dbus
+    int m_interactionExpectedEmitted;
 
 #ifdef UNIT_TEST
     friend class Ut_ScreenLock;
