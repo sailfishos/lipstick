@@ -87,6 +87,7 @@ private:
     //! The minimum priority of notifications for which a feedback should be played
     int m_minimumPriority;
 
+    friend class NotificationPreviewPresenter;
 #ifdef UNIT_TEST
     friend class Ut_NotificationFeedbackPlayer;
 #endif

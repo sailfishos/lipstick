@@ -264,6 +264,13 @@ signals:
     void notificationAdded(uint id);
 
     /*!
+     * Emitted before notificationMofified when updating an existing notification.
+     *
+     * \param id the ID of the notification that will be updated
+     */
+    void aboutToUpdateNotification(uint id);
+
+    /*!
      * Emitted when a notification is modified (added or updated).
      *
      * \param id the ID of the modified notification

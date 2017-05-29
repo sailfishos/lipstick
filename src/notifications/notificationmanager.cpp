@@ -622,6 +622,8 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
     }
     if (replacesId == 0) {
         emit notificationAdded(id);
+    } else {
+        emit aboutToUpdateNotification(id);
     }
 }
 
