@@ -36,8 +36,19 @@ ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent) :
     m_shuttingDown(false),
     m_lockscreenVisible(false),
     m_lowPowerMode(false),
-    m_mceBlankingPolicy("default")
+    m_mceBlankingPolicy("default"),
+    m_interactionExpectedTimer(0),
+    m_interactionExpectedCurrent(false),
+    m_interactionExpectedEmitted(-1)
+
 {
+    /* Setup idle timer for signaling interaction expected changes on D-Bus */
+    m_interactionExpectedTimer = new QTimer(this);
+    m_interactionExpectedTimer->setSingleShot(true);
+    m_interactionExpectedTimer->setInterval(0);
+    connect(m_interactionExpectedTimer, &QTimer::timeout,
+            this, &ScreenLock::interactionExpectedBroadcast);
+
     connect(m_touchScreen, SIGNAL(touchBlockedChanged()), this, SIGNAL(touchBlockedChanged()));
 
     auto systemBus = QDBusConnection::systemBus();
@@ -114,6 +125,29 @@ int ScreenLock::tklock_close(bool)
     QTimer::singleShot(0, this, SLOT(hideScreenLock()));
 
     return TkLockReplyOk;
+}
+
+void ScreenLock::interactionExpectedBroadcast()
+{
+    if (m_interactionExpectedEmitted != m_interactionExpectedCurrent) {
+        m_interactionExpectedEmitted = m_interactionExpectedCurrent;
+        emit interaction_expected(m_interactionExpectedEmitted);
+    }
+}
+
+void ScreenLock::interactionExpected(bool expected)
+{
+    /* The qml side property evaluation produces some jitter.
+     * To avoid duplicating it at dbus level, delay signal
+     * broadcasting until we settle on some value. */
+
+    m_interactionExpectedCurrent = expected;
+
+    if (m_interactionExpectedEmitted != m_interactionExpectedCurrent) {
+        m_interactionExpectedTimer->start();
+    } else {
+        m_interactionExpectedTimer->stop();
+    }
 }
 
 void ScreenLock::lockScreen(bool immediate)

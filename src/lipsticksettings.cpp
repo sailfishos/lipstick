@@ -73,6 +73,13 @@ void LipstickSettings::lockScreen(bool immediate)
     }
 }
 
+void LipstickSettings::interactionExpected(bool expected)
+{
+    if (m_screenLock != 0 ) {
+        m_screenLock->interactionExpected(expected);
+    }
+}
+
 QSize LipstickSettings::screenSize()
 {
     return QGuiApplication::primaryScreen()->size();

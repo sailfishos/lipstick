@@ -15,5 +15,8 @@
       <arg name="silent" type="b" direction="in"/>
       <arg name="status" type="i" direction="out"/>
     </method>
+    <signal name="interaction_expected">
+      <arg name="expected" type="b"/>
+    </signal>
 </interface>
 </node>
