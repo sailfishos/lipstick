@@ -286,29 +286,49 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
         disambiguatedAppName.append("-android");
     }
 
-    LipstickNotification *notification = 0;
-    if (replacesId == 0) {
-        // Create a new notification
-        notification = new LipstickNotification(appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints_, expireTimeout, this);
-        connect(notification, SIGNAL(actionInvoked(QString)), this, SLOT(invokeAction(QString)), Qt::QueuedConnection);
-        connect(notification, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
-        m_notifications.insert(id, notification);
-    } else {
-        // Only replace an existing notification if it really exists
-        notification = m_notifications.value(id);
-        notification->setAppName(appName);
-        notification->setDisambiguatedAppName(disambiguatedAppName);
-        notification->setAppIcon(appIcon);
-        notification->setSummary(summary);
-        notification->setBody(body);
-        notification->setActions(actions);
-        notification->setHints(hints_);
-        notification->setExpireTimeout(expireTimeout);
+    LipstickNotification notificationData(
+                appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints_, expireTimeout);
+    applyCategoryDefinition(&notificationData);
+    hints_ = notificationData.hints();
+
+    if (!notificationData.isUserRemovable() && !isPrivileged()) {
+        qWarning() << "Persistent notification from"
+                    << qPrintable(pidProperties.first)
+                    << "dropped because of insufficent permissions";
+        return 0;
     }
 
-    // Apply a category definition, if any
-    applyCategoryDefinition(notification);
-    hints_ = notification->hints();
+    LipstickNotification *notification = replacesId != 0
+            ? m_notifications.value(replacesId)
+            : nullptr;
+
+    if (notification) {
+        if (!notification->isUserRemovable() && !isPrivileged()) {
+            qWarning() << "An alteration to a persistent notification by"
+                        << qPrintable(pidProperties.first)
+                        << "was ignored because of insufficent permissions";
+            return 0;
+        }
+
+        notification->setAppName(notificationData.appName());
+        notification->setDisambiguatedAppName(notificationData.disambiguatedAppName());
+        notification->setAppIcon(notificationData.appIcon());
+        notification->setSummary(notificationData.summary());
+        notification->setBody(notificationData.body());
+        notification->setActions(notificationData.actions());
+        notification->setHints(notificationData.hints());
+        notification->setExpireTimeout(notificationData.expireTimeout());
+    } else {
+        notification = new LipstickNotification(notificationData);
+        notification->setParent(this);
+
+        connect(notification, &LipstickNotification::actionInvoked,
+                this, &NotificationManager::invokeAction, Qt::QueuedConnection);
+        connect(notification, &LipstickNotification::removeRequested, // default prevents direction connection.
+                this, [this]() { removeNotificationIfUserRemovable(); }, Qt::QueuedConnection);
+
+        m_notifications.insert(id, notification);
+    }
 
     if (androidOrigin) {
         // The app icon should also be the nemo icon
@@ -381,7 +401,12 @@ void NotificationManager::DeleteNotification(uint id)
 
 void NotificationManager::CloseNotification(uint id, NotificationClosedReason closeReason)
 {
-    if (m_notifications.contains(id)) {
+    if (LipstickNotification *notification = m_notifications.value(id)) {
+        if (!notification->isUserRemovable() && !isPrivileged()) {
+            qWarning() << "An application was not allowed to close a notification due to insufficient permissions";
+            return;
+        }
+
         emit NotificationClosed(id, closeReason);
 
         DeleteNotification(id);
