@@ -73,10 +73,10 @@ void LipstickSettings::lockScreen(bool immediate)
     }
 }
 
-void LipstickSettings::interactionExpected(bool expected)
+void LipstickSettings::setInteractionExpected(bool expected)
 {
     if (m_screenLock != 0 ) {
-        m_screenLock->interactionExpected(expected);
+        m_screenLock->setInteractionExpected(expected);
     }
 }
 

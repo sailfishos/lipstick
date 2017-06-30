@@ -135,7 +135,7 @@ void ScreenLock::interactionExpectedBroadcast()
     }
 }
 
-void ScreenLock::interactionExpected(bool expected)
+void ScreenLock::setInteractionExpected(bool expected)
 {
     /* The qml side property evaluation produces some jitter.
      * To avoid duplicating it at dbus level, delay signal

@@ -32,7 +32,7 @@ class ScreenLockStub : public StubBase {
   virtual void toggleScreenLockUI(bool toggle);
   virtual void toggleEventEater(bool toggle);
   virtual void lockScreen(bool immediate=false);
-  virtual void interactionExpected(bool expected);
+  virtual void setInteractionExpected(bool expected);
   virtual void interactionExpectedBroadcast();
   virtual void unlockScreen();
   virtual void showScreenLock();
@@ -106,10 +106,10 @@ void ScreenLockStub::lockScreen(bool immediate) {
   stubMethodEntered("lockScreen");
 }
 
-void ScreenLockStub::interactionExpected(bool expected) {
+void ScreenLockStub::setInteractionExpected(bool expected) {
   QList<ParameterBase*> params;
   params.append( new Parameter<bool >(expected));
-  stubMethodEntered("interactionExpected");
+  stubMethodEntered("setInteractionExpected");
 }
 
 void ScreenLockStub::interactionExpectedBroadcast() {
@@ -230,8 +230,8 @@ void ScreenLock::lockScreen(bool immediate) {
   gScreenLockStub->lockScreen(immediate);
 }
 
-void ScreenLock::interactionExpected(bool expected) {
-  gScreenLockStub->interactionExpected(expected);
+void ScreenLock::setInteractionExpected(bool expected) {
+  gScreenLockStub->setInteractionExpected(expected);
 }
 
 void ScreenLock::interactionExpectedBroadcast() {
