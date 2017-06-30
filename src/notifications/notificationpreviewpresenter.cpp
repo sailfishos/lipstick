@@ -35,7 +35,6 @@
 #include <QDBusPendingCall>
 #include <QGuiApplication>
 #include <QQmlContext>
-#include <QSettings>
 
 namespace {
 

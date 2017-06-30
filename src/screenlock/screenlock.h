@@ -114,7 +114,7 @@ public slots:
      * Primary consumer of this state data is mce - which uses it as an
      * input for display blanking policy.
      */
-    void interactionExpected(bool expected);
+    void setInteractionExpected(bool expected);
 
     //! Timer callback for broadcasting interaction expected -state
     void interactionExpectedBroadcast();
