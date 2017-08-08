@@ -33,6 +33,7 @@ class LIPSTICK_EXPORT USBModeSelector : public QObject
     Q_OBJECT
     Q_PROPERTY(bool windowVisible READ windowVisible WRITE setWindowVisible NOTIFY windowVisibleChanged)
     Q_PROPERTY(QStringList supportedUSBModes READ supportedUSBModes NOTIFY supportedUSBModesChanged)
+    Q_PROPERTY(QStringList availableUSBModes READ availableUSBModes NOTIFY availableUSBModesChanged)
 
 public:
 
@@ -60,6 +61,13 @@ public:
     QStringList supportedUSBModes() const;
 
     /*!
+     * Returns the available USB modes.
+     *
+     * \return a list of numbers of the available USB modes
+     */
+    QStringList availableUSBModes() const;
+
+    /*!
      * Sets the USB mode to the given mode.
      *
      * \param mode the mode to set
@@ -75,6 +83,9 @@ signals:
 
     //! Sent when the supported USB modes have changed.
     void supportedUSBModesChanged();
+
+    //! Sent when the available USB modes have changed.
+    void availableUSBModesChanged();
 
     void showUnlockScreen();
 
