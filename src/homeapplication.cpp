@@ -44,7 +44,6 @@
 #include "shutdownscreenadaptor.h"
 #include "connectionselector.h"
 #include "screenshotservice.h"
-#include "screenshotserviceadaptor.h"
 #include "vpnagent.h"
 #include "connmanvpnagent.h"
 #include "connmanvpnproxy.h"
@@ -125,9 +124,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     }
 
     m_screenshotService = new ScreenshotService(this);
-    new ScreenshotServiceAdaptor(m_screenshotService);
-    QDBusConnection sessionBus = QDBusConnection::sessionBus();
-    registerDBusObject(sessionBus, LIPSTICK_DBUS_SCREENSHOT_PATH, m_screenshotService);
 
     // Bring automatic VPNs up and down when connectivity state changes
     auto performUpDown = [this](const QList<QString> &activeTypes) {

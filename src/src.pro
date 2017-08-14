@@ -1,6 +1,5 @@
 system(qdbusxml2cpp notifications/notificationmanager.xml -a notifications/notificationmanageradaptor -c NotificationManagerAdaptor -l NotificationManager -i notificationmanager.h)
 system(qdbusxml2cpp screenlock/screenlock.xml -a screenlock/screenlockadaptor -c ScreenLockAdaptor -l ScreenLock -i screenlock.h)
-system(qdbusxml2cpp screenshotservice.xml -a screenshotserviceadaptor -c ScreenshotServiceAdaptor -l ScreenshotService -i screenshotservice.h)
 system(qdbusxml2cpp shutdownscreen.xml -a shutdownscreenadaptor -c ShutdownScreenAdaptor -l ShutdownScreen -i shutdownscreen.h)
 system(qdbusxml2cpp net.connman.vpn.Agent.xml -a connmanvpnagent -c ConnmanVpnAgentAdaptor -l VpnAgent -i vpnagent.h)
 system(qdbusxml2cpp -c ConnmanVpnProxy -p connmanvpnproxy net.connman.vpn.xml -i qdbusxml2cpp_dbus_types.h)
@@ -87,7 +86,6 @@ HEADERS += \
     lipstickqmlpath.h \
     shutdownscreenadaptor.h \
     screenshotservice.h \
-    screenshotserviceadaptor.h \
     qdbusxml2cpp_dbus_types.h \
     connmanvpnagent.h \
     connmanvpnproxy.h \
@@ -142,7 +140,6 @@ SOURCES += \
     connectionselector.cpp \
     lipstickapi.cpp \
     screenshotservice.cpp \
-    screenshotserviceadaptor.cpp \
     notifications/thermalnotifier.cpp \
     qmsystem2/qmactivity.cpp \
     qmsystem2/qmdisplaystate.cpp \
@@ -244,6 +241,6 @@ androidpriorities.files = androidnotificationpriorities
 androidpriorities.path = /usr/share/lipstick/
 
 INSTALLS += androidpriorities
-OTHER_FILES += androidnotificationpriorities
+OTHER_FILES += androidnotificationpriorities *.xml
 
 include(notificationcategories/notificationcategories.pri)
