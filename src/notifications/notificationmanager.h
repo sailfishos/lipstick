@@ -60,7 +60,7 @@ public:
     //! Standard hint: If true, audible feedback should be should be suppressed during notification feedback.
     static const char *HINT_SUPPRESS_SOUND;
 
-    //! Nemo hint: Icon of the notification. Allows the icon to be set using a category definition file without specifying it in the Notify() call.
+    //! Nemo hint: Icon of the notification. Might take precedence over appIcon depending on platform implementation.
     static const char *HINT_ICON;
 
     //! Nemo hint: Item count represented by the notification.
