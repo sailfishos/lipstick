@@ -989,17 +989,14 @@ void NotificationManager::fetchData(bool update)
         }
     }
 
-    QList<uint> restoredIds;
     foreach (LipstickNotification *n, m_notifications) {
-        const uint id = n->replacesId();
         connect(n, SIGNAL(actionInvoked(QString)), this, SLOT(invokeAction(QString)), Qt::QueuedConnection);
         connect(n, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
-
+#if DEBUG_NOTIFICATIONS
+        const uint id = n->replacesId();
         NOTIFICATIONS_DEBUG("RESTORED:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
-        restoredIds.append(id);
+#endif
     }
-    if (!restoredIds.isEmpty())
-        emit notificationsModified(restoredIds);
 
     if (update) {
         qWarning() << "Notifications restored:" << m_notifications.count();
