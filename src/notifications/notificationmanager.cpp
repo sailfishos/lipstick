@@ -648,7 +648,7 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
     if (replacesId == 0) {
         emit notificationAdded(id);
     } else {
-        emit aboutToUpdateNotification(id);
+        emit notificationModified(id);
     }
 }
 
@@ -1164,12 +1164,10 @@ void NotificationManager::expire()
 
 void NotificationManager::reportModifications()
 {
-    if (m_modifiedIds.count() == 1) {
-        emit notificationModified(*m_modifiedIds.begin());
-    } else if (!m_modifiedIds.isEmpty()) {
+    if (!m_modifiedIds.isEmpty()) {
         emit notificationsModified(m_modifiedIds.toList());
+        m_modifiedIds.clear();
     }
-    m_modifiedIds.clear();
 }
 
 void NotificationManager::removeUserRemovableNotifications()

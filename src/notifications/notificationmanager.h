@@ -264,21 +264,14 @@ signals:
     void notificationAdded(uint id);
 
     /*!
-     * Emitted before notificationMofified when updating an existing notification.
-     *
-     * \param id the ID of the notification that will be updated
-     */
-    void aboutToUpdateNotification(uint id);
-
-    /*!
-     * Emitted when a notification is modified (added or updated).
+     * Emitted when a notification is modified.
      *
      * \param id the ID of the modified notification
      */
     void notificationModified(uint id);
 
     /*!
-     * Emitted when a group of notifications is collectively modified (added or updated).
+     * Batched group of modified notifications, emitted within a second from changes
      *
      * \param ids the IDs of the modified notifications
      */
@@ -292,7 +285,7 @@ signals:
     void notificationRemoved(uint id);
 
     /*!
-     * Emitted when a group of notifications is collectively removed.
+     * Emitted when a group of notifications is collectively removed. notificationRemoved() is still called for each instance too.
      *
      * \param ids the IDs of the removed notifications
      */

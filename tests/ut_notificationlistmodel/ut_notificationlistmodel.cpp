@@ -40,7 +40,6 @@ void Ut_NotificationListModel::cleanup()
 void Ut_NotificationListModel::testSignalConnections()
 {
     NotificationListModel model;
-    QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationModified(uint)), &model, SLOT(updateNotification(uint))), true);
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationsModified(const QList<uint> &)), &model, SLOT(updateNotifications(const QList<uint> &))), true);
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), &model, SLOT(removeNotification(uint))), true);
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationsRemoved(const QList<uint> &)), &model, SLOT(removeNotifications(const QList<uint> &))), true);

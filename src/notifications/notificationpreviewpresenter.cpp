@@ -64,7 +64,7 @@ NotificationPreviewPresenter::NotificationPreviewPresenter(
 {
     connect(NotificationManager::instance(), &NotificationManager::notificationAdded,
             this, &NotificationPreviewPresenter::updateNotification);
-    connect(NotificationManager::instance(), &NotificationManager::aboutToUpdateNotification,
+    connect(NotificationManager::instance(), &NotificationManager::notificationModified,
             this, &NotificationPreviewPresenter::updateNotification);
     connect(NotificationManager::instance(), &NotificationManager::notificationRemoved,
             this, [=](uint id) {
