@@ -81,12 +81,8 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                     if (!properties.contains("media.audio")) {
                         properties.insert("media.audio", true);
                     }
-                    if (!properties.contains("media.vibra")) {
-                        properties.insert("media.vibra", true);
-                    }
-                    if (!properties.contains("media.backlight")) {
-                        properties.insert("media.backlight", true);
-                    }
+                    properties.insert("media.vibra", true);
+                    properties.insert("media.backlight", true);
                 }
 
                 foreach (const QString &item, feedbackItems) {
