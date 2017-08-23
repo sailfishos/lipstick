@@ -93,6 +93,11 @@ QStringList QUsbModed::supportedModes() const
     return iPrivate->iSupportedModes;
 }
 
+QStringList QUsbModed::availableModes() const
+{
+    return iPrivate->iSupportedModes;
+}
+
 bool QUsbModed::available() const
 {
     return true;
@@ -131,6 +136,10 @@ void QUsbModed::onServiceRegistered(QString)
 }
 
 void QUsbModed::onServiceUnregistered(QString)
+{
+}
+
+void QUsbModed::onGetAvailableModesFinished(QDBusPendingCallWatcher*)
 {
 }
 

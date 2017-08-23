@@ -43,6 +43,7 @@ USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject
     connect(m_usbMode, SIGNAL(currentModeChanged()), this, SLOT(applyCurrentUSBMode()));
     connect(m_usbMode, SIGNAL(usbStateError(QString)), this, SLOT(showError(QString)));
     connect(m_usbMode, SIGNAL(supportedModesChanged()), this, SIGNAL(supportedUSBModesChanged()));
+    connect(m_usbMode, &QUsbModed::availableModesChanged, this, &USBModeSelector::availableUSBModesChanged);
     connect(NotificationManager::instance(), &NotificationManager::NotificationClosed,
             this, &USBModeSelector::notificationClosed);
 
@@ -90,6 +91,11 @@ bool USBModeSelector::windowVisible() const
 QStringList USBModeSelector::supportedUSBModes() const
 {
     return m_usbMode->supportedModes();
+}
+
+QStringList USBModeSelector::availableUSBModes() const
+{
+    return m_usbMode->availableModes();
 }
 
 void USBModeSelector::applyUSBMode(QString mode)
