@@ -180,6 +180,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
                 unsetTemporary(item);
                 removeItem(item);
             }
+            delete item;
         } else if (isIconFile(filename)) {
             // Icons has been removed - find item and clear its icon path
             updateItemsWithIcon(filename, false);
