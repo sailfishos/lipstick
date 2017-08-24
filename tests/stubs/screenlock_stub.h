@@ -29,8 +29,8 @@ class ScreenLockStub : public StubBase {
   virtual void displayStatusChanged(const QString &mode);
   virtual int tklock_open(const QString &service, const QString &path, const QString &interface, const QString &method, uint mode, bool silent, bool flicker);
   virtual int tklock_close(bool silent);
-  virtual void toggleScreenLockUI(bool toggle);
-  virtual void toggleEventEater(bool toggle);
+  virtual void setScreenLocked(bool value);
+  virtual void setEventEaterEnabled(bool value);
   virtual void lockScreen(bool immediate=false);
   virtual void setInteractionExpected(bool expected);
   virtual void interactionExpectedBroadcast();
@@ -88,16 +88,16 @@ int ScreenLockStub::tklock_close(bool silent) {
   return stubReturnValue<int>("tklock_close");
 }
 
-void ScreenLockStub::toggleScreenLockUI(bool toggle) {
+void ScreenLockStub::setScreenLocked(bool value) {
   QList<ParameterBase*> params;
-  params.append( new Parameter<bool >(toggle));
-  stubMethodEntered("toggleScreenLockUI",params);
+  params.append( new Parameter<bool >(value));
+  stubMethodEntered("setScreenLocked",params);
 }
 
-void ScreenLockStub::toggleEventEater(bool toggle) {
+void ScreenLockStub::setEventEaterEnabled(bool value) {
   QList<ParameterBase*> params;
-  params.append( new Parameter<bool >(toggle));
-  stubMethodEntered("toggleEventEater",params);
+  params.append( new Parameter<bool >(value));
+  stubMethodEntered("setEventEaterEnabled",params);
 }
 
 void ScreenLockStub::lockScreen(bool immediate) {
@@ -218,12 +218,12 @@ int ScreenLock::tklock_close(bool silent) {
   return gScreenLockStub->tklock_close(silent);
 }
 
-void ScreenLock::toggleScreenLockUI(bool toggle) {
-  gScreenLockStub->toggleScreenLockUI(toggle);
+void ScreenLock::setScreenLocked(bool value) {
+  gScreenLockStub->setScreenLocked(value);
 }
 
-void ScreenLock::toggleEventEater(bool toggle) {
-  gScreenLockStub->toggleEventEater(toggle);
+void ScreenLock::setEventEaterEnabled(bool value) {
+  gScreenLockStub->setEventEaterEnabled(value);
 }
 
 void ScreenLock::lockScreen(bool immediate) {

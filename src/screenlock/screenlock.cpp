@@ -170,56 +170,56 @@ void ScreenLock::unlockScreen()
 
 void ScreenLock::showScreenLock()
 {
-    toggleScreenLockUI(true);
-    toggleEventEater(false);
+    setScreenLocked(true);
+    setEventEaterEnabled(false);
 }
 
 void ScreenLock::showLowPowerMode()
 {
-    toggleScreenLockUI(true);
-    toggleEventEater(false);
+    setScreenLocked(true);
+    setEventEaterEnabled(false);
 }
 
 void ScreenLock::setDisplayOffMode()
 {
-    toggleScreenLockUI(true);
-    toggleEventEater(false);
+    setScreenLocked(true);
+    setEventEaterEnabled(false);
 }
 
 void ScreenLock::hideScreenLock()
 {
-    toggleScreenLockUI(false);
+    setScreenLocked(false);
 }
 
 void ScreenLock::hideScreenLockAndEventEater()
 {
-    toggleScreenLockUI(false);
-    toggleEventEater(false);
+    setScreenLocked(false);
+    setEventEaterEnabled(false);
 }
 
 void ScreenLock::showEventEater()
 {
-    toggleEventEater(true);
+    setEventEaterEnabled(true);
 }
 
 void ScreenLock::hideEventEater()
 {
-    toggleEventEater(false);
+    setEventEaterEnabled(false);
 }
 
-void ScreenLock::toggleScreenLockUI(bool toggle)
+void ScreenLock::setScreenLocked(bool value)
 {
     // TODO Make the view a lock screen view (title? stacking layer?)
-    if (m_lockscreenVisible != toggle) {
-        m_lockscreenVisible = toggle;
-        emit screenIsLocked(toggle);
+    if (m_lockscreenVisible != value) {
+        m_lockscreenVisible = value;
+        emit screenLockedChanged(value);
     }
 }
 
-void ScreenLock::toggleEventEater(bool toggle)
+void ScreenLock::setEventEaterEnabled(bool value)
 {
     Q_ASSERT(m_touchScreen);
-    m_touchScreen->setEnabled(!toggle);
+    m_touchScreen->setEnabled(!value);
 }
 
 bool ScreenLock::isScreenLocked() const

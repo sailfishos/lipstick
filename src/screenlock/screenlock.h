@@ -124,10 +124,10 @@ public slots:
 
 private slots:
     //! Shows or hides the screen lock window
-    void toggleScreenLockUI(bool toggle);
+    void setScreenLocked(bool value);
 
     //! Shows or hides the event eater window
-    void toggleEventEater(bool toggle);
+    void setEventEaterEnabled(bool value);
 
     //! Shows the screen lock window in normal mode and hides the event eater window.
     void showScreenLock();
@@ -158,13 +158,13 @@ private slots:
 
 signals:
     //! Emitted when the screen lock state changes
-    void screenIsLocked(bool locked);
+    void screenLockedChanged(bool locked);
 
     //! Emitted when the low power mode state changes
     void lowPowerModeChanged();
 
     //! Emitted when the display blanking policy changes
-    void  blankingPolicyChanged(const QString &policy);
+    void blankingPolicyChanged(const QString &policy);
 
     //! Emitted when touch blocking changes. Touch is blocked when display is off.
     void touchBlockedChanged();
