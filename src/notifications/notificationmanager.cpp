@@ -292,8 +292,8 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
 
     if (!notificationData.isUserRemovable() && !isPrivileged()) {
         qWarning() << "Persistent notification from"
-                    << qPrintable(pidProperties.first)
-                    << "dropped because of insufficent permissions";
+                   << qPrintable(pidProperties.first)
+                   << "dropped because of insufficent permissions";
         return 0;
     }
 
@@ -304,8 +304,8 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     if (notification) {
         if (!notification->isUserRemovable() && !isPrivileged()) {
             qWarning() << "An alteration to a persistent notification by"
-                        << qPrintable(pidProperties.first)
-                        << "was ignored because of insufficent permissions";
+                       << qPrintable(pidProperties.first)
+                       << "was ignored because of insufficent permissions";
             return 0;
         }
 
