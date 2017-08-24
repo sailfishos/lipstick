@@ -5,7 +5,7 @@
 // serialization to and from QDBusArgument. For all intents and purposes
 // this fake behaves the same way as the real QDBusArgument class also
 // mimicking the fact that you cannot marshall to a partially
-// demashalled QDBusArgument. This should also help catch cases when a
+// demarshalled QDBusArgument. This should also help catch cases when a
 // 'operator >>' function is written incorrectly in respect of object
 // constness.
 //
@@ -111,18 +111,18 @@ public:
         END_ARRAY
     };
 
-    QDBusArgumentMarker() : type(NONE) {};
-    QDBusArgumentMarker(Type t) : type(t) {};
+    QDBusArgumentMarker() : type(NONE) {}
+    QDBusArgumentMarker(Type t) : type(t) {}
 
     bool operator==(const QDBusArgumentMarker &other) const
     {
         return type == other.type;
-    };
+    }
 
     bool operator!=(const QDBusArgumentMarker &other) const
     {
         return !(*this == other);
-    };
+    }
 
     operator QVariant()
     {
@@ -158,7 +158,7 @@ public:
     Type type;
 };
 
-Q_DECLARE_METATYPE(QDBusArgumentMarker);
+Q_DECLARE_METATYPE(QDBusArgumentMarker)
 
 QDBusArgument::QDBusArgument()
     : index(0)
