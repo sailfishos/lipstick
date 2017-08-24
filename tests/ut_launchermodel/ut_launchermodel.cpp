@@ -20,7 +20,8 @@
 #include "ut_launchermodel.h"
 #include "mdesktopentry.h"
 
-class MDesktopEntryPrivate {
+class MDesktopEntryPrivate
+{
 public:
     MDesktopEntryPrivate(const QString &fileName)
         : m_fileName(fileName)
@@ -146,7 +147,7 @@ void Ut_LauncherModel::testUpdating()
     QVERIFY(launcherModel->packageInModel("somepackage") == NULL);
 
     launcherModel->updatingStarted("somepackage", "Some Package",
-            "/usr/share/pixmaps/example.png", "", "org.example.caller");
+                                   "/usr/share/pixmaps/example.png", "", "org.example.caller");
 
     auto item = launcherModel->packageInModel("somepackage");
     QVERIFY(item != NULL);
@@ -181,8 +182,8 @@ void Ut_LauncherModel::testUpdatingFileAppears()
     const QString DESKTOPFILE("/usr/share/applications/lipstick_ut_launchermodel.desktop");
 
     launcherModel->updatingStarted("somepackage", "Some Package",
-            "/usr/share/pixmaps/example.png", DESKTOPFILE,
-            "org.example.caller");
+                                   "/usr/share/pixmaps/example.png", DESKTOPFILE,
+                                   "org.example.caller");
 
     auto item = launcherModel->packageInModel("somepackage");
     QVERIFY(item != NULL);

@@ -18,14 +18,14 @@
 
 #include <QObject>
 
-namespace NemoDeviceLock
-{
+namespace NemoDeviceLock {
 class DeviceLock;
 }
 
 class USBModeSelector;
 
-class Ut_USBModeSelector : public QObject {
+class Ut_USBModeSelector : public QObject
+{
     Q_OBJECT
 
 private slots:

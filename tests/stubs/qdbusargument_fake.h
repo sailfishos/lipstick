@@ -29,122 +29,133 @@
 
 class QDBusArgument
 {
-    public:
-        QDBusArgument();
+public:
+    QDBusArgument();
 
-        // marshalling
+    // marshalling
 
-        void beginStructure();
-        void endStructure();
-        void beginArray(int elementMetaTypeId);
-        void endArray();
-        void beginMap(int keyMetaTypeId, int valueMetaTypeId);
-        void endMap();
-        void beginMapEntry();
-        void endMapEntry();
+    void beginStructure();
+    void endStructure();
+    void beginArray(int elementMetaTypeId);
+    void endArray();
+    void beginMap(int keyMetaTypeId, int valueMetaTypeId);
+    void endMap();
+    void beginMapEntry();
+    void endMapEntry();
 
-        QDBusArgument &operator<<(uchar arg);
-        QDBusArgument &operator<<(bool arg);
-        QDBusArgument &operator<<(short arg);
-        QDBusArgument &operator<<(ushort arg);
-        QDBusArgument &operator<<(int arg);
-        QDBusArgument &operator<<(uint arg);
-        QDBusArgument &operator<<(qlonglong arg);
-        QDBusArgument &operator<<(qulonglong arg);
-        QDBusArgument &operator<<(double arg);
-        QDBusArgument &operator<<(const QString &arg);
-        QDBusArgument &operator<<(const QDBusVariant &arg);
-        QDBusArgument &operator<<(const QDBusObjectPath &arg);
-        QDBusArgument &operator<<(const QDBusSignature &arg);
-        QDBusArgument &operator<<(const QStringList &arg);
-        QDBusArgument &operator<<(const QByteArray &arg);
+    QDBusArgument &operator<<(uchar arg);
+    QDBusArgument &operator<<(bool arg);
+    QDBusArgument &operator<<(short arg);
+    QDBusArgument &operator<<(ushort arg);
+    QDBusArgument &operator<<(int arg);
+    QDBusArgument &operator<<(uint arg);
+    QDBusArgument &operator<<(qlonglong arg);
+    QDBusArgument &operator<<(qulonglong arg);
+    QDBusArgument &operator<<(double arg);
+    QDBusArgument &operator<<(const QString &arg);
+    QDBusArgument &operator<<(const QDBusVariant &arg);
+    QDBusArgument &operator<<(const QDBusObjectPath &arg);
+    QDBusArgument &operator<<(const QDBusSignature &arg);
+    QDBusArgument &operator<<(const QStringList &arg);
+    QDBusArgument &operator<<(const QByteArray &arg);
 
-        // unmarshalling
+    // unmarshalling
 
-        void beginStructure() const;
-        void endStructure() const;
-        void beginArray() const;
-        void endArray() const;
-        void beginMap() const;
-        void endMap() const;
-        void beginMapEntry() const;
-        void endMapEntry() const;
-        bool atEnd() const;
+    void beginStructure() const;
+    void endStructure() const;
+    void beginArray() const;
+    void endArray() const;
+    void beginMap() const;
+    void endMap() const;
+    void beginMapEntry() const;
+    void endMapEntry() const;
+    bool atEnd() const;
 
-        const QDBusArgument &operator>>(uchar &arg) const;
-        const QDBusArgument &operator>>(bool &arg) const;
-        const QDBusArgument &operator>>(short &arg) const;
-        const QDBusArgument &operator>>(ushort &arg) const;
-        const QDBusArgument &operator>>(int &arg) const;
-        const QDBusArgument &operator>>(uint &arg) const;
-        const QDBusArgument &operator>>(qlonglong &arg) const;
-        const QDBusArgument &operator>>(qulonglong &arg) const;
-        const QDBusArgument &operator>>(double &arg) const;
-        const QDBusArgument &operator>>(QString &arg) const;
-        const QDBusArgument &operator>>(QDBusVariant &arg) const;
-        const QDBusArgument &operator>>(QDBusObjectPath &arg) const;
-        const QDBusArgument &operator>>(QDBusSignature &arg) const;
-        const QDBusArgument &operator>>(QStringList &arg) const;
-        const QDBusArgument &operator>>(QByteArray &arg) const;
+    const QDBusArgument &operator>>(uchar &arg) const;
+    const QDBusArgument &operator>>(bool &arg) const;
+    const QDBusArgument &operator>>(short &arg) const;
+    const QDBusArgument &operator>>(ushort &arg) const;
+    const QDBusArgument &operator>>(int &arg) const;
+    const QDBusArgument &operator>>(uint &arg) const;
+    const QDBusArgument &operator>>(qlonglong &arg) const;
+    const QDBusArgument &operator>>(qulonglong &arg) const;
+    const QDBusArgument &operator>>(double &arg) const;
+    const QDBusArgument &operator>>(QString &arg) const;
+    const QDBusArgument &operator>>(QDBusVariant &arg) const;
+    const QDBusArgument &operator>>(QDBusObjectPath &arg) const;
+    const QDBusArgument &operator>>(QDBusSignature &arg) const;
+    const QDBusArgument &operator>>(QStringList &arg) const;
+    const QDBusArgument &operator>>(QByteArray &arg) const;
 
-    private:
-        void assertMarker(QVariant& arg) const;
-        void assertMarshalling() const;
-        void assertUnmarshalling() const;
+private:
+    void assertMarker(QVariant &arg) const;
+    void assertMarshalling() const;
+    void assertUnmarshalling() const;
 
-        mutable int index;
-        QList<QVariant> data;
+    mutable int index;
+    QList<QVariant> data;
 };
 
 class QDBusArgumentMarker
 {
-    public:
-        enum Type {
-            NONE,
-            BEGIN_MAP,
-            END_MAP,
-            BEGIN_MAP_ENTRY,
-            END_MAP_ENTRY,
-            BEGIN_STRUCTURE,
-            END_STRUCTURE,
-            BEGIN_ARRAY,
-            END_ARRAY
-        };
+public:
+    enum Type {
+        NONE,
+        BEGIN_MAP,
+        END_MAP,
+        BEGIN_MAP_ENTRY,
+        END_MAP_ENTRY,
+        BEGIN_STRUCTURE,
+        END_STRUCTURE,
+        BEGIN_ARRAY,
+        END_ARRAY
+    };
 
-        QDBusArgumentMarker() : type(NONE) {};
-        QDBusArgumentMarker(Type t) : type(t) {};
+    QDBusArgumentMarker() : type(NONE) {};
+    QDBusArgumentMarker(Type t) : type(t) {};
 
-        bool operator==(const QDBusArgumentMarker& other) const {
-            return type == other.type;
-        };
+    bool operator==(const QDBusArgumentMarker &other) const
+    {
+        return type == other.type;
+    };
 
-        bool operator!=(const QDBusArgumentMarker& other) const {
-            return !(*this == other);
-        };
+    bool operator!=(const QDBusArgumentMarker &other) const
+    {
+        return !(*this == other);
+    };
 
-        operator QVariant()
-        {
-            return QVariant::fromValue(*this);
+    operator QVariant()
+    {
+        return QVariant::fromValue(*this);
+    }
+
+    operator QString()
+    {
+        switch (type) {
+        case NONE:
+            return QString("NONE");
+        case BEGIN_MAP:
+            return QString("BEGIN_MAP");
+        case END_MAP:
+            return QString("END_MAP");
+        case BEGIN_MAP_ENTRY:
+            return QString("BEGIN_MAP_ENTRY");
+        case END_MAP_ENTRY:
+            return QString("END_MAP_ENTRY");
+        case BEGIN_STRUCTURE:
+            return QString("BEGIN_STRUCTURE");
+        case END_STRUCTURE:
+            return QString("END_STRUCTURE");
+        case BEGIN_ARRAY:
+            return QString("BEGIN_ARRAY");
+        case END_ARRAY:
+            return QString("END_ARRAY");
         }
 
-        operator QString()
-        {
-            switch(type) {
-                case NONE: return QString("NONE");
-                case BEGIN_MAP: return QString("BEGIN_MAP");
-                case END_MAP: return QString("END_MAP");
-                case BEGIN_MAP_ENTRY: return QString("BEGIN_MAP_ENTRY");
-                case END_MAP_ENTRY: return QString("END_MAP_ENTRY");
-                case BEGIN_STRUCTURE: return QString("BEGIN_STRUCTURE");
-                case END_STRUCTURE: return QString("END_STRUCTURE");
-                case BEGIN_ARRAY: return QString("BEGIN_ARRAY");
-                case END_ARRAY: return QString("END_ARRAY");
-            }
+        return QString();
+    }
 
-            return QString();
-        }
-
-        Type type;
+    Type type;
 };
 
 Q_DECLARE_METATYPE(QDBusArgumentMarker);
@@ -170,7 +181,7 @@ void QDBusArgument::endStructure()
     data.append(token);
 }
 
-void QDBusArgument::beginArray(int elementMetaTypeId) 
+void QDBusArgument::beginArray(int elementMetaTypeId)
 {
     Q_UNUSED(elementMetaTypeId);
 
@@ -323,12 +334,12 @@ QDBusArgument &QDBusArgument::operator<<(const QByteArray &arg)
 
 // unmarshaling
 
-void QDBusArgument::assertMarker(QVariant& other) const
+void QDBusArgument::assertMarker(QVariant &other) const
 {
     QDBusArgumentMarker mine = data.value(index).value<QDBusArgumentMarker>();
     QDBusArgumentMarker his = other.value<QDBusArgumentMarker>();
 
-    if(mine != his) {
+    if (mine != his) {
         QFAIL(QString("Position %1: %2 marker found, %3 marker expected").
               arg(QString::number(index)).
               arg(mine).
@@ -339,8 +350,7 @@ void QDBusArgument::assertMarker(QVariant& other) const
 
 void QDBusArgument::assertMarshalling() const
 {
-    if (index != 0)
-    {
+    if (index != 0) {
         QFAIL("Cannot marshall a (partially) unmarshalled QDBusArgument");
     }
 }
@@ -419,24 +429,24 @@ void QDBusArgument::endMapEntry() const
 bool QDBusArgument::atEnd() const
 {
     // If we're at the end of the data list, we're "at end"
-    if(index >= data.count())
+    if (index >= data.count())
         return true;
 
     // If the last check didn't get it, value() will return an default
     // (invalid) QVariant, we're at the end
     QVariant v = data.value(index);
-    if(!v.isValid())
+    if (!v.isValid())
         return true;
 
     // If the QVariant is valid and it is not a marker, we're not at the end
-    if(!v.canConvert<QDBusArgumentMarker>())
+    if (!v.canConvert<QDBusArgumentMarker>())
         return false;
 
     // If this is and end marker, we're at the [logical] end
     QDBusArgumentMarker marker = v.value<QDBusArgumentMarker>();
-    if(marker.type == QDBusArgumentMarker::END_ARRAY ||
-       marker.type == QDBusArgumentMarker::END_MAP ||
-       marker.type == QDBusArgumentMarker::END_STRUCTURE)
+    if (marker.type == QDBusArgumentMarker::END_ARRAY ||
+            marker.type == QDBusArgumentMarker::END_MAP ||
+            marker.type == QDBusArgumentMarker::END_STRUCTURE)
         return true;
 
     // It is a valid marker, but not an end marker, we're not at the end

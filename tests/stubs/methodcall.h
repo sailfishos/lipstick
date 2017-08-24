@@ -23,29 +23,34 @@ public:
     MethodCall(const QString &name, QList<ParameterBase *> params, ParameterBase *returnValue)
         : _name(name),
           _params(params),
-          _returnValue(returnValue) {
+          _returnValue(returnValue)
+    {
     }
 
-    virtual ~MethodCall() {
-        foreach(ParameterBase * p, _params) {
+    virtual ~MethodCall()
+    {
+        foreach (ParameterBase *p, _params) {
             delete p;
         }
     }
 
-    QString name() {
+    QString name()
+    {
         return _name;
     }
 
-    QList<ParameterBase *> params() {
+    QList<ParameterBase *> params()
+    {
         return _params;
     }
 
     template <typename T>
-    T parameter(int number) {
+    T parameter(int number)
+    {
         if (number >= _params.count()) {
             qFatal("MethodCall::%s: method %s does not have parameter #%d. Check your test code.", __func__, qPrintable(_name), number);
         }
-        Parameter<T>* param = dynamic_cast<Parameter<T>* >(_params[number]);
+        Parameter<T> *param = dynamic_cast<Parameter<T>* >(_params[number]);
         if (!param) {
             qFatal("MethodCall::%s: failed dynamic_cast, check that parameter type matches parameter number", __func__);
         }
@@ -53,8 +58,9 @@ public:
     }
 
     template <typename T>
-    T returnValue() {
-        Parameter<T>* value = dynamic_cast<Parameter<T>*>(_returnValue);
+    T returnValue()
+    {
+        Parameter<T> *value = dynamic_cast<Parameter<T>*>(_returnValue);
 
         if (!value) {
             qFatal("MethodCall::%s: failed dynamic_cast, check that type matches return value", __func__);
@@ -62,7 +68,8 @@ public:
         return value->data;
     }
 
-    bool returnValueExists() {
+    bool returnValueExists()
+    {
         return (_returnValue != NULL);
     }
 

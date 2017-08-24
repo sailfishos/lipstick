@@ -43,7 +43,7 @@ void Ut_BatteryNotifier::setNewStubState
 static QString getNotificationHint(QString const &h)
 {
     return gNotificationManagerStub->stubLastCallTo("Notify")
-        .parameter<QVariantHash>(6).value(h).toString();
+           .parameter<QVariantHash>(6).value(h).toString();
 }
 
 static QString getNotificationCategory()
@@ -158,7 +158,7 @@ void Ut_BatteryNotifier::testChargingStateChanged()
     gNotificationManagerStub->stubReset();
 
     static const QString levels[] = { "normal", "low", "empty" };
-    for(size_t i = 0; i < sizeof(levels)/sizeof(levels[0]); ++i) {
+    for (size_t i = 0; i < sizeof(levels) / sizeof(levels[0]); ++i) {
         /* StateCharging */
         setNewStubState(levels[i], "charging", "dcp");
         QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
@@ -173,7 +173,7 @@ void Ut_BatteryNotifier::testChargingStateChanged()
         gNotificationManagerStub->stubReset();
     }
 
-    for(size_t i = 0; i < sizeof(levels)/sizeof(levels[0]); ++i) {
+    for (size_t i = 0; i < sizeof(levels) / sizeof(levels[0]); ++i) {
         /* StateCharging */
         setNewStubState(levels[i], "charging", "usb");
         QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);

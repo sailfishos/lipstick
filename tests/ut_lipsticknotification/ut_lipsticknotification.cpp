@@ -131,26 +131,26 @@ void Ut_Notification::testIcon_data()
     QTest::addColumn<QString>("icon");
 
     QTest::newRow("No app_icon, no hint, no imagePath")
-        << QString() << QString() << QString()
-        << QString();
+            << QString() << QString() << QString()
+            << QString();
     QTest::newRow("No app_icon, hint, no imagePath")
-        << QString() << QString("hintIcon") << QString()
-        << QString("hintIcon");
+            << QString() << QString("hintIcon") << QString()
+            << QString("hintIcon");
     QTest::newRow("No app_icon, hint, imagePath")
-        << QString() << QString("hintIcon") << QString("imagePath")
-        << QString("hintIcon");
+            << QString() << QString("hintIcon") << QString("imagePath")
+            << QString("hintIcon");
     QTest::newRow("No app_icon, no hint, imagePath")
-        << QString() << QString() << QString("imagePath")
-        << QString("imagePath");
+            << QString() << QString() << QString("imagePath")
+            << QString("imagePath");
     QTest::newRow("app_icon, hint, no imagePath")
-        << QString("appIcon") << QString("hintIcon") << QString()
-        << QString("hintIcon");
+            << QString("appIcon") << QString("hintIcon") << QString()
+            << QString("hintIcon");
     QTest::newRow("app_icon, hint, imagePath")
-        << QString("appIcon") << QString("hintIcon") << QString("imagePath")
-        << QString("hintIcon");
+            << QString("appIcon") << QString("hintIcon") << QString("imagePath")
+            << QString("hintIcon");
     QTest::newRow("app_icon, no hint, imagePath")
-        << QString("appIcon") << QString() << QString("imagePath")
-        << QString("imagePath");
+            << QString("appIcon") << QString() << QString("imagePath")
+            << QString("imagePath");
 }
 
 void Ut_Notification::testIcon()

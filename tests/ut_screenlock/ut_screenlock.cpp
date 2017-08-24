@@ -39,7 +39,7 @@ QString qDbusAbstractInterfaceCallMethod;
 QString qDbusAbstractInterfaceCallPath;
 QString qDbusAbstractInterfaceCallService;
 QString qDbusAbstractInterfaceCallInterface;
-QDBusMessage QDBusAbstractInterface::call(QDBus::CallMode mode, const QString & method, const QVariant & arg1, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &)
+QDBusMessage QDBusAbstractInterface::call(QDBus::CallMode mode, const QString &method, const QVariant &arg1, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &)
 {
     qDbusAbstractInterfaceCallMode = mode;
     qDbusAbstractInterfaceCallArg1 = arg1;

@@ -7,85 +7,100 @@
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
-class NotificationPreviewPresenterStub : public StubBase {
-  public:
-  virtual void NotificationPreviewPresenterConstructor(QObject *parent);
-  virtual void NotificationPreviewPresenterDestructor();
-  virtual LipstickNotification * notification() const;
-  virtual void showNextNotification();
-  virtual void updateNotification(uint id);
-  virtual void removeNotification(uint id, bool onlyFromQueue);
-  virtual void createWindowIfNecessary();
-}; 
+class NotificationPreviewPresenterStub : public StubBase
+{
+public:
+    virtual void NotificationPreviewPresenterConstructor(QObject *parent);
+    virtual void NotificationPreviewPresenterDestructor();
+    virtual LipstickNotification *notification() const;
+    virtual void showNextNotification();
+    virtual void updateNotification(uint id);
+    virtual void removeNotification(uint id, bool onlyFromQueue);
+    virtual void createWindowIfNecessary();
+};
 
 // 2. IMPLEMENT STUB
-void NotificationPreviewPresenterStub::NotificationPreviewPresenterConstructor(QObject *parent) {
-  Q_UNUSED(parent);
+void NotificationPreviewPresenterStub::NotificationPreviewPresenterConstructor(QObject *parent)
+{
+    Q_UNUSED(parent);
 
 }
-void NotificationPreviewPresenterStub::NotificationPreviewPresenterDestructor() {
+void NotificationPreviewPresenterStub::NotificationPreviewPresenterDestructor()
+{
 
 }
-LipstickNotification * NotificationPreviewPresenterStub::notification() const {
-  stubMethodEntered("notification");
-  return stubReturnValue<LipstickNotification *>("notification");
+LipstickNotification *NotificationPreviewPresenterStub::notification() const
+{
+    stubMethodEntered("notification");
+    return stubReturnValue<LipstickNotification *>("notification");
 }
 
-void NotificationPreviewPresenterStub::showNextNotification() {
-  stubMethodEntered("showNextNotification");
+void NotificationPreviewPresenterStub::showNextNotification()
+{
+    stubMethodEntered("showNextNotification");
 }
 
-void NotificationPreviewPresenterStub::updateNotification(uint id) {
-  QList<ParameterBase*> params;
-  params.append( new Parameter<uint >(id));
-  stubMethodEntered("updateNotification",params);
+void NotificationPreviewPresenterStub::updateNotification(uint id)
+{
+    QList<ParameterBase *> params;
+    params.append( new Parameter<uint >(id));
+    stubMethodEntered("updateNotification", params);
 }
 
-void NotificationPreviewPresenterStub::removeNotification(uint id, bool onlyFromQueue) {
-  QList<ParameterBase*> params;
-  params.append( new Parameter<uint >(id));
-  params.append( new Parameter<bool >(onlyFromQueue));
-  stubMethodEntered("removeNotification",params);
+void NotificationPreviewPresenterStub::removeNotification(uint id, bool onlyFromQueue)
+{
+    QList<ParameterBase *> params;
+    params.append( new Parameter<uint >(id));
+    params.append( new Parameter<bool >(onlyFromQueue));
+    stubMethodEntered("removeNotification", params);
 }
 
-void NotificationPreviewPresenterStub::createWindowIfNecessary() {
-  stubMethodEntered("createWindowIfNecessary");
+void NotificationPreviewPresenterStub::createWindowIfNecessary()
+{
+    stubMethodEntered("createWindowIfNecessary");
 }
 
 
 
 // 3. CREATE A STUB INSTANCE
 NotificationPreviewPresenterStub gDefaultNotificationPreviewPresenterStub;
-NotificationPreviewPresenterStub* gNotificationPreviewPresenterStub = &gDefaultNotificationPreviewPresenterStub;
+NotificationPreviewPresenterStub *gNotificationPreviewPresenterStub = &gDefaultNotificationPreviewPresenterStub;
 
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
-NotificationPreviewPresenter::NotificationPreviewPresenter(QObject *parent) {
-  gNotificationPreviewPresenterStub->NotificationPreviewPresenterConstructor(parent);
+NotificationPreviewPresenter::NotificationPreviewPresenter(QObject *parent)
+{
+    gNotificationPreviewPresenterStub->NotificationPreviewPresenterConstructor(parent);
 }
 
-NotificationPreviewPresenter::~NotificationPreviewPresenter() {
-  gNotificationPreviewPresenterStub->NotificationPreviewPresenterDestructor();
+NotificationPreviewPresenter::~NotificationPreviewPresenter()
+{
+    gNotificationPreviewPresenterStub->NotificationPreviewPresenterDestructor();
 }
 
-LipstickNotification * NotificationPreviewPresenter::notification() const {
-  return gNotificationPreviewPresenterStub->notification();
+LipstickNotification *NotificationPreviewPresenter::notification() const
+{
+    return gNotificationPreviewPresenterStub->notification();
 }
 
-void NotificationPreviewPresenter::showNextNotification() {
-  gNotificationPreviewPresenterStub->showNextNotification();
+void NotificationPreviewPresenter::showNextNotification()
+{
+    gNotificationPreviewPresenterStub->showNextNotification();
 }
 
-void NotificationPreviewPresenter::updateNotification(uint id) {
-  gNotificationPreviewPresenterStub->updateNotification(id);
+void NotificationPreviewPresenter::updateNotification(uint id)
+{
+    gNotificationPreviewPresenterStub->updateNotification(id);
 }
 
-void NotificationPreviewPresenter::removeNotification(uint id, bool onlyFromQueue) {
-  gNotificationPreviewPresenterStub->removeNotification(id, onlyFromQueue);
+void NotificationPreviewPresenter::removeNotification(uint id, bool onlyFromQueue)
+{
+    gNotificationPreviewPresenterStub->removeNotification(id, onlyFromQueue);
 }
 
-void NotificationPreviewPresenter::createWindowIfNecessary() {
-  gNotificationPreviewPresenterStub->createWindowIfNecessary();
+void NotificationPreviewPresenter::createWindowIfNecessary()
+{
+    gNotificationPreviewPresenterStub->createWindowIfNecessary();
 }
 
 

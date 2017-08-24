@@ -36,42 +36,41 @@ extern "C"
 
 bool acquireCalled = false;
 
-namespace ResourcePolicy
+namespace ResourcePolicy {
+ResourceSet::ResourceSet(const QString &, QObject *)
 {
-    ResourceSet::ResourceSet(const QString&, QObject*)
-    {
-    }
+}
 
-    bool ResourceSet::setAlwaysReply()
-    {
-        return true;
-    }
+bool ResourceSet::setAlwaysReply()
+{
+    return true;
+}
 
-    ScaleButtonResource::ScaleButtonResource()
-    {
-    }
+ScaleButtonResource::ScaleButtonResource()
+{
+}
 
-    void ResourceSet::addResourceObject(ResourcePolicy::Resource* rsc)
-    {
-        Q_UNUSED(rsc);
-        return;
-    }
+void ResourceSet::addResourceObject(ResourcePolicy::Resource *rsc)
+{
+    Q_UNUSED(rsc);
+    return;
+}
 
-    bool ResourceSet::acquire()
-    {
-        acquireCalled = true;
-        return true;
-    }
+bool ResourceSet::acquire()
+{
+    acquireCalled = true;
+    return true;
+}
 
-    bool ResourceSet::release()
-    {
-        return true;
-    }
+bool ResourceSet::release()
+{
+    return true;
+}
 
-    void ResourceSet::deleteResource(ResourcePolicy::ResourceType)
-    {
-        return;
-    }
+void ResourceSet::deleteResource(ResourcePolicy::ResourceType)
+{
+    return;
+}
 }
 
 void QObject::installEventFilter(QObject *filterObj)

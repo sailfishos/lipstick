@@ -22,7 +22,7 @@ class NotificationFeedbackPlayer;
 
 class Ut_NotificationFeedbackPlayer : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 
 signals:
     void timeout();

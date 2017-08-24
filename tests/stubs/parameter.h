@@ -18,12 +18,14 @@
 class ParameterBase
 {
 public:
-    virtual ~ParameterBase() {
+    virtual ~ParameterBase()
+    {
         // Class needs to have at least one virtual function to be polymorphic
         // (and thus enable dynamic_cast)
     }
 protected:
-    ParameterBase() {
+    ParameterBase()
+    {
     }
 };
 
@@ -31,7 +33,8 @@ template <typename T>
 class Parameter : public ParameterBase
 {
 public:
-    Parameter(T value) : ParameterBase(), data(value) {
+    Parameter(T value) : ParameterBase(), data(value)
+    {
     }
     T data;
 };

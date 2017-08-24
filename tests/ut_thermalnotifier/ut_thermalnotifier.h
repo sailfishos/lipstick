@@ -19,7 +19,8 @@
 
 class ThermalNotifier;
 
-class Ut_ThermalNotifier : public QObject {
+class Ut_ThermalNotifier : public QObject
+{
     Q_OBJECT
 
 private slots:

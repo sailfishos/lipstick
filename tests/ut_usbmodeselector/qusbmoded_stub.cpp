@@ -56,7 +56,7 @@ const QString QUsbMode::Mode::PCSuite(MODE_PC_SUITE);
 const QString QUsbMode::Mode::Charging(MODE_CHARGING);
 const QString QUsbMode::Mode::Charger(MODE_CHARGER);
 
-QUsbMode::QUsbMode(QObject* aParent) :
+QUsbMode::QUsbMode(QObject *aParent) :
     QObject(aParent)
 {
 }
@@ -77,7 +77,7 @@ public:
     }
 };
 
-QUsbModed::QUsbModed(QObject* aParent) :
+QUsbModed::QUsbModed(QObject *aParent) :
     QUsbMode(aParent),
     iPrivate(new Private)
 {
@@ -139,19 +139,19 @@ void QUsbModed::onServiceUnregistered(QString)
 {
 }
 
-void QUsbModed::onGetAvailableModesFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onGetAvailableModesFinished(QDBusPendingCallWatcher *)
 {
 }
 
-void QUsbModed::onGetModesFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onGetModesFinished(QDBusPendingCallWatcher *)
 {
 }
 
-void QUsbModed::onGetConfigFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onGetConfigFinished(QDBusPendingCallWatcher *)
 {
 }
 
-void QUsbModed::onGetModeRequestFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onGetModeRequestFinished(QDBusPendingCallWatcher *)
 {
 }
 
@@ -163,11 +163,11 @@ void QUsbModed::setupCallFinished(int)
 {
 }
 
-void QUsbModed::onSetModeFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onSetModeFinished(QDBusPendingCallWatcher *)
 {
 }
 
-void QUsbModed::onSetConfigFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onSetConfigFinished(QDBusPendingCallWatcher *)
 {
 }
 
@@ -183,15 +183,15 @@ void QUsbModed::onUsbSupportedModesChanged(QString)
 {
 }
 
-void QUsbModed::onHideModeFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onHideModeFinished(QDBusPendingCallWatcher *)
 {
 }
 
-void QUsbModed::onUnhideModeFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onUnhideModeFinished(QDBusPendingCallWatcher *)
 {
 }
 
-void QUsbModed::onGetHiddenFinished(QDBusPendingCallWatcher*)
+void QUsbModed::onGetHiddenFinished(QDBusPendingCallWatcher *)
 {
 }
 

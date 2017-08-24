@@ -186,7 +186,7 @@ void Ut_QObjectListModel::testRemoval()
 
     model.removeItem(1);
     model.removeItem(0);
-    
+
     QCOMPARE(model.itemCount(), 0);
 
     QCOMPARE(addedSpy.count(), 0);
