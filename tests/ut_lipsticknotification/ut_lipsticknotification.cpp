@@ -23,7 +23,7 @@ void Ut_Notification::testGettersAndSetters()
 {
     QString appName = "appName1";
     QString disambiguatedAppName = "appName1-2-3";
-    uint replacesId = 1;
+    uint id = 1;
     QString appIcon = "appIcon1";
     QString summary = "summary1";
     QString body = "body1";
@@ -51,10 +51,10 @@ void Ut_Notification::testGettersAndSetters()
     int expireTimeout = 1;
 
     // Ensure that the constructor puts things in place
-    LipstickNotification notification(appName, disambiguatedAppName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
+    LipstickNotification notification(appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints, expireTimeout);
     QCOMPARE(notification.appName(), appName);
     QCOMPARE(notification.disambiguatedAppName(), disambiguatedAppName);
-    QCOMPARE(notification.replacesId(), replacesId);
+    QCOMPARE(notification.id(), id);
     QCOMPARE(notification.appIcon(), appIcon);
     QCOMPARE(notification.summary(), summary);
     QCOMPARE(notification.body(), body);
@@ -235,7 +235,7 @@ void Ut_Notification::testSignals()
 void Ut_Notification::testSerialization()
 {
     QString appName = "appName1";
-    uint replacesId = 1;
+    uint id = 1;
     QString appIcon = "appIcon1";
     QString summary = "summary1";
     QString body = "body1";
@@ -247,7 +247,7 @@ void Ut_Notification::testSerialization()
     hints.insert(NotificationManager::HINT_TIMESTAMP, timestamp);
     int expireTimeout = 1;
 
-    LipstickNotification n1(appName, appName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
+    LipstickNotification n1(appName, appName, id, appIcon, summary, body, actions, hints, expireTimeout);
     LipstickNotification n2;
 
     // Transfer a Notification from n1 to n2 by serializing it to a QDBusArgument and unserializing it
@@ -256,7 +256,7 @@ void Ut_Notification::testSerialization()
     arg >> n2;
 
     QCOMPARE(n2.appName(), n1.appName());
-    QCOMPARE(n2.replacesId(), n1.replacesId());
+    QCOMPARE(n2.id(), n1.id());
     QCOMPARE(n2.appIcon(), n1.appIcon());
     QCOMPARE(n2.summary(), n1.summary());
     QCOMPARE(n2.body(), n1.body());

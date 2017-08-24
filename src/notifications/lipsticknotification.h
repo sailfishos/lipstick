@@ -31,7 +31,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_OBJECT
     Q_PROPERTY(QString appName READ appName CONSTANT)
     Q_PROPERTY(QString disambiguatedAppName READ disambiguatedAppName CONSTANT)
-    Q_PROPERTY(uint replacesId READ replacesId CONSTANT)
+    Q_PROPERTY(uint id READ id CONSTANT)
     Q_PROPERTY(QString appIcon READ appIcon CONSTANT)
     Q_PROPERTY(QString summary READ summary NOTIFY summaryChanged)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged)
@@ -59,7 +59,7 @@ public:
      *
      * \param appName name of the application sending the notification
      * \param disambiguatedAppName name of the application, decorated to disambiguate names from android and native applications
-     * \param replacesID the ID of the notification
+     * \param id the ID of the notification
      * \param appIcon icon ID of the application sending the notification
      * \param summary summary text for the notification
      * \param body body text for the notification
@@ -68,7 +68,9 @@ public:
      * \param expireTimeout expiration timeout for the notification
      * \param parent the parent QObject
      */
-    LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout, QObject *parent = 0);
+    LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id, const QString &appIcon,
+                         const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints,
+                         int expireTimeout, QObject *parent = 0);
 
     /*!
      * Creates a new uninitialized representation of a notification.
@@ -86,7 +88,7 @@ public:
     void setDisambiguatedAppName(const QString &disambiguatedAppName);
 
     //! Returns the ID of the notification
-    uint replacesId() const;
+    uint id() const;
 
     //! Returns the icon ID of the application sending the notification
     QString appIcon() const;
@@ -247,7 +249,7 @@ private:
     QString m_disambiguatedAppName;
 
     //! The ID of the notification
-    uint m_replacesId;
+    uint m_id;
 
     //! Icon ID of the application sending the notification
     QString m_appIcon;

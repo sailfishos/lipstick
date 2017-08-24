@@ -559,7 +559,7 @@ void NotificationManager::updateNotificationsWithCategory(const QString &categor
 
         // Update the category properties and re-publish
         applyCategoryDefinition(notification);
-        publish(notification, notification->replacesId());
+        publish(notification, notification->id());
     }
 }
 
@@ -611,7 +611,7 @@ void NotificationManager::applyCategoryDefinition(LipstickNotification *notifica
 
 void NotificationManager::publish(const LipstickNotification *notification, uint replacesId)
 {
-    const uint id(notification->replacesId());
+    const uint id(notification->id());
     if (id == 0) {
         qWarning() << "Cannot publish notification without ID!";
         return;
@@ -964,7 +964,7 @@ void NotificationManager::fetchData(bool update)
         foreach (LipstickNotification *n, activeNotifications) {
             const QVariant userRemovable = n->hints().value(HINT_USER_REMOVABLE);
             if (!userRemovable.isValid() || userRemovable.toBool()) {
-                const uint id = n->replacesId();
+                const uint id = n->id();
                 NOTIFICATIONS_DEBUG("CULLED AT RESTORE:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
                 expiredIds.append(id);
 
@@ -989,7 +989,7 @@ void NotificationManager::fetchData(bool update)
         connect(n, SIGNAL(actionInvoked(QString)), this, SLOT(invokeAction(QString)), Qt::QueuedConnection);
         connect(n, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
 #if DEBUG_NOTIFICATIONS
-        const uint id = n->replacesId();
+        const uint id = n->id();
         NOTIFICATIONS_DEBUG("RESTORED:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
 #endif
     }

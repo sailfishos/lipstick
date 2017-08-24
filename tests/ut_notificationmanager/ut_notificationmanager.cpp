@@ -1001,8 +1001,8 @@ void Ut_NotificationManager::testListingNotifications()
     QCOMPARE(notifications.count(), 2);
     QCOMPARE(notifications.at(0).appName(), QString("appName1"));
     QCOMPARE(notifications.at(1).appName(), QString("appName1"));
-    QCOMPARE(notifications.at(0).replacesId(), id1);
-    QCOMPARE(notifications.at(1).replacesId(), id2);
+    QCOMPARE(notifications.at(0).id(), id1);
+    QCOMPARE(notifications.at(1).id(), id2);
     QCOMPARE(notifications.at(0).appIcon(), QString("appIcon1"));
     QCOMPARE(notifications.at(1).appIcon(), QString("appIcon2"));
     QCOMPARE(notifications.at(0).summary(), QString("summary1"));
@@ -1019,7 +1019,7 @@ void Ut_NotificationManager::testListingNotifications()
     notifications = manager->GetNotifications("appName2");
     QCOMPARE(notifications.count(), 1);
     QCOMPARE(notifications.at(0).appName(), QString("appName2"));
-    QCOMPARE(notifications.at(0).replacesId(), id3);
+    QCOMPARE(notifications.at(0).id(), id3);
     QCOMPARE(notifications.at(0).appIcon(), QString("appIcon3"));
     QCOMPARE(notifications.at(0).summary(), QString("summary3"));
     QCOMPARE(notifications.at(0).body(), QString("body3"));

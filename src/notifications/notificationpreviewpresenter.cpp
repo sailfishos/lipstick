@@ -117,7 +117,7 @@ void NotificationPreviewPresenter::showNextNotification()
         if (!show) {
             if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) { // Suppress feedback if locked out.
                 // Don't show the notification but just remove it from the queue
-                emit notificationPresented(notification->replacesId());
+                emit notificationPresented(notification->id());
             }
 
             setCurrentNotification(0);
@@ -129,7 +129,7 @@ void NotificationPreviewPresenter::showNextNotification()
                 m_window->show();
             }
 
-            emit notificationPresented(notification->replacesId());
+            emit notificationPresented(notification->id());
 
             setCurrentNotification(notification);
         }
@@ -228,7 +228,7 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
 {
     if (m_currentNotification != notification) {
         if (m_currentNotification) {
-            NotificationManager::instance()->MarkNotificationDisplayed(m_currentNotification->replacesId());
+            NotificationManager::instance()->MarkNotificationDisplayed(m_currentNotification->id());
         }
         m_currentNotification = notification;
         emit notificationChanged();
@@ -240,7 +240,7 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
             const bool notificationCanUnblank = !notification->hints().value(NotificationManager::HINT_SUPPRESS_DISPLAY_ON).toBool();
 
             if (notificationIsCritical && notificationCanUnblank) {
-                QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->replacesId());
+                QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->id());
                 QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_NOTIFICATION_BEGIN);
                 msg.setArguments(QVariantList() << mceIdToAdd << MCE_DURATION << MCE_EXTEND_DURATION);
                 QDBusConnection::systemBus().asyncCall(msg);

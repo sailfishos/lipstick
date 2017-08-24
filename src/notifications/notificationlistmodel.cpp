@@ -112,7 +112,7 @@ int NotificationListModel::indexFor(LipstickNotification *notification)
 {
     for (int index = 0; index < itemCount(); index++) {
         LipstickNotification *notificationAtIndex = static_cast<LipstickNotification *>(get(index));
-        if (notification->replacesId() == notificationAtIndex->replacesId()) {
+        if (notification->id() == notificationAtIndex->id()) {
             continue;
         }
         if (*notification < *notificationAtIndex) {

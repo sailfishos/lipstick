@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
         std::sort(ids.begin(), ids.end());
         foreach (id, ids) {
             const LipstickNotification *n(mgr->notification(id));
-            std::cout << "ID:" << n->replacesId() << "\t" << qUtf8Printable(n->appName())
+            std::cout << "ID:" << n->id() << "\t" << qUtf8Printable(n->appName())
                                                   << "\t" << qUtf8Printable(n->summary())
                                                   << "\t" << qUtf8Printable(firstLine(n->body())) << std::endl;
         }
