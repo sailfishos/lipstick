@@ -151,11 +151,7 @@ void LipstickCompositor::classBegin()
 void LipstickCompositor::onVisibleChanged(bool visible)
 {
     if (!visible) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,2,0)
         sendFrameCallbacks(surfaces());
-#else
-        frameFinished(0);
-#endif
     }
 }
 
@@ -174,11 +170,7 @@ void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)
     connect(surface, SIGNAL(windowPropertyChanged(QString,QVariant)), this, SLOT(windowPropertyChanged(QString)));
     connect(surface, SIGNAL(raiseRequested()), this, SLOT(surfaceRaised()));
     connect(surface, SIGNAL(lowerRequested()), this, SLOT(surfaceLowered()));
-#if QT_VERSION >= QT_VERSION_CHECK(5,2,0)
     connect(surface, SIGNAL(damaged(QRegion)), this, SLOT(surfaceDamaged(QRegion)));
-#else
-    connect(surface, SIGNAL(damaged(QRect)), this, SLOT(surfaceDamaged(QRect)));
-#endif
     connect(surface, &QWaylandSurface::redraw, this, &LipstickCompositor::surfaceCommitted);
 }
 
@@ -303,20 +295,12 @@ void LipstickCompositor::setDisplayOff()
     HomeApplication::instance()->setDisplayOff();
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5,2,0)
 void LipstickCompositor::surfaceDamaged(const QRegion &)
-#else
-void LipstickCompositor::surfaceDamaged(const QRect &)
-#endif
 {
     if (!isVisible()) {
         // If the compositor is not visible, do not throttle.
         // make it conditional to QT_WAYLAND_COMPOSITOR_NO_THROTTLE?
-#if QT_VERSION >= QT_VERSION_CHECK(5,2,0)
         sendFrameCallbacks(surfaces());
-#else
-        frameFinished(0);
-#endif
     }
 }
 
@@ -517,11 +501,7 @@ void LipstickCompositor::surfaceLowered()
 
 void LipstickCompositor::windowSwapped()
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5,2,0)
     sendFrameCallbacks(surfaces());
-#else
-    frameFinished(0);
-#endif
 }
 
 void LipstickCompositor::windowDestroyed()

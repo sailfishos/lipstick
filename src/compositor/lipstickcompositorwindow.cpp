@@ -196,7 +196,6 @@ void LipstickCompositorWindow::refreshGrabbedKeys()
 
 bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
 {
-#if QT_VERSION >= 0x050202
     if (obj == window() && m_interceptingTouch) {
         switch (event->type()) {
         case QEvent::TouchUpdate: {
@@ -218,9 +217,6 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
         }
         return false;
     }
-#else
-    Q_UNUSED(obj);
-#endif
     if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         QWaylandSurface *m_surface = surface();
@@ -337,7 +333,6 @@ void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
     if (touchEventsEnabled() && surface()) {
         handleTouchEvent(event);
 
-#if QT_VERSION >= 0x050202
         static bool lipstick_touch_interception = qEnvironmentVariableIsEmpty("LIPSTICK_NO_TOUCH_INTERCEPTION");
         if (lipstick_touch_interception && event->type() == QEvent::TouchBegin) {
             // On TouchBegin, start intercepting
@@ -346,7 +341,6 @@ void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
                 window()->installEventFilter(this);
             }
         }
-#endif
     } else {
         event->ignore();
     }

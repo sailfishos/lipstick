@@ -45,11 +45,7 @@ public:
     virtual void surfaceTitleChanged();
     virtual void surfaceRaised();
     virtual void surfaceLowered();
-#if QT_VERSION >= QT_VERSION_CHECK(5, 2, 0)
     virtual void surfaceDamaged(const QRegion &);
-#else
-    virtual void surfaceDamaged(const QRect &);
-#endif
     virtual void windowSwapped();
     virtual void windowDestroyed();
     virtual void windowPropertyChanged(const QString &);
@@ -312,21 +308,12 @@ void LipstickCompositorStub::timerEvent(QTimerEvent *e)
     stubMethodEntered("timerEvent", params);
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 2, 0)
 void LipstickCompositorStub::surfaceDamaged(const QRegion &rect)
 {
     QList<ParameterBase *> params;
     params.append( new Parameter<QRegion>(rect));
     stubMethodEntered("surfaceDamaged", params);
 }
-#else
-void LipstickCompositorStub::surfaceDamaged(const QRect &rect)
-{
-    QList<ParameterBase *> params;
-    params.append( new Parameter<QRect>(rect));
-    stubMethodEntered("surfaceDamaged", params);
-}
-#endif
 
 void LipstickCompositorStub::windowSwapped()
 {
@@ -564,17 +551,10 @@ void LipstickCompositor::surfaceLowered()
     gLipstickCompositorStub->surfaceLowered();
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 2, 0)
 void LipstickCompositor::surfaceDamaged(const QRegion &rect)
 {
     gLipstickCompositorStub->surfaceDamaged(rect);
 }
-#else
-void LipstickCompositor::surfaceDamaged(const QRect &rect)
-{
-    gLipstickCompositorStub->surfaceDamaged(rect);
-}
-#endif
 
 void LipstickCompositor::windowSwapped()
 {
@@ -645,11 +625,7 @@ void LipstickCompositor::timerEvent(QTimerEvent *e)
     gLipstickCompositorStub->timerEvent(e);
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 2, 0)
-QWaylandCompositor::QWaylandCompositor(QWindow *, const char *)
-#else
 QWaylandCompositor::QWaylandCompositor(QWindow *, const char *, QWaylandCompositor::ExtensionFlags)
-#endif
 {
 }
 
