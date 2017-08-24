@@ -26,3 +26,5 @@ support_files.path = /opt/tests/lipstick-tests/test-definition
 support_files.CONFIG += no_check_exist
 
 INSTALLS += support_files
+
+OTHER_FILES = stubs/*.cpp stubs/*.h
