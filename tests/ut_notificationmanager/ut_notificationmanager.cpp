@@ -906,25 +906,17 @@ void Ut_NotificationManager::testInvokingActionClosesNotificationIfUserRemovable
     QVariantHash hints1;
     QVariantHash hints2;
     QVariantHash hints3;
-    QVariantHash hints4;
-    QVariantHash hints5;
     QVariantHash hints6;
     hints2.insert(NotificationManager::HINT_USER_REMOVABLE, true);
     hints3.insert(NotificationManager::HINT_USER_REMOVABLE, false);
-    hints4.insert(NotificationManager::HINT_USER_CLOSEABLE, true);
-    hints5.insert(NotificationManager::HINT_USER_CLOSEABLE, false);
     hints6.insert(NotificationManager::HINT_RESIDENT, true); // 'resident' hint also prevents automatic closure
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
     uint id3 = manager->Notify("app3", 0, QString(), QString(), QString(), QStringList(), hints3, 0);
-    uint id4 = manager->Notify("app4", 0, QString(), QString(), QString(), QStringList(), hints4, 0);
-    uint id5 = manager->Notify("app5", 0, QString(), QString(), QString(), QStringList(), hints5, 0);
     uint id6 = manager->Notify("app6", 0, QString(), QString(), QString(), QStringList(), hints6, 0);
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id1), SIGNAL(actionInvoked(QString)));
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id2), SIGNAL(actionInvoked(QString)));
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id3), SIGNAL(actionInvoked(QString)));
-    connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id4), SIGNAL(actionInvoked(QString)));
-    connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id5), SIGNAL(actionInvoked(QString)));
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id6), SIGNAL(actionInvoked(QString)));
 
     // Make all notifications emit the actionInvoked() signal for action "action"; removable notifications should get removed
@@ -932,49 +924,14 @@ void Ut_NotificationManager::testInvokingActionClosesNotificationIfUserRemovable
     QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
     emit actionInvoked("action");
     QCoreApplication::processEvents();
-    QCOMPARE(removedSpy.count(), 4);
+    QCOMPARE(removedSpy.count(), 2);
     QCOMPARE(removedSpy.at(0).at(0).toUInt(), id1);
     QCOMPARE(removedSpy.at(1).at(0).toUInt(), id2);
-    QCOMPARE(removedSpy.at(2).at(0).toUInt(), id4);
-    QCOMPARE(removedSpy.at(3).at(0).toUInt(), id5);
-    QCOMPARE(closedSpy.count(), 3);
+    QCOMPARE(closedSpy.count(), 2);
     QCOMPARE(closedSpy.at(0).at(0).toUInt(), id1);
     QCOMPARE(closedSpy.at(0).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
     QCOMPARE(closedSpy.at(1).at(0).toUInt(), id2);
     QCOMPARE(closedSpy.at(1).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
-    QCOMPARE(closedSpy.at(2).at(0).toUInt(), id4);
-    QCOMPARE(closedSpy.at(2).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
-}
-
-void Ut_NotificationManager::testInvokingActionRemovesNotificationIfUserRemovableAndNotCloseable()
-{
-    // Add notification which is removable but not closeable
-    NotificationManager *manager = NotificationManager::instance();
-    QVariantHash hints;
-    hints.insert(NotificationManager::HINT_USER_REMOVABLE, true);
-    hints.insert(NotificationManager::HINT_USER_CLOSEABLE, false);
-    uint id = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints, 0);
-    LipstickNotification *notification = manager->notification(id);
-    connect(this, SIGNAL(actionInvoked(QString)), notification, SIGNAL(actionInvoked(QString)));
-    qSqlQueryPrepare.clear();
-    qSqlQueryAddBindValue.clear();
-
-    // Make the notifications emit the actionInvoked() signal for action "action"; removable notifications should get removed but non-closeable should not be closed
-    QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
-    emit actionInvoked("action");
-    QCoreApplication::processEvents();
-    QCOMPARE(removedSpy.count(), 1);
-    QCOMPARE(removedSpy.at(0).at(0).toUInt(), id);
-    QCOMPARE(closedSpy.count(), 0);
-
-    // Check that the notification was marked hidden
-    QCOMPARE(qSqlQueryPrepare.count(), 1);
-    QCOMPARE(qSqlQueryPrepare.at(0), QString("INSERT INTO hints VALUES (?, ?, ?)"));
-    QCOMPARE(qSqlQueryAddBindValue.count(), 3);
-    QCOMPARE(qSqlQueryAddBindValue.at(0).toUInt(), id);
-    QCOMPARE(qSqlQueryAddBindValue.at(1), QVariant(NotificationManager::HINT_HIDDEN));
-    QCOMPARE(qSqlQueryAddBindValue.at(2), QVariant(true));
 }
 
 void Ut_NotificationManager::testListingNotifications()
@@ -1035,19 +992,13 @@ void Ut_NotificationManager::testRemoveUserRemovableNotifications()
     QVariantHash hints1;
     QVariantHash hints2;
     QVariantHash hints3;
-    QVariantHash hints4;
-    QVariantHash hints5;
     QVariantHash hints6;
     hints2.insert(NotificationManager::HINT_USER_REMOVABLE, true);
     hints3.insert(NotificationManager::HINT_USER_REMOVABLE, false);
-    hints4.insert(NotificationManager::HINT_USER_CLOSEABLE, true);
-    hints5.insert(NotificationManager::HINT_USER_CLOSEABLE, false);
     hints6.insert(NotificationManager::HINT_RESIDENT, true);
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
     manager->Notify("app3", 0, QString(), QString(), QString(), QStringList(), hints3, 0);
-    uint id4 = manager->Notify("app4", 0, QString(), QString(), QString(), QStringList(), hints4, 0);
-    uint id5 = manager->Notify("app5", 0, QString(), QString(), QString(), QStringList(), hints5, 0);
     uint id6 = manager->Notify("app6", 0, QString(), QString(), QString(), QStringList(), hints6, 0);
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
@@ -1058,11 +1009,9 @@ void Ut_NotificationManager::testRemoveUserRemovableNotifications()
     for (int i = 0; i < removedSpy.count(); i++) {
         removedIds.insert(removedSpy.at(i).at(0).toUInt());
     }
-    QCOMPARE(removedIds.count(), 5);
+    QCOMPARE(removedIds.count(), 3);
     QCOMPARE(removedIds.contains(id1), true);
     QCOMPARE(removedIds.contains(id2), true);
-    QCOMPARE(removedIds.contains(id4), true);
-    QCOMPARE(removedIds.contains(id5), true);
     QCOMPARE(removedIds.contains(id6), true);
 
     QSet<uint> closedIds;
@@ -1070,10 +1019,9 @@ void Ut_NotificationManager::testRemoveUserRemovableNotifications()
         closedIds.insert(closedSpy.at(i).at(0).toUInt());
         QCOMPARE(closedSpy.at(i).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
     }
-    QCOMPARE(closedIds.count(), 4);
+    QCOMPARE(closedIds.count(), 3);
     QCOMPARE(closedIds.contains(id1), true);
     QCOMPARE(closedIds.contains(id2), true);
-    QCOMPARE(closedIds.contains(id4), true);
     QCOMPARE(closedIds.contains(id6), true);
 }
 

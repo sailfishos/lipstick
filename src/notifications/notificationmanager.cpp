@@ -73,7 +73,6 @@ const char *NotificationManager::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary"
 const char *NotificationManager::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
 const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
 const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
-const char *NotificationManager::HINT_USER_CLOSEABLE = "x-nemo-user-closeable";
 const char *NotificationManager::HINT_FEEDBACK = "x-nemo-feedback";
 const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
 const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
@@ -1112,17 +1111,7 @@ void NotificationManager::removeNotificationIfUserRemovable(uint id)
     QVariant userRemovable = notification->hints().value(HINT_USER_REMOVABLE);
     if (!userRemovable.isValid() || userRemovable.toBool()) {
         // The notification should be removed if user removability is not defined (defaults to true) or is set to true
-        QVariant userCloseable = notification->hints().value(HINT_USER_CLOSEABLE);
-        if (!userCloseable.isValid() || userCloseable.toBool()) {
-            // The notification should be closed if user closeability is not defined (defaults to true) or is set to true
-            CloseNotification(id, NotificationDismissedByUser);
-        } else {
-            // Uncloseable notifications should be only removed
-            emit notificationRemoved(id);
-
-            // Mark the notification as hidden
-            execSQL("INSERT INTO hints VALUES (?, ?, ?)", QVariantList() << id << HINT_HIDDEN << true);
-        }
+        CloseNotification(id, NotificationDismissedByUser);
     }
 }
 
@@ -1176,10 +1165,7 @@ void NotificationManager::removeUserRemovableNotifications()
         LipstickNotification *notification(it.value());
         QVariant userRemovable = notification->hints().value(HINT_USER_REMOVABLE);
         if (!userRemovable.isValid() || userRemovable.toBool()) {
-            QVariant userCloseable = notification->hints().value(HINT_USER_CLOSEABLE);
-            if (!userCloseable.isValid() || userCloseable.toBool()) {
-                closableNotifications.append(it.key());
-            }
+            closableNotifications.append(it.key());
         }
     }
 

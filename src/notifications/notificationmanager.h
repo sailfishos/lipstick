@@ -90,9 +90,6 @@ public:
     //! Nemo hint: User removability of the notification.
     static const char *HINT_USER_REMOVABLE;
 
-    //! Nemo hint: User closeability of the notification.
-    static const char *HINT_USER_CLOSEABLE;
-
     //! Nemo hint: Feedback of the notification.
     static const char *HINT_FEEDBACK;
 

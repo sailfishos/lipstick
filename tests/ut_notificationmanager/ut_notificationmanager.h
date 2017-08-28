@@ -45,7 +45,6 @@ private slots:
     void testActionIsNotInvokedIfIncomplete();
     void testRemoteActionIsInvokedIfDefined();
     void testInvokingActionClosesNotificationIfUserRemovable();
-    void testInvokingActionRemovesNotificationIfUserRemovableAndNotCloseable();
     void testListingNotifications();
     void testRemoveUserRemovableNotifications();
     void testRemoveRequested();
