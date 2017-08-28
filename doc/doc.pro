@@ -29,3 +29,5 @@ notification_htmldocs.path = /usr/share/doc/lipstick-notification
 notification_htmldocs.CONFIG += no_check_exist
 
 INSTALLS += htmldocs notification_htmldocs
+
+OTHER_FILES = src/*.dox
