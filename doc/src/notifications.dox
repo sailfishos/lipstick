@@ -86,7 +86,6 @@
  *       - \c x-nemo-preview-icon: icon ID or path to use in the preview banner for the notification, if any.
  *       - \c x-nemo-preview-body: body text to be shown in the preview banner for the notification, if any.
  *       - \c x-nemo-preview-summary: summary text to be shown in the preview banner for the notification, if any.
- *       - \c x-nemo-user-removable: a boolean value for defining whether the user is able to remove the notification manually; otherwise it may only be removed programmatically. Defaults to true.
  *       - \c x-nemo-max-content-lines: the maximum number of content lines to display in the events view, inclusive of the summary. If 1, then no body lines will be displayed.
  *       - \c x-nemo-remote-action-actionname: details of the D-Bus call to be made when the action "actionname" is executed. "actionname" should be listed in the notification's \c actions array. The required format is "serviceName objectPath interface methodName [argument...]", where each argument must be separately encoded by serializing to QDataStream, then encoding the resulting byte sequence to Base64.
  *
@@ -95,6 +94,7 @@
  *       - \c x-nemo-display-on: if true, the display will be turned on when required for the duration of the notification preview
  *       - \c x-nemo-led-disabled-without-body-and-summary: if false, a notification may invoke a feedback event even with empty body and summary properties
  *       - \c x-nemo-hidden: if true, the notification is not displayed and does not cause any feedback to be invoked
+ *       - \c x-nemo-user-removable: a boolean value for defining whether the user is able to remove the notification manually; otherwise it may only be removed programmatically. Defaults to true.
  *
  * \section howto How to use notifications in various use cases
  *
