@@ -241,6 +241,6 @@ androidpriorities.files = androidnotificationpriorities
 androidpriorities.path = /usr/share/lipstick/
 
 INSTALLS += androidpriorities
-OTHER_FILES += androidnotificationpriorities *.xml
+OTHER_FILES += androidnotificationpriorities *.xml screenlock/screenlock.xml notifications/notificationmanager.xml
 
 include(notificationcategories/notificationcategories.pri)
