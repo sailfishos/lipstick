@@ -384,7 +384,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     return id;
 }
 
-void NotificationManager::DeleteNotification(uint id)
+void NotificationManager::deleteNotification(uint id)
 {
     // Remove the notification, its actions and its hints from database
     const QVariantList params(QVariantList() << id);
@@ -404,7 +404,7 @@ void NotificationManager::CloseNotification(uint id, NotificationClosedReason cl
 
         emit NotificationClosed(id, closeReason);
 
-        DeleteNotification(id);
+        deleteNotification(id);
 
         NOTIFICATIONS_DEBUG("REMOVE:" << id);
         emit notificationRemoved(id);
@@ -414,7 +414,7 @@ void NotificationManager::CloseNotification(uint id, NotificationClosedReason cl
     }
 }
 
-void NotificationManager::CloseNotifications(const QList<uint> &ids, NotificationClosedReason closeReason)
+void NotificationManager::closeNotifications(const QList<uint> &ids, NotificationClosedReason closeReason)
 {
     QSet<uint> uniqueIds = QSet<uint>::fromList(ids);
     QList<uint> removedIds;
@@ -424,7 +424,7 @@ void NotificationManager::CloseNotifications(const QList<uint> &ids, Notificatio
             removedIds.append(id);
             emit NotificationClosed(id, closeReason);
 
-            DeleteNotification(id);
+            deleteNotification(id);
         }
     }
 
@@ -441,7 +441,7 @@ void NotificationManager::CloseNotifications(const QList<uint> &ids, Notificatio
     }
 }
 
-void NotificationManager::MarkNotificationDisplayed(uint id)
+void NotificationManager::markNotificationDisplayed(uint id)
 {
     if (m_notifications.contains(id)) {
         const LipstickNotification *notification = m_notifications.value(id);
@@ -535,7 +535,7 @@ void NotificationManager::removeNotificationsWithCategory(const QString &categor
             ids.append(it.key());
         }
     }
-    CloseNotifications(ids);
+    closeNotifications(ids);
 }
 
 void NotificationManager::updateNotificationsWithCategory(const QString &category)
@@ -621,7 +621,7 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
 
     if (replacesId != 0) {
         // Delete the existing notification from the database
-        DeleteNotification(id);
+        deleteNotification(id);
     }
 
     // Add the notification, its actions and its hints to the database
@@ -951,7 +951,7 @@ void NotificationManager::fetchData(bool update)
     if (update) {
         // Remove notifications no longer required
         foreach (uint id, transientIds) {
-            DeleteNotification(id);
+            deleteNotification(id);
         }
     }
 
@@ -975,7 +975,7 @@ void NotificationManager::fetchData(bool update)
     }
 
     if (update) {
-        CloseNotifications(expiredIds, NotificationExpired);
+        closeNotifications(expiredIds, NotificationExpired);
 
         m_nextExpirationTime = unexpiredRemaining ? nextTimeout : 0;
         if (m_nextExpirationTime) {
@@ -1138,7 +1138,7 @@ void NotificationManager::expire()
         }
     }
 
-    CloseNotifications(expiredIds, NotificationExpired);
+    closeNotifications(expiredIds, NotificationExpired);
 
     m_nextExpirationTime = unexpiredRemaining ? nextTimeout : 0;
     if (m_nextExpirationTime) {
@@ -1169,7 +1169,7 @@ void NotificationManager::removeUserRemovableNotifications()
         }
     }
 
-    CloseNotifications(closableNotifications, NotificationDismissedByUser);
+    closeNotifications(closableNotifications, NotificationDismissedByUser);
 
     // Remove any remaining notifications
     foreach(uint id, m_notifications.keys()) {

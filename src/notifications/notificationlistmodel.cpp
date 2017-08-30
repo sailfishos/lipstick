@@ -129,7 +129,7 @@ void NotificationListModel::refreshModel()
 
 void NotificationListModel::markAsDisplayed(uint id)
 {
-    NotificationManager::instance()->MarkNotificationDisplayed(id);
+    NotificationManager::instance()->markNotificationDisplayed(id);
 }
 
 void NotificationListModel::removeNotification(uint id)

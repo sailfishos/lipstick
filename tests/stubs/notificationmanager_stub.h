@@ -31,7 +31,7 @@ public:
     virtual QStringList GetCapabilities();
     virtual uint Notify(const QString &appName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout);
     virtual void CloseNotification(uint id, NotificationManager::NotificationClosedReason closeReason);
-    virtual void MarkNotificationDisplayed(uint id);
+    virtual void markNotificationDisplayed(uint id);
     virtual QString GetServerInformation(QString &name, QString &vendor, QString &version);
     virtual NotificationList GetNotifications(const QString &appName);
     virtual NotificationList GetNotificationsByCategory(const QString &category);
@@ -99,11 +99,11 @@ void NotificationManagerStub::CloseNotification(uint id, NotificationManager::No
     stubMethodEntered("CloseNotification", params);
 }
 
-void NotificationManagerStub::MarkNotificationDisplayed(uint id)
+void NotificationManagerStub::markNotificationDisplayed(uint id)
 {
     QList<ParameterBase *> params;
     params.append( new Parameter<uint >(id));
-    stubMethodEntered("MarkNotificationDisplayed", params);
+    stubMethodEntered("markNotificationDisplayed", params);
 }
 
 QString NotificationManagerStub::GetServerInformation(QString &name, QString &vendor, QString &version)
@@ -254,9 +254,9 @@ void NotificationManager::CloseNotification(uint id, NotificationClosedReason cl
     gNotificationManagerStub->CloseNotification(id, closeReason);
 }
 
-void NotificationManager::MarkNotificationDisplayed(uint id)
+void NotificationManager::markNotificationDisplayed(uint id)
 {
-    gNotificationManagerStub->MarkNotificationDisplayed(id);
+    gNotificationManagerStub->markNotificationDisplayed(id);
 }
 
 QString NotificationManager::GetServerInformation(QString &name, QString &vendor, QString &version)

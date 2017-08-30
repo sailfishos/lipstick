@@ -163,7 +163,7 @@ void NotificationPreviewPresenter::updateNotification(uint id)
             removeNotification(id, true);
 
             if (m_currentNotification != notification) {
-                NotificationManager::instance()->MarkNotificationDisplayed(id);
+                NotificationManager::instance()->markNotificationDisplayed(id);
             }
         }
     }
@@ -228,7 +228,7 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
 {
     if (m_currentNotification != notification) {
         if (m_currentNotification) {
-            NotificationManager::instance()->MarkNotificationDisplayed(m_currentNotification->id());
+            NotificationManager::instance()->markNotificationDisplayed(m_currentNotification->id());
         }
         m_currentNotification = notification;
         emit notificationChanged();

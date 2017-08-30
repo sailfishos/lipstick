@@ -1053,7 +1053,7 @@ void Ut_NotificationManager::testImmediateExpiration()
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
     QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
-    manager->MarkNotificationDisplayed(id1);
+    manager->markNotificationDisplayed(id1);
     QCoreApplication::processEvents();
     QCOMPARE(removedSpy.count(), 1);
     QCOMPARE(removedSpy.last().at(0).toUInt(), id1);
@@ -1079,13 +1079,13 @@ void Ut_NotificationManager::testDelayedExpiration()
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
     QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
-    manager->MarkNotificationDisplayed(id1);
+    manager->markNotificationDisplayed(id1);
     QCoreApplication::processEvents();
     QCOMPARE(removedSpy.count(), 0);
     QCOMPARE(closedSpy.count(), 0);
 
     qSqlQueryValues["SELECT * FROM expiration"] = QueryValueList() << expirationValues1 << expirationValues2;
-    manager->MarkNotificationDisplayed(id2);
+    manager->markNotificationDisplayed(id2);
 
     QCoreApplication::processEvents();
     QCOMPARE(removedSpy.count(), 0);
