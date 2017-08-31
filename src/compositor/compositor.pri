@@ -40,3 +40,5 @@ QT += compositor
 QT += quick-private gui-private core-private compositor-private qml-private
 
 WAYLANDSERVERSOURCES += ../protocol/lipstick-recorder.xml \
+
+OTHER_FILES += $$PWD/compositor.xml

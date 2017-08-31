@@ -40,7 +40,6 @@ void Ut_NotificationListModel::cleanup()
 void Ut_NotificationListModel::testSignalConnections()
 {
     NotificationListModel model;
-    QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationModified(uint)), &model, SLOT(updateNotification(uint))), true);
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationsModified(const QList<uint> &)), &model, SLOT(updateNotifications(const QList<uint> &))), true);
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), &model, SLOT(removeNotification(uint))), true);
     QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationsRemoved(const QList<uint> &)), &model, SLOT(removeNotifications(const QList<uint> &))), true);
@@ -170,7 +169,7 @@ void Ut_NotificationListModel::testNotificationUpdate()
 
     NotificationListModel model;
     QCOMPARE(model.itemCount(), 1);
-    QCOMPARE(model.get(0)->property("replacesId").value<uint>(), 1u);
+    QCOMPARE(model.get(0)->property("id").value<uint>(), 1u);
 
     QSignalSpy dataChangedSpy(&model, SIGNAL(dataChanged(QModelIndex,QModelIndex)));
     QCOMPARE(dataChangedSpy.count(), 0);
@@ -178,7 +177,7 @@ void Ut_NotificationListModel::testNotificationUpdate()
     notification.setAppName("differentAppName");
     model.updateNotification(1);
     QCOMPARE(model.itemCount(), 1);
-    QCOMPARE(model.get(0)->property("replacesId").value<uint>(), 1u);
+    QCOMPARE(model.get(0)->property("id").value<uint>(), 1u);
 
     QCOMPARE(dataChangedSpy.count(), 1);
     QCOMPARE(dataChangedSpy.at(0).count(), 2);

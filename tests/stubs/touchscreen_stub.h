@@ -21,7 +21,8 @@
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
-class TouchScreenStub : public StubBase {
+class TouchScreenStub : public StubBase
+{
 public:
     virtual void TouchScreenStubConstructor(QObject *parent = 0);
     virtual void TouchScreenStubDestructor();
@@ -39,7 +40,8 @@ public:
 };
 
 // 2. IMPLEMENT STUB
-void TouchScreenStub::TouchScreenStubConstructor(QObject *parent) {
+void TouchScreenStub::TouchScreenStubConstructor(QObject *parent)
+{
     Q_UNUSED(parent)
 }
 
@@ -56,7 +58,7 @@ bool TouchScreenStub::touchBlocked() const
 
 void TouchScreenStub::setEnabled(bool enable)
 {
-    QList<ParameterBase*> params;
+    QList<ParameterBase *> params;
     params.append(new Parameter<bool>(enable));
     stubMethodEntered("setEnabled", params);
 }
@@ -97,14 +99,16 @@ void TouchScreenStub::inputPolicyReply(QDBusPendingCallWatcher *watcher)
 
 // 3. CREATE A STUB INSTANCE
 TouchScreenStub gDefaultTouchScreenStub;
-TouchScreenStub* gTouchScreenStub = &gDefaultTouchScreenStub;
+TouchScreenStub *gTouchScreenStub = &gDefaultTouchScreenStub;
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
-TouchScreen::TouchScreen(QObject *parent) {
+TouchScreen::TouchScreen(QObject *parent)
+{
     gTouchScreenStub->TouchScreenStubConstructor(parent);
 }
 
-TouchScreen::~TouchScreen() {
+TouchScreen::~TouchScreen()
+{
     gTouchScreenStub->TouchScreenStubDestructor();
 }
 

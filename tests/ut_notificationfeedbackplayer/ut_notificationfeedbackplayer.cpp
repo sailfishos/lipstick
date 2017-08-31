@@ -35,7 +35,6 @@ const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
 const char *NotificationManager::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
 const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
 const char *NotificationManager::HINT_FEEDBACK = "x-nemo-feedback";
-const char *NotificationManager::HINT_FEEDBACK_SUPPRESSED = "x-nemo-feedback-suppressed";
 const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
 const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
 const char *NotificationManager::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
@@ -231,20 +230,6 @@ void Ut_NotificationFeedbackPlayer::testHiddenNotification()
     LipstickNotification *notification = createNotification(1);
     QVariantHash hints(notification->hints());
     hints.insert(NotificationManager::HINT_HIDDEN, true);
-    notification->setHints(hints);
-    player->addNotification(1);
-
-    // Check that NGFAdapter::play() was not called for the feedback
-    QCOMPARE(gClientStub->stubCallCount("play"), 0);
-}
-
-void Ut_NotificationFeedbackPlayer::testSuppressedNotification()
-{
-    // Create a notification
-    LipstickNotification *notification = createNotification(1);
-    QVariantHash hints(notification->hints());
-    hints.insert(NotificationManager::HINT_FEEDBACK, "feedback");
-    hints.insert(NotificationManager::HINT_FEEDBACK_SUPPRESSED, true);
     notification->setHints(hints);
     player->addNotification(1);
 

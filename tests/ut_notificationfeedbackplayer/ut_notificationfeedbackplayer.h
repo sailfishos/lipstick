@@ -22,7 +22,7 @@ class NotificationFeedbackPlayer;
 
 class Ut_NotificationFeedbackPlayer : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 
 signals:
     void timeout();
@@ -37,7 +37,6 @@ private slots:
     void testWithoutFeedbackId();
     void testMultipleFeedbackIds();
     void testHiddenNotification();
-    void testSuppressedNotification();
     void testNotificationSoundSuppressed();
     void testUpdateNotification();
     void testUpdateNotificationAfterRestart();

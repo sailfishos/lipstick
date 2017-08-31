@@ -40,21 +40,22 @@ int statfs (const char *, struct statfs *st)
 
 // QDir stubs
 bool qDirRemoveCalled;
-bool QDir::remove(const QString &) {
+bool QDir::remove(const QString &)
+{
     return qDirRemoveCalled = true;
 }
 
 // QSqlDatabase stubs
 QString qSqlDatabaseAddDatabaseType = QString();
 QSqlDatabase qSqlDatabaseInstance;
-QSqlDatabase QSqlDatabase::addDatabase (const QString & type, const QString&)
+QSqlDatabase QSqlDatabase::addDatabase (const QString &type, const QString &)
 {
     qSqlDatabaseAddDatabaseType = type;
     return qSqlDatabaseInstance;
 }
 
 QString qSqlDatabaseDatabaseName = QString();
-void QSqlDatabase::setDatabaseName(const QString& name)
+void QSqlDatabase::setDatabaseName(const QString &name)
 {
     qSqlDatabaseDatabaseName = name;
 }
@@ -81,7 +82,7 @@ bool QSqlDatabase::isOpen() const
 }
 
 QStringList qSqlDatabaseExec;
-QSqlQuery QSqlDatabase::exec(const QString& query) const
+QSqlQuery QSqlDatabase::exec(const QString &query) const
 {
     qSqlDatabaseExec << query;
     return QSqlQuery();
@@ -102,7 +103,7 @@ bool QSqlDatabase::commit()
 // QSqlQuery stubs
 QStringList qSqlQueryExecQuery = QStringList();
 int qSqlQueryIndex = -1;
-QSqlQuery::QSqlQuery(const QString& query, QSqlDatabase)
+QSqlQuery::QSqlQuery(const QString &query, QSqlDatabase)
 {
     if (!query.isEmpty()) {
         qSqlQueryExecQuery << query;
@@ -114,7 +115,7 @@ QSqlQuery::~QSqlQuery()
 {
 }
 
-bool QSqlQuery::exec(const QString& query)
+bool QSqlQuery::exec(const QString &query)
 {
     qSqlQueryExecQuery << query;
     qSqlQueryIndex = -1;
@@ -132,7 +133,7 @@ QSqlError QSqlQuery::lastError() const
 }
 
 QStringList qSqlQueryPrepare = QStringList();
-bool QSqlQuery::prepare(const QString& query)
+bool QSqlQuery::prepare(const QString &query)
 {
     qSqlQueryPrepare << query;
     return true;
@@ -195,7 +196,7 @@ int QSqlRecord::indexOf(const QString &name) const
 
 // QSqlTableModel stubs
 QSet<QString> tableNamesModeled;
-QMap<QSqlQueryModel*, QString> modelToTableName = QMap<QSqlQueryModel*, QString>();
+QMap<QSqlQueryModel *, QString> modelToTableName = QMap<QSqlQueryModel *, QString>();
 void QSqlTableModel::setTable(const QString &tableName)
 {
     modelToTableName[this] = tableName;
@@ -230,7 +231,7 @@ int QSqlTableModel::fieldIndex(const QString &fieldName) const
 
     int ret = -1;
 
-    QString tableName = modelToTableName.value(const_cast<QSqlTableModel*>(this));
+    QString tableName = modelToTableName.value(const_cast<QSqlTableModel *>(this));
     if (tableName == "notifications") {
         if (notificationsTableFieldIndices.contains(fieldName)) {
             ret = notificationsTableFieldIndices.value(fieldName);
@@ -739,7 +740,7 @@ void Ut_NotificationManager::testRemovingExistingNotification()
     qSqlQueryAddBindValue.clear();
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
+    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
     manager->CloseNotification(id);
     QCOMPARE(removedSpy.count(), 1);
     QCOMPARE(removedSpy.last().at(0).toUInt(), id);
@@ -762,7 +763,7 @@ void Ut_NotificationManager::testRemovingInexistingNotification()
 {
     NotificationManager *manager = NotificationManager::instance();
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
+    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
     manager->CloseNotification(1);
     QCOMPARE(removedSpy.count(), 0);
     QCOMPARE(closedSpy.count(), 0);
@@ -905,75 +906,32 @@ void Ut_NotificationManager::testInvokingActionClosesNotificationIfUserRemovable
     QVariantHash hints1;
     QVariantHash hints2;
     QVariantHash hints3;
-    QVariantHash hints4;
-    QVariantHash hints5;
     QVariantHash hints6;
     hints2.insert(NotificationManager::HINT_USER_REMOVABLE, true);
     hints3.insert(NotificationManager::HINT_USER_REMOVABLE, false);
-    hints4.insert(NotificationManager::HINT_USER_CLOSEABLE, true);
-    hints5.insert(NotificationManager::HINT_USER_CLOSEABLE, false);
     hints6.insert(NotificationManager::HINT_RESIDENT, true); // 'resident' hint also prevents automatic closure
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
     uint id3 = manager->Notify("app3", 0, QString(), QString(), QString(), QStringList(), hints3, 0);
-    uint id4 = manager->Notify("app4", 0, QString(), QString(), QString(), QStringList(), hints4, 0);
-    uint id5 = manager->Notify("app5", 0, QString(), QString(), QString(), QStringList(), hints5, 0);
     uint id6 = manager->Notify("app6", 0, QString(), QString(), QString(), QStringList(), hints6, 0);
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id1), SIGNAL(actionInvoked(QString)));
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id2), SIGNAL(actionInvoked(QString)));
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id3), SIGNAL(actionInvoked(QString)));
-    connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id4), SIGNAL(actionInvoked(QString)));
-    connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id5), SIGNAL(actionInvoked(QString)));
     connect(this, SIGNAL(actionInvoked(QString)), manager->notification(id6), SIGNAL(actionInvoked(QString)));
 
     // Make all notifications emit the actionInvoked() signal for action "action"; removable notifications should get removed
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
+    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
     emit actionInvoked("action");
     QCoreApplication::processEvents();
-    QCOMPARE(removedSpy.count(), 4);
+    QCOMPARE(removedSpy.count(), 2);
     QCOMPARE(removedSpy.at(0).at(0).toUInt(), id1);
     QCOMPARE(removedSpy.at(1).at(0).toUInt(), id2);
-    QCOMPARE(removedSpy.at(2).at(0).toUInt(), id4);
-    QCOMPARE(removedSpy.at(3).at(0).toUInt(), id5);
-    QCOMPARE(closedSpy.count(), 3);
+    QCOMPARE(closedSpy.count(), 2);
     QCOMPARE(closedSpy.at(0).at(0).toUInt(), id1);
     QCOMPARE(closedSpy.at(0).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
     QCOMPARE(closedSpy.at(1).at(0).toUInt(), id2);
     QCOMPARE(closedSpy.at(1).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
-    QCOMPARE(closedSpy.at(2).at(0).toUInt(), id4);
-    QCOMPARE(closedSpy.at(2).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
-}
-
-void Ut_NotificationManager::testInvokingActionRemovesNotificationIfUserRemovableAndNotCloseable()
-{
-    // Add notification which is removable but not closeable
-    NotificationManager *manager = NotificationManager::instance();
-    QVariantHash hints;
-    hints.insert(NotificationManager::HINT_USER_REMOVABLE, true);
-    hints.insert(NotificationManager::HINT_USER_CLOSEABLE, false);
-    uint id = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints, 0);
-    LipstickNotification *notification = manager->notification(id);
-    connect(this, SIGNAL(actionInvoked(QString)), notification, SIGNAL(actionInvoked(QString)));
-    qSqlQueryPrepare.clear();
-    qSqlQueryAddBindValue.clear();
-
-    // Make the notifications emit the actionInvoked() signal for action "action"; removable notifications should get removed but non-closeable should not be closed
-    QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
-    emit actionInvoked("action");
-    QCoreApplication::processEvents();
-    QCOMPARE(removedSpy.count(), 1);
-    QCOMPARE(removedSpy.at(0).at(0).toUInt(), id);
-    QCOMPARE(closedSpy.count(), 0);
-
-    // Check that the notification was marked hidden
-    QCOMPARE(qSqlQueryPrepare.count(), 1);
-    QCOMPARE(qSqlQueryPrepare.at(0), QString("INSERT INTO hints VALUES (?, ?, ?)"));
-    QCOMPARE(qSqlQueryAddBindValue.count(), 3);
-    QCOMPARE(qSqlQueryAddBindValue.at(0).toUInt(), id);
-    QCOMPARE(qSqlQueryAddBindValue.at(1), QVariant(NotificationManager::HINT_HIDDEN));
-    QCOMPARE(qSqlQueryAddBindValue.at(2), QVariant(true));
 }
 
 void Ut_NotificationManager::testListingNotifications()
@@ -1000,8 +958,8 @@ void Ut_NotificationManager::testListingNotifications()
     QCOMPARE(notifications.count(), 2);
     QCOMPARE(notifications.at(0).appName(), QString("appName1"));
     QCOMPARE(notifications.at(1).appName(), QString("appName1"));
-    QCOMPARE(notifications.at(0).replacesId(), id1);
-    QCOMPARE(notifications.at(1).replacesId(), id2);
+    QCOMPARE(notifications.at(0).id(), id1);
+    QCOMPARE(notifications.at(1).id(), id2);
     QCOMPARE(notifications.at(0).appIcon(), QString("appIcon1"));
     QCOMPARE(notifications.at(1).appIcon(), QString("appIcon2"));
     QCOMPARE(notifications.at(0).summary(), QString("summary1"));
@@ -1018,7 +976,7 @@ void Ut_NotificationManager::testListingNotifications()
     notifications = manager->GetNotifications("appName2");
     QCOMPARE(notifications.count(), 1);
     QCOMPARE(notifications.at(0).appName(), QString("appName2"));
-    QCOMPARE(notifications.at(0).replacesId(), id3);
+    QCOMPARE(notifications.at(0).id(), id3);
     QCOMPARE(notifications.at(0).appIcon(), QString("appIcon3"));
     QCOMPARE(notifications.at(0).summary(), QString("summary3"));
     QCOMPARE(notifications.at(0).body(), QString("body3"));
@@ -1034,34 +992,26 @@ void Ut_NotificationManager::testRemoveUserRemovableNotifications()
     QVariantHash hints1;
     QVariantHash hints2;
     QVariantHash hints3;
-    QVariantHash hints4;
-    QVariantHash hints5;
     QVariantHash hints6;
     hints2.insert(NotificationManager::HINT_USER_REMOVABLE, true);
     hints3.insert(NotificationManager::HINT_USER_REMOVABLE, false);
-    hints4.insert(NotificationManager::HINT_USER_CLOSEABLE, true);
-    hints5.insert(NotificationManager::HINT_USER_CLOSEABLE, false);
     hints6.insert(NotificationManager::HINT_RESIDENT, true);
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
     manager->Notify("app3", 0, QString(), QString(), QString(), QStringList(), hints3, 0);
-    uint id4 = manager->Notify("app4", 0, QString(), QString(), QString(), QStringList(), hints4, 0);
-    uint id5 = manager->Notify("app5", 0, QString(), QString(), QString(), QStringList(), hints5, 0);
     uint id6 = manager->Notify("app6", 0, QString(), QString(), QString(), QStringList(), hints6, 0);
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
+    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
     manager->removeUserRemovableNotifications();
 
     QSet<uint> removedIds;
     for (int i = 0; i < removedSpy.count(); i++) {
         removedIds.insert(removedSpy.at(i).at(0).toUInt());
     }
-    QCOMPARE(removedIds.count(), 5);
+    QCOMPARE(removedIds.count(), 3);
     QCOMPARE(removedIds.contains(id1), true);
     QCOMPARE(removedIds.contains(id2), true);
-    QCOMPARE(removedIds.contains(id4), true);
-    QCOMPARE(removedIds.contains(id5), true);
     QCOMPARE(removedIds.contains(id6), true);
 
     QSet<uint> closedIds;
@@ -1069,10 +1019,9 @@ void Ut_NotificationManager::testRemoveUserRemovableNotifications()
         closedIds.insert(closedSpy.at(i).at(0).toUInt());
         QCOMPARE(closedSpy.at(i).at(1).toInt(), (int)NotificationManager::NotificationDismissedByUser);
     }
-    QCOMPARE(closedIds.count(), 4);
+    QCOMPARE(closedIds.count(), 3);
     QCOMPARE(closedIds.contains(id1), true);
     QCOMPARE(closedIds.contains(id2), true);
-    QCOMPARE(closedIds.contains(id4), true);
     QCOMPARE(closedIds.contains(id6), true);
 }
 
@@ -1084,7 +1033,7 @@ void Ut_NotificationManager::testRemoveRequested()
     connect(this, SIGNAL(removeRequested()), notification1, SIGNAL(removeRequested()));
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
+    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
     emit removeRequested();
     QCoreApplication::processEvents();
     QCOMPARE(removedSpy.count(), 1);
@@ -1103,8 +1052,8 @@ void Ut_NotificationManager::testImmediateExpiration()
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints, 0);
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
-    manager->MarkNotificationDisplayed(id1);
+    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
+    manager->markNotificationDisplayed(id1);
     QCoreApplication::processEvents();
     QCOMPARE(removedSpy.count(), 1);
     QCOMPARE(removedSpy.last().at(0).toUInt(), id1);
@@ -1129,14 +1078,14 @@ void Ut_NotificationManager::testDelayedExpiration()
     qSqlQueryValues["SELECT * FROM expiration"] = QueryValueList() << expirationValues1;
 
     QSignalSpy removedSpy(manager, SIGNAL(notificationRemoved(uint)));
-    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint,uint)));
-    manager->MarkNotificationDisplayed(id1);
+    QSignalSpy closedSpy(manager, SIGNAL(NotificationClosed(uint, uint)));
+    manager->markNotificationDisplayed(id1);
     QCoreApplication::processEvents();
     QCOMPARE(removedSpy.count(), 0);
     QCOMPARE(closedSpy.count(), 0);
 
     qSqlQueryValues["SELECT * FROM expiration"] = QueryValueList() << expirationValues1 << expirationValues2;
-    manager->MarkNotificationDisplayed(id2);
+    manager->markNotificationDisplayed(id2);
 
     QCoreApplication::processEvents();
     QCOMPARE(removedSpy.count(), 0);

@@ -60,7 +60,7 @@ public:
     //! Standard hint: If true, audible feedback should be should be suppressed during notification feedback.
     static const char *HINT_SUPPRESS_SOUND;
 
-    //! Nemo hint: Icon of the notification. Allows the icon to be set using a category definition file without specifying it in the Notify() call.
+    //! Nemo hint: Icon of the notification. Might take precedence over appIcon depending on platform implementation.
     static const char *HINT_ICON;
 
     //! Nemo hint: Item count represented by the notification.
@@ -90,14 +90,8 @@ public:
     //! Nemo hint: User removability of the notification.
     static const char *HINT_USER_REMOVABLE;
 
-    //! Nemo hint: User closeability of the notification.
-    static const char *HINT_USER_CLOSEABLE;
-
     //! Nemo hint: Feedback of the notification.
     static const char *HINT_FEEDBACK;
-
-    //! Nemo hint: Suppress any feedback that would otherwise be emitted.
-    static const char *HINT_FEEDBACK_SUPPRESSED;
 
     //! Nemo hint: Whether the notification is hidden.
     static const char *HINT_HIDDEN;
@@ -123,7 +117,8 @@ public:
     //! Nemo hint: Specifies the maximum number of content lines to display (including summary)
     static const char *HINT_MAX_CONTENT_LINES;
 
-    //! Nemo hint: Indicates that this notification has been restored from persistent storage since the last update
+    //! Nemo hint: Indicates that this notification has been restored from persistent storage since the last update.
+    //! Internal, shouldn't be expected or allowed from d-bus
     static const char *HINT_RESTORED;
 
     //! Notification closing reasons used in the NotificationClosed signal
@@ -194,21 +189,12 @@ public:
     void CloseNotification(uint id, NotificationClosedReason closeReason = CloseNotificationCalled);
 
     /*!
-     * Causes all listed notifications to be forcefully closed and removed from the user's view.
-     * The NotificationClosed signal is emitted by this method for each closed notification.
-     *
-     * \param ids the IDs of the notifications to be closed
-     * \param closeReason the reason for the closure of these notifications
-     */
-    void CloseNotifications(const QList<uint> &ids, NotificationClosedReason closeReason = CloseNotificationCalled);
-
-    /*!
      * Mark the notification as displayed.  If the notification has an expiry timeout
      * value defined, it will apply from when the notification is marked as displayed.
      *
      * \param id the ID of the notification to be closed
      */
-    void MarkNotificationDisplayed(uint id);
+    void markNotificationDisplayed(uint id);
 
     /*!
      * This message returns the information on the server. Specifically, the server name, vendor,
@@ -264,21 +250,14 @@ signals:
     void notificationAdded(uint id);
 
     /*!
-     * Emitted before notificationMofified when updating an existing notification.
-     *
-     * \param id the ID of the notification that will be updated
-     */
-    void aboutToUpdateNotification(uint id);
-
-    /*!
-     * Emitted when a notification is modified (added or updated).
+     * Emitted when a notification is modified.
      *
      * \param id the ID of the modified notification
      */
     void notificationModified(uint id);
 
     /*!
-     * Emitted when a group of notifications is collectively modified (added or updated).
+     * Batched group of modified notifications, emitted within a second from changes
      *
      * \param ids the IDs of the modified notifications
      */
@@ -292,7 +271,7 @@ signals:
     void notificationRemoved(uint id);
 
     /*!
-     * Emitted when a group of notifications is collectively removed.
+     * Emitted when a group of notifications is collectively removed. notificationRemoved() is still called for each instance too.
      *
      * \param ids the IDs of the removed notifications
      */
@@ -400,7 +379,16 @@ private:
     /*!
      * Deletes a notification from the system, without any reporting.
      */
-    void DeleteNotification(uint id);
+    void deleteNotification(uint id);
+
+    /*!
+     * Causes all listed notifications to be forcefully closed and removed from the user's view.
+     * The NotificationClosed signal is emitted by this method for each closed notification.
+     *
+     * \param ids the IDs of the notifications to be closed
+     * \param closeReason the reason for the closure of these notifications
+     */
+    void closeNotifications(const QList<uint> &ids, NotificationClosedReason closeReason = CloseNotificationCalled);
 
     /*!
      * Checks whether there is enough free disk space available.

@@ -34,7 +34,6 @@ NotificationListModel::NotificationListModel(QObject *parent) :
     QObjectListModel(parent),
     m_populated(false)
 {
-    connect(NotificationManager::instance(), SIGNAL(notificationModified(uint)), this, SLOT(updateNotification(uint)));
     connect(NotificationManager::instance(), SIGNAL(notificationsModified(const QList<uint> &)), this, SLOT(updateNotifications(const QList<uint> &)));
     connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));
     connect(NotificationManager::instance(), SIGNAL(notificationsRemoved(const QList<uint> &)), this, SLOT(removeNotifications(const QList<uint> &)));
@@ -113,7 +112,7 @@ int NotificationListModel::indexFor(LipstickNotification *notification)
 {
     for (int index = 0; index < itemCount(); index++) {
         LipstickNotification *notificationAtIndex = static_cast<LipstickNotification *>(get(index));
-        if (notification->replacesId() == notificationAtIndex->replacesId()) {
+        if (notification->id() == notificationAtIndex->id()) {
             continue;
         }
         if (*notification < *notificationAtIndex) {
@@ -130,7 +129,7 @@ void NotificationListModel::refreshModel()
 
 void NotificationListModel::markAsDisplayed(uint id)
 {
-    NotificationManager::instance()->MarkNotificationDisplayed(id);
+    NotificationManager::instance()->markNotificationDisplayed(id);
 }
 
 void NotificationListModel::removeNotification(uint id)

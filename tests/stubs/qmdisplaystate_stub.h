@@ -27,52 +27,57 @@
 
 
 /** DECLARE STUB */
-class QmDisplayStateStub : public StubBase {
-  public:
-  // enum DisplayState { Off=-1, Dimmed=0, On=1, Unknown } ;
-  virtual void QmDisplayStateConstructor(QObject *parent);
-  virtual void QmDisplayStateDestructor();
-  virtual MeeGo::QmDisplayState::DisplayState get() const;
-  virtual bool set(MeeGo::QmDisplayState::DisplayState state);
-  virtual void connectNotify(const QMetaMethod &signal);
-  virtual void disconnectNotify(const QMetaMethod &signal);
+class QmDisplayStateStub : public StubBase
+{
+public:
+    // enum DisplayState { Off=-1, Dimmed=0, On=1, Unknown } ;
+    virtual void QmDisplayStateConstructor(QObject *parent);
+    virtual void QmDisplayStateDestructor();
+    virtual MeeGo::QmDisplayState::DisplayState get() const;
+    virtual bool set(MeeGo::QmDisplayState::DisplayState state);
+    virtual void connectNotify(const QMetaMethod &signal);
+    virtual void disconnectNotify(const QMetaMethod &signal);
 
-  MeeGo::QmDisplayState *displayState;
-}; 
+    MeeGo::QmDisplayState *displayState;
+};
 
 // 2. IMPLEMENT STUB
-void QmDisplayStateStub::QmDisplayStateConstructor(QObject *parent) {
-  Q_UNUSED(parent);
+void QmDisplayStateStub::QmDisplayStateConstructor(QObject *parent)
+{
+    Q_UNUSED(parent);
 
 }
-void QmDisplayStateStub::QmDisplayStateDestructor() {
+void QmDisplayStateStub::QmDisplayStateDestructor()
+{
 
 }
-MeeGo::QmDisplayState::DisplayState QmDisplayStateStub::get() const {
-  stubMethodEntered("get");
-  return stubReturnValue<MeeGo::QmDisplayState::DisplayState>("get");
+MeeGo::QmDisplayState::DisplayState QmDisplayStateStub::get() const
+{
+    stubMethodEntered("get");
+    return stubReturnValue<MeeGo::QmDisplayState::DisplayState>("get");
 }
 
-bool QmDisplayStateStub::set(MeeGo::QmDisplayState::DisplayState state) {
-  QList<ParameterBase*> params;
-  params.append( new Parameter<MeeGo::QmDisplayState::DisplayState >(state));
-  stubMethodEntered("set",params);
-  return stubReturnValue<bool>("set");
+bool QmDisplayStateStub::set(MeeGo::QmDisplayState::DisplayState state)
+{
+    QList<ParameterBase *> params;
+    params.append( new Parameter<MeeGo::QmDisplayState::DisplayState >(state));
+    stubMethodEntered("set", params);
+    return stubReturnValue<bool>("set");
 }
 
 void QmDisplayStateStub::connectNotify(const QMetaMethod &signal)
 {
-  QList<ParameterBase*> params;
-  params.append( new Parameter<const QMetaMethod &>(signal));
-  stubMethodEntered("connectNotify",params);
+    QList<ParameterBase *> params;
+    params.append( new Parameter<const QMetaMethod &>(signal));
+    stubMethodEntered("connectNotify", params);
 }
 
 
 void QmDisplayStateStub::disconnectNotify(const QMetaMethod &signal)
 {
-  QList<ParameterBase*> params;
-  params.append( new Parameter<const QMetaMethod &>(signal));
-  stubMethodEntered("disconnectNotify",params);
+    QList<ParameterBase *> params;
+    params.append( new Parameter<const QMetaMethod &>(signal));
+    stubMethodEntered("disconnectNotify", params);
 }
 
 
@@ -82,33 +87,37 @@ void QmDisplayStateStub::disconnectNotify(const QMetaMethod &signal)
 
 // 3. CREATE A STUB INSTANCE
 QmDisplayStateStub gDefaultQmDisplayStateStub;
-QmDisplayStateStub* gQmDisplayStateStub = &gDefaultQmDisplayStateStub;
+QmDisplayStateStub *gQmDisplayStateStub = &gDefaultQmDisplayStateStub;
 
 namespace MeeGo {
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
-QmDisplayState::QmDisplayState(QObject *parent) {
-  gQmDisplayStateStub->QmDisplayStateConstructor(parent);
-  gQmDisplayStateStub->displayState = this;
+QmDisplayState::QmDisplayState(QObject *parent)
+{
+    gQmDisplayStateStub->QmDisplayStateConstructor(parent);
+    gQmDisplayStateStub->displayState = this;
 }
 
-QmDisplayState::~QmDisplayState() {
-  gQmDisplayStateStub->QmDisplayStateDestructor();
+QmDisplayState::~QmDisplayState()
+{
+    gQmDisplayStateStub->QmDisplayStateDestructor();
 }
 
-MeeGo::QmDisplayState::DisplayState QmDisplayState::get() const {
-  return gQmDisplayStateStub->get();
+MeeGo::QmDisplayState::DisplayState QmDisplayState::get() const
+{
+    return gQmDisplayStateStub->get();
 }
 
-bool QmDisplayState::set(DisplayState state) {
-  return gQmDisplayStateStub->set(state);
+bool QmDisplayState::set(DisplayState state)
+{
+    return gQmDisplayStateStub->set(state);
 }
 
 void QmDisplayState::connectNotify(const QMetaMethod &signal)
 {
-	gQmDisplayStateStub->connectNotify(signal);
+    gQmDisplayStateStub->connectNotify(signal);
 }
-void QmDisplayState::disconnectNotify(const QMetaMethod & signal)
+void QmDisplayState::disconnectNotify(const QMetaMethod &signal)
 {
     gQmDisplayStateStub->disconnectNotify(signal);
 }

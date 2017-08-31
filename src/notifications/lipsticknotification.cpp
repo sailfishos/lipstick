@@ -20,11 +20,14 @@
 #include <QDataStream>
 #include <QtDebug>
 
-LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout, QObject *parent) :
+LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
+                                           const QString &appIcon, const QString &summary, const QString &body,
+                                           const QStringList &actions, const QVariantHash &hints, int expireTimeout,
+                                           QObject *parent) :
     QObject(parent),
     m_appName(appName),
     m_disambiguatedAppName(disambiguatedAppName),
-    m_replacesId(replacesId),
+    m_id(id),
     m_appIcon(appIcon),
     m_summary(summary),
     m_body(body),
@@ -39,7 +42,7 @@ LipstickNotification::LipstickNotification(const QString &appName, const QString
 
 LipstickNotification::LipstickNotification(QObject *parent) :
     QObject(parent),
-    m_replacesId(0),
+    m_id(0),
     m_expireTimeout(-1),
     m_priority(0),
     m_timestamp(0)
@@ -50,7 +53,7 @@ LipstickNotification::LipstickNotification(const LipstickNotification &notificat
     QObject(notification.parent()),
     m_appName(notification.m_appName),
     m_disambiguatedAppName(notification.m_disambiguatedAppName),
-    m_replacesId(notification.m_replacesId),
+    m_id(notification.m_id),
     m_appIcon(notification.m_appIcon),
     m_summary(notification.m_summary),
     m_body(notification.m_body),
@@ -83,9 +86,9 @@ void LipstickNotification::setDisambiguatedAppName(const QString &disambiguatedA
     m_disambiguatedAppName = disambiguatedAppName;
 }
 
-uint LipstickNotification::replacesId() const
+uint LipstickNotification::id() const
 {
-    return m_replacesId;
+    return m_id;
 }
 
 QString LipstickNotification::appIcon() const
@@ -385,7 +388,7 @@ QDBusArgument &operator<<(QDBusArgument &argument, const LipstickNotification &n
 {
     argument.beginStructure();
     argument << notification.m_appName;
-    argument << notification.m_replacesId;
+    argument << notification.m_id;
     argument << notification.m_appIcon;
     argument << notification.m_summary;
     argument << notification.m_body;
@@ -400,7 +403,7 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, LipstickNotificat
 {
     argument.beginStructure();
     argument >> notification.m_appName;
-    argument >> notification.m_replacesId;
+    argument >> notification.m_id;
     argument >> notification.m_appIcon;
     argument >> notification.m_summary;
     argument >> notification.m_body;
@@ -457,7 +460,7 @@ bool operator<(const LipstickNotification &lhs, const LipstickNotification &rhs)
             return true;
         } else if (timestampComparison == 0) {
             // For matching timestamps, sort the higher ID first
-            if (lhs.replacesId() > rhs.replacesId()) {
+            if (lhs.id() > rhs.id()) {
                 return true;
             }
         }

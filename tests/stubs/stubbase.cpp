@@ -24,16 +24,16 @@ QList<MethodCall *> StubBase::stubCallHistory() const
 
 void StubBase::stubReset() const
 {
-    foreach(ParameterBase * p, _stubReturnValues) {
+    foreach (ParameterBase *p, _stubReturnValues) {
         delete p;
     }
 
-    foreach(MethodCall * p, _stubCallHistory) {
+    foreach (MethodCall *p, _stubCallHistory) {
         delete p;
     }
 
-    foreach(QList<ParameterBase *> valueList, _stubReturnValueLists) {
-        foreach(ParameterBase *p, valueList) {
+    foreach (QList<ParameterBase *> valueList, _stubReturnValueLists) {
+        foreach (ParameterBase *p, valueList) {
             delete p;
         }
     }

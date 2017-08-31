@@ -81,7 +81,7 @@ private:
 template <typename T>
 void StubBase::stubSetReturnValue(const QString &methodName, T value) const
 {
-    Parameter<T>* param = new Parameter<T>(value);
+    Parameter<T> *param = new Parameter<T>(value);
     _stubReturnValues[methodName] = param;
 }
 
@@ -89,8 +89,8 @@ template <typename T>
 void StubBase::stubSetReturnValueList(const QString &methodName, QList<T> valueList) const
 {
     QList<ParameterBase *> newValueList;
-    foreach(T value, valueList) {
-        Parameter<T>* param = new Parameter<T>(value);
+    foreach (T value, valueList) {
+        Parameter<T> *param = new Parameter<T>(value);
         newValueList.append(param);
     }
     _stubReturnValueLists[methodName] = newValueList;
@@ -112,7 +112,7 @@ T &StubBase::stubReturnValueNoDefault(const QString &methodName) const
         base = _stubReturnValues[methodName];
     }
 
-    Parameter<T>* param = dynamic_cast<Parameter<T>*>(base);
+    Parameter<T> *param = dynamic_cast<Parameter<T>*>(base);
     if (!param) {
         QString msg = QString("StubBase::") + __func__ + ": failed dynamic_cast, check that return value type matches the method; check also that you have used stubSetReturnValue(" + methodName + ")";
         qFatal("%s", qPrintable(msg));
@@ -135,7 +135,7 @@ T &StubBase::stubReturnValue(const QString &methodName) const
         base = _stubReturnValues[methodName];
     }
 
-    Parameter<T>* param = dynamic_cast<Parameter<T>*>(base);
+    Parameter<T> *param = dynamic_cast<Parameter<T>*>(base);
     if (!param) {
         QString msg = QString("StubBase::") + __func__ + ": failed dynamic_cast, check that return value type matches the method; check also that you have used stubSetReturnValue(" + methodName + ")";
         qFatal("%s", qPrintable(msg));

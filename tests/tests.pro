@@ -1,7 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS = \
           ut_batterynotifier \
-          ut_categorydefinitionstore \
           ut_closeeventeater \
           ut_launchermodel \
           ut_lipsticksettings \
@@ -26,3 +25,5 @@ support_files.path = /opt/tests/lipstick-tests/test-definition
 support_files.CONFIG += no_check_exist
 
 INSTALLS += support_files
+
+OTHER_FILES = stubs/*.cpp stubs/*.h

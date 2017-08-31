@@ -155,7 +155,7 @@ void NotificationManager::CloseNotification(uint id, NotificationClosedReason)
 }
 
 QList<uint> notificationManagerDisplayedNotificationIds;
-void NotificationManager::MarkNotificationDisplayed(uint id)
+void NotificationManager::markNotificationDisplayed(uint id)
 {
     notificationManagerDisplayedNotificationIds.append(id);
 }

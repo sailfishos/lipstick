@@ -6,7 +6,8 @@
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
-class QmLocksStub : public StubBase {
+class QmLocksStub : public StubBase
+{
 public:
     virtual void QmLocksConstructor(QObject *parent = 0);
     virtual void QmLocksDestructor();
@@ -17,23 +18,27 @@ public:
 };
 
 // 2. IMPLEMENT STUB
-void QmLocksStub::QmLocksConstructor(QObject *parent) {
+void QmLocksStub::QmLocksConstructor(QObject *parent)
+{
     Q_UNUSED(parent)
 }
 
-void QmLocksStub::QmLocksDestructor() {
+void QmLocksStub::QmLocksDestructor()
+{
 
 }
 
-MeeGo::QmLocks::State QmLocksStub::getState(MeeGo::QmLocks::Lock what) const {
-    QList<ParameterBase*> params;
+MeeGo::QmLocks::State QmLocksStub::getState(MeeGo::QmLocks::Lock what) const
+{
+    QList<ParameterBase *> params;
     params.append(new Parameter<MeeGo::QmLocks::Lock>(what));
     stubMethodEntered("getState", params);
     return stubReturnValue<MeeGo::QmLocks::State>("getState");
 }
 
-bool QmLocksStub::setState(MeeGo::QmLocks::Lock what, MeeGo::QmLocks::State how) {
-    QList<ParameterBase*> params;
+bool QmLocksStub::setState(MeeGo::QmLocks::Lock what, MeeGo::QmLocks::State how)
+{
+    QList<ParameterBase *> params;
     params.append(new Parameter<MeeGo::QmLocks::Lock>(what));
     params.append(new Parameter<MeeGo::QmLocks::State>(how));
     stubMethodEntered("setState", params);
@@ -42,39 +47,42 @@ bool QmLocksStub::setState(MeeGo::QmLocks::Lock what, MeeGo::QmLocks::State how)
 
 void QmLocksStub::connectNotify(const QMetaMethod &signal)
 {
-  QList<ParameterBase*> params;
-  params.append(new Parameter<const QMetaMethod &>(signal));
-  stubMethodEntered("connectNotify",params);
+    QList<ParameterBase *> params;
+    params.append(new Parameter<const QMetaMethod &>(signal));
+    stubMethodEntered("connectNotify", params);
 }
 
 void QmLocksStub::disconnectNotify(const QMetaMethod &signal)
 {
-  QList<ParameterBase*> params;
-  params.append(new Parameter<const QMetaMethod &>(signal));
-  stubMethodEntered("disconnectNotify",params);
+    QList<ParameterBase *> params;
+    params.append(new Parameter<const QMetaMethod &>(signal));
+    stubMethodEntered("disconnectNotify", params);
 }
 
 // 3. CREATE A STUB INSTANCE
 QmLocksStub gDefaultQmLocksStub;
-QmLocksStub* gQmLocksStub = &gDefaultQmLocksStub;
+QmLocksStub *gQmLocksStub = &gDefaultQmLocksStub;
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
-namespace MeeGo
-{
+namespace MeeGo {
 
-QmLocks::QmLocks(QObject *parent) {
+QmLocks::QmLocks(QObject *parent)
+{
     gQmLocksStub->QmLocksConstructor(parent);
 }
 
-QmLocks::~QmLocks() {
+QmLocks::~QmLocks()
+{
     gQmLocksStub->QmLocksDestructor();
 }
 
-QmLocks::State QmLocks::getState(QmLocks::Lock what) const {
+QmLocks::State QmLocks::getState(QmLocks::Lock what) const
+{
     return gQmLocksStub->getState(what);
 }
 
-bool QmLocks::setState(QmLocks::Lock what, QmLocks::State how) {
+bool QmLocks::setState(QmLocks::Lock what, QmLocks::State how)
+{
     return gQmLocksStub->setState(what, how);
 }
 

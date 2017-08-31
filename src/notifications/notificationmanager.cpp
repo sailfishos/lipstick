@@ -73,9 +73,7 @@ const char *NotificationManager::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary"
 const char *NotificationManager::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
 const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
 const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
-const char *NotificationManager::HINT_USER_CLOSEABLE = "x-nemo-user-closeable";
 const char *NotificationManager::HINT_FEEDBACK = "x-nemo-feedback";
-const char *NotificationManager::HINT_FEEDBACK_SUPPRESSED = "x-nemo-feedback-suppressed";
 const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
 const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
 const char *NotificationManager::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
@@ -293,8 +291,8 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
 
     if (!notificationData.isUserRemovable() && !isPrivileged()) {
         qWarning() << "Persistent notification from"
-                    << qPrintable(pidProperties.first)
-                    << "dropped because of insufficent permissions";
+                   << qPrintable(pidProperties.first)
+                   << "dropped because of insufficent permissions";
         return 0;
     }
 
@@ -305,8 +303,8 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     if (notification) {
         if (!notification->isUserRemovable() && !isPrivileged()) {
             qWarning() << "An alteration to a persistent notification by"
-                        << qPrintable(pidProperties.first)
-                        << "was ignored because of insufficent permissions";
+                       << qPrintable(pidProperties.first)
+                       << "was ignored because of insufficent permissions";
             return 0;
         }
 
@@ -361,12 +359,9 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
         }
         hints_.insert(HINT_PRIORITY, priority.first);
         if (!priority.second.isEmpty()) {
-            // Add the appropriate feedback, unless it is specifically suppressed
-            if (!notification->hints().value(HINT_FEEDBACK_SUPPRESSED).toBool()) {
-                hints_.insert(HINT_FEEDBACK, priority.second);
-                // Also turn the display on if required
-                hints_.insert(HINT_DISPLAY_ON, true);
-            }
+            hints_.insert(HINT_FEEDBACK, priority.second);
+            // Also turn the display on if required
+            hints_.insert(HINT_DISPLAY_ON, true);
         }
     } else {
         if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {
@@ -389,7 +384,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     return id;
 }
 
-void NotificationManager::DeleteNotification(uint id)
+void NotificationManager::deleteNotification(uint id)
 {
     // Remove the notification, its actions and its hints from database
     const QVariantList params(QVariantList() << id);
@@ -409,7 +404,7 @@ void NotificationManager::CloseNotification(uint id, NotificationClosedReason cl
 
         emit NotificationClosed(id, closeReason);
 
-        DeleteNotification(id);
+        deleteNotification(id);
 
         NOTIFICATIONS_DEBUG("REMOVE:" << id);
         emit notificationRemoved(id);
@@ -419,7 +414,7 @@ void NotificationManager::CloseNotification(uint id, NotificationClosedReason cl
     }
 }
 
-void NotificationManager::CloseNotifications(const QList<uint> &ids, NotificationClosedReason closeReason)
+void NotificationManager::closeNotifications(const QList<uint> &ids, NotificationClosedReason closeReason)
 {
     QSet<uint> uniqueIds = QSet<uint>::fromList(ids);
     QList<uint> removedIds;
@@ -429,7 +424,7 @@ void NotificationManager::CloseNotifications(const QList<uint> &ids, Notificatio
             removedIds.append(id);
             emit NotificationClosed(id, closeReason);
 
-            DeleteNotification(id);
+            deleteNotification(id);
         }
     }
 
@@ -446,7 +441,7 @@ void NotificationManager::CloseNotifications(const QList<uint> &ids, Notificatio
     }
 }
 
-void NotificationManager::MarkNotificationDisplayed(uint id)
+void NotificationManager::markNotificationDisplayed(uint id)
 {
     if (m_notifications.contains(id)) {
         const LipstickNotification *notification = m_notifications.value(id);
@@ -540,7 +535,7 @@ void NotificationManager::removeNotificationsWithCategory(const QString &categor
             ids.append(it.key());
         }
     }
-    CloseNotifications(ids);
+    closeNotifications(ids);
 }
 
 void NotificationManager::updateNotificationsWithCategory(const QString &category)
@@ -563,7 +558,7 @@ void NotificationManager::updateNotificationsWithCategory(const QString &categor
 
         // Update the category properties and re-publish
         applyCategoryDefinition(notification);
-        publish(notification, notification->replacesId());
+        publish(notification, notification->id());
     }
 }
 
@@ -615,7 +610,7 @@ void NotificationManager::applyCategoryDefinition(LipstickNotification *notifica
 
 void NotificationManager::publish(const LipstickNotification *notification, uint replacesId)
 {
-    const uint id(notification->replacesId());
+    const uint id(notification->id());
     if (id == 0) {
         qWarning() << "Cannot publish notification without ID!";
         return;
@@ -626,7 +621,7 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
 
     if (replacesId != 0) {
         // Delete the existing notification from the database
-        DeleteNotification(id);
+        deleteNotification(id);
     }
 
     // Add the notification, its actions and its hints to the database
@@ -648,7 +643,7 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
     if (replacesId == 0) {
         emit notificationAdded(id);
     } else {
-        emit aboutToUpdateNotification(id);
+        emit notificationModified(id);
     }
 }
 
@@ -956,7 +951,7 @@ void NotificationManager::fetchData(bool update)
     if (update) {
         // Remove notifications no longer required
         foreach (uint id, transientIds) {
-            DeleteNotification(id);
+            deleteNotification(id);
         }
     }
 
@@ -968,7 +963,7 @@ void NotificationManager::fetchData(bool update)
         foreach (LipstickNotification *n, activeNotifications) {
             const QVariant userRemovable = n->hints().value(HINT_USER_REMOVABLE);
             if (!userRemovable.isValid() || userRemovable.toBool()) {
-                const uint id = n->replacesId();
+                const uint id = n->id();
                 NOTIFICATIONS_DEBUG("CULLED AT RESTORE:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
                 expiredIds.append(id);
 
@@ -980,7 +975,7 @@ void NotificationManager::fetchData(bool update)
     }
 
     if (update) {
-        CloseNotifications(expiredIds, NotificationExpired);
+        closeNotifications(expiredIds, NotificationExpired);
 
         m_nextExpirationTime = unexpiredRemaining ? nextTimeout : 0;
         if (m_nextExpirationTime) {
@@ -989,17 +984,14 @@ void NotificationManager::fetchData(bool update)
         }
     }
 
-    QList<uint> restoredIds;
     foreach (LipstickNotification *n, m_notifications) {
-        const uint id = n->replacesId();
         connect(n, SIGNAL(actionInvoked(QString)), this, SLOT(invokeAction(QString)), Qt::QueuedConnection);
         connect(n, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
-
+#if DEBUG_NOTIFICATIONS
+        const uint id = n->id();
         NOTIFICATIONS_DEBUG("RESTORED:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
-        restoredIds.append(id);
+#endif
     }
-    if (!restoredIds.isEmpty())
-        emit notificationsModified(restoredIds);
 
     if (update) {
         qWarning() << "Notifications restored:" << m_notifications.count();
@@ -1119,17 +1111,7 @@ void NotificationManager::removeNotificationIfUserRemovable(uint id)
     QVariant userRemovable = notification->hints().value(HINT_USER_REMOVABLE);
     if (!userRemovable.isValid() || userRemovable.toBool()) {
         // The notification should be removed if user removability is not defined (defaults to true) or is set to true
-        QVariant userCloseable = notification->hints().value(HINT_USER_CLOSEABLE);
-        if (!userCloseable.isValid() || userCloseable.toBool()) {
-            // The notification should be closed if user closeability is not defined (defaults to true) or is set to true
-            CloseNotification(id, NotificationDismissedByUser);
-        } else {
-            // Uncloseable notifications should be only removed
-            emit notificationRemoved(id);
-
-            // Mark the notification as hidden
-            execSQL("INSERT INTO hints VALUES (?, ?, ?)", QVariantList() << id << HINT_HIDDEN << true);
-        }
+        CloseNotification(id, NotificationDismissedByUser);
     }
 }
 
@@ -1156,7 +1138,7 @@ void NotificationManager::expire()
         }
     }
 
-    CloseNotifications(expiredIds, NotificationExpired);
+    closeNotifications(expiredIds, NotificationExpired);
 
     m_nextExpirationTime = unexpiredRemaining ? nextTimeout : 0;
     if (m_nextExpirationTime) {
@@ -1167,12 +1149,10 @@ void NotificationManager::expire()
 
 void NotificationManager::reportModifications()
 {
-    if (m_modifiedIds.count() == 1) {
-        emit notificationModified(*m_modifiedIds.begin());
-    } else if (!m_modifiedIds.isEmpty()) {
+    if (!m_modifiedIds.isEmpty()) {
         emit notificationsModified(m_modifiedIds.toList());
+        m_modifiedIds.clear();
     }
-    m_modifiedIds.clear();
 }
 
 void NotificationManager::removeUserRemovableNotifications()
@@ -1185,14 +1165,11 @@ void NotificationManager::removeUserRemovableNotifications()
         LipstickNotification *notification(it.value());
         QVariant userRemovable = notification->hints().value(HINT_USER_REMOVABLE);
         if (!userRemovable.isValid() || userRemovable.toBool()) {
-            QVariant userCloseable = notification->hints().value(HINT_USER_CLOSEABLE);
-            if (!userCloseable.isValid() || userCloseable.toBool()) {
-                closableNotifications.append(it.key());
-            }
+            closableNotifications.append(it.key());
         }
     }
 
-    CloseNotifications(closableNotifications, NotificationDismissedByUser);
+    closeNotifications(closableNotifications, NotificationDismissedByUser);
 
     // Remove any remaining notifications
     foreach(uint id, m_notifications.keys()) {

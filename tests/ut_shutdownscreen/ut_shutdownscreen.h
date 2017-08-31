@@ -20,7 +20,8 @@
 
 class ShutdownScreen;
 
-class Ut_ShutdownScreen : public QObject {
+class Ut_ShutdownScreen : public QObject
+{
     Q_OBJECT
 
 private slots:
