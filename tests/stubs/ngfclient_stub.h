@@ -31,11 +31,11 @@ public:
     virtual void disconnect();
     virtual quint32 play(const QString &event);
     virtual quint32 play(const QString &event, const QMap<QString, QVariant> &properties);
-    virtual bool pause(const quint32 &event_id);
+    virtual bool pause(quint32 event_id);
     virtual bool pause(const QString &event);
-    virtual bool resume(const quint32 &event_id);
+    virtual bool resume(quint32 event_id);
     virtual bool resume(const QString &event);
-    virtual bool stop(const quint32 &event_id);
+    virtual bool stop(quint32 event_id);
     virtual bool stop(const QString &event);
 };
 
@@ -83,7 +83,7 @@ quint32 ClientStub::play(const QString &event, const QMap<QString, QVariant> &pr
     return stubReturnValue<quint32>("play");
 }
 
-bool ClientStub::pause(const quint32 &event_id)
+bool ClientStub::pause(quint32 event_id)
 {
     QList<ParameterBase *> params;
     params.append( new Parameter<const quint32 & >(event_id));
@@ -99,7 +99,7 @@ bool ClientStub::pause(const QString &event)
     return stubReturnValue<bool>("pause");
 }
 
-bool ClientStub::resume(const quint32 &event_id)
+bool ClientStub::resume(quint32 event_id)
 {
     QList<ParameterBase *> params;
     params.append( new Parameter<const quint32 & >(event_id));
@@ -115,7 +115,7 @@ bool ClientStub::resume(const QString &event)
     return stubReturnValue<bool>("resume");
 }
 
-bool ClientStub::stop(const quint32 &event_id)
+bool ClientStub::stop(quint32 event_id)
 {
     QList<ParameterBase *> params;
     params.append( new Parameter<quint32 >(event_id));
@@ -174,7 +174,7 @@ quint32 Ngf::Client::play(const QString &event, const QMap<QString, QVariant> &p
     return gClientStub->play(event, properties);
 }
 
-bool Ngf::Client::pause(const quint32 &event_id)
+bool Ngf::Client::pause(quint32 event_id)
 {
     return gClientStub->pause(event_id);
 }
@@ -184,7 +184,7 @@ bool Ngf::Client::pause(const QString &event)
     return gClientStub->pause(event);
 }
 
-bool Ngf::Client::resume(const quint32 &event_id)
+bool Ngf::Client::resume(quint32 event_id)
 {
     return gClientStub->resume(event_id);
 }
@@ -194,7 +194,7 @@ bool Ngf::Client::resume(const QString &event)
     return gClientStub->resume(event);
 }
 
-bool Ngf::Client::stop(const quint32 &event_id)
+bool Ngf::Client::stop(quint32 event_id)
 {
     return gClientStub->stop(event_id);
 }
