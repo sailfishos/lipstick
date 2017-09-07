@@ -37,7 +37,7 @@ BuildRequires:  pkgconfig(ngf-qt5)
 BuildRequires:  pkgconfig(contextkit-statefs) >= 0.2.7
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(wayland-server)
-BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.4
+BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.6
 BuildRequires:  pkgconfig(systemsettings)
 BuildRequires:  pkgconfig(nemodevicelock)
 BuildRequires:  qt5-qttools-linguist
