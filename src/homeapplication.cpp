@@ -96,8 +96,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     m_touchScreen = new TouchScreen(this);
     connect(m_touchScreen, &TouchScreen::displayStateChanged, this, &HomeApplication::displayStateChanged);
 
-    // Create screen lock logic - not parented to "this" since destruction happens too late in that case
-    m_screenLock = new ScreenLock(m_touchScreen);
+    m_screenLock = new ScreenLock(m_touchScreen, this);
     LipstickSettings::instance()->setScreenLock(m_screenLock);
     new ScreenLockAdaptor(m_screenLock);
 
@@ -107,7 +106,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     NotificationManager::instance();
     new NotificationPreviewPresenter(m_screenLock, deviceLock, this);
 
-    m_volumeControl = new VolumeControl;
+    m_volumeControl = new VolumeControl(this);
     new BatteryNotifier(this);
     new ThermalNotifier(this);
     m_usbModeSelector = new USBModeSelector(deviceLock, this);
@@ -192,10 +191,8 @@ HomeApplication::~HomeApplication()
 
     emit aboutToDestroy();
 
-    delete m_volumeControl;
-    delete m_screenLock;
     delete m_mainWindowInstance;
-    delete m_qmlEngine;
+    m_mainWindowInstance = nullptr;
 }
 
 HomeApplication *HomeApplication::instance()

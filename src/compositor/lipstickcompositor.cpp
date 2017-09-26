@@ -117,6 +117,8 @@ LipstickCompositor::~LipstickCompositor()
     disconnect(this, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
 
     delete m_shaderEffect;
+
+    m_instance = nullptr;
 }
 
 LipstickCompositor *LipstickCompositor::instance()
