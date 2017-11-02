@@ -108,6 +108,8 @@ LipstickCompositor::LipstickCompositor()
 
     setUpdatesEnabled(false);
     QTimer::singleShot(0, this, SLOT(initialize()));
+
+    setClientFullScreenHint(true);
 }
 
 LipstickCompositor::~LipstickCompositor()
