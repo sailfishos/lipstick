@@ -22,7 +22,6 @@
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
 
-
 #include "hwcimage.h"
 #include "hwcrenderstage.h"
 #include <EGL/egl.h>
@@ -31,7 +30,7 @@
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)
-: QWaylandSurfaceItem(surface, parent), m_windowId(windowId), m_category(category),
+: QWaylandSurfaceItem(surface, parent), m_windowId(windowId), m_isAlien(false), m_category(category),
   m_delayRemove(false), m_windowClosed(false), m_removePosted(false), m_mouseRegionValid(false),
   m_interceptingTouch(false), m_mapped(false), m_noHardwareComposition(false),
   m_focusOnTouch(false), m_hasVisibleReferences(false)
@@ -44,6 +43,10 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     connect(this, SIGNAL(enabledChanged()), SLOT(handleTouchCancel()));
     connect(this, SIGNAL(touchEventsEnabledChanged()), SLOT(handleTouchCancel()));
     connect(this, &QWaylandSurfaceItem::surfaceDestroyed, this, &QObject::deleteLater);
+
+    if (surface) {
+        m_isAlien = surface->property("alienSurface").toBool();
+    }
 
     connectSurfaceSignals();
 }
@@ -72,6 +75,11 @@ void LipstickCompositorWindow::setUserData(QVariant data)
 int LipstickCompositorWindow::windowId() const
 {
     return m_windowId;
+}
+
+bool LipstickCompositorWindow::isAlien() const
+{
+    return m_isAlien;
 }
 
 qint64 LipstickCompositorWindow::processId() const

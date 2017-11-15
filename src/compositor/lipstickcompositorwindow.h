@@ -29,6 +29,7 @@ class LIPSTICK_EXPORT LipstickCompositorWindow : public QWaylandSurfaceItem
 
     Q_PROPERTY(int windowId READ windowId CONSTANT)
     Q_PROPERTY(bool isInProcess READ isInProcess CONSTANT)
+    Q_PROPERTY(bool isAlien READ isAlien CONSTANT)
 
     Q_PROPERTY(bool delayRemove READ delayRemove WRITE setDelayRemove NOTIFY delayRemoveChanged)
     Q_PROPERTY(QVariant userData READ userData WRITE setUserData NOTIFY userDataChanged)
@@ -56,6 +57,8 @@ public:
     QString category() const;
     virtual QString title() const;
     virtual bool isInProcess() const;
+
+    bool isAlien() const;
 
     QRect mouseRegionBounds() const;
 
@@ -106,6 +109,7 @@ private:
     void handleTouchEvent(QTouchEvent *e);
 
     int m_windowId;
+    bool m_isAlien;
     QString m_category;
     bool m_delayRemove:1;
     bool m_windowClosed:1;
