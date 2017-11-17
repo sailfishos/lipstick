@@ -36,6 +36,7 @@ AlienSurface::AlienSurface(AlienClient *client, QWaylandSurface *surface, uint32
     connect(surface, &QWaylandSurface::configure, this, &AlienSurface::configure);
     setSurfaceType(QWaylandSurface::Toplevel);
     setSurfaceClassName(package);
+    surface->setProperty("alienSurface", true);
 }
 
 AlienSurface::~AlienSurface()
