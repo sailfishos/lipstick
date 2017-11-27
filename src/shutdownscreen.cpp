@@ -22,6 +22,7 @@
 #include <QScreen>
 #include "utilities/closeeventeater.h"
 #include "notifications/notificationmanager.h"
+#include "notifications/lipsticknotification.h"
 #include "homeapplication.h"
 #include "shutdownscreen.h"
 #include "lipstickqmlpath.h"
@@ -106,8 +107,8 @@ void ShutdownScreen::createAndPublishNotification(const QString &category, const
 {
     NotificationManager *manager = NotificationManager::instance();
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_CATEGORY, category);
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, body);
+    hints.insert(LipstickNotification::HINT_CATEGORY, category);
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
     manager->Notify(qApp->applicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
 }
 

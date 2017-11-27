@@ -57,33 +57,6 @@ static const char *DESKTOP_ENTRY_PATH= "/usr/share/applications/";
 //! Minimum amount of disk space needed for the notification database in kilobytes
 static const uint MINIMUM_FREE_SPACE_NEEDED_IN_KB = 1024;
 
-const char *NotificationManager::HINT_URGENCY = "urgency";
-const char *NotificationManager::HINT_CATEGORY = "category";
-const char *NotificationManager::HINT_TRANSIENT = "transient";
-const char *NotificationManager::HINT_RESIDENT = "resident";
-const char *NotificationManager::HINT_IMAGE_PATH = "image-path";
-const char *NotificationManager::HINT_SUPPRESS_SOUND = "suppress-sound";
-const char *NotificationManager::HINT_ICON = "x-nemo-icon";
-const char *NotificationManager::HINT_ITEM_COUNT = "x-nemo-item-count";
-const char *NotificationManager::HINT_PRIORITY = "x-nemo-priority";
-const char *NotificationManager::HINT_TIMESTAMP = "x-nemo-timestamp";
-const char *NotificationManager::HINT_PREVIEW_ICON = "x-nemo-preview-icon";
-const char *NotificationManager::HINT_PREVIEW_BODY = "x-nemo-preview-body";
-const char *NotificationManager::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary";
-const char *NotificationManager::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
-const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
-const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
-const char *NotificationManager::HINT_FEEDBACK = "x-nemo-feedback";
-const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
-const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
-const char *NotificationManager::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
-const char *NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY = "x-nemo-led-disabled-without-body-and-summary";
-const char *NotificationManager::HINT_ORIGIN = "x-nemo-origin";
-const char *NotificationManager::HINT_ORIGIN_PACKAGE = "x-nemo-origin-package";
-const char *NotificationManager::HINT_OWNER = "x-nemo-owner";
-const char *NotificationManager::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
-const char *NotificationManager::HINT_RESTORED = "x-nemo-restored";
-
 // Exported for unit test:
 int MaxNotificationRestoreCount = 1000;
 
@@ -222,16 +195,16 @@ QStringList NotificationManager::GetCapabilities()
     return QStringList() << "body"
                          << "actions"
                          << "persistence"
-                         << HINT_ICON
-                         << HINT_ITEM_COUNT
-                         << HINT_TIMESTAMP
-                         << HINT_PREVIEW_ICON
-                         << HINT_PREVIEW_BODY
-                         << HINT_PREVIEW_SUMMARY
+                         << LipstickNotification::HINT_ICON
+                         << LipstickNotification::HINT_ITEM_COUNT
+                         << LipstickNotification::HINT_TIMESTAMP
+                         << LipstickNotification::HINT_PREVIEW_ICON
+                         << LipstickNotification::HINT_PREVIEW_BODY
+                         << LipstickNotification::HINT_PREVIEW_SUMMARY
                          << "x-nemo-remote-actions"
-                         << HINT_USER_REMOVABLE
-                         << HINT_ORIGIN
-                         << HINT_MAX_CONTENT_LINES
+                         << LipstickNotification::HINT_USER_REMOVABLE
+                         << LipstickNotification::HINT_ORIGIN
+                         << LipstickNotification::HINT_MAX_CONTENT_LINES
                          << "x-nemo-get-notifications";
 }
 
@@ -249,7 +222,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     QVariantHash hints_(hints);
 
     // Ensure the hints contain a timestamp, and convert to UTC if required
-    QString timestamp(hints_.value(HINT_TIMESTAMP).toString());
+    QString timestamp(hints_.value(LipstickNotification::HINT_TIMESTAMP).toString());
     if (!timestamp.isEmpty()) {
         QDateTime tsValue(QDateTime::fromString(timestamp, Qt::ISODate));
         if (tsValue.isValid()) {
@@ -264,7 +237,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     if (timestamp.isEmpty()) {
         timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     }
-    hints_.insert(HINT_TIMESTAMP, timestamp);
+    hints_.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
 
     QPair<QString, QString> pidProperties;
     bool androidOrigin(false);
@@ -330,38 +303,38 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
 
     if (androidOrigin) {
         // The app icon should also be the nemo icon
-        const QString icon(hints_.value(HINT_ICON).toString());
+        const QString icon(hints_.value(LipstickNotification::HINT_ICON).toString());
         if (icon.isEmpty()) {
-            hints_.insert(HINT_ICON, appIcon);
+            hints_.insert(LipstickNotification::HINT_ICON, appIcon);
         }
 
         // If this notification includes a preview, ensure it has a non-empty body and summary
-        const QString previewSummary(hints_.value(HINT_PREVIEW_SUMMARY).toString());
-        const QString previewBody(hints_.value(HINT_PREVIEW_BODY).toString());
+        const QString previewSummary(hints_.value(LipstickNotification::HINT_PREVIEW_SUMMARY).toString());
+        const QString previewBody(hints_.value(LipstickNotification::HINT_PREVIEW_BODY).toString());
         if (!previewSummary.isEmpty()) {
             if (previewBody.isEmpty()) {
-                hints_.insert(HINT_PREVIEW_BODY, QStringLiteral(" "));
+                hints_.insert(LipstickNotification::HINT_PREVIEW_BODY, QStringLiteral(" "));
             }
         }
         if (!previewBody.isEmpty()) {
             if (previewSummary.isEmpty()) {
-                hints_.insert(HINT_PREVIEW_SUMMARY, QStringLiteral(" "));
+                hints_.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, QStringLiteral(" "));
             }
         }
 
         // See if this notification has elevated priority and feedback
         AndroidPriorityStore::PriorityDetails priority;
-        const QString packageName(hints_.value(HINT_ORIGIN_PACKAGE).toString());
+        const QString packageName(hints_.value(LipstickNotification::HINT_ORIGIN_PACKAGE).toString());
         if (!packageName.isEmpty()) {
             priority = m_androidPriorityStore->packageDetails(packageName);
         } else {
             priority = m_androidPriorityStore->appDetails(appName);
         }
-        hints_.insert(HINT_PRIORITY, priority.first);
+        hints_.insert(LipstickNotification::HINT_PRIORITY, priority.first);
         if (!priority.second.isEmpty()) {
-            hints_.insert(HINT_FEEDBACK, priority.second);
+            hints_.insert(LipstickNotification::HINT_FEEDBACK, priority.second);
             // Also turn the display on if required
-            hints_.insert(HINT_DISPLAY_ON, true);
+            hints_.insert(LipstickNotification::HINT_DISPLAY_ON, true);
         }
     } else {
         if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {
@@ -372,8 +345,8 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
         }
 
         // Unspecified priority should result in medium priority to permit low priorities
-        if (!hints_.contains(HINT_PRIORITY)) {
-            hints_.insert(HINT_PRIORITY, DefaultNotificationPriority);
+        if (!hints_.contains(LipstickNotification::HINT_PRIORITY)) {
+            hints_.insert(LipstickNotification::HINT_PRIORITY, DefaultNotificationPriority);
         }
     }
 
@@ -445,7 +418,7 @@ void NotificationManager::markNotificationDisplayed(uint id)
 {
     if (m_notifications.contains(id)) {
         const LipstickNotification *notification = m_notifications.value(id);
-        if (notification->hints().value(HINT_TRANSIENT).toBool()) {
+        if (notification->hints().value(LipstickNotification::HINT_TRANSIENT).toBool()) {
             // Remove this notification immediately
             CloseNotification(id, NotificationExpired);
             NOTIFICATIONS_DEBUG("REMOVED transient:" << id);
@@ -553,7 +526,7 @@ void NotificationManager::updateNotificationsWithCategory(const QString &categor
     foreach (LipstickNotification *notification, categoryNotifications) {
         // Mark the notification as restored to avoid showing the preview banner again
         QVariantHash hints = notification->hints();
-        hints.insert(HINT_RESTORED, true);
+        hints.insert(LipstickNotification::HINT_RESTORED, true);
         notification->setHints(hints);
 
         // Update the category properties and re-publish
@@ -564,7 +537,7 @@ void NotificationManager::updateNotificationsWithCategory(const QString &categor
 
 QHash<QString, QString> NotificationManager::categoryDefinitionParameters(const QVariantHash &hints) const
 {
-    return m_categoryDefinitionStore->categoryParameters(hints.value(HINT_CATEGORY).toString());
+    return m_categoryDefinitionStore->categoryParameters(hints.value(LipstickNotification::HINT_CATEGORY).toString());
 }
 
 void NotificationManager::applyCategoryDefinition(LipstickNotification *notification) const
@@ -863,7 +836,7 @@ void NotificationManager::fetchData(bool update)
         const QVariant hintValue(hintsQuery.value(hintsTableValueFieldIndex));
 
         QVariant value;
-        if (hintName == HINT_TIMESTAMP) {
+        if (hintName == LipstickNotification::HINT_TIMESTAMP) {
             // Timestamps in the DB are already UTC but not marked as such, so they will
             // be converted again unless specified to be UTC
             QDateTime timestamp(QDateTime::fromString(hintValue.toString(), Qt::ISODate));
@@ -915,14 +888,14 @@ void NotificationManager::fetchData(bool update)
         const QStringList &notificationActions = actions[id];
 
         QVariantHash &notificationHints = hints[id];
-        if (notificationHints.value(HINT_TRANSIENT).toBool()) {
+        if (notificationHints.value(LipstickNotification::HINT_TRANSIENT).toBool()) {
             // This notification was transient, it should not be restored
             NOTIFICATIONS_DEBUG("TRANSIENT AT RESTORE:" << appName << appIcon << summary << body << notificationActions << notificationHints << expireTimeout << "->" << id);
             transientIds.append(id);
             continue;
         } else {
             // Mark this notification as restored
-            notificationHints.insert(HINT_RESTORED, true);
+            notificationHints.insert(LipstickNotification::HINT_RESTORED, true);
         }
 
         bool expired = false;
@@ -965,7 +938,7 @@ void NotificationManager::fetchData(bool update)
         std::sort(activeNotifications.begin(), activeNotifications.end(), notificationReverseOrder);
 
         foreach (LipstickNotification *n, activeNotifications) {
-            const QVariant userRemovable = n->hints().value(HINT_USER_REMOVABLE);
+            const QVariant userRemovable = n->hints().value(LipstickNotification::HINT_USER_REMOVABLE);
             if (!userRemovable.isValid() || userRemovable.toBool()) {
                 const uint id = n->id();
                 NOTIFICATIONS_DEBUG("CULLED AT RESTORE:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
@@ -1072,7 +1045,7 @@ void NotificationManager::invokeAction(const QString &action)
     if (notification != 0) {
         uint id = m_notifications.key(notification, 0);
         if (id > 0) {
-            QString remoteAction = notification->hints().value(QString(HINT_REMOTE_ACTION_PREFIX) + action).toString();
+            QString remoteAction = notification->hints().value(QString(LipstickNotification::HINT_REMOTE_ACTION_PREFIX) + action).toString();
             if (!remoteAction.isEmpty()) {
                 NOTIFICATIONS_DEBUG("INVOKE REMOTE ACTION:" << action << id);
 
@@ -1090,7 +1063,7 @@ void NotificationManager::invokeAction(const QString &action)
             }
 
             // Unless marked as resident, we should remove the notification now
-            const QVariant resident(notification->hints().value(HINT_RESIDENT));
+            const QVariant resident(notification->hints().value(LipstickNotification::HINT_RESIDENT));
             if (!resident.isValid() || resident.toBool() == false) {
                 removeNotificationIfUserRemovable(id);
             }
@@ -1112,7 +1085,7 @@ void NotificationManager::removeNotificationIfUserRemovable(uint id)
         return;
     }
 
-    QVariant userRemovable = notification->hints().value(HINT_USER_REMOVABLE);
+    QVariant userRemovable = notification->hints().value(LipstickNotification::HINT_USER_REMOVABLE);
     if (!userRemovable.isValid() || userRemovable.toBool()) {
         // The notification should be removed if user removability is not defined (defaults to true) or is set to true
         CloseNotification(id, NotificationDismissedByUser);
@@ -1167,7 +1140,7 @@ void NotificationManager::removeUserRemovableNotifications()
     QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
     for ( ; it != end; ++it) {
         LipstickNotification *notification(it.value());
-        QVariant userRemovable = notification->hints().value(HINT_USER_REMOVABLE);
+        QVariant userRemovable = notification->hints().value(LipstickNotification::HINT_USER_REMOVABLE);
         if (!userRemovable.isValid() || userRemovable.toBool()) {
             closableNotifications.append(it.key());
         }

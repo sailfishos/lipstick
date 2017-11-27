@@ -17,6 +17,7 @@
 #include "ut_notificationmanager.h"
 #include "notificationmanager.h"
 #include "notificationmanageradaptor_stub.h"
+#include "lipsticknotification.h"
 #include "categorydefinitionstore_stub.h"
 #include "androidprioritystore_stub.h"
 #include <QSqlQuery>
@@ -580,17 +581,17 @@ void Ut_NotificationManager::testCapabilities()
     QCOMPARE((bool)capabilities.contains("body"), true);
     QCOMPARE((bool)capabilities.contains("actions"), true);
     QCOMPARE((bool)capabilities.contains("persistence"), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_ICON), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_ITEM_COUNT), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_TIMESTAMP), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_PREVIEW_ICON), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_PREVIEW_BODY), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_PREVIEW_SUMMARY), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ICON), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ITEM_COUNT), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_TIMESTAMP), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_PREVIEW_ICON), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_PREVIEW_BODY), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_PREVIEW_SUMMARY), true);
     QCOMPARE((bool)capabilities.contains("x-nemo-remote-actions"), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_USER_REMOVABLE), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_USER_REMOVABLE), true);
     QCOMPARE((bool)capabilities.contains("x-nemo-get-notifications"), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_ORIGIN), true);
-    QCOMPARE((bool)capabilities.contains(NotificationManager::HINT_MAX_CONTENT_LINES), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ORIGIN), true);
+    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_MAX_CONTENT_LINES), true);
 }
 
 void Ut_NotificationManager::testAddingNotification()
@@ -628,17 +629,17 @@ void Ut_NotificationManager::testAddingNotification()
     QCOMPARE(qSqlQueryAddBindValue.at(8), QVariant("action"));
     QCOMPARE(qSqlQueryAddBindValue.at(9).toUInt(), id);
     QCOMPARE(qSqlQueryAddBindValue.at(10), QVariant("Action"));
-    QStringList keys(QStringList() << "hint" << NotificationManager::HINT_TIMESTAMP << NotificationManager::HINT_PRIORITY);
+    QStringList keys(QStringList() << "hint" << LipstickNotification::HINT_TIMESTAMP << LipstickNotification::HINT_PRIORITY);
     for (int i = 11; i <= 17; i += 3) {
         QCOMPARE(qSqlQueryAddBindValue.at(i).toUInt(), id);
         QString key(qSqlQueryAddBindValue.at(i + 1).toString());
         if (key == "hint") {
             QCOMPARE(qSqlQueryAddBindValue.at(i + 2), QVariant("value"));
             keys.removeAll(key);
-        } else if (key == NotificationManager::HINT_TIMESTAMP) {
+        } else if (key == LipstickNotification::HINT_TIMESTAMP) {
             QCOMPARE(qSqlQueryAddBindValue.at(i + 2).type(), QVariant::String);
             keys.removeAll(key);
-        } else if (key == NotificationManager::HINT_PRIORITY) {
+        } else if (key == LipstickNotification::HINT_PRIORITY) {
             QCOMPARE(qSqlQueryAddBindValue.at(i + 2).type(), QVariant::Int);
             keys.removeAll(key);
         }
@@ -652,7 +653,7 @@ void Ut_NotificationManager::testAddingNotification()
     QCOMPARE(notification->actions().at(0), QString("action"));
     QCOMPARE(notification->actions().at(1), QString("Action"));
     QCOMPARE(notification->hints().value("hint"), QVariant("value"));
-    QCOMPARE(notification->hints().value(NotificationManager::HINT_TIMESTAMP).type(), QVariant::String);
+    QCOMPARE(notification->hints().value(LipstickNotification::HINT_TIMESTAMP).type(), QVariant::String);
     QCOMPARE(notification->restored(), false);
 }
 
@@ -696,14 +697,14 @@ void Ut_NotificationManager::testUpdatingExistingNotification()
     QCOMPARE(qSqlQueryAddBindValue.at(10), QVariant("newAppName"));
     QCOMPARE(qSqlQueryAddBindValue.at(11).toUInt(), id);
     QCOMPARE(qSqlQueryAddBindValue.at(12), QVariant("action"));
-    QStringList keys(QStringList() << NotificationManager::HINT_TIMESTAMP << NotificationManager::HINT_PRIORITY);
+    QStringList keys(QStringList() << LipstickNotification::HINT_TIMESTAMP << LipstickNotification::HINT_PRIORITY);
     for (int i = 13; i <= 16; i += 3) {
         QCOMPARE(qSqlQueryAddBindValue.at(i).toUInt(), id);
         QString key(qSqlQueryAddBindValue.at(i + 1).toString());
-        if (key == NotificationManager::HINT_TIMESTAMP) {
+        if (key == LipstickNotification::HINT_TIMESTAMP) {
             QCOMPARE(qSqlQueryAddBindValue.at(i + 2).type(), QVariant::String);
             keys.removeAll(key);
-        } else if (key == NotificationManager::HINT_PRIORITY) {
+        } else if (key == LipstickNotification::HINT_PRIORITY) {
             QCOMPARE(qSqlQueryAddBindValue.at(i + 2).type(), QVariant::Int);
             keys.removeAll(key);
         }
@@ -716,7 +717,7 @@ void Ut_NotificationManager::testUpdatingExistingNotification()
     QCOMPARE(notification->disambiguatedAppName(), QString("newAppName"));
     QCOMPARE(notification->actions().count(), 1);
     QCOMPARE(notification->actions().at(0), QString("action"));
-    QCOMPARE(notification->hints().value(NotificationManager::HINT_TIMESTAMP).type(), QVariant::String);
+    QCOMPARE(notification->hints().value(LipstickNotification::HINT_TIMESTAMP).type(), QVariant::String);
 }
 
 void Ut_NotificationManager::testUpdatingInexistingNotification()
@@ -794,12 +795,12 @@ void Ut_NotificationManager::testModifyingCategoryDefinitionUpdatesNotifications
     // Add two notifications, one with category "category1" and one with category "category2"
     QVariantHash hints1;
     QVariantHash hints2;
-    hints1.insert(NotificationManager::HINT_CATEGORY, "category1");
-    hints1.insert(NotificationManager::HINT_PREVIEW_BODY, "previewBody1");
-    hints1.insert(NotificationManager::HINT_PREVIEW_SUMMARY, "previewSummary1");
-    hints2.insert(NotificationManager::HINT_CATEGORY, "category2");
-    hints2.insert(NotificationManager::HINT_PREVIEW_BODY, "previewBody2");
-    hints2.insert(NotificationManager::HINT_PREVIEW_SUMMARY, "previewSummary2");
+    hints1.insert(LipstickNotification::HINT_CATEGORY, "category1");
+    hints1.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody1");
+    hints1.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary1");
+    hints2.insert(LipstickNotification::HINT_CATEGORY, "category2");
+    hints2.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody2");
+    hints2.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary2");
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
 
@@ -830,8 +831,8 @@ void Ut_NotificationManager::testUninstallingCategoryDefinitionRemovesNotificati
     // Add two notifications, one with category "category1" and one with category "category2"
     QVariantHash hints1;
     QVariantHash hints2;
-    hints1.insert(NotificationManager::HINT_CATEGORY, "category1");
-    hints2.insert(NotificationManager::HINT_CATEGORY, "category2");
+    hints1.insert(LipstickNotification::HINT_CATEGORY, "category1");
+    hints2.insert(LipstickNotification::HINT_CATEGORY, "category2");
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
 
@@ -887,7 +888,7 @@ void Ut_NotificationManager::testRemoteActionIsInvokedIfDefined()
     // Add a notifications with an action named "action"
     NotificationManager *manager = NotificationManager::instance();
     QVariantHash hints;
-    hints.insert(QString(NotificationManager::HINT_REMOTE_ACTION_PREFIX) + "action", "a b c d");
+    hints.insert(QString(LipstickNotification::HINT_REMOTE_ACTION_PREFIX) + "action", "a b c d");
     uint id = manager->Notify("app", 0, QString(), QString(), QString(), QStringList(), hints, 0);
     LipstickNotification *notification = manager->notification(id);
     connect(this, SIGNAL(actionInvoked(QString)), notification, SIGNAL(actionInvoked(QString)));
@@ -896,7 +897,7 @@ void Ut_NotificationManager::testRemoteActionIsInvokedIfDefined()
     emit actionInvoked("action");
     QCoreApplication::processEvents();
     QCOMPARE(mRemoteActionTrigger.count(), 1);
-    QCOMPARE(mRemoteActionTrigger.last(), hints.value(QString(NotificationManager::HINT_REMOTE_ACTION_PREFIX) + "action").toString());
+    QCOMPARE(mRemoteActionTrigger.last(), hints.value(QString(LipstickNotification::HINT_REMOTE_ACTION_PREFIX) + "action").toString());
 }
 
 void Ut_NotificationManager::testInvokingActionClosesNotificationIfUserRemovable()
@@ -907,9 +908,9 @@ void Ut_NotificationManager::testInvokingActionClosesNotificationIfUserRemovable
     QVariantHash hints2;
     QVariantHash hints3;
     QVariantHash hints6;
-    hints2.insert(NotificationManager::HINT_USER_REMOVABLE, true);
-    hints3.insert(NotificationManager::HINT_USER_REMOVABLE, false);
-    hints6.insert(NotificationManager::HINT_RESIDENT, true); // 'resident' hint also prevents automatic closure
+    hints2.insert(LipstickNotification::HINT_USER_REMOVABLE, true);
+    hints3.insert(LipstickNotification::HINT_USER_REMOVABLE, false);
+    hints6.insert(LipstickNotification::HINT_RESIDENT, true); // 'resident' hint also prevents automatic closure
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
     uint id3 = manager->Notify("app3", 0, QString(), QString(), QString(), QStringList(), hints3, 0);
@@ -942,9 +943,9 @@ void Ut_NotificationManager::testListingNotifications()
     QVariantHash hints1;
     QVariantHash hints2;
     QVariantHash hints3;
-    hints1.insert(NotificationManager::HINT_CATEGORY, "category1");
-    hints2.insert(NotificationManager::HINT_CATEGORY, "category2");
-    hints3.insert(NotificationManager::HINT_CATEGORY, "category3");
+    hints1.insert(LipstickNotification::HINT_CATEGORY, "category1");
+    hints2.insert(LipstickNotification::HINT_CATEGORY, "category2");
+    hints3.insert(LipstickNotification::HINT_CATEGORY, "category3");
     uint id1 = manager->Notify("appName1", 0, "appIcon1", "summary1", "body1", QStringList() << "action1", hints1, 1);
     uint id2 = manager->Notify("appName1", 0, "appIcon2", "summary2", "body2", QStringList() << "action2", hints2, 2);
     uint id3 = manager->Notify("appName2", 0, "appIcon3", "summary3", "body3", QStringList() << "action3", hints3, 3);
@@ -993,9 +994,9 @@ void Ut_NotificationManager::testRemoveUserRemovableNotifications()
     QVariantHash hints2;
     QVariantHash hints3;
     QVariantHash hints6;
-    hints2.insert(NotificationManager::HINT_USER_REMOVABLE, true);
-    hints3.insert(NotificationManager::HINT_USER_REMOVABLE, false);
-    hints6.insert(NotificationManager::HINT_RESIDENT, true);
+    hints2.insert(LipstickNotification::HINT_USER_REMOVABLE, true);
+    hints3.insert(LipstickNotification::HINT_USER_REMOVABLE, false);
+    hints6.insert(LipstickNotification::HINT_RESIDENT, true);
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints1, 0);
     uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList(), hints2, 0);
     manager->Notify("app3", 0, QString(), QString(), QString(), QStringList(), hints3, 0);
@@ -1046,7 +1047,7 @@ void Ut_NotificationManager::testRemoveRequested()
 void Ut_NotificationManager::testImmediateExpiration()
 {
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_TRANSIENT, "true");
+    hints.insert(LipstickNotification::HINT_TRANSIENT, "true");
 
     NotificationManager *manager = NotificationManager::instance();
     uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList(), hints, 0);

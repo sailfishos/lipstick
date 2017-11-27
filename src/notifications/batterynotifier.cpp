@@ -19,6 +19,7 @@
 #include <QDebug>
 #include "lowbatterynotifier.h"
 #include "notificationmanager.h"
+#include "lipsticknotification.h"
 #include "batterynotifier.h"
 #include <contextproperty.h>
 
@@ -249,8 +250,8 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationID id)
 
     NotificationManager *manager = NotificationManager::instance();
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_CATEGORY, info.category);
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, info.message);
+    hints.insert(LipstickNotification::HINT_CATEGORY, info.category);
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, info.message);
     QueuedNotification queued;
     queued.number = manager->Notify(qApp->applicationName(), 0, info.icon,
                                     QString(), QString(), QStringList(), hints, -1);

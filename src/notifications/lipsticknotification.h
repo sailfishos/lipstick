@@ -54,6 +54,85 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(int maxContentLines READ maxContentLines CONSTANT)
 
 public:
+    //! Standard hint: The urgency level.
+    static const char *HINT_URGENCY;
+
+    //! Standard hint: The type of notification this is.
+    static const char *HINT_CATEGORY;
+
+    //! Standard hint: If true, the notification should be removed after display.
+    static const char *HINT_TRANSIENT;
+
+    //! Standard hint: If true, the notification should not be removed after activation.
+    static const char *HINT_RESIDENT;
+
+    //! Standard hint: Icon of the notification: either a file:// URL, an absolute path, or a token to be satisfied by the 'theme' image provider.
+    static const char *HINT_IMAGE_PATH;
+
+    //! Standard hint: If true, audible feedback should be should be suppressed during notification feedback.
+    static const char *HINT_SUPPRESS_SOUND;
+
+    //! Nemo hint: Icon of the notification. Might take precedence over appIcon depending on platform implementation.
+    static const char *HINT_ICON;
+
+    //! Nemo hint: Item count represented by the notification.
+    static const char *HINT_ITEM_COUNT;
+
+    //! Nemo hint: Priority level of the notification.
+    static const char *HINT_PRIORITY;
+
+    //! Nemo hint: Timestamp of the notification.
+    static const char *HINT_TIMESTAMP;
+
+    //! Nemo hint: Icon of the preview of the notification.
+    static const char *HINT_PREVIEW_ICON;
+
+    //! Nemo hint: Body text of the preview of the notification.
+    static const char *HINT_PREVIEW_BODY;
+
+    //! Nemo hint: Summary text of the preview of the notification.
+    static const char *HINT_PREVIEW_SUMMARY;
+
+    //! Nemo hint: Remote action of the notification. Prefix only: the action identifier is to be appended.
+    static const char *HINT_REMOTE_ACTION_PREFIX;
+
+    //! Nemo hint: Icon for the remote action of the notification. Prefix only: the action identifier is to be appended.
+    static const char *HINT_REMOTE_ACTION_ICON_PREFIX;
+
+    //! Nemo hint: User removability of the notification.
+    static const char *HINT_USER_REMOVABLE;
+
+    //! Nemo hint: Feedback of the notification.
+    static const char *HINT_FEEDBACK;
+
+    //! Nemo hint: Whether the notification is hidden.
+    static const char *HINT_HIDDEN;
+
+    //! Nemo hint: Whether to turn the screen on when displaying preview
+    static const char *HINT_DISPLAY_ON;
+
+    //! Nemo hint: Even if priority suggests it, do not turn display on
+    static const char *HINT_SUPPRESS_DISPLAY_ON;
+
+    //! Nemo hint: Whether to disable LED feedbacks when there is no body and summary
+    static const char *HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY;
+
+    //! Nemo hint: Indicates the origin of the notification
+    static const char *HINT_ORIGIN;
+
+    //! Nemo hint: Indicates the Android package name from which this notification originates
+    static const char *HINT_ORIGIN_PACKAGE;
+
+    //! Nemo hint: Indicates the identifer of the owner for notification
+    static const char *HINT_OWNER;
+
+    //! Nemo hint: Specifies the maximum number of content lines to display (including summary)
+    static const char *HINT_MAX_CONTENT_LINES;
+
+    //! Nemo hint: Indicates that this notification has been restored from persistent storage since the last update.
+    //! Internal, shouldn't be expected or allowed from d-bus
+    static const char *HINT_RESTORED;
+
     /*!
      * Creates an object for storing information about a single notification.
      *

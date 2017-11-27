@@ -38,15 +38,15 @@ void Ut_Notification::testGettersAndSetters()
     QStringList actions = QStringList() << "action1a" << "action1b";
     QDateTime timestamp = QDateTime::currentDateTime();
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_TIMESTAMP, timestamp);
-    hints.insert(NotificationManager::HINT_ITEM_COUNT, itemCount);
-    hints.insert(NotificationManager::HINT_PRIORITY, priority);
-    hints.insert(NotificationManager::HINT_PREVIEW_ICON, previewIcon);
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, previewSummary);
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, previewBody);
-    hints.insert(NotificationManager::HINT_URGENCY, urgency);
-    hints.insert(NotificationManager::HINT_CATEGORY, category);
-    hints.insert(NotificationManager::HINT_MAX_CONTENT_LINES, maxContentLines);
+    hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
+    hints.insert(LipstickNotification::HINT_ITEM_COUNT, itemCount);
+    hints.insert(LipstickNotification::HINT_PRIORITY, priority);
+    hints.insert(LipstickNotification::HINT_PREVIEW_ICON, previewIcon);
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, previewSummary);
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
+    hints.insert(LipstickNotification::HINT_URGENCY, urgency);
+    hints.insert(LipstickNotification::HINT_CATEGORY, category);
+    hints.insert(LipstickNotification::HINT_MAX_CONTENT_LINES, maxContentLines);
     hints.insert("x-nemo.testing.custom-hint-value", M_PI);
     int expireTimeout = 1;
 
@@ -71,8 +71,8 @@ void Ut_Notification::testGettersAndSetters()
     QCOMPARE(notification.maxContentLines(), maxContentLines);
     QVERIFY(notification.hintValues().count() > 0);
     QVERIFY(notification.hintValues().contains("x-nemo.testing.custom-hint-value"));
-    QVERIFY(!notification.hintValues().contains(NotificationManager::HINT_CATEGORY));
-    QVERIFY(!notification.hintValues().contains(NotificationManager::HINT_MAX_CONTENT_LINES));
+    QVERIFY(!notification.hintValues().contains(LipstickNotification::HINT_CATEGORY));
+    QVERIFY(!notification.hintValues().contains(LipstickNotification::HINT_MAX_CONTENT_LINES));
     QCOMPARE(notification.hintValues().value("x-nemo.testing.custom-hint-value").toDouble(), M_PI);
 
     appName = "appName2";
@@ -89,14 +89,14 @@ void Ut_Notification::testGettersAndSetters()
     category = "category2";
     actions = QStringList() << "action2a" << "action2b" << "action2c";
     timestamp = QDateTime::currentDateTime();
-    hints.insert(NotificationManager::HINT_TIMESTAMP, timestamp);
-    hints.insert(NotificationManager::HINT_ITEM_COUNT, itemCount);
-    hints.insert(NotificationManager::HINT_PRIORITY, priority);
-    hints.insert(NotificationManager::HINT_PREVIEW_ICON, previewIcon);
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, previewSummary);
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, previewBody);
-    hints.insert(NotificationManager::HINT_URGENCY, urgency);
-    hints.insert(NotificationManager::HINT_CATEGORY, category);
+    hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
+    hints.insert(LipstickNotification::HINT_ITEM_COUNT, itemCount);
+    hints.insert(LipstickNotification::HINT_PRIORITY, priority);
+    hints.insert(LipstickNotification::HINT_PREVIEW_ICON, previewIcon);
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, previewSummary);
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
+    hints.insert(LipstickNotification::HINT_URGENCY, urgency);
+    hints.insert(LipstickNotification::HINT_CATEGORY, category);
     expireTimeout = 2;
     notification.setAppName(appName);
     notification.setDisambiguatedAppName(disambiguatedAppName);
@@ -162,10 +162,10 @@ void Ut_Notification::testIcon()
 
     QVariantHash hints;
     if (!hintIcon.isEmpty()) {
-        hints.insert(NotificationManager::HINT_ICON, hintIcon);
+        hints.insert(LipstickNotification::HINT_ICON, hintIcon);
     }
     if (!imagePath.isEmpty()) {
-        hints.insert(NotificationManager::HINT_IMAGE_PATH, imagePath);
+        hints.insert(LipstickNotification::HINT_IMAGE_PATH, imagePath);
     }
 
     // The 'icon' properly used to fallback to appIcon if required; but no longer
@@ -202,31 +202,31 @@ void Ut_Notification::testSignals()
     notification.setBody("body");
     QCOMPARE(bodySpy.count(), 1);
 
-    hints.insert(NotificationManager::HINT_ICON, "icon");
+    hints.insert(LipstickNotification::HINT_ICON, "icon");
     notification.setHints(hints);
     QCOMPARE(iconSpy.count(), 1);
 
-    hints.insert(NotificationManager::HINT_TIMESTAMP, "2012-10-01 18:04:19");
+    hints.insert(LipstickNotification::HINT_TIMESTAMP, "2012-10-01 18:04:19");
     notification.setHints(hints);
     QCOMPARE(iconSpy.count(), 1);
     QCOMPARE(timestampSpy.count(), 1);
 
-    hints.insert(NotificationManager::HINT_PREVIEW_ICON, "previewIcon");
+    hints.insert(LipstickNotification::HINT_PREVIEW_ICON, "previewIcon");
     notification.setHints(hints);
     QCOMPARE(timestampSpy.count(), 1);
     QCOMPARE(previewIconSpy.count(), 1);
 
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, "previewSummary");
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
     notification.setHints(hints);
     QCOMPARE(previewIconSpy.count(), 1);
     QCOMPARE(previewSummarySpy.count(), 1);
 
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, "previewBody");
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
     notification.setHints(hints);
     QCOMPARE(previewSummarySpy.count(), 1);
     QCOMPARE(previewBodySpy.count(), 1);
 
-    hints.insert(NotificationManager::HINT_URGENCY, 2);
+    hints.insert(LipstickNotification::HINT_URGENCY, 2);
     notification.setHints(hints);
     QCOMPARE(previewBodySpy.count(), 1);
     QCOMPARE(urgencySpy.count(), 1);
@@ -243,8 +243,8 @@ void Ut_Notification::testSerialization()
     QString icon = "icon1";
     QDateTime timestamp = QDateTime::currentDateTime();
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_ICON, icon);
-    hints.insert(NotificationManager::HINT_TIMESTAMP, timestamp);
+    hints.insert(LipstickNotification::HINT_ICON, icon);
+    hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
     int expireTimeout = 1;
 
     LipstickNotification n1(appName, appName, id, appIcon, summary, body, actions, hints, expireTimeout);

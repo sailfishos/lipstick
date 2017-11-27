@@ -21,6 +21,7 @@
 #include <qmlocks.h>
 #include <qusbmoded.h>
 #include "notifications/notificationmanager.h"
+#include "notifications/lipsticknotification.h"
 #include "usbmodeselector.h"
 #include "lipstickqmlpath.h"
 
@@ -109,9 +110,9 @@ void USBModeSelector::applyUSBMode(QString mode)
                 // Show a notification instead if configured USB mode is not charging only.
                 NotificationManager *manager = NotificationManager::instance();
                 QVariantHash hints;
-                hints.insert(NotificationManager::HINT_CATEGORY, "x-nemo.device.locked");
+                hints.insert(LipstickNotification::HINT_CATEGORY, "x-nemo.device.locked");
                 //% "Unlock device first"
-                hints.insert(NotificationManager::HINT_PREVIEW_BODY, qtTrId("qtn_usb_device_locked"));
+                hints.insert(LipstickNotification::HINT_PREVIEW_BODY, qtTrId("qtn_usb_device_locked"));
                 manager->Notify(qApp->applicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
                 emit showUnlockScreen();
             }
@@ -168,8 +169,8 @@ void USBModeSelector::showNotification(QString mode)
 
     NotificationManager *manager = NotificationManager::instance();
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_CATEGORY, category);
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, body);
+    hints.insert(LipstickNotification::HINT_CATEGORY, category);
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
     if (m_previousNotificationId != 0) {
         manager->CloseNotification(m_previousNotificationId);
     }
@@ -181,9 +182,9 @@ void USBModeSelector::showError(const QString &errorCode)
     if (s_errorCodeToTranslationID.contains(errorCode)) {
         NotificationManager *manager = NotificationManager::instance();
         QVariantHash hints;
-        hints.insert(NotificationManager::HINT_CATEGORY, "device.error");
+        hints.insert(LipstickNotification::HINT_CATEGORY, "device.error");
         //% "USB connection error occurred"
-        hints.insert(NotificationManager::HINT_PREVIEW_BODY, qtTrId(s_errorCodeToTranslationID.value(errorCode).toUtf8().constData()));
+        hints.insert(LipstickNotification::HINT_PREVIEW_BODY, qtTrId(s_errorCodeToTranslationID.value(errorCode).toUtf8().constData()));
         manager->Notify(qApp->applicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
     }
 }

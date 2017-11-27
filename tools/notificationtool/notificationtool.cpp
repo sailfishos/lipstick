@@ -15,6 +15,7 @@
 
 #include "notificationmanager.h"
 #include "notificationmanagerproxy.h"
+#include "lipsticknotification.h"
 
 #include <QPair>
 
@@ -291,23 +292,23 @@ int main(int argc, char *argv[])
         QVariantHash hintValues;
         QStringList actionValues;
         if (!category.isEmpty()) {
-            hintValues.insert(NotificationManager::HINT_CATEGORY, category);
+            hintValues.insert(LipstickNotification::HINT_CATEGORY, category);
         }
         if (urgency != -1) {
-            hintValues.insert(NotificationManager::HINT_URGENCY, urgency);
+            hintValues.insert(LipstickNotification::HINT_URGENCY, urgency);
         }
         if (priority != -1) {
-            hintValues.insert(NotificationManager::HINT_PRIORITY, priority);
+            hintValues.insert(LipstickNotification::HINT_PRIORITY, priority);
         }
         if (count >= 0) {
-            hintValues.insert(NotificationManager::HINT_ITEM_COUNT, count);
+            hintValues.insert(LipstickNotification::HINT_ITEM_COUNT, count);
         }
         if (!timestamp.isEmpty()) {
-            hintValues.insert(NotificationManager::HINT_TIMESTAMP, timestamp);
+            hintValues.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
         }
         if (!actions.isEmpty()) {
             foreach (const StringPair &name, actions.keys()) {
-                hintValues.insert(QString(NotificationManager::HINT_REMOTE_ACTION_PREFIX) + name.first, actions.value(name));
+                hintValues.insert(QString(LipstickNotification::HINT_REMOTE_ACTION_PREFIX) + name.first, actions.value(name));
                 actionValues << name.first << name.second;
             }
         }
@@ -318,10 +319,10 @@ int main(int argc, char *argv[])
             }
         }
         if (!previewSummary.isEmpty()) {
-            hintValues.insert(NotificationManager::HINT_PREVIEW_SUMMARY, previewSummary);
+            hintValues.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, previewSummary);
         }
         if (!previewBody.isEmpty()) {
-            hintValues.insert(NotificationManager::HINT_PREVIEW_BODY, previewBody);
+            hintValues.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
         }
         if (appName.isEmpty()) {
             appName = argv[0];

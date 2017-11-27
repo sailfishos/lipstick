@@ -17,6 +17,7 @@
 #include <QWaylandSurface>
 #include "lipstickcompositor.h"
 #include "notificationmanager.h"
+#include "lipsticknotification.h"
 #include "notificationfeedbackplayer.h"
 
 namespace {
@@ -58,16 +59,16 @@ void NotificationFeedbackPlayer::addNotification(uint id)
         }
 
         // Play the feedback related to the notification if any
-        const QString feedback = notification->hints().value(NotificationManager::HINT_FEEDBACK).toString();
+        const QString feedback = notification->hints().value(LipstickNotification::HINT_FEEDBACK).toString();
         const QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
         if (!feedbackItems.isEmpty()) {
             QMap<QString, QVariant> properties;
-            if (notification->hints().value(NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, true).toBool() &&
+            if (notification->hints().value(LipstickNotification::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, true).toBool() &&
                     notification->body().isEmpty() &&
                     notification->summary().isEmpty()) {
                 properties.insert("media.leds", false);
             }
-            if (notification->hints().value(NotificationManager::HINT_SUPPRESS_SOUND, false).toBool()) {
+            if (notification->hints().value(LipstickNotification::HINT_SUPPRESS_SOUND, false).toBool()) {
                 properties.insert("media.audio", false);
             }
 
@@ -118,7 +119,7 @@ bool NotificationFeedbackPlayer::isEnabled(LipstickNotification *notification)
 
     int urgency = notification->urgency();
     int priority = notification->priority();
-    int notificationIsCritical = urgency >= 2 || notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
+    int notificationIsCritical = urgency >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
 
     return !(urgency < 2 && priority < m_minimumPriority) &&
            (mode == AllNotificationsEnabled ||
