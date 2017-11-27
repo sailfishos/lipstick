@@ -327,6 +327,7 @@ int main(int argc, char *argv[])
             appName = argv[0];
         }
         result = proxy.Notify(appName, id, icon, summary, body, actionValues, hintValues, expireTimeout);
+        std::cout << "Created notification with id " << result << std::endl;
         break;
     }
     case Remove:
