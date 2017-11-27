@@ -209,6 +209,10 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
     if (notification->hidden() || notification->restored() || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty()))
         return false;
 
+    if (notification->hasProgress()) {
+        return false; // would show up constantly as preview
+    }
+
     const bool screenLocked = m_screenLock->isScreenLocked();
     const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
     const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();

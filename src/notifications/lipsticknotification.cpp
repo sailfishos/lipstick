@@ -46,6 +46,7 @@ const char *LipstickNotification::HINT_ORIGIN_PACKAGE = "x-nemo-origin-package";
 const char *LipstickNotification::HINT_OWNER = "x-nemo-owner";
 const char *LipstickNotification::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
 const char *LipstickNotification::HINT_RESTORED = "x-nemo-restored";
+const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
 
 LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
                                            const QString &appIcon, const QString &summary, const QString &body,
@@ -185,6 +186,8 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     int oldItemCount = itemCount();
     int oldPriority = m_priority;
     QString oldCategory = category();
+    qreal oldProgress = progress();
+    bool oldHasProgress = hasProgress();
 
     m_hints = hints;
     updateHintValues();
@@ -225,6 +228,14 @@ void LipstickNotification::setHints(const QVariantHash &hints)
 
     if (oldCategory != category()) {
         emit categoryChanged();
+    }
+
+    if (oldHasProgress != hasProgress()) {
+        emit hasProgressChanged();
+    }
+
+    if (oldProgress != progress()) {
+        emit progressChanged();
     }
 
     emit hintsChanged();
@@ -376,6 +387,16 @@ bool LipstickNotification::restored() const
     return m_hints.value(LipstickNotification::HINT_RESTORED).toBool();
 }
 
+qreal LipstickNotification::progress() const
+{
+    return m_hints.value(LipstickNotification::HINT_PROGRESS).toReal();
+}
+
+bool LipstickNotification::hasProgress() const
+{
+    return m_hints.contains(LipstickNotification::HINT_PROGRESS);
+}
+
 quint64 LipstickNotification::internalTimestamp() const
 {
     return m_timestamp;
@@ -404,6 +425,7 @@ void LipstickNotification::updateHintValues()
             hint.compare(LipstickNotification::HINT_ORIGIN, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_OWNER, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_MAX_CONTENT_LINES, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_PROGRESS, Qt::CaseInsensitive) &&
             !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_PREFIX, Qt::CaseInsensitive) &&
             !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX, Qt::CaseInsensitive)) {
             m_hintValues.insert(hint, it.value());

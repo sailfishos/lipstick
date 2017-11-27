@@ -1054,7 +1054,8 @@ void NotificationManager::invokeAction(const QString &action)
             }
 
             for (int actionIndex = 0; actionIndex < notification->actions().count() / 2; actionIndex++) {
-                // Actions are sent over as a list of pairs. Each even element in the list (starting at index 0) represents the identifier for the action. Each odd element in the list is the localized string that will be displayed to the user.
+                // Actions are sent over as a list of pairs. Each even element in the list (starting at index 0) represents
+                // the identifier for the action. Each odd element in the list is the localized string that will be displayed to the user.
                 if (notification->actions().at(actionIndex * 2) == action) {
                     NOTIFICATIONS_DEBUG("INVOKE ACTION:" << action << id);
 
@@ -1062,9 +1063,11 @@ void NotificationManager::invokeAction(const QString &action)
                 }
             }
 
-            // Unless marked as resident, we should remove the notification now
+            // Unless marked as resident, we should remove the notification now.
+            // progress notifications expected to update real soon so there is no point of automatically removing.
             const QVariant resident(notification->hints().value(LipstickNotification::HINT_RESIDENT));
-            if (!resident.isValid() || resident.toBool() == false) {
+            if ((resident.isValid() && resident.toBool() == false)
+                    || (!resident.isValid() && !notification->hasProgress())) {
                 removeNotificationIfUserRemovable(id);
             }
         }

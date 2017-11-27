@@ -52,6 +52,8 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(QString origin READ origin CONSTANT)
     Q_PROPERTY(QString owner READ owner CONSTANT)
     Q_PROPERTY(int maxContentLines READ maxContentLines CONSTANT)
+    Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
+    Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
 
 public:
     //! Standard hint: The urgency level.
@@ -132,6 +134,9 @@ public:
     //! Nemo hint: Indicates that this notification has been restored from persistent storage since the last update.
     //! Internal, shouldn't be expected or allowed from d-bus
     static const char *HINT_RESTORED;
+
+    //! Nemo hint: progress percentage between 0 and 1, negative for indeterminate
+    static const char *HINT_PROGRESS;
 
     /*!
      * Creates an object for storing information about a single notification.
@@ -254,6 +259,10 @@ public:
     //! Returns true if the notification has been restored since it was last modified
     bool restored() const;
 
+    qreal progress() const;
+
+    bool hasProgress() const;
+
     //! \internal
     quint64 internalTimestamp() const;
 
@@ -319,6 +328,9 @@ signals:
 
     //! Sent when the user removability has been modified
     void userRemovableChanged();
+
+    void hasProgressChanged();
+    void progressChanged();
 
 private:
     void updateHintValues();
