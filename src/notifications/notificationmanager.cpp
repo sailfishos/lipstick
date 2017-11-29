@@ -49,10 +49,10 @@ static const char *CATEGORY_DEFINITION_FILE_DIRECTORY = "/usr/share/lipstick/not
 static const uint MAX_CATEGORY_DEFINITION_FILES = 100;
 
 //! Path of the privileged storage directory relative to the home directory
-static const char *PRIVILEGED_DATA_PATH= "/.local/share/system/privileged";
+static const char *PRIVILEGED_DATA_PATH = "/.local/share/system/privileged";
 
 //! Path to probe for desktop entries
-static const char *DESKTOP_ENTRY_PATH= "/usr/share/applications/";
+static const char *DESKTOP_ENTRY_PATH = "/usr/share/applications/";
 
 //! Minimum amount of disk space needed for the notification database in kilobytes
 static const uint MINIMUM_FREE_SPACE_NEEDED_IN_KB = 1024;
@@ -601,9 +601,21 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
     execSQL("INSERT INTO notifications VALUES (?, ?, ?, ?, ?, ?, ?)",
             QVariantList() << id << notification->appName() << notification->appIcon() << notification->summary()
             << notification->body() << notification->expireTimeout() << notification->disambiguatedAppName());
-    foreach (const QString &action, notification->actions()) {
-        execSQL("INSERT INTO actions VALUES (?, ?)", QVariantList() << id << action);
+
+    // every other is identifier and every other the localized name for it
+    bool everySecond = false;
+    QString action;
+    foreach (const QString &actionItem, notification->actions()) {
+        if (everySecond) {
+            if (!action.isEmpty()) {
+                execSQL("INSERT INTO actions VALUES (?, ?, ?)", QVariantList() << id << action << actionItem);
+            }
+        } else {
+            action = actionItem;
+        }
+        everySecond = !everySecond;
     }
+
     const QVariantHash hints(notification->hints());
     QVariantHash::const_iterator hit = hints.constBegin(), hend = hints.constEnd();
     for ( ; hit != hend; ++hit) {
@@ -708,8 +720,10 @@ bool NotificationManager::checkTableValidity()
         recreateExpirationTable = true;
     } else if (databaseVersion == 1) {
         // Check that the table schemas are as expected
-        recreateNotificationsTable = !verifyTableColumns("notifications", QStringList() << "id" << "app_name" << "app_icon" << "summary" << "body" << "expire_timeout");
-        recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action");
+        recreateNotificationsTable = !verifyTableColumns("notifications",
+                                                         QStringList() << "id" << "app_name" << "app_icon" << "summary"
+                                                         << "body" << "expire_timeout");
+        recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action" << "display_name");
         recreateHintsTable = !verifyTableColumns("hints", QStringList() << "id" << "hint" << "value");
         recreateExpirationTable = !verifyTableColumns("expiration", QStringList() << "id" << "expire_at");
 
@@ -722,9 +736,23 @@ bool NotificationManager::checkTableValidity()
             qWarning() << "Failed to extend notifications table!";
             recreateNotificationsTable = true;
         }
-    } else if (databaseVersion == 2) {
-        recreateNotificationsTable = !verifyTableColumns("notifications", QStringList() << "id" << "app_name" << "app_icon" << "summary" << "body" << "expire_timeout" << "disambiguated_app_name");
-        recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action");
+    } else {
+        if (databaseVersion == 2) {
+            QSqlQuery query(*m_database);
+            if (query.exec("ALTER TABLE actions ADD COLUMN display_name TEXT")) {
+                qWarning() << "Extended actions table";
+            } else {
+                qWarning() << "Failed to extend actions table!";
+                recreateActionsTable = true;
+            }
+
+        } else {
+            recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action" << "display_name");
+        }
+
+        recreateNotificationsTable = !verifyTableColumns("notifications",
+                                                         QStringList() << "id" << "app_name" << "app_icon" << "summary"
+                                                         << "body" << "expire_timeout" << "disambiguated_app_name");
         recreateHintsTable = !verifyTableColumns("hints", QStringList() << "id" << "hint" << "value");
         recreateExpirationTable = !verifyTableColumns("expiration", QStringList() << "id" << "expire_at");
     }
@@ -735,7 +763,7 @@ bool NotificationManager::checkTableValidity()
     }
     if (recreateActionsTable) {
         qWarning() << "Recreating actions table";
-        result &= recreateTable("actions", "id INTEGER, action TEXT, PRIMARY KEY(id, action)");
+        result &= recreateTable("actions", "id INTEGER, action TEXT, display_name TEXT, PRIMARY KEY(id, action)");
     }
     if (recreateHintsTable) {
         qWarning() << "Recreating hints table";
@@ -746,8 +774,8 @@ bool NotificationManager::checkTableValidity()
         result &= recreateTable("expiration", "id INTEGER PRIMARY KEY, expire_at INTEGER");
     }
 
-    if (result && databaseVersion != 2) {
-        if (!setSchemaVersion(2)) {
+    if (result && databaseVersion != 3) {
+        if (!setSchemaVersion(3)) {
             qWarning() << "Unable to set database schema version!";
         }
     }
@@ -817,10 +845,13 @@ void NotificationManager::fetchData(bool update)
     QSqlRecord actionsRecord = actionsQuery.record();
     int actionsTableIdFieldIndex = actionsRecord.indexOf("id");
     int actionsTableActionFieldIndex = actionsRecord.indexOf("action");
+    int actionsTableNameFieldIndex = actionsRecord.indexOf("display_name");
+
     QHash<uint, QStringList> actions;
     while (actionsQuery.next()) {
         const uint id = actionsQuery.value(actionsTableIdFieldIndex).toUInt();
         actions[id].append(actionsQuery.value(actionsTableActionFieldIndex).toString());
+        actions[id].append(actionsQuery.value(actionsTableNameFieldIndex).toString());
     }
 
     // Gather hints for each notification
@@ -890,7 +921,8 @@ void NotificationManager::fetchData(bool update)
         QVariantHash &notificationHints = hints[id];
         if (notificationHints.value(LipstickNotification::HINT_TRANSIENT).toBool()) {
             // This notification was transient, it should not be restored
-            NOTIFICATIONS_DEBUG("TRANSIENT AT RESTORE:" << appName << appIcon << summary << body << notificationActions << notificationHints << expireTimeout << "->" << id);
+            NOTIFICATIONS_DEBUG("TRANSIENT AT RESTORE:" << appName << appIcon << summary << body << notificationActions
+                                << notificationHints << expireTimeout << "->" << id);
             transientIds.append(id);
             continue;
         } else {
@@ -909,7 +941,9 @@ void NotificationManager::fetchData(bool update)
             }
         }
 
-        LipstickNotification *notification = new LipstickNotification(appName, disambiguatedAppName, id, appIcon, summary, body, notificationActions, notificationHints, expireTimeout, this);
+        LipstickNotification *notification = new LipstickNotification(appName, disambiguatedAppName, id, appIcon,
+                                                                      summary, body, notificationActions, notificationHints,
+                                                                      expireTimeout, this);
         m_notifications.insert(id, notification);
 
         if (id > m_previousNotificationID) {
@@ -920,7 +954,8 @@ void NotificationManager::fetchData(bool update)
         if (!expired) {
             activeNotifications.append(notification);
         } else {
-            NOTIFICATIONS_DEBUG("EXPIRED AT RESTORE:" << appName << appIcon << summary << body << notificationActions << notificationHints << expireTimeout << "->" << id);
+            NOTIFICATIONS_DEBUG("EXPIRED AT RESTORE:" << appName << appIcon << summary << body << notificationActions
+                                << notificationHints << expireTimeout << "->" << id);
             expiredIds.append(id);
         }
     }
@@ -941,7 +976,8 @@ void NotificationManager::fetchData(bool update)
             const QVariant userRemovable = n->hints().value(LipstickNotification::HINT_USER_REMOVABLE);
             if (!userRemovable.isValid() || userRemovable.toBool()) {
                 const uint id = n->id();
-                NOTIFICATIONS_DEBUG("CULLED AT RESTORE:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
+                NOTIFICATIONS_DEBUG("CULLED AT RESTORE:" << n->appName() << n->appIcon() << n->summary() << n->body()
+                                    << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
                 expiredIds.append(id);
 
                 if (--cullCount == 0) {
@@ -966,7 +1002,8 @@ void NotificationManager::fetchData(bool update)
         connect(n, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
 #ifdef DEBUG_NOTIFICATIONS
         const uint id = n->id();
-        NOTIFICATIONS_DEBUG("RESTORED:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id] << hints[id] << n->expireTimeout() << "->" << id);
+        NOTIFICATIONS_DEBUG("RESTORED:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id]
+                            << hints[id] << n->expireTimeout() << "->" << id);
 #endif
     }
 
