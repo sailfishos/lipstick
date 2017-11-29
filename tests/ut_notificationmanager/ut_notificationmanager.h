@@ -26,7 +26,6 @@ private slots:
     void cleanup();
     void testManagerIsSingleton();
     void testCapabilities();
-    void testUpdatingInexistingNotification();
     void testRemovingInexistingNotification();
     void testServerInformation();
     void testModifyingCategoryDefinitionUpdatesNotifications();

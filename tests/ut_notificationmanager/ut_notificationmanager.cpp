@@ -74,19 +74,6 @@ void Ut_NotificationManager::testCapabilities()
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_MAX_CONTENT_LINES), true);
 }
 
-void Ut_NotificationManager::testUpdatingInexistingNotification()
-{
-    NotificationManager *manager = NotificationManager::instance();
-    QSignalSpy modifiedSpy(manager, SIGNAL(notificationModified(uint)));
-    QSignalSpy addedSpy(manager, SIGNAL(notificationAdded(uint)));
-    uint id = manager->Notify("appName", 1, "appIcon", "summary", "body", QStringList(), QVariantHash(), 1);
-    QCOMPARE(id, (uint)0);
-    QTest::qWait(1100);
-    QCOMPARE(modifiedSpy.count(), 0);
-    QCOMPARE(addedSpy.count(), 0);
-    QCOMPARE(qSqlQueryPrepare.count(), 0);
-}
-
 void Ut_NotificationManager::testRemovingInexistingNotification()
 {
     NotificationManager *manager = NotificationManager::instance();
