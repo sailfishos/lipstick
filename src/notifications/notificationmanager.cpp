@@ -1062,15 +1062,15 @@ uint NotificationManager::callerProcessId() const
 
 bool NotificationManager::isPrivileged() const
 {
+    if (!calledFromDBus()) {
+        return true;
+    }
+
     uint pid = callerProcessId();
     QFileInfo info(QString("/proc/%1").arg(pid));
     if (info.group() != QLatin1String("privileged") && info.owner() != QLatin1String("root")) {
         QString errorString = QString("PID %1 is not in privileged group").arg(pid);
-        if (calledFromDBus()) {
-            sendErrorReply(QDBusError::AccessDenied, errorString);
-        } else {
-            qWarning() << errorString;
-        }
+        sendErrorReply(QDBusError::AccessDenied, errorString);
         return false;
     }
     return true;
