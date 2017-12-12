@@ -442,12 +442,13 @@ void NotificationManager::markNotificationDisplayed(uint id)
     }
 }
 
-QString NotificationManager::GetServerInformation(QString &name, QString &vendor, QString &version)
+QString NotificationManager::GetServerInformation(QString &vendor, QString &version, QString &spec_version)
 {
-    name = qApp->applicationName();
+    QString name = qApp->applicationName();
     vendor = "Nemo Mobile";
     version = qApp->applicationVersion();
-    return QString();
+    spec_version = "1.2";
+    return name;
 }
 
 NotificationList NotificationManager::GetNotifications(const QString &owner)

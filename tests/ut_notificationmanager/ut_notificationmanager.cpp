@@ -87,13 +87,14 @@ void Ut_NotificationManager::testRemovingInexistingNotification()
 void Ut_NotificationManager::testServerInformation()
 {
     // Check that the server information uses application information from qApp
-    QString name, vendor, version;
+    QString name, vendor, version, spec_version;
     qApp->setApplicationName("testApp");
     qApp->setApplicationVersion("1.2.3");
-    NotificationManager::instance()->GetServerInformation(name, vendor, version);
+    name = NotificationManager::instance()->GetServerInformation(vendor, version, spec_version);
     QCOMPARE(name, qApp->applicationName());
     QCOMPARE(vendor, QString("Nemo Mobile"));
     QCOMPARE(version, qApp->applicationVersion());
+    QCOMPARE(spec_version, QString("1.2"));
 }
 
 void Ut_NotificationManager::testModifyingCategoryDefinitionUpdatesNotifications()

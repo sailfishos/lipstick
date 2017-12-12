@@ -121,12 +121,12 @@ public:
      * This message returns the information on the server. Specifically, the server name, vendor,
      * and version number.
      *
-     * \param name The product name of the server.
      * \param vendor The vendor name. For example, "KDE," "GNOME," "freedesktop.org," or "Microsoft."
      * \param version The server's version number.
-     * \return an empty string
+     * \param spec_version The specification version the server is compliant with.
+     * \return The product name of the server
      */
-    QString GetServerInformation(QString &name, QString &vendor, QString &version);
+    QString GetServerInformation(QString &vendor, QString &version, QString &spec_version);
 
     /*!
      * Returns the notifications sent by a specified application.
