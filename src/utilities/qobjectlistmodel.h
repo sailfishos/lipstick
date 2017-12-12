@@ -32,6 +32,8 @@ class LIPSTICK_EXPORT QObjectListModel : public QAbstractListModel
 
 public:
     explicit QObjectListModel(QObject *parent = 0, QList<QObject*> *list = new QList<QObject*>());
+
+    QHash<int, QByteArray> roleNames() const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int itemCount() const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;

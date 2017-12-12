@@ -97,7 +97,7 @@ void PulseAudioControl::openConnection()
         message.setArguments(QVariantList() << "org.PulseAudio.ServerLookup1" << "Address");
         QDBusMessage reply = QDBusConnection::sessionBus().call(message);
         if (reply.type() == QDBusMessage::ReplyMessage && reply.arguments().count() > 0) {
-            addressArray = reply.arguments().first().value<QDBusVariant>().variant().toString().toAscii();
+            addressArray = reply.arguments().first().value<QDBusVariant>().variant().toString().toLatin1();
             pa_bus_address = addressArray.data();
         }
     }
