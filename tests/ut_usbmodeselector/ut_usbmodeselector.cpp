@@ -20,7 +20,6 @@
 #include <qusbmoded.h>
 
 #include "ut_usbmodeselector.h"
-#include "qmlocks_stub.h"
 #include "notificationmanager_stub.h"
 #include "lipsticknotification.h"
 #include "closeeventeater_stub.h"
@@ -206,8 +205,6 @@ void Ut_USBModeSelector::testUSBNotifications()
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), body);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 }
-
-Q_DECLARE_METATYPE(MeeGo::QmLocks::State)
 
 void Ut_USBModeSelector::testConnectingUSBWhenDeviceIsLockedEmitsDialogShown_data()
 {

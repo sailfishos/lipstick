@@ -24,7 +24,6 @@
 #include "notificationfeedbackplayer_stub.h"
 #include "lipstickcompositor_stub.h"
 #include "closeeventeater_stub.h"
-#include "qmlocks_stub.h"
 #include "qmdisplaystate_stub.h"
 #include "lipstickqmlpath_stub.h"
 #include "lipsticksettings.h"
@@ -212,7 +211,6 @@ void Ut_NotificationPreviewPresenter::cleanup()
     notificationManagerNotification.clear();
     notificationManagerCloseNotificationIds.clear();
     notificationManagerDisplayedNotificationIds.clear();
-    gQmLocksStub->stubReset();
     gQmDisplayStateStub->stubReset();
 }
 

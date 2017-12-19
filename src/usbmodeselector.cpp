@@ -18,7 +18,6 @@
 #include <QQmlContext>
 #include <QScreen>
 #include "utilities/closeeventeater.h"
-#include <qmlocks.h>
 #include <qusbmoded.h>
 #include "notifications/notificationmanager.h"
 #include "notifications/lipsticknotification.h"

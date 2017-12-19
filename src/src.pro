@@ -51,9 +51,7 @@ PUBLICHEADERS += \
     notifications/notificationpreviewpresenter.h \
     usbmodeselector.h \
     shutdownscreen.h \
-    qmsystem2/qmactivity.h \
     qmsystem2/qmdisplaystate.h \
-    qmsystem2/qmlocks.h \
     qmsystem2/qmsystemstate.h \
     qmsystem2/qmthermal.h \
     qmsystem2/system_global.h \
@@ -93,8 +91,6 @@ HEADERS += \
     notifications/thermalnotifier.h \
     qmsystem2/qmsystemstate_p.h \
     qmsystem2/qmdisplaystate_p.h \
-    qmsystem2/qmlocks_p.h \
-    qmsystem2/qmactivity_p.h \
     qmsystem2/qmipcinterface_p.h \
     qmsystem2/qmthermal_p.h \
 
@@ -140,9 +136,7 @@ SOURCES += \
     lipstickapi.cpp \
     screenshotservice.cpp \
     notifications/thermalnotifier.cpp \
-    qmsystem2/qmactivity.cpp \
     qmsystem2/qmdisplaystate.cpp \
-    qmsystem2/qmlocks.cpp \
     qmsystem2/qmsystemstate.cpp \
     qmsystem2/qmthermal.cpp \
     qmsystem2/qmipcinterface.cpp \

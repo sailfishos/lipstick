@@ -24,8 +24,6 @@
 #include "notificationpreviewpresenter.h"
 #include "lipstickqmlpath.h"
 
-#include <qmdisplaystate.h>
-#include <qmlocks.h>
 #include "screenlock/screenlock.h"
 
 #include <mce/dbus-names.h>
