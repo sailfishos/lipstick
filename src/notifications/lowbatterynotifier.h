@@ -33,7 +33,8 @@ class QTimer;
  * The LowBatteryNotifier will emit a lowBatteryAlert() when the user should
  * be alerted about a low battery condition.
  */
-class LowBatteryNotifier : public QObject {
+class LowBatteryNotifier : public QObject
+{
     Q_OBJECT
 
 public:

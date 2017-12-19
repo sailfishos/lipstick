@@ -28,7 +28,8 @@ class ContextProperty;
 /*!
  * Implements the configuration and state for the battery, the power save mode.
  */
-class BatteryNotifier : public QObject {
+class BatteryNotifier : public QObject
+{
     Q_OBJECT
 
 public:
@@ -89,9 +90,6 @@ public:
     };
 
 public slots:
-    //! Initializes the battery status from the current values given by QBatteryInfo
-    void initBattery();
-
     //! Sends a low battery notification
     void lowBatteryAlert();
 
@@ -103,6 +101,7 @@ public slots:
     void setTouchScreenLockActive(bool active);
 
 private slots:
+    void initBattery();
     void onPowerSaveModeChanged();
     void onPropertyChanged();
     void prepareNotification();
