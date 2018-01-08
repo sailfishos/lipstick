@@ -262,7 +262,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     applyCategoryDefinition(&notificationData);
     hints_ = notificationData.hints();
 
-    if (!notificationData.isUserRemovable() && !isPrivileged()) {
+    if (!notificationData.isUserRemovableByHint() && !isPrivileged()) {
         qWarning() << "Persistent notification from"
                    << qPrintable(pidProperties.first)
                    << "dropped because of insufficent permissions";
@@ -274,7 +274,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
             : nullptr;
 
     if (notification) {
-        if (!notification->isUserRemovable() && !isPrivileged()) {
+        if (!notification->isUserRemovableByHint() && !isPrivileged()) {
             qWarning() << "An alteration to a persistent notification by"
                        << qPrintable(pidProperties.first)
                        << "was ignored because of insufficent permissions";
@@ -300,6 +300,8 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
 
         m_notifications.insert(id, notification);
     }
+
+    notification->restartProgressTimer();
 
     if (androidOrigin) {
         // The app icon should also be the nemo icon
@@ -370,7 +372,7 @@ void NotificationManager::deleteNotification(uint id)
 void NotificationManager::CloseNotification(uint id, NotificationClosedReason closeReason)
 {
     if (LipstickNotification *notification = m_notifications.value(id)) {
-        if (!notification->isUserRemovable() && !isPrivileged()) {
+        if (!notification->isUserRemovableByHint() && !isPrivileged()) {
             qWarning() << "An application was not allowed to close a notification due to insufficient permissions";
             return;
         }

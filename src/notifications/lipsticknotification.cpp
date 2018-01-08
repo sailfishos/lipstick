@@ -63,7 +63,8 @@ LipstickNotification::LipstickNotification(const QString &appName, const QString
     m_hints(hints),
     m_expireTimeout(expireTimeout),
     m_priority(hints.value(LipstickNotification::HINT_PRIORITY).toInt()),
-    m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch())
+    m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch()),
+    m_activeProgressTimer(0)
 {
     updateHintValues();
 }
@@ -73,7 +74,8 @@ LipstickNotification::LipstickNotification(QObject *parent) :
     m_id(0),
     m_expireTimeout(-1),
     m_priority(0),
-    m_timestamp(0)
+    m_timestamp(0),
+    m_activeProgressTimer(0)
 {
 }
 
@@ -90,7 +92,8 @@ LipstickNotification::LipstickNotification(const LipstickNotification &notificat
     m_hintValues(notification.m_hintValues),
     m_expireTimeout(notification.m_expireTimeout),
     m_priority(notification.m_priority),
-    m_timestamp(notification.m_timestamp)
+    m_timestamp(notification.m_timestamp),
+    m_activeProgressTimer(0) // not caring for d-bus serialization
 {
 }
 
@@ -302,7 +305,16 @@ QString LipstickNotification::category() const
 
 bool LipstickNotification::isUserRemovable() const
 {
-    return m_hints.value(LipstickNotification::HINT_USER_REMOVABLE, QVariant(true)).toBool();
+    if (hasProgress() && m_activeProgressTimer && m_activeProgressTimer->isActive()) {
+        return false;
+    } else {
+        return isUserRemovableByHint();
+    }
+}
+
+bool LipstickNotification::isUserRemovableByHint() const
+{
+    return (m_hints.value(LipstickNotification::HINT_USER_REMOVABLE, QVariant(true)).toBool());
 }
 
 bool LipstickNotification::hidden() const
@@ -400,6 +412,28 @@ bool LipstickNotification::hasProgress() const
 quint64 LipstickNotification::internalTimestamp() const
 {
     return m_timestamp;
+}
+
+void LipstickNotification::restartProgressTimer()
+{
+    // if this is notification with progress, have it non-removable for some time so updates don't instantly re-add it.
+    // if no updates come soon, it can be considered stalled and removable.
+    //
+    // TODO: if we had an explicit hint like Android notifications' setOngoing(bool) we could use that for
+    // temporarily marking notification non-removable, maybe using a lot longer timer.
+    if (hasProgress()) {
+        bool wasUserRemovable = isUserRemovable();
+        if (!m_activeProgressTimer) {
+            m_activeProgressTimer = new QTimer(this);
+            m_activeProgressTimer->setSingleShot(true);
+            connect(m_activeProgressTimer, &QTimer::timeout, this, &LipstickNotification::userRemovableChanged);
+        }
+        m_activeProgressTimer->start(60000); // just need some rough value here
+
+        if (!wasUserRemovable) {
+            emit userRemovableChanged();
+        }
+    }
 }
 
 void LipstickNotification::updateHintValues()

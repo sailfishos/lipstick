@@ -20,6 +20,7 @@
 #include <QStringList>
 #include <QDateTime>
 #include <QVariantHash>
+#include <QTimer>
 
 class QDBusArgument;
 
@@ -241,6 +242,9 @@ public:
     //! Returns the user removability of the notification
     bool isUserRemovable() const;
 
+    //! Returns the user removability hint state
+    bool isUserRemovableByHint() const;
+
     //! Returns true if the notification has been hidden to prevent further display
     bool hidden() const;
 
@@ -265,6 +269,9 @@ public:
 
     //! \internal
     quint64 internalTimestamp() const;
+
+    //! \internal
+    void restartProgressTimer();
 
     /*!
      * Creates a copy of an existing representation of a notification.
@@ -364,6 +371,7 @@ private:
     // Cached values for speeding up comparisons:
     int m_priority;
     quint64 m_timestamp;
+    QTimer *m_activeProgressTimer;
 };
 
 // Order notifications by descending priority then timestamp:
