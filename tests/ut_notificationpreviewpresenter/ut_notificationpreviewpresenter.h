@@ -33,7 +33,6 @@ private slots:
     void initTestCase();
     void init();
     void cleanup();
-    void testSignalConnections();
     void testAddNotificationWhenWindowNotOpen();
     void testAddNotificationWhenWindowAlreadyOpen();
     void testUpdateNotification();

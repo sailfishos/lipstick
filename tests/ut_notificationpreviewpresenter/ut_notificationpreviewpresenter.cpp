@@ -214,14 +214,6 @@ void Ut_NotificationPreviewPresenter::cleanup()
     gQmDisplayStateStub->stubReset();
 }
 
-void Ut_NotificationPreviewPresenter::testSignalConnections()
-{
-    NotificationPreviewPresenter presenter(screenLock, deviceLock);
-    QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationAdded(uint)), &presenter, SLOT(updateNotification(uint))), true);
-    QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), &presenter, SLOT(removeNotification(uint))), true);
-    QCOMPARE(disconnect(&presenter, SIGNAL(notificationPresented(uint)), presenter.m_notificationFeedbackPlayer, SLOT(addNotification(uint))), true);
-}
-
 void Ut_NotificationPreviewPresenter::testAddNotificationWhenWindowNotOpen()
 {
     NotificationPreviewPresenter presenter(screenLock, deviceLock);
