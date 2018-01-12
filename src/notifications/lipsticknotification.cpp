@@ -47,6 +47,7 @@ const char *LipstickNotification::HINT_OWNER = "x-nemo-owner";
 const char *LipstickNotification::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
 const char *LipstickNotification::HINT_RESTORED = "x-nemo-restored";
 const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
+const char *LipstickNotification::HINT_VIBRA = "x-nemo-vibrate";
 
 LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
                                            const QString &appIcon, const QString &summary, const QString &body,

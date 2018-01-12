@@ -139,6 +139,9 @@ public:
     //! Nemo hint: progress percentage between 0 and 1, negative for indeterminate
     static const char *HINT_PROGRESS;
 
+    //! Nemo hint: play vibra feedback
+    static const char *HINT_VIBRA;
+
     /*!
      * Creates an object for storing information about a single notification.
      *
