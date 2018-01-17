@@ -18,12 +18,12 @@
 #include <QQmlContext>
 #include <QScreen>
 #include "notificationmanager.h"
+#include "lipsticknotification.h"
 #include "ut_notificationpreviewpresenter.h"
 #include "notificationpreviewpresenter.h"
 #include "notificationfeedbackplayer_stub.h"
 #include "lipstickcompositor_stub.h"
 #include "closeeventeater_stub.h"
-#include "qmlocks_stub.h"
 #include "qmdisplaystate_stub.h"
 #include "lipstickqmlpath_stub.h"
 #include "lipsticksettings.h"
@@ -98,27 +98,6 @@ LipstickSettings *LipstickSettings::instance()
     return 0;
 }
 
-const char *NotificationManager::HINT_CATEGORY = "category";
-const char *NotificationManager::HINT_URGENCY = "urgency";
-const char *NotificationManager::HINT_IMAGE_PATH = "image-path";
-const char *NotificationManager::HINT_ICON = "x-nemo-icon";
-const char *NotificationManager::HINT_ITEM_COUNT = "x-nemo-item-count";
-const char *NotificationManager::HINT_PRIORITY = "x-nemo-priority";
-const char *NotificationManager::HINT_TIMESTAMP = "x-nemo-timestamp";
-const char *NotificationManager::HINT_PREVIEW_ICON = "x-nemo-preview-icon";
-const char *NotificationManager::HINT_PREVIEW_BODY = "x-nemo-preview-body";
-const char *NotificationManager::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary";
-const char *NotificationManager::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
-const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
-const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
-const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
-const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
-const char *NotificationManager::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
-const char *NotificationManager::HINT_ORIGIN = "x-nemo-origin";
-const char *NotificationManager::HINT_OWNER = "x-nemo-owner";
-const char *NotificationManager::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
-const char *NotificationManager::HINT_RESTORED = "x-nemo-restored";
-
 NotificationManager::NotificationManager(QObject *parent, bool owner) : QObject(parent)
 {
     Q_UNUSED(owner)
@@ -192,9 +171,9 @@ enum Urgency { Low = 0, Normal = 1, Critical = 2 };
 LipstickNotification *createNotification(uint id, Urgency urgency = Normal)
 {
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, "summary");
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, "body");
-    hints.insert(NotificationManager::HINT_URGENCY, static_cast<int>(urgency));
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "summary");
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "body");
+    hints.insert(LipstickNotification::HINT_URGENCY, static_cast<int>(urgency));
     LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", id, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(id, notification);
     return notification;
@@ -232,7 +211,6 @@ void Ut_NotificationPreviewPresenter::cleanup()
     notificationManagerNotification.clear();
     notificationManagerCloseNotificationIds.clear();
     notificationManagerDisplayedNotificationIds.clear();
-    gQmLocksStub->stubReset();
     gQmDisplayStateStub->stubReset();
 }
 
@@ -396,8 +374,8 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfNoSummaryOrBody(
 
     // Create notification
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, previewSummary);
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, previewBody);
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, previewSummary);
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
     LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", 1, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(1, notification);
     QTest::qWait(0);
@@ -422,9 +400,9 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfHidden()
 
     // Create notification
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, "previewSummary");
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, "previewBody");
-    hints.insert(NotificationManager::HINT_HIDDEN, true);
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
+    hints.insert(LipstickNotification::HINT_HIDDEN, true);
     LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", 1, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(1, notification);
     presenter.updateNotification(1);
@@ -445,9 +423,9 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfRestored()
 
     // Create notification
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, "previewSummary");
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, "previewBody");
-    hints.insert(NotificationManager::HINT_RESTORED, true);
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
+    hints.insert(LipstickNotification::HINT_RESTORED, true);
     LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", 1, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(1, notification);
     presenter.updateNotification(1);
@@ -468,9 +446,9 @@ void Ut_NotificationPreviewPresenter::testShowingOnlyCriticalNotifications()
 
     // Create normal urgency notification
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_PREVIEW_SUMMARY, "previewSummary");
-    hints.insert(NotificationManager::HINT_PREVIEW_BODY, "previewBody");
-    hints.insert(NotificationManager::HINT_URGENCY, 1);
+    hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
+    hints.insert(LipstickNotification::HINT_URGENCY, 1);
     LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", 1, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(1, notification);
     QTest::qWait(0);
@@ -487,7 +465,7 @@ void Ut_NotificationPreviewPresenter::testShowingOnlyCriticalNotifications()
     QCOMPARE(presentedSpy.last().at(0).toUInt(), (uint)1);
 
     // Urgency set to critical, so the notification should be shown
-    hints.insert(NotificationManager::HINT_URGENCY, 2);
+    hints.insert(LipstickNotification::HINT_URGENCY, 2);
     notification->setHints(hints);
     presenter.updateNotification(1);
     QCOMPARE(changedSpy.count(), 1);

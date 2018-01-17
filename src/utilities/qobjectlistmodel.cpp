@@ -23,9 +23,13 @@ QObjectListModel::QObjectListModel(QObject *parent, QList<QObject*> *list)
     : QAbstractListModel(parent),
       _list(list)
 {
+}
+
+QHash<int, QByteArray> QObjectListModel::roleNames() const
+{
     QHash<int, QByteArray> roles;
     roles[Qt::UserRole + 1] = "object";
-    setRoleNames(roles);
+    return roles;
 }
 
 int QObjectListModel::indexOf(QObject *obj) const
@@ -55,8 +59,7 @@ QVariant QObjectListModel::data(const QModelIndex &index, int role) const
     if (index.row() < 0 || index.row() >= _list->count())
         return QVariant();
 
-    if (role == Qt::UserRole + 1)
-    {
+    if (role == Qt::UserRole + 1) {
         QObject *obj = _list->at(index.row());
         return QVariant::fromValue(obj);
     }
@@ -69,8 +72,7 @@ bool QObjectListModel::setData(const QModelIndex &index, const QVariant &value, 
     if (index.row() < 0 || index.row() >= _list->count())
         return false;
 
-    if (role == Qt::UserRole + 1)
-    {
+    if (role == Qt::UserRole + 1) {
         _list->replace(index.row(), reinterpret_cast<QObject*>(value.toInt()));
         return true;
     }

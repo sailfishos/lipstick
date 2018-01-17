@@ -18,6 +18,7 @@
 
 #include "lowbatterynotifier_stub.h"
 #include "notificationmanager_stub.h"
+#include "lipsticknotification.h"
 #include "qmdisplaystate_stub.h"
 #include "batterynotifier.h"
 #include "ut_batterynotifier.h"
@@ -48,12 +49,12 @@ static QString getNotificationHint(QString const &h)
 
 static QString getNotificationCategory()
 {
-    return getNotificationHint(NotificationManager::HINT_CATEGORY);
+    return getNotificationHint(LipstickNotification::HINT_CATEGORY);
 }
 
 static QString getNotificationPreviewBody()
 {
-    return getNotificationHint(NotificationManager::HINT_PREVIEW_BODY);
+    return getNotificationHint(LipstickNotification::HINT_PREVIEW_BODY);
 }
 
 void QTimer::start()

@@ -20,6 +20,34 @@
 #include <QDataStream>
 #include <QtDebug>
 
+const char *LipstickNotification::HINT_URGENCY = "urgency";
+const char *LipstickNotification::HINT_CATEGORY = "category";
+const char *LipstickNotification::HINT_TRANSIENT = "transient";
+const char *LipstickNotification::HINT_RESIDENT = "resident";
+const char *LipstickNotification::HINT_IMAGE_PATH = "image-path";
+const char *LipstickNotification::HINT_SUPPRESS_SOUND = "suppress-sound";
+const char *LipstickNotification::HINT_ICON = "x-nemo-icon";
+const char *LipstickNotification::HINT_ITEM_COUNT = "x-nemo-item-count";
+const char *LipstickNotification::HINT_PRIORITY = "x-nemo-priority";
+const char *LipstickNotification::HINT_TIMESTAMP = "x-nemo-timestamp";
+const char *LipstickNotification::HINT_PREVIEW_ICON = "x-nemo-preview-icon";
+const char *LipstickNotification::HINT_PREVIEW_BODY = "x-nemo-preview-body";
+const char *LipstickNotification::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary";
+const char *LipstickNotification::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
+const char *LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
+const char *LipstickNotification::HINT_USER_REMOVABLE = "x-nemo-user-removable";
+const char *LipstickNotification::HINT_FEEDBACK = "x-nemo-feedback";
+const char *LipstickNotification::HINT_HIDDEN = "x-nemo-hidden";
+const char *LipstickNotification::HINT_DISPLAY_ON = "x-nemo-display-on";
+const char *LipstickNotification::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
+const char *LipstickNotification::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY = "x-nemo-led-disabled-without-body-and-summary";
+const char *LipstickNotification::HINT_ORIGIN = "x-nemo-origin";
+const char *LipstickNotification::HINT_ORIGIN_PACKAGE = "x-nemo-origin-package";
+const char *LipstickNotification::HINT_OWNER = "x-nemo-owner";
+const char *LipstickNotification::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
+const char *LipstickNotification::HINT_RESTORED = "x-nemo-restored";
+const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
+
 LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
                                            const QString &appIcon, const QString &summary, const QString &body,
                                            const QStringList &actions, const QVariantHash &hints, int expireTimeout,
@@ -34,8 +62,9 @@ LipstickNotification::LipstickNotification(const QString &appName, const QString
     m_actions(actions),
     m_hints(hints),
     m_expireTimeout(expireTimeout),
-    m_priority(hints.value(NotificationManager::HINT_PRIORITY).toInt()),
-    m_timestamp(hints.value(NotificationManager::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch())
+    m_priority(hints.value(LipstickNotification::HINT_PRIORITY).toInt()),
+    m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch()),
+    m_activeProgressTimer(0)
 {
     updateHintValues();
 }
@@ -45,7 +74,8 @@ LipstickNotification::LipstickNotification(QObject *parent) :
     m_id(0),
     m_expireTimeout(-1),
     m_priority(0),
-    m_timestamp(0)
+    m_timestamp(0),
+    m_activeProgressTimer(0)
 {
 }
 
@@ -62,7 +92,8 @@ LipstickNotification::LipstickNotification(const LipstickNotification &notificat
     m_hintValues(notification.m_hintValues),
     m_expireTimeout(notification.m_expireTimeout),
     m_priority(notification.m_priority),
-    m_timestamp(notification.m_timestamp)
+    m_timestamp(notification.m_timestamp),
+    m_activeProgressTimer(0) // not caring for d-bus serialization
 {
 }
 
@@ -158,6 +189,8 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     int oldItemCount = itemCount();
     int oldPriority = m_priority;
     QString oldCategory = category();
+    qreal oldProgress = progress();
+    bool oldHasProgress = hasProgress();
 
     m_hints = hints;
     updateHintValues();
@@ -166,7 +199,7 @@ void LipstickNotification::setHints(const QVariantHash &hints)
         emit iconChanged();
     }
 
-    m_timestamp = m_hints.value(NotificationManager::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch();
+    m_timestamp = m_hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch();
     if (oldTimestamp != m_timestamp) {
         emit timestampChanged();
     }
@@ -191,13 +224,21 @@ void LipstickNotification::setHints(const QVariantHash &hints)
         emit itemCountChanged();
     }
 
-    m_priority = m_hints.value(NotificationManager::HINT_PRIORITY).toInt();
+    m_priority = m_hints.value(LipstickNotification::HINT_PRIORITY).toInt();
     if (oldPriority != m_priority) {
         emit priorityChanged();
     }
 
     if (oldCategory != category()) {
         emit categoryChanged();
+    }
+
+    if (oldHasProgress != hasProgress()) {
+        emit hasProgressChanged();
+    }
+
+    if (oldProgress != progress()) {
+        emit progressChanged();
     }
 
     emit hintsChanged();
@@ -215,9 +256,9 @@ void LipstickNotification::setExpireTimeout(int expireTimeout)
 
 QString LipstickNotification::icon() const
 {
-    QString rv(m_hints.value(NotificationManager::HINT_ICON).toString());
+    QString rv(m_hints.value(LipstickNotification::HINT_ICON).toString());
     if (rv.isEmpty()) {
-        rv = m_hints.value(NotificationManager::HINT_IMAGE_PATH).toString();
+        rv = m_hints.value(LipstickNotification::HINT_IMAGE_PATH).toString();
     }
     return rv;
 }
@@ -229,27 +270,27 @@ QDateTime LipstickNotification::timestamp() const
 
 QString LipstickNotification::previewIcon() const
 {
-    return m_hints.value(NotificationManager::HINT_PREVIEW_ICON).toString();
+    return m_hints.value(LipstickNotification::HINT_PREVIEW_ICON).toString();
 }
 
 QString LipstickNotification::previewSummary() const
 {
-    return m_hints.value(NotificationManager::HINT_PREVIEW_SUMMARY).toString();
+    return m_hints.value(LipstickNotification::HINT_PREVIEW_SUMMARY).toString();
 }
 
 QString LipstickNotification::previewBody() const
 {
-    return m_hints.value(NotificationManager::HINT_PREVIEW_BODY).toString();
+    return m_hints.value(LipstickNotification::HINT_PREVIEW_BODY).toString();
 }
 
 int LipstickNotification::urgency() const
 {
-    return m_hints.value(NotificationManager::HINT_URGENCY).toInt();
+    return m_hints.value(LipstickNotification::HINT_URGENCY).toInt();
 }
 
 int LipstickNotification::itemCount() const
 {
-    return m_hints.value(NotificationManager::HINT_ITEM_COUNT).toInt();
+    return m_hints.value(LipstickNotification::HINT_ITEM_COUNT).toInt();
 }
 
 int LipstickNotification::priority() const
@@ -259,17 +300,26 @@ int LipstickNotification::priority() const
 
 QString LipstickNotification::category() const
 {
-    return m_hints.value(NotificationManager::HINT_CATEGORY).toString();
+    return m_hints.value(LipstickNotification::HINT_CATEGORY).toString();
 }
 
 bool LipstickNotification::isUserRemovable() const
 {
-    return m_hints.value(NotificationManager::HINT_USER_REMOVABLE, QVariant(true)).toBool();
+    if (hasProgress() && m_activeProgressTimer && m_activeProgressTimer->isActive()) {
+        return false;
+    } else {
+        return isUserRemovableByHint();
+    }
+}
+
+bool LipstickNotification::isUserRemovableByHint() const
+{
+    return (m_hints.value(LipstickNotification::HINT_USER_REMOVABLE, QVariant(true)).toBool());
 }
 
 bool LipstickNotification::hidden() const
 {
-    return m_hints.value(NotificationManager::HINT_HIDDEN, QVariant(false)).toBool();
+    return m_hints.value(LipstickNotification::HINT_HIDDEN, QVariant(false)).toBool();
 }
 
 QVariantList LipstickNotification::remoteActions() const
@@ -285,9 +335,9 @@ QVariantList LipstickNotification::remoteActions() const
             ++it;
         }
 
-        const QString hint(m_hints.value(NotificationManager::HINT_REMOTE_ACTION_PREFIX + name).toString());
+        const QString hint(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_PREFIX + name).toString());
         if (!hint.isEmpty()) {
-            const QString icon(m_hints.value(NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX + name).toString());
+            const QString icon(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX + name).toString());
 
             QVariantMap vm;
             vm.insert(QStringLiteral("name"), name);
@@ -331,27 +381,59 @@ QVariantList LipstickNotification::remoteActions() const
 
 QString LipstickNotification::origin() const
 {
-    return m_hints.value(NotificationManager::HINT_ORIGIN).toString();
+    return m_hints.value(LipstickNotification::HINT_ORIGIN).toString();
 }
 
 QString LipstickNotification::owner() const
 {
-    return m_hints.value(NotificationManager::HINT_OWNER).toString();
+    return m_hints.value(LipstickNotification::HINT_OWNER).toString();
 }
 
 int LipstickNotification::maxContentLines() const
 {
-    return m_hints.value(NotificationManager::HINT_MAX_CONTENT_LINES).toInt();
+    return m_hints.value(LipstickNotification::HINT_MAX_CONTENT_LINES).toInt();
 }
 
 bool LipstickNotification::restored() const
 {
-    return m_hints.value(NotificationManager::HINT_RESTORED).toBool();
+    return m_hints.value(LipstickNotification::HINT_RESTORED).toBool();
+}
+
+qreal LipstickNotification::progress() const
+{
+    return m_hints.value(LipstickNotification::HINT_PROGRESS).toReal();
+}
+
+bool LipstickNotification::hasProgress() const
+{
+    return m_hints.contains(LipstickNotification::HINT_PROGRESS);
 }
 
 quint64 LipstickNotification::internalTimestamp() const
 {
     return m_timestamp;
+}
+
+void LipstickNotification::restartProgressTimer()
+{
+    // if this is notification with progress, have it non-removable for some time so updates don't instantly re-add it.
+    // if no updates come soon, it can be considered stalled and removable.
+    //
+    // TODO: if we had an explicit hint like Android notifications' setOngoing(bool) we could use that for
+    // temporarily marking notification non-removable, maybe using a lot longer timer.
+    if (hasProgress()) {
+        bool wasUserRemovable = isUserRemovable();
+        if (!m_activeProgressTimer) {
+            m_activeProgressTimer = new QTimer(this);
+            m_activeProgressTimer->setSingleShot(true);
+            connect(m_activeProgressTimer, &QTimer::timeout, this, &LipstickNotification::userRemovableChanged);
+        }
+        m_activeProgressTimer->start(60000); // just need some rough value here
+
+        if (!wasUserRemovable) {
+            emit userRemovableChanged();
+        }
+    }
 }
 
 void LipstickNotification::updateHintValues()
@@ -362,23 +444,24 @@ void LipstickNotification::updateHintValues()
     for ( ; it != end; ++it) {
         // Filter out the hints that are represented by other properties
         const QString &hint(it.key());
-        if (hint.compare(NotificationManager::HINT_ICON, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_IMAGE_PATH, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_TIMESTAMP, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_PREVIEW_ICON, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_PREVIEW_SUMMARY, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_PREVIEW_BODY, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_URGENCY, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_ITEM_COUNT, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_PRIORITY, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_CATEGORY, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_USER_REMOVABLE, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_HIDDEN, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_ORIGIN, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_OWNER, Qt::CaseInsensitive) != 0 &&
-            hint.compare(NotificationManager::HINT_MAX_CONTENT_LINES, Qt::CaseInsensitive) != 0 &&
-            !hint.startsWith(NotificationManager::HINT_REMOTE_ACTION_PREFIX, Qt::CaseInsensitive) &&
-            !hint.startsWith(NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX, Qt::CaseInsensitive)) {
+        if (hint.compare(LipstickNotification::HINT_ICON, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_IMAGE_PATH, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_TIMESTAMP, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_PREVIEW_ICON, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_PREVIEW_SUMMARY, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_PREVIEW_BODY, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_URGENCY, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_ITEM_COUNT, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_PRIORITY, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_CATEGORY, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_USER_REMOVABLE, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_HIDDEN, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_ORIGIN, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_OWNER, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_MAX_CONTENT_LINES, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_PROGRESS, Qt::CaseInsensitive) &&
+            !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_PREFIX, Qt::CaseInsensitive) &&
+            !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX, Qt::CaseInsensitive)) {
             m_hintValues.insert(hint, it.value());
         }
     }
@@ -412,8 +495,8 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, LipstickNotificat
     argument >> notification.m_expireTimeout;
     argument.endStructure();
 
-    notification.m_priority = notification.m_hints.value(NotificationManager::HINT_PRIORITY).toInt();
-    notification.m_timestamp = notification.m_hints.value(NotificationManager::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch();
+    notification.m_priority = notification.m_hints.value(LipstickNotification::HINT_PRIORITY).toInt();
+    notification.m_timestamp = notification.m_hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch();
     notification.updateHintValues();
 
     return argument;

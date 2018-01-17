@@ -20,8 +20,8 @@
 #include <qusbmoded.h>
 
 #include "ut_usbmodeselector.h"
-#include "qmlocks_stub.h"
 #include "notificationmanager_stub.h"
+#include "lipsticknotification.h"
 #include "closeeventeater_stub.h"
 #include "homewindow.h"
 #include "lipstickqmlpath_stub.h"
@@ -201,12 +201,10 @@ void Ut_USBModeSelector::testUSBNotifications()
 
     usbModeSelector->applyUSBMode(mode);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_CATEGORY).toString(), category);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_PREVIEW_BODY).toString(), body);
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), category);
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), body);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 }
-
-Q_DECLARE_METATYPE(MeeGo::QmLocks::State)
 
 void Ut_USBModeSelector::testConnectingUSBWhenDeviceIsLockedEmitsDialogShown_data()
 {
@@ -234,11 +232,11 @@ void Ut_USBModeSelector::testShowError()
 
     usbModeSelector->showError("qtn_usb_filessystem_inuse");
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_usb_filessystem_inuse"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_usb_filessystem_inuse"));
 
     usbModeSelector->showError("mount_failed");
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 2);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_usb_mount_failed"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_usb_mount_failed"));
 }
 
 void Ut_USBModeSelector::testSetUSBMode()

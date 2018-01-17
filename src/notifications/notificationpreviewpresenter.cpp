@@ -18,13 +18,12 @@
 #include "utilities/closeeventeater.h"
 #include "notifications/notificationmanager.h"
 #include "notifications/notificationfeedbackplayer.h"
+#include "notifications/lipsticknotification.h"
 #include <QScreen> // should be included by lipstickcompositor.h
 #include "compositor/lipstickcompositor.h"
 #include "notificationpreviewpresenter.h"
 #include "lipstickqmlpath.h"
 
-#include <qmdisplaystate.h>
-#include <qmlocks.h>
 #include "screenlock/screenlock.h"
 
 #include <mce/dbus-names.h>
@@ -99,7 +98,7 @@ void NotificationPreviewPresenter::showNextNotification()
 
         const bool screenLocked = m_screenLock->isScreenLocked() && m_screenLock->displayState() == TouchScreen::DisplayOff;
         const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
-        const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
+        const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
 
         bool show = true;
         if (deviceLocked) {
@@ -208,9 +207,13 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
     if (notification->hidden() || notification->restored() || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty()))
         return false;
 
+    if (notification->hasProgress()) {
+        return false; // would show up constantly as preview
+    }
+
     const bool screenLocked = m_screenLock->isScreenLocked();
     const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
-    const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
+    const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
 
     uint mode = AllNotificationsEnabled;
     QWaylandSurface *surface = LipstickCompositor::instance()->surfaceForId(LipstickCompositor::instance()->topmostWindowId());
@@ -236,8 +239,8 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
         if (notification) {
             // Ask mce to turn the screen on if requested
             const bool notificationIsCritical = notification->urgency() >= 2 ||
-                                                notification->hints().value(NotificationManager::HINT_DISPLAY_ON).toBool();
-            const bool notificationCanUnblank = !notification->hints().value(NotificationManager::HINT_SUPPRESS_DISPLAY_ON).toBool();
+                                                notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
+            const bool notificationCanUnblank = !notification->hints().value(LipstickNotification::HINT_SUPPRESS_DISPLAY_ON).toBool();
 
             if (notificationIsCritical && notificationCanUnblank) {
                 QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->id());

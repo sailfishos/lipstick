@@ -12,7 +12,6 @@ TARGET = lipstick-qt5
 # Override the version from the spec file, we need .so version 1.0
 VERSION = 1.0
 
-DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
 DEFINES += LIPSTICK_BUILD_LIBRARY
 DEFINES += VERSION=\\\"$${VERSION}\\\"
 DEFINES += MESA_EGL_NO_X11_HEADERS
@@ -52,9 +51,7 @@ PUBLICHEADERS += \
     notifications/notificationpreviewpresenter.h \
     usbmodeselector.h \
     shutdownscreen.h \
-    qmsystem2/qmactivity.h \
     qmsystem2/qmdisplaystate.h \
-    qmsystem2/qmlocks.h \
     qmsystem2/qmsystemstate.h \
     qmsystem2/qmthermal.h \
     qmsystem2/system_global.h \
@@ -94,8 +91,6 @@ HEADERS += \
     notifications/thermalnotifier.h \
     qmsystem2/qmsystemstate_p.h \
     qmsystem2/qmdisplaystate_p.h \
-    qmsystem2/qmlocks_p.h \
-    qmsystem2/qmactivity_p.h \
     qmsystem2/qmipcinterface_p.h \
     qmsystem2/qmthermal_p.h \
 
@@ -141,9 +136,7 @@ SOURCES += \
     lipstickapi.cpp \
     screenshotservice.cpp \
     notifications/thermalnotifier.cpp \
-    qmsystem2/qmactivity.cpp \
     qmsystem2/qmdisplaystate.cpp \
-    qmsystem2/qmlocks.cpp \
     qmsystem2/qmsystemstate.cpp \
     qmsystem2/qmthermal.cpp \
     qmsystem2/qmipcinterface.cpp \

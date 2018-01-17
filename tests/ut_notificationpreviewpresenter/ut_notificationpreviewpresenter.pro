@@ -23,7 +23,6 @@ HEADERS += \
     $$TOUCHSCREENSRCDIR/touchscreen.h \
     $$UTILITYSRCDIR/closeeventeater.h \
     $$COMPOSITORSRCDIR/lipstickcompositor.h \
-    $$QMSYSTEM2/qmlocks.h \
     $$QMSYSTEM2/qmdisplaystate.h \
     $$SRCDIR/homewindow.h \
     $$STUBSDIR/nemo-devicelock/devicelock.h

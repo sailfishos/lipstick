@@ -21,6 +21,7 @@
 #include "homeapplication.h"
 #include "ut_shutdownscreen.h"
 #include "notificationmanager_stub.h"
+#include "lipsticknotification.h"
 #include "closeeventeater_stub.h"
 #include "lipstickqmlpath_stub.h"
 
@@ -93,22 +94,22 @@ void Ut_ShutdownScreen::testSystemState()
     shutdownScreen->applySystemState(MeeGo::QmSystemState::ThermalStateFatal);
     QCOMPARE(qQuickViews.count(), 0);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_high_temp"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_high_temp"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
     shutdownScreen->applySystemState(MeeGo::QmSystemState::ShutdownDeniedUSB);
     QCOMPARE(qQuickViews.count(), 0);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 2);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_CATEGORY).toString(), QString("device.added"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_unplug_usb"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("device.added"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_unplug_usb"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
     shutdownScreen->applySystemState(MeeGo::QmSystemState::BatteryStateEmpty);
     QCOMPARE(qQuickViews.count(), 0);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 3);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_CATEGORY).toString(), QString("x-nemo.battery.shutdown"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(NotificationManager::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_batt_empty"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.shutdown"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_batt_empty"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
     shutdownScreen->applySystemState(MeeGo::QmSystemState::Shutdown);

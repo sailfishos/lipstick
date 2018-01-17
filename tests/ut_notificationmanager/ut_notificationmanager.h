@@ -25,18 +25,7 @@ private slots:
     void init();
     void cleanup();
     void testManagerIsSingleton();
-    void testDatabaseConnectionSucceedsAndTablesAreOk();
-    void testDatabaseConnectionUpgradeToVersion2();
-    void testDatabaseConnectionSucceedsAndTablesAreNotOk();
-    void testFirstDatabaseConnectionFails();
-    void testNotEnoughDiskSpaceToOpenDatabase();
-    void testNotificationsAreRestoredOnConstruction();
-    void testDatabaseCommitIsDoneOnDestruction();
     void testCapabilities();
-    void testAddingNotification();
-    void testUpdatingExistingNotification();
-    void testUpdatingInexistingNotification();
-    void testRemovingExistingNotification();
     void testRemovingInexistingNotification();
     void testServerInformation();
     void testModifyingCategoryDefinitionUpdatesNotifications();
@@ -49,7 +38,6 @@ private slots:
     void testRemoveUserRemovableNotifications();
     void testRemoveRequested();
     void testImmediateExpiration();
-    void testDelayedExpiration();
 
 signals:
     void actionInvoked(QString action);

@@ -17,32 +17,9 @@
 #include "notificationmanager.h"
 #include "notificationfeedbackplayer.h"
 #include "lipstickcompositor_stub.h"
+#include "lipsticknotification.h"
 #include "ngfclient_stub.h"
 #include "ut_notificationfeedbackplayer.h"
-
-const char *NotificationManager::HINT_CATEGORY = "category";
-const char *NotificationManager::HINT_URGENCY = "urgency";
-const char *NotificationManager::HINT_IMAGE_PATH = "image-path";
-const char *NotificationManager::HINT_SUPPRESS_SOUND = "suppress-sound";
-const char *NotificationManager::HINT_ICON = "x-nemo-icon";
-const char *NotificationManager::HINT_ITEM_COUNT = "x-nemo-item-count";
-const char *NotificationManager::HINT_PRIORITY = "x-nemo-priority";
-const char *NotificationManager::HINT_TIMESTAMP = "x-nemo-timestamp";
-const char *NotificationManager::HINT_PREVIEW_ICON = "x-nemo-preview-icon";
-const char *NotificationManager::HINT_PREVIEW_BODY = "x-nemo-preview-body";
-const char *NotificationManager::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary";
-const char *NotificationManager::HINT_HIDDEN = "x-nemo-hidden";
-const char *NotificationManager::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
-const char *NotificationManager::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
-const char *NotificationManager::HINT_FEEDBACK = "x-nemo-feedback";
-const char *NotificationManager::HINT_USER_REMOVABLE = "x-nemo-user-removable";
-const char *NotificationManager::HINT_DISPLAY_ON = "x-nemo-display-on";
-const char *NotificationManager::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
-const char *NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY = "x-nemo-led-disabled-without-body-and-summary";
-const char *NotificationManager::HINT_ORIGIN = "x-nemo-origin";
-const char *NotificationManager::HINT_OWNER = "x-nemo-owner";
-const char *NotificationManager::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
-const char *NotificationManager::HINT_RESTORED = "x-nemo-restored";
 
 NotificationManager::NotificationManager(QObject *parent, bool owner) : QObject(parent)
 {
@@ -108,10 +85,10 @@ QList<uint> NotificationManager::notificationIds() const
 LipstickNotification *createNotification(uint id, int urgency = 0, QVariant priority = QVariant())
 {
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_FEEDBACK, "feedback");
-    hints.insert(NotificationManager::HINT_URGENCY, urgency);
+    hints.insert(LipstickNotification::HINT_FEEDBACK, "feedback");
+    hints.insert(LipstickNotification::HINT_URGENCY, urgency);
     if (priority.isValid()) {
-        hints.insert(NotificationManager::HINT_PRIORITY, priority);
+        hints.insert(LipstickNotification::HINT_PRIORITY, priority);
     }
     LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", "", id, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(id, notification);
@@ -198,7 +175,7 @@ void Ut_NotificationFeedbackPlayer::testMultipleFeedbackIds()
     // Create a notification
     LipstickNotification *notification = createNotification(1);
     QVariantHash hints(notification->hints());
-    hints.insert(NotificationManager::HINT_FEEDBACK, "feedback,foldback");
+    hints.insert(LipstickNotification::HINT_FEEDBACK, "feedback,foldback");
     notification->setHints(hints);
     player->addNotification(1);
 
@@ -229,7 +206,7 @@ void Ut_NotificationFeedbackPlayer::testHiddenNotification()
     // Create a notification
     LipstickNotification *notification = createNotification(1);
     QVariantHash hints(notification->hints());
-    hints.insert(NotificationManager::HINT_HIDDEN, true);
+    hints.insert(LipstickNotification::HINT_HIDDEN, true);
     notification->setHints(hints);
     player->addNotification(1);
 
@@ -244,7 +221,7 @@ void Ut_NotificationFeedbackPlayer::testNotificationSoundSuppressed()
     // Create a notification
     LipstickNotification *notification = createNotification(1);
     QVariantHash hints(notification->hints());
-    hints.insert(NotificationManager::HINT_SUPPRESS_SOUND, true);
+    hints.insert(LipstickNotification::HINT_SUPPRESS_SOUND, true);
     notification->setHints(hints);
     player->addNotification(1);
 
@@ -284,7 +261,7 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotification()
 
     // Change the feedback and update
     QVariantHash hints(notification->hints());
-    hints.insert(NotificationManager::HINT_FEEDBACK, "foldback");
+    hints.insert(LipstickNotification::HINT_FEEDBACK, "foldback");
     notification->setHints(hints);
     player->addNotification(1);
 
@@ -298,7 +275,7 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotification()
 
     // Remove the feedback and update
     hints = notification->hints();
-    hints.remove(NotificationManager::HINT_FEEDBACK);
+    hints.remove(LipstickNotification::HINT_FEEDBACK);
     notification->setHints(hints);
     player->addNotification(1);
 
@@ -317,7 +294,7 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotificationAfterRestart()
 
     // Mark the notification as restored from storage
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_RESTORED, true);
+    hints.insert(LipstickNotification::HINT_RESTORED, true);
     notification->setHints(hints);
 
     // Update the notification
@@ -418,9 +395,9 @@ void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody()
     QFETCH(bool, mediaParametersDefined);
 
     QVariantHash hints;
-    hints.insert(NotificationManager::HINT_FEEDBACK, "feedback");
+    hints.insert(LipstickNotification::HINT_FEEDBACK, "feedback");
     if (disableHint.isValid()) {
-        hints.insert(NotificationManager::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, disableHint);
+        hints.insert(LipstickNotification::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, disableHint);
     }
     LipstickNotification *notification1 = new LipstickNotification("ut_notificationfeedbackplayer", "", 1, "", "", "", QStringList(), hints, -1);
     LipstickNotification *notification2 = new LipstickNotification("ut_notificationfeedbackplayer", "", 2, "", "summary", "", QStringList(), hints, -1);
