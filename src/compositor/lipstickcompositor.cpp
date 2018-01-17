@@ -21,7 +21,6 @@
 #include <QDesktopServices>
 #include <QtSensors/QOrientationSensor>
 #include <QClipboard>
-#include <QSettings>
 #include <QMimeData>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 #include "homeapplication.h"
@@ -70,14 +69,6 @@ LipstickCompositor::LipstickCompositor()
 
     m_orientationLock = new MGConfItem("/lipstick/orientationLock", this);
     connect(m_orientationLock, SIGNAL(valueChanged()), SIGNAL(orientationLockChanged()));
-
-    // Load legacy settings from the config file and delete it from there
-    QSettings legacySettings("nemomobile", "lipstick");
-    QString legacyOrientationKey("Compositor/orientationLock");
-    if (legacySettings.contains(legacyOrientationKey)) {
-        m_orientationLock->set(legacySettings.value(legacyOrientationKey));
-        legacySettings.remove(legacyOrientationKey);
-    }
 
     connect(this, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
     QObject::connect(this, SIGNAL(afterRendering()), this, SLOT(windowSwapped()));

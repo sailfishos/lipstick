@@ -69,8 +69,6 @@ NotificationPreviewPresenter::NotificationPreviewPresenter(
             this, [=](uint id) {
             removeNotification(id);
     });
-    connect(this, &NotificationPreviewPresenter::notificationPresented,
-            m_notificationFeedbackPlayer, &NotificationFeedbackPlayer::addNotification);
     QTimer::singleShot(0, this, SLOT(createWindowIfNecessary()));
 }
 
@@ -115,8 +113,7 @@ void NotificationPreviewPresenter::showNextNotification()
 
         if (!show) {
             if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) { // Suppress feedback if locked out.
-                // Don't show the notification but just remove it from the queue
-                emit notificationPresented(notification->id());
+                m_notificationFeedbackPlayer->addNotification(notification->id());
             }
 
             setCurrentNotification(0);
@@ -128,7 +125,7 @@ void NotificationPreviewPresenter::showNextNotification()
                 m_window->show();
             }
 
-            emit notificationPresented(notification->id());
+            m_notificationFeedbackPlayer->addNotification(notification->id());
 
             setCurrentNotification(notification);
         }
@@ -156,9 +153,9 @@ void NotificationPreviewPresenter::updateNotification(uint id)
                 }
             }
         } else {
-            // Remove updated notification only from the queue so that a currently visible notification won't suddenly disappear
-            emit notificationPresented(id);
+            m_notificationFeedbackPlayer->addNotification(id);
 
+            // Remove updated notification only from the queue so that a currently visible notification won't suddenly disappear
             removeNotification(id, true);
 
             if (m_currentNotification != notification) {

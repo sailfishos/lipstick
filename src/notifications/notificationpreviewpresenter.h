@@ -42,17 +42,8 @@ class LIPSTICK_EXPORT NotificationPreviewPresenter : public QObject
     Q_PROPERTY(LipstickNotification *notification READ notification NOTIFY notificationChanged)
 
 public:
-    /*!
-     * Creates a notification preview presenter.
-     *
-     * \param parent the parent object
-     */
-    explicit NotificationPreviewPresenter(
-            ScreenLock *screenLock, NemoDeviceLock::DeviceLock *deviceLock, QObject *parent = 0);
-
-    /*!
-     * Destroys the notification preview presenter.
-     */
+    explicit NotificationPreviewPresenter(ScreenLock *screenLock, NemoDeviceLock::DeviceLock *deviceLock,
+                                          QObject *parent = 0);
     virtual ~NotificationPreviewPresenter();
 
     /*!
@@ -66,9 +57,6 @@ public:
 signals:
     //! Sent when the notification to be shown has changed.
     void notificationChanged();
-
-    //! Sent when a notification is considered presented by the presenter
-    void notificationPresented(uint id);
 
 public slots:
     /*!
