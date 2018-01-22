@@ -160,6 +160,11 @@ QStringList LauncherItem::desktopCategories() const
     return !m_desktopEntry.isNull() ? m_desktopEntry->categories() : QStringList();
 }
 
+QStringList LauncherItem::mimeType() const
+{
+    return !m_desktopEntry.isNull() ? m_desktopEntry->mimeType() : QStringList();
+}
+
 QString LauncherItem::titleUnlocalized() const
 {
     if (m_isTemporary) {
