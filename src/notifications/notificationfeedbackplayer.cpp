@@ -72,23 +72,19 @@ void NotificationFeedbackPlayer::addNotification(uint id)
             if (notification->hints().value(LipstickNotification::HINT_SUPPRESS_SOUND, false).toBool()) {
                 properties.insert("media.audio", false);
             }
-
-            if (!properties.isEmpty()) {
-                // Add any unspecified properties as true, or they are treated as false (when properties is non-empty)
-                if (!properties.contains("media.leds")) {
-                    properties.insert("media.leds", true);
-                }
-                if (!properties.contains("media.audio")) {
-                    properties.insert("media.audio", true);
-                }
-                properties.insert("media.vibra", true);
-                properties.insert("media.backlight", true);
+            if (!notification->hints().value(LipstickNotification::HINT_ORIGIN_PACKAGE).toString().isEmpty()) {
+                // android notification, play vibra only when explicitly asked via separate hint
+                properties.insert("media.vibra", false);
             }
 
             foreach (const QString &item, feedbackItems) {
                 m_ngfClient->stop(item);
                 m_idToEventId.insert(notification, m_ngfClient->play(item, properties));
             }
+        }
+        if (notification->hints().value(LipstickNotification::HINT_VIBRA, false).toBool()) {
+            m_ngfClient->stop("vibra");
+            m_idToEventId.insert(notification, m_ngfClient->play("vibra", QMap<QString, QVariant>()));
         }
     }
 }

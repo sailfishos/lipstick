@@ -333,10 +333,14 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
             priority = m_androidPriorityStore->appDetails(appName);
         }
         hints_.insert(LipstickNotification::HINT_PRIORITY, priority.first);
+
         if (!priority.second.isEmpty()) {
             hints_.insert(LipstickNotification::HINT_FEEDBACK, priority.second);
-            // Also turn the display on if required
-            hints_.insert(LipstickNotification::HINT_DISPLAY_ON, true);
+            // Also turn the display on if required, but only if it's really playing vibra or sound feedback
+            if (hints_.value(LipstickNotification::HINT_VIBRA, false).toBool()
+                    || !hints_.value(LipstickNotification::HINT_SUPPRESS_SOUND, false).toBool()) {
+                hints_.insert(LipstickNotification::HINT_DISPLAY_ON, true);
+            }
         }
     } else {
         if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {
