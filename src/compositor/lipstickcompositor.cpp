@@ -103,6 +103,16 @@ LipstickCompositor::LipstickCompositor()
     setClientFullScreenHint(true);
 }
 
+static inline bool displayStateIsDimmed(TouchScreen::DisplayState state)
+{
+    return state == TouchScreen::DisplayDimmed;
+}
+
+static bool displayStateIsOn(TouchScreen::DisplayState state)
+{
+    return state == TouchScreen::DisplayOn || state == TouchScreen::DisplayDimmed;
+}
+
 LipstickCompositor::~LipstickCompositor()
 {
     // ~QWindow can a call into onVisibleChanged and QWaylandCompositor after we
@@ -610,7 +620,7 @@ void LipstickCompositor::setScreenOrientation(Qt::ScreenOrientation screenOrient
 bool LipstickCompositor::displayDimmed() const
 {
     TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
-    return touchScreen->currentDisplayState() == TouchScreen::DisplayDimmed;
+    return displayStateIsDimmed(touchScreen->currentDisplayState());
 }
 
 LipstickKeymap *LipstickCompositor::keymap() const
@@ -657,15 +667,22 @@ void LipstickCompositor::updateKeymap()
 
 void LipstickCompositor::reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState)
 {
-    if (newState == TouchScreen::DisplayOn) {
-        emit displayOn();
-    } else if (newState == TouchScreen::DisplayOff) {
-        QCoreApplication::postEvent(this, new QTouchEvent(QEvent::TouchCancel));
-        emit displayOff();
+    bool oldOn = displayStateIsOn(oldState);
+    bool newOn = displayStateIsOn(newState);
+
+    if (oldOn != newOn) {
+        if (newOn) {
+            emit displayOn();
+        } else {
+            QCoreApplication::postEvent(this, new QTouchEvent(QEvent::TouchCancel));
+            emit displayOff();
+        }
     }
 
-    bool changeInDimming = (newState == TouchScreen::DisplayDimmed) != (oldState == TouchScreen::DisplayDimmed);
-    if (changeInDimming) {
+    bool oldDimmed = displayStateIsDimmed(oldState);
+    bool newDimmed = displayStateIsDimmed(newState);
+
+    if (oldDimmed != newDimmed) {
         emit displayDimmedChanged();
     }
 }
