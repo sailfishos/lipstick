@@ -10,6 +10,7 @@
 **
 ****************************************************************************/
 
+#include <QSocketNotifier>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -23,6 +24,8 @@
 #include <QDebug>
 #include <QEvent>
 #include <systemd/sd-daemon.h>
+#include <sys/eventfd.h>
+#include <unistd.h>
 
 #include "notifications/notificationmanager.h"
 #include "notifications/notificationpreviewpresenter.h"
@@ -53,8 +56,12 @@
 
 void HomeApplication::quitSignalHandler(int)
 {
-    qApp->quit();
+    uint64_t a = 1;
+    ssize_t unused = ::write(s_quitSignalFd, &a, sizeof(a));
+    Q_UNUSED(unused);
 }
+
+int HomeApplication::s_quitSignalFd = -1;
 
 static void registerDBusObject(QDBusConnection &bus, const char *path, QObject *object)
 {
@@ -65,15 +72,16 @@ static void registerDBusObject(QDBusConnection &bus, const char *path, QObject *
 
 HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     : QGuiApplication(argc, argv)
+    , m_quitSignalNotifier(0)
     , m_mainWindowInstance(0)
     , m_qmlPath(qmlPath)
-    , m_originalSigIntHandler(signal(SIGINT, quitSignalHandler))
-    , m_originalSigTermHandler(signal(SIGTERM, quitSignalHandler))
     , m_homeReadySent(false)
     , m_screenshotService(0)
     , m_connmanVpn(0)
     , m_online(false)
 {
+    setUpSignalHandlers();
+
     QTranslator *engineeringEnglish = new QTranslator(this);
     engineeringEnglish->load("lipstick_eng_en", "/usr/share/translations");
     installTranslator(engineeringEnglish);
@@ -200,10 +208,48 @@ HomeApplication *HomeApplication::instance()
     return qobject_cast<HomeApplication *>(qApp);
 }
 
+void HomeApplication::setUpSignalHandlers()
+{
+    s_quitSignalFd = ::eventfd(0, 0);
+    if (s_quitSignalFd == -1)
+        qFatal("Failed to create eventfd object for signal handling");
+
+    m_quitSignalNotifier = new QSocketNotifier(s_quitSignalFd, QSocketNotifier::Read, this);
+    connect(m_quitSignalNotifier, &QSocketNotifier::activated, this, [this]() {
+        uint64_t tmp;
+        ssize_t unused = ::read(s_quitSignalFd, &tmp, sizeof(tmp));
+        Q_UNUSED(unused);
+
+        quit();
+    });
+
+    struct sigaction action;
+    action.sa_handler = quitSignalHandler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    action.sa_flags |= SA_RESTART;
+
+    if (sigaction(SIGINT, &action, &m_originalSigIntAction))
+        qFatal("Failed to set up SIGINT handling");
+    if (sigaction(SIGTERM, &action, &m_originalSigTermAction))
+        qFatal("Failed to set up SIGTERM handling");
+}
+
 void HomeApplication::restoreSignalHandlers()
 {
-    signal(SIGINT, m_originalSigIntHandler);
-    signal(SIGTERM, m_originalSigTermHandler);
+    if (s_quitSignalFd == -1) {
+        qWarning() << "HomeApplication::restoreSignalHandlers: called multiple times?";
+        return;
+    }
+
+    if (sigaction(SIGINT, &m_originalSigIntAction, nullptr))
+        qFatal("Failed to restore original SIGINT handling");
+    if (sigaction(SIGTERM, &m_originalSigTermAction, nullptr))
+        qFatal("Failed to restore original SIGTERM handling");
+
+    delete m_quitSignalNotifier, m_quitSignalNotifier = nullptr;
+
+    ::close(s_quitSignalFd), s_quitSignalFd = -1;
 }
 
 void HomeApplication::sendHomeReadySignalIfNotAlreadySent()
