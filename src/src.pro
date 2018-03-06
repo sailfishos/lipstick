@@ -13,7 +13,7 @@ DEFINES += LIPSTICK_BUILD_LIBRARY
 DEFINES += VERSION=\\\"$${VERSION}\\\"
 DEFINES += MESA_EGL_NO_X11_HEADERS
 
-CONFIG += qt wayland-scanner
+CONFIG += qt wayland-scanner c++11
 INSTALLS = target ts_install engineering_english_install
 target.path = $$[QT_INSTALL_LIBS]
 
@@ -180,7 +180,6 @@ QMAKE_CXXFLAGS += \
     -Werror \
     -Wfatal-errors \
     -g \
-    -std=c++0x \
     -fPIC \
     -fvisibility=hidden \
     -fvisibility-inlines-hidden
