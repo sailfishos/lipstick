@@ -178,6 +178,7 @@ QT += dbus xml qml quick sql gui gui-private sensors
 
 QMAKE_CXXFLAGS += \
     -Werror \
+    -Wfatal-errors \
     -g \
     -std=c++0x \
     -fPIC \
