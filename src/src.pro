@@ -9,9 +9,6 @@ system(qdbusxml2cpp -c ConnmanServiceProxy -p connmanserviceproxy net.connman.se
 TEMPLATE = lib
 TARGET = lipstick-qt5
 
-# Override the version from the spec file, we need .so version 1.0
-VERSION = 1.0
-
 DEFINES += LIPSTICK_BUILD_LIBRARY
 DEFINES += VERSION=\\\"$${VERSION}\\\"
 DEFINES += MESA_EGL_NO_X11_HEADERS
@@ -197,6 +194,7 @@ QMAKE_CLEAN += \
 
 CONFIG += create_pc create_prl
 QMAKE_PKGCONFIG_NAME = lib$$TARGET
+QMAKE_PKGCONFIG_VERSION = $$VERSION
 QMAKE_PKGCONFIG_DESCRIPTION = Library for creating QML desktops
 QMAKE_PKGCONFIG_LIBDIR = $$target.path
 QMAKE_PKGCONFIG_INCDIR = $$publicheaderfiles.path
