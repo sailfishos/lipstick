@@ -17,3 +17,5 @@ QMAKE_DISTCLEAN += \
     configure-stamp \
     *.log.xml \
     *.log
+
+OTHER_FILES += rpm/*
