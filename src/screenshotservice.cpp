@@ -16,43 +16,43 @@
 #include "lipstickcompositor.h"
 #include "screenshotservice.h"
 
-#include <QDateTime>
 #include <QGuiApplication>
 #include <QImage>
 #include <QScreen>
-#include <QStandardPaths>
 #include <QTransform>
-#include <QLocale>
 #include <private/qquickwindow_p.h>
 
-ScreenshotService::ScreenshotService(QObject *parent) :
-    QObject(parent)
+bool ScreenshotService::saveScreenshot(const QString &path)
 {
-}
-
-void ScreenshotService::saveScreenshot(const QString &path)
-{
-    if (LipstickCompositor *compositor = LipstickCompositor::instance()) {
-        QQuickWindowPrivate *wd = QQuickWindowPrivate::get(compositor);
-        HwcRenderStage *renderStage = (HwcRenderStage *) wd->customRenderStage;
-        if (renderStage)
-            renderStage->setBypassHwc(true);
-
-        QImage grab(compositor->grabWindow());
-
-        int rotation(QGuiApplication::primaryScreen()->angleBetween(Qt::PrimaryOrientation, compositor->topmostWindowOrientation()));
-        if (rotation != 0) {
-            QTransform xform;
-            xform.rotate(rotation);
-            grab = grab.transformed(xform, Qt::SmoothTransformation);
-        }
-
-        grab.save(path.isEmpty()
-                  ? (QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)
-                     + "/" + QLocale::c().toString(QDateTime::currentDateTime(), "yyyyMMddhhmmss") + ".png")
-                  : path);
-
-        if (renderStage)
-            renderStage->setBypassHwc(false);
+    if (path.isEmpty()) {
+        qWarning() << "Screenshot path is empty.";
+        return false;
     }
+
+    LipstickCompositor *compositor = LipstickCompositor::instance();
+    if (!compositor) {
+        return false;
+    }
+
+    QQuickWindowPrivate *wd = QQuickWindowPrivate::get(compositor);
+    HwcRenderStage *renderStage = (HwcRenderStage *) wd->customRenderStage;
+    if (renderStage)
+        renderStage->setBypassHwc(true);
+
+    QImage grab(compositor->grabWindow());
+
+    int rotation(QGuiApplication::primaryScreen()->angleBetween(Qt::PrimaryOrientation, compositor->topmostWindowOrientation()));
+    if (rotation != 0) {
+        QTransform xform;
+        xform.rotate(rotation);
+        grab = grab.transformed(xform, Qt::SmoothTransformation);
+    }
+
+    const bool saved = grab.save(path);
+
+    if (renderStage) {
+        renderStage->setBypassHwc(false);
+    }
+
+    return saved;
 }
