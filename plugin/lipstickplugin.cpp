@@ -30,7 +30,7 @@
 #include <compositor/lipstickcompositorwindow.h>
 #include <compositor/windowmodel.h>
 #include <compositor/windowpixmapitem.h>
-#include <compositor/windowproperty.h>
+#include <compositor/windowpropertymap.h>
 #include <lipstickapi.h>
 #include <hwcimage.h>
 
@@ -67,11 +67,12 @@ void LipstickPlugin::registerTypes(const char *uri)
     qmlRegisterUncreatableType<QWaylandSurface>("org.nemomobile.lipstick", 0, 1, "WaylandSurface", "This type is created by the compositor");
     qmlRegisterType<WindowModel>("org.nemomobile.lipstick", 0, 1, "WindowModel");
     qmlRegisterType<WindowPixmapItem>("org.nemomobile.lipstick", 0, 1, "WindowPixmapItem");
-    qmlRegisterType<WindowProperty>("org.nemomobile.lipstick", 0, 1, "WindowProperty");
     qmlRegisterSingletonType<LipstickApi>("org.nemomobile.lipstick", 0, 1, "Lipstick", lipstickApi_callback);
 
     qmlRegisterType<LipstickCompositorWindow>();
     qmlRegisterType<QObjectListModel>();
+    qmlRegisterType<WindowPropertyMap>();
+    qmlRegisterType<QWaylandKeymap>();
 
     qmlRegisterRevision<QQuickWindow,1>("org.nemomobile.lipstick", 0, 1);
 }
