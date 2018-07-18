@@ -30,20 +30,18 @@ public:
     virtual bool isInProcess() const;
     virtual bool isTextureProvider() const { return false; }
 
-    virtual QString title() const;
-    void setTitle(const QString &);
-
     QQuickItem *rootItem();
     void setRootItem(QQuickItem *item);
+
+    using LipstickCompositorWindow::setTitle;
 
 signals:
     void rootItemChanged();
 
 private:
     friend class LipstickCompositor;
-    LipstickCompositorProcWindow(int windowId, const QString &, QQuickItem *parent = 0);
+    LipstickCompositorProcWindow(int windowId, const QString &);
 
-    QString m_title;
     QPointer<QQuickItem> m_rootItem;
 };
 

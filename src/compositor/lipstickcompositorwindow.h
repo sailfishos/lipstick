@@ -24,10 +24,20 @@
 
 #include <QPointer>
 
+QT_BEGIN_NAMESPACE
+
 namespace QtWayland {
     class ExtendedSurface;
 }
+
+class QWaylandXdgSurfaceV5;
+
+QT_END_NAMESPACE
+
+class AlienSurface;
+class LipstickCompositor;
 class LipstickCompositorWindowHwcNode;
+class WindowPropertyMap;
 
 class LIPSTICK_EXPORT LipstickCompositorWindow : public QWaylandQuickItem
 {
@@ -46,10 +56,20 @@ class LIPSTICK_EXPORT LipstickCompositorWindow : public QWaylandQuickItem
     Q_PROPERTY(qint16 windowFlags READ windowFlags NOTIFY windowFlagsChanged)
     Q_PROPERTY(QString className READ className NOTIFY classNameChanged)
 
+    Q_PROPERTY(QRect mouseRegionBounds READ mouseRegionBounds NOTIFY mouseRegionBoundsChanged)
+
     Q_PROPERTY(bool focusOnTouch READ focusOnTouch WRITE setFocusOnTouch NOTIFY focusOnTouchChanged)
 
+    Q_PROPERTY(bool exposed READ isExposed WRITE setExposed NOTIFY exposedChanged)
+    Q_PROPERTY(bool exposedAsCover READ isExposedAsCover WRITE setExposedAsCover NOTIFY exposedAsCoverChanged)
+
+    Q_PROPERTY(WindowPropertyMap *properties READ windowProperties CONSTANT)
+
 public:
-    LipstickCompositorWindow(int windowId, const QString &, QWaylandSurface *surface, QQuickItem *parent = 0);
+    LipstickCompositorWindow(int windowId, const QString &, QWaylandSurface *surface = nullptr);
+    LipstickCompositorWindow(int windowId, const QString &, QWaylandWlShellSurface *wlSurface);
+    LipstickCompositorWindow(int windowId, const QString &, QWaylandXdgSurfaceV5 *xdgSurface);
+    LipstickCompositorWindow(int windowId, AlienSurface *alienSurface);
     ~LipstickCompositorWindow();
 
     QVariant userData() const;
@@ -71,6 +91,8 @@ public:
 
     qint16 windowFlags();
 
+    QRect mouseRegionBounds() const;
+
     bool eventFilter(QObject *object, QEvent *event);
 
     Q_INVOKABLE void terminateProcess(int killTimeout);
@@ -82,10 +104,27 @@ public:
 
     bool isAlien() const;
 
-    QVariantMap windowProperties();
+    WindowPropertyMap *windowProperties();
+    QVariant windowProperty(const QString &key);
+
+    bool isExposed() const;
+    void setExposed(bool exposed);
+
+    bool isExposedAsCover() const;
+    void setExposedAsCover(bool exposed);
+
+    void sendOomScore(int score);
+
     QtWayland::ExtendedSurface *extendedSurface();
 
+    Q_INVOKABLE void resize(const QSize &size);
+    Q_INVOKABLE void ping();
+    Q_INVOKABLE void close();
+    Q_INVOKABLE void closePopup();
+
 protected:
+    void setTitle(const QString &title);
+
     void itemChange(ItemChange change, const ItemChangeData &data);
 
     virtual bool event(QEvent *);
@@ -100,20 +139,21 @@ signals:
     void titleChanged();
     void classNameChanged();
     void delayRemoveChanged();
-    void committed();
     void focusOnTouchChanged();
     void windowFlagsChanged();
+    void mouseRegionBoundsChanged();
+    void pong();
+    void exposedChanged();
+    void exposedAsCoverChanged();
 
 private slots:
     void handleTouchCancel();
     void killProcess();
-    void connectSurfaceSignals();
 
 private:
     friend class LipstickCompositor;
     friend class WindowModel;
     friend class WindowPixmapItem;
-    friend class WindowProperty;
 
     void imageAddref(QQuickItem *item);
     void imageRelease(QQuickItem *item);
@@ -123,29 +163,37 @@ private:
     void tryRemove();
     void handleTouchEvent(QTouchEvent *e);
 
-    void setWlShellSurface(QWaylandWlShellSurface *surface);
     void setExtendedSurface(QtWayland::ExtendedSurface *extSurface);
-    void setTitle(const QString &title);
-    QString m_title;
 
-    int m_windowId;
-    bool m_isAlien;
+    inline void updateMouseRegion(const QVariant &value);
+
+    QString m_title;
     QString m_category;
-    bool m_delayRemove:1;
-    bool m_windowClosed:1;
-    bool m_removePosted:1;
-    bool m_interceptingTouch:1;
+    QVariant m_data;
+
+    QVector<QQuickItem *> m_refs;
+    QPointer<QtWayland::ExtendedSurface> m_extSurface;
+    QPointer<QWaylandWlShellSurface> m_wlShellSurface;
+    QPointer<QWaylandXdgSurfaceV5> m_xdgSurface;
+    QPointer<AlienSurface> m_alienSurface;
+    QScopedPointer<WindowPropertyMap> m_windowProperties;
+
+    QRect m_mouseRegion;
+    LipstickCompositor * const m_compositor;
+    const int m_windowId;
+    uint m_pingSerial = 0;
+    bool m_isAlien : 1;
+    bool m_delayRemove : 1;
+    bool m_windowClosed : 1;
+    bool m_removePosted : 1;
+    bool m_interceptingTouch : 1;
     bool m_mapped : 1;
     bool m_noHardwareComposition: 1;
     bool m_focusOnTouch : 1;
     bool m_hasVisibleReferences : 1;
     bool m_transient : 1;
-    QVariant m_data;
-
-    QList<QMetaObject::Connection> m_surfaceConnections;
-    QVector<QQuickItem *> m_refs;
-    QPointer<QtWayland::ExtendedSurface> m_extSurface;
-    QPointer<QWaylandWlShellSurface> m_wlShellSurface;
+    bool m_exposed : 1;
+    bool m_exposedAsCover : 1;
 };
 
 #endif // LIPSTICKCOMPOSITORWINDOW_H
