@@ -20,6 +20,7 @@
 #include "notificationmanager.h"
 #include "lipsticknotification.h"
 #include "notificationfeedbackplayer.h"
+#include "windowpropertymap.h"
 
 namespace {
 
@@ -112,7 +113,8 @@ bool NotificationFeedbackPlayer::isEnabled(LipstickNotification *notification)
     uint mode = AllNotificationsEnabled;
     LipstickCompositorWindow *win = LipstickCompositor::instance()->m_windows.value(LipstickCompositor::instance()->topmostWindowId());
     if (win != 0) {
-        mode = win->windowProperties().value("NOTIFICATION_PREVIEWS_DISABLED", uint(AllNotificationsEnabled)).toUInt();
+        const QVariant value = win->windowProperties()->value(QStringLiteral("NOTIFICATION_PREVIEWS_DISABLED"));
+        mode = value.isValid()? value.toUInt() : uint(AllNotificationsEnabled);
     }
 
     int urgency = notification->urgency();

@@ -11,6 +11,7 @@ HEADERS += \
     $$NOTIFICATIONSRCDIR/notificationmanager.h \
     $$NOTIFICATIONSRCDIR/lipsticknotification.h \
     $$COMPOSITORSRCDIR/lipstickcompositor.h \
+    $$COMPOSITORSRCDIR/windowpropertymap.h \
     /usr/include/ngf-qt5/ngfclient.h
 
 SOURCES += \
