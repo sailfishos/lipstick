@@ -118,6 +118,7 @@ bool HwcRenderStage::m_hwcEnabled = false;
 
 void HwcRenderStage::initialize(LipstickCompositor *lipstick)
 {
+    // JB#42170 Force off for now.
     static bool enabled = qgetenv("LIPSTICK_HARDWARE_COMPOSITOR").toInt() != 0;
     QPlatformNativeInterface *iface = QGuiApplicationPrivate::platform_integration->nativeInterface();
     if (!enabled) {
