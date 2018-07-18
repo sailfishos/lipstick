@@ -20,42 +20,27 @@
 #include <QPointer>
 #include <QVariant>
 #include "lipstickcompositorwindow.h"
-
+#include <QQmlPropertyMap>
 
 class QWaylandSurface;
 
 
-class LIPSTICK_EXPORT WindowProperty : public QObject
+class LIPSTICK_EXPORT WindowPropertyMap : public QQmlPropertyMap
 {
     Q_OBJECT
-    Q_PROPERTY(int windowId READ windowId WRITE setWindowId NOTIFY windowIdChanged)
-    Q_PROPERTY(QString property READ property WRITE setProperty NOTIFY propertyChanged)
-    Q_PROPERTY(QVariant value READ value NOTIFY valueChanged)
 public:
-    WindowProperty();
+    WindowPropertyMap(QtWayland::ExtendedSurface *surface, QWaylandSurface *waylandSurface, QObject *parent = nullptr);
+    ~WindowPropertyMap();
 
-    int windowId() const;
-    void setWindowId(int);
+    static QVariant fixupWindowProperty(
+            LipstickCompositor *compositor, QWaylandSurface *surface, const QVariant &value);
 
-    QString property() const;
-    void setProperty(const QString &);
-
-    QVariant value();
-
-signals:
-    void windowIdChanged();
-    void propertyChanged();
-    void valueChanged();
-
-private slots:
-    void availableWinIdsChanged();
-    void windowPropertyChanged(const QString &);
+protected:
+    QVariant updateValue(const QString &key, const QVariant &input) override;
 
 private:
-    int m_windowId;
-    bool m_waitingRefProperty;
-    void connectRef();
-    QString m_property;
+    inline void insertWindowProperty(const QString &key, const QVariant &value);
+
     QPointer<QtWayland::ExtendedSurface> m_surface;
     QPointer<QWaylandSurface> m_waylandSurface;
 };

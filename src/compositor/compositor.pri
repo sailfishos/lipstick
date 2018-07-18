@@ -8,7 +8,7 @@ PUBLICHEADERS += \
     $$PWD/lipstickcompositorprocwindow.h \
     $$PWD/lipstickcompositoradaptor.h \
     $$PWD/windowmodel.h \
-    $$PWD/windowproperty.h
+    $$PWD/windowpropertymap.h
 
 HEADERS += \
     $$PWD/windowpixmapitem.h \
@@ -23,7 +23,7 @@ SOURCES += \
     $$PWD/lipstickcompositoradaptor.cpp \
     $$PWD/windowmodel.cpp \
     $$PWD/windowpixmapitem.cpp \
-    $$PWD/windowproperty.cpp \
+    $$PWD/windowpropertymap.cpp \
     $$PWD/hwcrenderstage.cpp \
     $$PWD/hwcimage.cpp \
 

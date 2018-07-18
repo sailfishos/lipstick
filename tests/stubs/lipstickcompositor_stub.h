@@ -3,9 +3,17 @@
 
 #include "lipstickcompositor.h"
 #include "touchscreen/touchscreen.h"
+#include "windowpropertymap.h"
 #include <stubbase.h>
 
 #include <QWaylandSurface>
+#include <QWaylandXdgShellV5>
+
+QT_BEGIN_NAMESPACE
+namespace QtWayland {
+class ExtendedSurface : public QObject {};
+}
+QT_END_NAMESPACE
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
@@ -43,14 +51,11 @@ public:
     virtual void surfaceLowered();
     virtual void surfaceDamaged(const QRegion &);
     virtual void windowSwapped();
-    virtual void windowObjectDestroyed();
     virtual void windowPropertyChanged(const QString &);
     virtual void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
     virtual void setScreenOrientationFromSensor();
     virtual void clipboardDataChanged();
     virtual void onVisibleChanged(bool visible);
-    virtual LipstickCompositorWindow *createView(QWaylandSurface *surf);
-    virtual void onSurfaceDying();
     virtual void readContent();
     virtual void initialize();
     virtual bool completed();
@@ -240,11 +245,6 @@ void LipstickCompositorStub::surfaceLowered()
     stubMethodEntered("surfaceLowered");
 }
 
-void LipstickCompositorStub::onSurfaceDying()
-{
-    stubMethodEntered("onSurfaceDying");
-}
-
 void LipstickCompositorStub::readContent()
 {
     stubMethodEntered("readContent");
@@ -280,11 +280,6 @@ void LipstickCompositorStub::windowSwapped()
     stubMethodEntered("windowSwapped");
 }
 
-void LipstickCompositorStub::windowObjectDestroyed()
-{
-    stubMethodEntered("windowObjectDestroyed");
-}
-
 void LipstickCompositorStub::windowPropertyChanged(const QString &property)
 {
     QList<ParameterBase *> params;
@@ -315,14 +310,6 @@ void LipstickCompositorStub::onVisibleChanged(bool v)
     QList<ParameterBase *> params;
     params.append( new Parameter<bool>(v));
     stubMethodEntered("onVisibleChanged", params);
-}
-
-LipstickCompositorWindow *LipstickCompositorStub::createView(QWaylandSurface *surf)
-{
-    QList<ParameterBase *> params;
-    params.append( new Parameter<QWaylandSurface *>(surf));
-    stubMethodEntered("createView", params);
-    return stubReturnValue<LipstickCompositorWindow *>("createView");
 }
 
 // 3. CREATE A STUB INSTANCE
@@ -466,11 +453,6 @@ void LipstickCompositor::windowSwapped()
     gLipstickCompositorStub->windowSwapped();
 }
 
-void LipstickCompositor::windowObjectDestroyed()
-{
-    gLipstickCompositorStub->windowObjectDestroyed();
-}
-
 void LipstickCompositor::reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState)
 {
     gLipstickCompositorStub->reactOnDisplayStateChanges(oldState, newState);
@@ -493,16 +475,6 @@ void LipstickCompositor::clipboardDataChanged()
 void LipstickCompositor::onVisibleChanged(bool v)
 {
     gLipstickCompositorStub->onVisibleChanged(v);
-}
-
-LipstickCompositorWindow *LipstickCompositor::createView(QWaylandSurface *surf)
-{
-    return gLipstickCompositorStub->createView(surf);
-}
-
-void LipstickCompositor::onSurfaceDying()
-{
-    gLipstickCompositorStub->onSurfaceDying();
 }
 
 void LipstickCompositor::initialize()
@@ -531,6 +503,23 @@ QWaylandCompositor::QWaylandCompositor(QObject *)
 
 QWaylandQuickCompositor::QWaylandQuickCompositor(QObject *)
 {
+}
+
+WindowPropertyMap::WindowPropertyMap(
+        QtWayland::ExtendedSurface *surface, QWaylandSurface *waylandSurface,  QObject *parent)
+    : QQmlPropertyMap(parent)
+    , m_surface(surface)
+    , m_waylandSurface(waylandSurface)
+{
+}
+
+WindowPropertyMap::~WindowPropertyMap()
+{
+}
+
+QVariant WindowPropertyMap::updateValue(const QString &key, const QVariant &value)
+{
+    return QQmlPropertyMap::updateValue(key, value);
 }
 
 #endif
