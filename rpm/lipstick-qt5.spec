@@ -40,6 +40,7 @@ BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.6
 BuildRequires:  pkgconfig(systemsettings)
 BuildRequires:  pkgconfig(nemodevicelock)
+BuildRequires:  pkgconfig(ssu-sysinfo)
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  qt5-qtgui-devel >= 5.2.1+git24
 BuildRequires:  qt5-qtwayland-compositor-devel >= 5.9.5
@@ -152,11 +153,11 @@ mkdir -p %{buildroot}/%{icondirectory}
 
 %files doc
 %defattr(-,root,root,-)
-%{_datadir}/doc/lipstick/*
+#%{_datadir}/doc/lipstick/*
 
 %files notification-doc
 %defattr(-,root,root,-)
-%{_datadir}/doc/lipstick-notification/*
+#%{_datadir}/doc/lipstick-notification/*
 
 %files ts-devel
 %defattr(-,root,root,-)
