@@ -23,18 +23,33 @@
 #include <QWaylandWlShellSurface>
 #include <QQmlComponent>
 #include <QWaylandClient>
+#include <QWaylandSurface>
+#include <QWaylandKeymap>
 #include <QPointer>
 #include <QTimer>
 #include <MGConfItem>
 
 #include <touchscreen.h>
 
+QT_BEGIN_NAMESPACE
+
 namespace QtWayland {
     class SurfaceExtensionGlobal;
     class ExtendedSurface;
+    class QtKeyExtensionGlobal;
 }
 
+class QWaylandXdgShellV5;
+class QWaylandXdgSurfaceV5;
+class QWaylandOutput;
+
+QT_END_NAMESPACE
+
+class AlienClient;
+class AlienManager;
+class AlienSurface;
 class WindowModel;
+class WindowPropertyMap;
 class LipstickCompositorWindow;
 class LipstickCompositorProcWindow;
 class QOrientationSensor;
@@ -61,6 +76,7 @@ class LIPSTICK_EXPORT LipstickCompositor : public QWaylandQuickCompositor
     Q_PROPERTY(QQuickWindow *quickWindow READ quickWindow CONSTANT)
     Q_PROPERTY(QQuickItem *contentItem READ contentItem CONSTANT)
     Q_PROPERTY(QQmlListProperty<QObject> data READ data)
+    Q_PROPERTY(QWaylandKeymap *keymap READ keymap CONSTANT)
     Q_CLASSINFO("DefaultProperty", "data")
 public:
     LipstickCompositor();
@@ -116,11 +132,13 @@ public:
     bool completed();
 
     void setUpdatesEnabled(bool enabled);
-    LipstickCompositorWindow *createView(QWaylandSurface *surf);
 
-    QQuickWindow *quickWindow() { return m_window; }
+    QQuickWindow *quickWindow() { return m_window.data(); }
     QQuickItem *contentItem() { return m_window->contentItem(); }
     QQmlListProperty<QObject> data();
+    QWaylandKeymap *keymap();
+
+    static LipstickCompositorWindow *surfaceWindow(QWaylandSurface *surface);
 
 protected:
     void timerEvent(QTimerEvent *e) Q_DECL_OVERRIDE;
@@ -158,43 +176,41 @@ signals:
     void showUnlockScreen();
 
 private:
-    void onHasContentChanged();
     void surfaceSizeChanged();
     void surfaceTitleChanged();
     void surfaceSetTransient(QWaylandSurface *transientParent, const QPoint &relativeToParent, bool inactive);
     void surfaceSetFullScreen(QWaylandWlShellSurface::FullScreenMethod method, uint framerate, QWaylandOutput *output);
     void surfaceDamaged(const QRegion &);
     void windowSwapped();
-    void windowObjectDestroyed();
     bool openUrl(const QUrl &);
     void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
     void homeApplicationAboutToDestroy();
     void setScreenOrientationFromSensor();
     void clipboardDataChanged();
     void onVisibleChanged(bool visible);
-    void onSurfaceDying();
     void initialize();
 
     void onShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface);
+    void onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface);
+    void onAlienSurfaceCreated(AlienSurface *alienSurface, QWaylandSurface *surface);
     void onExtendedSurfaceReady(QtWayland::ExtendedSurface *extSurface, QWaylandSurface *surface);
 
+    friend class AlienClient;
     friend class LipstickCompositorWindow;
     friend class LipstickCompositorProcWindow;
     friend class WindowModel;
-    friend class WindowProperty;
+    friend class WindowPropertyMap;
     friend class NotificationPreviewPresenter;
     friend class NotificationFeedbackPlayer;
 
-    void surfaceMapped(QWaylandSurface *surface);
-    void surfaceUnmapped(QWaylandSurface *surface);
-    void surfaceUnmapped(LipstickCompositorWindow *item);
+    void surfaceMapped(LipstickCompositorWindow *window, QWaylandSurface *surface);
+    void surfaceUnmapped(LipstickCompositorWindow *window, QWaylandSurface *surface);
 
     int windowIdForLink(QWaylandSurface *, uint) const;
     void windowAdded(int);
     void windowRemoved(int);
     void windowDestroyed(LipstickCompositorWindow *item);
     void surfaceCommitted();
-    void onSurfaceCreated(QWaylandSurface *surface);
 
     QQmlComponent *shaderEffectComponent();
 
@@ -209,8 +225,15 @@ private:
 
     bool m_homeActive;
 
+    QScopedPointer<QQuickWindow> m_window;
+    QScopedPointer<QWaylandOutput> m_output;
+    QScopedPointer<QWaylandWlShell> m_wlShell;
+    QScopedPointer<QWaylandXdgShellV5> m_xdgShell;
+    QScopedPointer<AlienManager> m_alienManager;
+    QScopedPointer<QtWayland::SurfaceExtensionGlobal> m_surfExtGlob;
+    QScopedPointer<QtWayland::QtKeyExtensionGlobal> m_keyExtension;
     QQmlComponent *m_shaderEffect;
-    QWaylandSurface *m_fullscreenSurface;
+    QPointer<QWaylandSurface> m_fullscreenSurface;
     bool m_directRenderingActive;
     int m_topmostWindowId;
     int m_topmostWindowProcessId;
@@ -224,10 +247,6 @@ private:
     bool m_completed;
     int m_onUpdatesDisabledUnfocusedWindowId;
     bool m_fakeRepaintTriggered;
-    QQuickWindow *m_window;
-    QWaylandOutput *m_output;
-    QWaylandWlShell *m_wlShell;
-    QtWayland::SurfaceExtensionGlobal *m_surfExtGlob;
 };
 
 #endif // LIPSTICKCOMPOSITOR_H
