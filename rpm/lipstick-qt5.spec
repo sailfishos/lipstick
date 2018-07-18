@@ -40,6 +40,7 @@ BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.6
 BuildRequires:  pkgconfig(systemsettings)
 BuildRequires:  pkgconfig(nemodevicelock)
+BuildRequires:  pkgconfig(ssu-sysinfo)
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  qt5-qtgui-devel >= 5.2.1+git24
 BuildRequires:  qt5-qtwayland-compositor-devel >= 5.9.5
@@ -56,6 +57,7 @@ A QML toolkit for homescreen creation
 Summary:    Development files for lipstick
 License:    LGPLv2.1
 Requires:   %{name} = %{version}-%{release}
+Requires:   qt5-qtwayland-compositor-devel >= 5.9.5
 
 %description devel
 Files useful for building homescreens.
@@ -111,6 +113,7 @@ Translation files for the lipstick package.
 %qmake5 VERSION=%{version}
 
 make %{?_smp_mflags}
+make -C doc lipstick_doc notification_doc
 
 %install
 rm -rf %{buildroot}
