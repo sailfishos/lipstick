@@ -24,6 +24,7 @@
 #include "compositor/lipstickcompositorwindow.h"
 #include "notificationpreviewpresenter.h"
 #include "lipstickqmlpath.h"
+#include "windowpropertymap.h"
 
 #include "screenlock/screenlock.h"
 
@@ -216,7 +217,8 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
     uint mode = AllNotificationsEnabled;
     LipstickCompositorWindow *win = LipstickCompositor::instance()->m_windows.value(LipstickCompositor::instance()->topmostWindowId(), 0);
     if (win != 0) {
-        mode = win->windowProperties().value("NOTIFICATION_PREVIEWS_DISABLED", uint(AllNotificationsEnabled)).toUInt();
+        const QVariant value = win->windowProperties()->value(QStringLiteral("NOTIFICATION_PREVIEWS_DISABLED"));
+        mode = value.isValid()? value.toUInt() : uint(AllNotificationsEnabled);
     }
 
     return ((!screenLocked && !deviceLocked) || notificationIsCritical) &&
