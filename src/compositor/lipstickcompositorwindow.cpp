@@ -21,22 +21,48 @@
 #include <signal.h>
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
+#include "windowpropertymap.h"
+#include "windowmodel.h"
 
 #include "hwcimage.h"
 #include "hwcrenderstage.h"
 #include <EGL/egl.h>
-#include <private/qwaylandsurface_p.h>
 #include <private/qquickwindow_p.h>
 #include <QtWaylandCompositor/private/qwlextendedsurface_p.h>
+#include <QtWaylandCompositor/private/qwlqtkey_p.h>
 
-LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
-                                                   QWaylandSurface *surface, QQuickItem *parent)
-: QWaylandQuickItem(), m_windowId(windowId), m_category(category),
-  m_delayRemove(false), m_windowClosed(false), m_removePosted(false),
-  m_interceptingTouch(false), m_mapped(false), m_noHardwareComposition(false),
-  m_focusOnTouch(false), m_hasVisibleReferences(false), m_transient(false)
+#include <QQmlEngine>
+#include <QWaylandXdgSurfaceV5>
+#include <QWaylandQuickSurface>
+#include "alienmanager/aliensurface.h"
+
+LipstickCompositorWindow::LipstickCompositorWindow(
+        int windowId, const QString &category, QWaylandSurface *surface)
+    : QWaylandQuickItem()
+    , m_category(category)
+    , m_transientPosition(0, 0)
+    , m_compositor(LipstickCompositor::instance())
+    , m_windowId(windowId)
+    , m_isAlien(false)
+    , m_delayRemove(false)
+    , m_windowClosed(false)
+    , m_removePosted(false)
+    , m_interceptingTouch(false)
+    , m_mapped(false)
+    , m_noHardwareComposition(false)
+    , m_focusOnTouch(false)
+    , m_hasVisibleReferences(false)
+    , m_exposed(true)
+    , m_exposedAsCover(false)
+    , m_explicitMouseRegion(false)
 {
     setFlags(QQuickItem::ItemIsFocusScope | flags());
+
+    if (QWaylandQuickSurface *quickSurface = qobject_cast<QWaylandQuickSurface *>(surface)) {
+        quickSurface->setUseTextureAlpha(true);
+    }
+
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
     // Handle ungrab situations
     connect(this, SIGNAL(visibleChanged()), SLOT(handleTouchCancel()));
@@ -44,12 +70,129 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     connect(this, SIGNAL(touchEventsEnabledChanged()), SLOT(handleTouchCancel()));
 
     if(surface) {
-        connect(surface, SIGNAL(surfaceDestroyed()), this, SLOT(deleteLater()));
+        connect(surface, &QWaylandSurface::surfaceDestroyed, this, [this]() {
+            m_windowClosed = true;
+            tryRemove();
+        });
+
+        connect(surface, &QWaylandSurface::sizeChanged, this, [this]() {
+            setSize(QWaylandQuickItem::surface()->size());
+        });
+
+        connect(surface, &QWaylandSurface::hasContentChanged, this, [this](){
+            QWaylandSurface * const surface = QWaylandQuickItem::surface();
+
+            if (!surface) {
+                // The signal has been emitted by the surface object so it exists, but during
+                // cleanup the QWaylandQuickItem may have cleared its pointer before the signal
+                // was received.
+            } else if (!surface->hasContent()) {
+                m_compositor->surfaceUnmapped(this, surface);
+            } else if (!m_mapped) {
+                m_mapped = true;
+                if (m_extSurface) {
+                    m_category = m_extSurface->windowProperty(QStringLiteral("CATEGORY")).toString();
+                }
+                setSize(surface->size());
+                setTouchEventsEnabled(true);
+
+                m_compositor->surfaceMapped(this, surface);
+            }
+        });
+
         setSurface(surface);
     }
-    Q_UNUSED(parent)
-    connectSurfaceSignals();
 }
+
+LipstickCompositorWindow::LipstickCompositorWindow(
+        int windowId, const QString &category, QWaylandWlShellSurface *wlSurface)
+    : LipstickCompositorWindow(windowId, category, wlSurface->surface())
+{
+    m_wlShellSurface = wlSurface;
+    connect(m_wlShellSurface.data(), &QWaylandWlShellSurface::classNameChanged,
+            this, &LipstickCompositorWindow::classNameChanged);
+    connect(m_wlShellSurface.data(), &QWaylandWlShellSurface::pong,
+            this, &LipstickCompositorWindow::pong);
+
+    connect(m_wlShellSurface.data(), &QWaylandWlShellSurface::titleChanged, this, [this]() {
+        setTitle(m_wlShellSurface->title());
+    });
+
+
+    connect(m_wlShellSurface.data(),
+                &QWaylandWlShellSurface::setTransient,
+                this,
+                [this](QWaylandSurface *transientParent, const QPoint &relativeToParent) {
+        if (LipstickCompositorWindow *parentItem = LipstickCompositor::surfaceWindow(transientParent)) {
+            m_transientParent = parentItem;
+            m_transientPosition = relativeToParent;
+            emit transientPositionChanged();
+            emit transientParentChanged();
+        } else {
+            qWarning("Surface was mapped without visible transient parent");
+        }
+    });
+    connect(m_wlShellSurface.data(),
+                &QWaylandWlShellSurface::setFullScreen,
+                this,
+                [this](QWaylandWlShellSurface::FullScreenMethod, uint, QWaylandOutput *output) {
+        if (!output) {
+            output = m_compositor->m_output.data();
+        }
+
+        m_wlShellSurface->sendConfigure(output->geometry().size(), QWaylandWlShellSurface::NoneEdge);
+    });
+
+    setTitle(m_wlShellSurface->title());
+}
+
+LipstickCompositorWindow::LipstickCompositorWindow(
+        int windowId, const QString &category, QWaylandXdgSurfaceV5 *xdgSurface)
+    : LipstickCompositorWindow(windowId, category, xdgSurface->surface())
+{
+    m_xdgSurface = xdgSurface;
+
+    connect(m_xdgSurface.data(), &QWaylandXdgSurfaceV5::titleChanged, this, [this]() {
+        setTitle(m_xdgSurface->title());
+    });
+    connect(m_xdgSurface.data(), &QWaylandXdgSurfaceV5::setTransient, this, [this]() {
+        if (LipstickCompositorWindow *parentItem = LipstickCompositor::surfaceWindow(m_xdgSurface->parentSurface()->surface())) {
+            m_transientParent = parentItem;
+
+            emit transientParentChanged();
+        } else {
+            qWarning("Surface was mapped without visible transient parent");
+        }
+    });
+    connect(m_xdgSurface.data(), &QWaylandXdgSurfaceV5::setFullscreen, this, [this]() {
+        QWaylandOutput *output = m_compositor->m_output.data();
+
+        m_xdgSurface->sendConfigure(
+                    output->geometry().size(),
+                    QVector<QWaylandXdgSurfaceV5::State>() << QWaylandXdgSurfaceV5::FullscreenState);
+    });
+    connect(m_compositor->m_xdgShell.data(), &QWaylandXdgShellV5::pong, this, [this](uint serial) {
+        if (m_pingSerial == serial) {
+            m_pingSerial = 0;
+            emit pong();
+        }
+    });
+
+    setTitle(m_xdgSurface->title());
+}
+
+LipstickCompositorWindow::LipstickCompositorWindow(int windowId, AlienSurface *alienSurface)
+    : LipstickCompositorWindow(windowId, QString(), alienSurface->surface())
+{
+    m_alienSurface = alienSurface;
+    m_isAlien = true;
+
+    connect(m_alienSurface.data(), &AlienSurface::titleChanged, this, &LipstickCompositorWindow::setTitle);
+    connect(m_alienSurface.data(), &AlienSurface::pong, this, &LipstickCompositorWindow::pong);
+
+    setTitle(m_alienSurface->title());
+}
+
 
 LipstickCompositorWindow::~LipstickCompositorWindow()
 {
@@ -100,10 +243,6 @@ void LipstickCompositorWindow::setDelayRemove(bool delay)
         return;
 
     m_delayRemove = delay;
-    if (m_delayRemove)
-        disconnect(surface(), SIGNAL(surfaceDestroyed()), this, SLOT(deleteLater()));
-    else
-        connect(surface(), SIGNAL(surfaceDestroyed()), this, SLOT(deleteLater()));
 
     emit delayRemoveChanged();
 
@@ -113,13 +252,6 @@ void LipstickCompositorWindow::setDelayRemove(bool delay)
 QString LipstickCompositorWindow::category() const
 {
     return m_category;
-}
-
-void LipstickCompositorWindow::setWlShellSurface(QWaylandWlShellSurface *surface)
-{
-    m_wlShellSurface = surface;
-    connect(m_wlShellSurface.data(), &QWaylandWlShellSurface::classNameChanged,
-            this, &LipstickCompositorWindow::classNameChanged);
 }
 
 QtWayland::ExtendedSurface *LipstickCompositorWindow::extendedSurface()
@@ -132,7 +264,140 @@ void LipstickCompositorWindow::setExtendedSurface(QtWayland::ExtendedSurface *ex
     m_extSurface = extSurface;
     connect(m_extSurface.data(), &QtWayland::ExtendedSurface::windowFlagsChanged,
             this, &LipstickCompositorWindow::windowFlagsChanged);
+
+    connect(m_extSurface.data(), &QtWayland::ExtendedSurface::windowPropertyChanged,
+            this, [this](const QString &key, const QVariant &value) {
+        if (key == QLatin1String("MOUSE_REGION")) {
+            updateMouseRegion(value);
+        }
+        if (key == QLatin1String("GRABBED_KEYS")) {
+            updateGrabbedKeys(value);
+        }
+    });
 }
+
+LipstickCompositorWindow *LipstickCompositorWindow::transientParent() const
+{
+    return m_transientParent.data();
+}
+
+QPoint LipstickCompositorWindow::transientPosition() const
+{
+    return m_transientPosition;
+}
+
+void LipstickCompositorWindow::resize(const QSize &size)
+{
+    if (m_wlShellSurface) {
+        m_wlShellSurface->sendConfigure(size, QWaylandWlShellSurface::BottomLeftEdge);
+    } else if (m_alienSurface) {
+        m_alienSurface->resize(size);
+    }
+}
+
+void LipstickCompositorWindow::ping()
+{
+    if (m_wlShellSurface) {
+        m_wlShellSurface->ping();
+    } else if (m_alienSurface) {
+        m_alienSurface->ping();
+    } else if (QWaylandSurface *surface = m_xdgSurface ? QWaylandQuickItem::surface() : nullptr) {
+        m_pingSerial = m_compositor->m_xdgShell->ping(surface->client());
+    }
+}
+
+void LipstickCompositorWindow::close()
+{
+    if (m_extSurface) {
+        // Qt extension, will only work with Qt applications, difficult to find as it's a
+        // code generated member of an undocumented class. Definition is in surface-extension.xml
+        m_extSurface->send_close();
+    } else if (m_xdgSurface) {
+        // Works with applications that support xdg-shell-v5. Qt applications don't by default
+        // but can if QT_WAYLAND_SHELL_INTEGRATION=xdg-shell-v5 is exported.
+        m_xdgSurface->sendClose();
+    } else if (m_alienSurface) {
+        m_alienSurface->close();
+    } else if (QWaylandSurface *surface = m_wlShellSurface ? QWaylandQuickItem::surface() : nullptr) {
+        // This is a somewhat brutal method. It will disconnect the socket connection to the
+        // application and Qt at least does not know how to deal with that gracefully and will
+        // assert out.
+        surface->client()->close();
+    }
+}
+
+void LipstickCompositorWindow::closePopup()
+{
+    if (m_wlShellSurface) {
+        m_wlShellSurface->sendPopupDone();
+    } else if (m_xdgSurface) {
+        m_xdgSurface->sendClose();
+    } else if (m_extSurface) {
+        m_extSurface->send_close();
+    } else if (m_alienSurface) {
+        m_alienSurface->close();
+    }
+}
+
+void LipstickCompositorWindow::sendOomScore(int score)
+{
+    if (m_alienSurface) {
+        m_alienSurface->sendOomScore(score);
+    }
+}
+
+bool LipstickCompositorWindow::isExposed() const
+{
+    return m_exposed;
+}
+
+void LipstickCompositorWindow::setExposed(bool exposed)
+{
+    if (m_exposed != exposed) {
+        m_exposed = exposed;
+
+        if (m_alienSurface) {
+            if (m_exposed) {
+                m_alienSurface->show(false);
+            } else if (m_exposedAsCover) {
+                m_alienSurface->show(true);
+            } else {
+                m_alienSurface->hide();
+            }
+        } else if (m_extSurface && !m_exposedAsCover) {
+            m_extSurface->sendOnScreenVisibilityChange(m_exposed);
+        }
+
+        emit exposedChanged();
+    }
+}
+
+bool LipstickCompositorWindow::isExposedAsCover() const
+{
+    return m_exposedAsCover;
+}
+
+void LipstickCompositorWindow::setExposedAsCover(bool exposed)
+{
+    if (m_exposedAsCover != exposed) {
+        m_exposedAsCover = exposed;
+
+        if (m_exposed) {
+            // We don't care about the cover state changing because the true window is exposed..
+        } else if (m_alienSurface) {
+            if (m_exposedAsCover) {
+                m_alienSurface->show(true);
+            } else {
+                m_alienSurface->hide();
+            }
+        } else if (m_extSurface) {
+            m_extSurface->sendOnScreenVisibilityChange(m_exposedAsCover);
+        }
+
+        emit exposedAsCoverChanged();
+    }
+}
+
 
 qint16 LipstickCompositorWindow::windowFlags()
 {
@@ -142,16 +407,32 @@ qint16 LipstickCompositorWindow::windowFlags()
     return 0;
 }
 
-QVariantMap LipstickCompositorWindow::windowProperties()
+WindowPropertyMap *LipstickCompositorWindow::windowProperties()
 {
-    if (m_extSurface)
-        return m_extSurface->windowProperties();
-    return QVariantMap();
+    if (!m_windowProperties) {
+        m_windowProperties.reset(new WindowPropertyMap(m_extSurface.data(), surface()));
+    }
+    return m_windowProperties.data();
+}
+
+QVariant LipstickCompositorWindow::windowProperty(const QString &key)
+{
+    return m_extSurface
+            ? WindowPropertyMap::fixupWindowProperty(m_compositor, surface(), m_extSurface->windowProperty(key))
+            : QVariant();
 }
 
 void LipstickCompositorWindow::setTitle(const QString &title)
 {
-    m_title = title;
+    if (m_title != title) {
+        m_title = title;
+
+        emit titleChanged();
+
+        for (WindowModel *model : LipstickCompositor::instance()->m_windowModels) {
+            model->titleChanged(m_windowId);
+        }
+    }
 }
 
 QString LipstickCompositorWindow::title() const
@@ -161,14 +442,59 @@ QString LipstickCompositorWindow::title() const
 
 QString LipstickCompositorWindow::className() const
 {
-    return m_wlShellSurface
-            ? m_wlShellSurface->className()
-            : QString();
+    if (m_wlShellSurface) {
+        return m_wlShellSurface->className();
+    } else if (m_alienSurface) {
+        return m_alienSurface->className();
+    } else {
+        return QString();
+    }
 }
+
+QRect LipstickCompositorWindow::mouseRegionBounds() const
+{
+    return m_mouseRegion;
+}
+
+void LipstickCompositorWindow::updateMouseRegion(const QVariant &value)
+{
+    m_explicitMouseRegion = value.isValid();
+
+    const QRect rect = m_explicitMouseRegion
+            ? value.value<QRegion>().boundingRect()
+            : QRect(0, 0, width(), height());
+    if (m_mouseRegion != rect) {
+        m_mouseRegion = rect;
+        emit mouseRegionBoundsChanged();
+    }
+}
+
+void LipstickCompositorWindow::updateGrabbedKeys(const QVariant &value)
+{
+    const QStringList grabbedKeys = value.value<QStringList>();
+
+    if (m_grabbedKeys.isEmpty() && !grabbedKeys.isEmpty()) {
+        qApp->installEventFilter(this);
+    } else if (!m_grabbedKeys.isEmpty() && grabbedKeys.isEmpty() && m_pressedGrabbedKeys.isEmpty()) {
+        // we don't remove the event filter if m_pressedGrabbedKeys contains still some key.
+        // we wait the key release for that.
+        qApp->removeEventFilter(this);
+    }
+
+    m_grabbedKeys.clear();
+    for (const QString &key : grabbedKeys) {
+        m_grabbedKeys.append(key.toInt());
+    }
+
+    if (LipstickCompositor::instance()->debug()) {
+        qDebug() << "Window" << windowId() << "grabbed keys changed:" << grabbedKeys;
+    }
+}
+
 
 bool LipstickCompositorWindow::isTransient() const
 {
-    return m_transient;
+    return m_transientParent;
 }
 
 void LipstickCompositorWindow::imageAddref(QQuickItem *item)
@@ -222,6 +548,31 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
         }
         return false;
     }
+
+    if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
+        QKeyEvent *ke = static_cast<QKeyEvent *>(event);
+        QWaylandSurface *m_surface = surface();
+        if (QtWayland::QtKeyExtensionGlobal *ext = m_surface
+                    && (m_grabbedKeys.contains(ke->key()) || m_pressedGrabbedKeys.contains(ke->key()))
+                    && !ke->isAutoRepeat()
+                ? QtWayland::QtKeyExtensionGlobal::findIn(compositor())
+                : nullptr) {
+            if (event->type() == QEvent::KeyPress) {
+                m_pressedGrabbedKeys << ke->key();
+            }
+
+            ext->postQtKeyEvent(ke, m_surface);
+
+            if (event->type() == QEvent::KeyRelease) {
+                m_pressedGrabbedKeys.removeOne(ke->key());
+                if (m_grabbedKeys.isEmpty()) {
+                    qApp->removeEventFilter(this);
+                }
+            }
+            return true;
+        }
+    }
+
     if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         QWaylandSurface *m_surface = surface();
@@ -260,6 +611,20 @@ void LipstickCompositorWindow::itemChange(ItemChange change, const ItemChangeDat
     QWaylandQuickItem::itemChange(change, data);
 }
 
+void LipstickCompositorWindow::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
+{
+    QWaylandQuickItem::geometryChanged(newGeometry, oldGeometry);
+
+    if (!m_explicitMouseRegion) {
+        QRect rect(0, 0, width(), height());
+
+        if (m_mouseRegion != rect) {
+            m_mouseRegion = rect;
+            emit mouseRegionBoundsChanged();
+        }
+    }
+}
+
 bool LipstickCompositorWindow::event(QEvent *e)
 {
     bool rv = QWaylandQuickItem::event(e);
@@ -273,16 +638,17 @@ bool LipstickCompositorWindow::event(QEvent *e)
 void LipstickCompositorWindow::mousePressEvent(QMouseEvent *event)
 {
     QWaylandSurface *m_surface = surface();
-    if (m_surface && m_surface->inputRegionContains(event->pos()) && event->source() != Qt::MouseEventSynthesizedByQt) {
+    if (m_surface
+            && (!m_explicitMouseRegion || m_mouseRegion.contains(event->pos()))
+            && m_surface->inputRegionContains(event->pos())
+            && event->source() != Qt::MouseEventSynthesizedByQt) {
         QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(event);
-        QWaylandView *v = view();
-        if (inputDevice->mouseFocus() != v) {
-            inputDevice->setMouseFocus(v);
-            if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
-                takeFocus();
-            }
-        }
+
         inputDevice->sendMousePressEvent(event->button());
+
+        if (m_focusOnTouch) {
+            takeFocus(inputDevice);
+        }
     } else {
         event->ignore();
     }
@@ -352,7 +718,8 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
 
     if (event->touchPointStates() & Qt::TouchPointPressed) {
         foreach (const QTouchEvent::TouchPoint &p, points) {
-            if (!m_surface->inputRegionContains(p.pos().toPoint())) {
+            if ((m_explicitMouseRegion && !m_mouseRegion.contains(p.pos().toPoint()))
+                    || !m_surface->inputRegionContains(p.pos().toPoint())) {
                 event->ignore();
                 return;
             }
@@ -362,23 +729,19 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
     QWaylandSeat *inputDevice = m_surface->compositor()->seatFor(event);
     event->accept();
 
-    QWaylandView *vview = view();
-    if (vview && (!vview->surface() || vview->surface()->isCursorSurface()))
-        vview = Q_NULLPTR;
-    inputDevice->setMouseFocus(vview);
-
     QWaylandView *v = view();
     if (inputDevice->mouseFocus() != v) {
         QPoint pointPos;
         if (!points.isEmpty())
             pointPos = points.at(0).pos().toPoint();
-        inputDevice->setMouseFocus(v);
-
-        if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
-            takeFocus();
-        }
+        inputDevice->sendMouseMoveEvent(v, pointPos, mapToScene(pointPos));
     }
+
     inputDevice->sendFullTouchEvent(surface(), event);
+
+    if (event->type() == QEvent::TouchBegin && m_focusOnTouch) {
+        takeFocus(inputDevice);
+    }
 }
 
 void LipstickCompositorWindow::handleTouchCancel()
@@ -415,18 +778,6 @@ void LipstickCompositorWindow::killProcess()
     }
 }
 
-void LipstickCompositorWindow::connectSurfaceSignals()
-{
-    foreach (const QMetaObject::Connection &connection, m_surfaceConnections) {
-        disconnect(connection);
-    }
-
-    m_surfaceConnections.clear();
-    if (surface()) {
-        m_surfaceConnections << connect(surface(), &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
-    }
-}
-
 static bool hwc_windowsurface_is_enabled();
 
 typedef EGLBoolean (EGLAPIENTRYP Ptr_eglHybrisAcquireNativeBufferWL)(EGLDisplay dpy, struct wl_resource *wlBuffer, EGLClientBuffer *buffer);
@@ -439,13 +790,37 @@ static Ptr_eglHybrisReleaseNativeBuffer eglHybrisReleaseNativeBuffer;
 class LipstickCompositorWindowHwcNode : public HwcNode
 {
 public:
-    LipstickCompositorWindowHwcNode(QQuickWindow *window) : HwcNode(window), eglBuffer(0) { }
+    LipstickCompositorWindowHwcNode(QQuickWindow *window) : HwcNode(window) { }
     ~LipstickCompositorWindowHwcNode();
 
-    void update(QWaylandSurfacePrivate *s, EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode);
+    void update(EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode);
 
-    EGLClientBuffer eglBuffer;
+    EGLClientBuffer eglBuffer = nullptr;
     QWaylandBufferRef waylandBuffer;
+};
+
+class LipstickCompositorWindowNode : public QSGNode
+{
+public:
+    ~LipstickCompositorWindowNode()
+    {
+        delete hwcNode;
+        delete contentNode;
+    }
+
+    void destroyHwcNode()
+    {
+        contentNode->setFlag(QSGNode::OwnedByParent, false);
+        delete hwcNode;
+        hwcNode = nullptr;
+
+        if (!contentNode->parent()) {
+            appendChildNode(contentNode);
+        }
+    }
+
+    QSGNode *contentNode = nullptr;
+    LipstickCompositorWindowHwcNode *hwcNode = nullptr;
 };
 
 static bool lcw_checkForVisibleReferences(const QVector<QQuickItem *> &refs)
@@ -469,8 +844,25 @@ void LipstickCompositorWindow::onSync()
 
 QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data)
 {
-    if (!hwc_windowsurface_is_enabled() || m_noHardwareComposition)
+    if (!hwc_windowsurface_is_enabled()) {
         return QWaylandQuickItem::updatePaintNode(old, data);
+    }
+
+    LipstickCompositorWindowNode *node = static_cast<LipstickCompositorWindowNode *>(old);
+    QSGNode * const contentNode = QWaylandQuickItem::updatePaintNode(node ? node->contentNode : nullptr, data);
+
+    if (contentNode && !node) {
+       node = new LipstickCompositorWindowNode;
+    }
+
+    if (node) {
+        node->contentNode = contentNode;
+    }
+
+    if (!contentNode) {
+        delete node;
+        return nullptr;
+    }
 
     // qCDebug(LIPSTICK_LOG_HWC, "LipstickCompositorWindow(%p)::updatePaintNode(), old=%p", this, old);
 
@@ -483,41 +875,25 @@ QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNode
     // Added to this logic, we have the case of a window surface suddenly
     // appearing with a shm buffer. We then need to switch to normal
     // composition.
+    QWaylandBufferRef buffer = view()->currentBuffer();
+    const bool hwBuffer = !m_noHardwareComposition
+            && (buffer.bufferFormatEgl() == QWaylandBufferRef::BufferFormatEgl_RGB
+             || buffer.bufferFormatEgl() == QWaylandBufferRef::BufferFormatEgl_RGBA);
 
-                               // TODO: a327ca8d8a1f6e0a44a3aa6bd4dac716911c434e
-    bool hwBuffer = surface(); // TODO && surface()->type() == QWaylandSurface::Texture;
-    int wantedNodeType = m_hasVisibleReferences || !hwBuffer ? QSGNode::GeometryNodeType : QSG_HWC_NODE_TYPE;
-    if (old && old->type() != wantedNodeType) {
-        delete old;
-        old = 0;
-    }
-    if (m_hasVisibleReferences || !hwBuffer)
-        return QWaylandQuickItem::updatePaintNode(old, data);
-
-    // No surface, abort..
-    if (!surface() || !QWaylandSurfacePrivate::get(surface()) || !surface()->hasContent() || !textureProvider()->texture()) {
-        delete old;
-        return 0;
+    // If there is no source node or we don't want a composer node return the node from
+    // QWaylandQuickItem now.
+    if (!m_hasVisibleReferences || !hwBuffer) {
+        node->destroyHwcNode();
+        return node;
     }
 
-    // Follow the unmaplock logic inside QtWayland. If a surface is still
-    // visible but has a null buffer attached, we retain the copy we have
-    // until further notice...
-    QWaylandSurfacePrivate *s = QWaylandSurfacePrivate::get(surface());
-    wl_resource *surfaceBufferHandle = s->bufferRef.hasBuffer() ? s->bufferRef.wl_buffer() : 0;
-    if (!surfaceBufferHandle && surface()->hasContent()) {
+    // QWaylandQuickItem will return a valid source node after the surface has been destroyed
+    // if isBufferLocked() is true. If that happens don't update the compositor node and instead
+    // return the last appropriate node.
+    wl_resource *surfaceBufferHandle = buffer.hasContent() ? buffer.wl_buffer() : nullptr;
+    if (!surfaceBufferHandle) {
         qCDebug(LIPSTICK_LOG_HWC, " - visible with attached 'null' buffer, reusing previous buffer");
-        return old;
-    }
-
-    // Find the old node if applicable and call updatePaintNode on the wayland
-    // surface item. If this results in a null node, we abort.
-    LipstickCompositorWindowHwcNode *hwcNode = old ? static_cast<LipstickCompositorWindowHwcNode *>(old) : 0;
-    QSGNode *oldContentNode = hwcNode ? hwcNode->firstChild() : 0;
-    QSGNode *newContentNode = QWaylandQuickItem::updatePaintNode(oldContentNode, data);
-    if (!newContentNode) {
-        delete old;
-        return 0;
+        return node;
     }
 
     // Check if we can extract the HWC handles from the wayland buffer. If
@@ -528,25 +904,35 @@ QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *old, UpdatePaintNode
     if (!eglHybrisAcquireNativeBufferWL(display, surfaceBufferHandle, &eglBuffer)) {
         qCDebug(LIPSTICK_LOG_HWC, " - failed to acquire native buffer (buffers are probably not allocated server-side)");
         m_noHardwareComposition = true;
-        delete old;
-        return QWaylandQuickItem::updatePaintNode(0, data);
+        node->destroyHwcNode();
+        return node;
     }
     eglHybrisNativeBufferHandle(eglGetCurrentDisplay(), eglBuffer, &hwcHandle);
     Q_ASSERT(hwcHandle);
 
     // At this point we know we are visible and we have access to hwc buffers,
     // make sure we have  an HwcNode instance.
-    if (!hwcNode)
-        hwcNode = new LipstickCompositorWindowHwcNode(window());
+    if (!node->hwcNode) {
+        node->hwcNode = new LipstickCompositorWindowHwcNode(window());
+    }
 
-    // Add the new content node. The old one, if present would already have
-    // been removed because it was deleted in the
-    // QWaylandQuickItem::updatePaintNode() call above.
-    if (newContentNode != hwcNode->firstChild())
-        hwcNode->appendChildNode(newContentNode);
+    node->hwcNode->waylandBuffer = buffer;
 
-    hwcNode->update(s, eglBuffer, hwcHandle, newContentNode);
-    return hwcNode;
+    if (node->contentNode->parent() == node) {
+        node->removeChildNode(node->contentNode);
+    }
+
+    if (!node->contentNode->parent()) {
+        node->hwcNode->appendChildNode(node->contentNode);
+    }
+
+    if (!node->hwcNode->parent()) {
+        node->appendChildNode(node->hwcNode);
+    }
+
+    node->hwcNode->update(eglBuffer, hwcHandle, node->contentNode);
+
+    return node;
 }
 
 bool LipstickCompositorWindow::focusOnTouch() const
@@ -632,7 +1018,7 @@ void hwc_windowsurface_release_native_buffer(void *, void *callbackData)
     QCoreApplication::postEvent(e->eventTarget, e);
 }
 
-void LipstickCompositorWindowHwcNode::update(QWaylandSurfacePrivate *s, EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode)
+void LipstickCompositorWindowHwcNode::update(EGLClientBuffer newBuffer, void *newHandle, QSGNode *contentNode)
 {
     // If we're taking a new buffer into use when there already was
     // one, set up the old to be removed.
@@ -644,7 +1030,6 @@ void LipstickCompositorWindowHwcNode::update(QWaylandSurfacePrivate *s, EGLClien
     }
     // qCDebug(LIPSTICK_LOG_HWC, " - setting buffers on HwcNode, EGLClientBuffer=%p, gralloc=%p", newBuffer, newHandle);
     eglBuffer = newBuffer;
-    waylandBuffer = QWaylandBufferRef(s->bufferRef);
 
     Q_ASSERT(contentNode->type() == QSGNode::GeometryNodeType);
     HwcNode::update(static_cast<QSGGeometryNode *>(contentNode), newHandle);

@@ -435,10 +435,12 @@ HwcImageNode *HwcImage::updateActualPaintNode(QSGNode *old)
     if (m_updateImage) {
         tn->releaseTexture();
         QSGTexture *t = HwcImageTexture::create(m_image, window());
-        if (t)
+        if (t) {
             tn->setTexture(t);
-        else
-            tn->setTexture(window()->createTextureFromImage(m_image));
+        } else {
+            auto tx = window()->createTextureFromImage(m_image);
+            tn->setTexture(tx);
+        }
         m_image = QImage();
         m_updateImage = false;
     }
