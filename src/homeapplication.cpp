@@ -361,30 +361,51 @@ void HomeApplication::setCompositorPath(const QString &path)
     } 
 
     QScopedPointer<QObject> object(component.beginCreate(m_qmlEngine->rootContext()));
+
+    QQuickWindow *window = nullptr;
+    LipstickCompositor *compositor = nullptr;
+
     if (!object) {
         qWarning() << "HomeApplication: Error constructing compositor from" << path;
         qWarning() << component.errors();
-    } else if (LipstickCompositor *compositor = qobject_cast<LipstickCompositor*>(object.data())) {
+        return;
+    } else if ((compositor = qobject_cast<LipstickCompositor*>(object.data()))) {
         compositor->setParent(this);
 
-        if (LipstickCompositor::instance()) {
-            LipstickCompositor::instance()->quickWindow()->setGeometry(QRect(QPoint(0, 0), QGuiApplication::primaryScreen()->size()));
-            connect(m_usbModeSelector, SIGNAL(showUnlockScreen()),
-                    LipstickCompositor::instance(), SIGNAL(showUnlockScreen()));
-        }
+        window = new QQuickWindow;
+        window->QObject::setParent(this);
+        window->setColor(Qt::black);
+        window->setGeometry(QRect(QPoint(0, 0), QGuiApplication::primaryScreen()->size()));
+        window->setVisible(true);
 
-        component.completeCreate();
+        object.take();
+    } else if ((window = qobject_cast<QQuickWindow *>(object.data()))) {
+        window->QObject::setParent(this);
+        window->setGeometry(QRect(QPoint(0, 0), QGuiApplication::primaryScreen()->size()));
 
-        if (!m_qmlEngine->incubationController() && LipstickCompositor::instance()) {
-            // install default incubation controller
-            m_qmlEngine->setIncubationController(LipstickCompositor::instance()->quickWindow()->incubationController());
-        }
+        compositor = LipstickCompositor::instance();
+
         object.take();
     } else {
         component.completeCreate();
+        return;
 
         qWarning() << "HomeApplication:" << path << "is not a a compositor" << object.data();
     }
+
+    if (compositor) {
+        compositor->setQuickWindow(window);
+
+        connect(m_usbModeSelector, &USBModeSelector::showUnlockScreen,
+                compositor, &LipstickCompositor::showUnlockScreen);
+    }
+
+    if (!m_qmlEngine->incubationController()) {
+        // install default incubation controller
+        m_qmlEngine->setIncubationController(window->incubationController());
+    }
+
+    component.completeCreate();
 }
 
 HomeWindow *HomeApplication::mainWindowInstance()
