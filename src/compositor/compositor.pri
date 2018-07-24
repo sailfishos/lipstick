@@ -1,5 +1,7 @@
 system(qdbusxml2cpp compositor.xml -a lipstickcompositoradaptor -c LipstickCompositorAdaptor -l LipstickCompositor -i lipstickcompositor.h)
 
+include(alienmanager/alienmanager.pri)
+
 INCLUDEPATH += $$PWD
 
 PUBLICHEADERS += \

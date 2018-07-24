@@ -24,6 +24,7 @@ class QWaylandUnmapLock;
 
 class LipstickCompositor;
 class LipstickCompositorWindow;
+class SnapshotTextureProvider;
 class LIPSTICK_EXPORT WindowPixmapItem : public QWaylandQuickItem
 {
     Q_OBJECT
@@ -66,6 +67,9 @@ public:
     qreal yScale() const;
     void setYScale(qreal);
 
+    bool isTextureProvider() const;
+    QSGTextureProvider *textureProvider() const;
+
 protected:
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
 
@@ -96,11 +100,10 @@ private:
     qreal m_yScale = 1;
     QSize m_windowSize;
     bool m_opaque = false;
-    bool m_hasBuffer = false;
     bool m_hasPixmap = false;
     bool m_surfaceDestroyed = false;
     bool m_haveSnapshot = false;
-    QSGTextureProvider *m_textureProvider = nullptr;
+    SnapshotTextureProvider *m_textureProvider = nullptr;
 
     static struct SnapshotProgram *s_snapshotProgram;
 };

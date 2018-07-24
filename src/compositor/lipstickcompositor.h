@@ -43,6 +43,9 @@ class QWaylandOutput;
 
 QT_END_NAMESPACE
 
+class AlienClient;
+class AlienManager;
+class AlienSurface;
 class WindowModel;
 class WindowPropertyMap;
 class LipstickCompositorWindow;
@@ -185,8 +188,10 @@ private:
 
     void onShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface);
     void onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface);
+    void onAlienSurfaceCreated(AlienSurface *alienSurface, QWaylandSurface *surface);
     void onExtendedSurfaceReady(QtWayland::ExtendedSurface *extSurface, QWaylandSurface *surface);
 
+    friend class AlienClient;
     friend class LipstickCompositorWindow;
     friend class LipstickCompositorProcWindow;
     friend class WindowModel;
@@ -220,6 +225,8 @@ private:
     QScopedPointer<QWaylandOutput> m_output;
     QScopedPointer<QWaylandWlShell> m_wlShell;
     QScopedPointer<QWaylandXdgShellV5> m_xdgShell;
+    QScopedPointer<AlienManager> m_alienManager;
+    QScopedPointer<QtWayland::SurfaceExtensionGlobal> m_surfExtGlob;
     QQmlComponent *m_shaderEffect;
     QPointer<QWaylandSurface> m_fullscreenSurface;
     bool m_directRenderingActive;
@@ -235,7 +242,6 @@ private:
     bool m_completed;
     int m_onUpdatesDisabledUnfocusedWindowId;
     bool m_fakeRepaintTriggered;
-    QtWayland::SurfaceExtensionGlobal *m_surfExtGlob;
 };
 
 #endif // LIPSTICKCOMPOSITOR_H

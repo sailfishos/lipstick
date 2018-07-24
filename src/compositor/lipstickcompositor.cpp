@@ -40,6 +40,8 @@
 
 #include <QWaylandXdgShellV5>
 
+#include "alienmanager/alienmanager.h"
+
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()
@@ -73,8 +75,10 @@ LipstickCompositor::LipstickCompositor()
     m_xdgShell.reset(new QWaylandXdgShellV5(this));
     connect(m_xdgShell.data(), &QWaylandXdgShellV5::xdgSurfaceCreated, this, &LipstickCompositor::onXdgSurfaceCreated);
 
-    m_surfExtGlob = new QtWayland::SurfaceExtensionGlobal(this);
-    connect(m_surfExtGlob, &QtWayland::SurfaceExtensionGlobal::extendedSurfaceReady, this, &LipstickCompositor::onExtendedSurfaceReady);
+    m_alienManager.reset(new AlienManager(this));
+
+    m_surfExtGlob.reset(new QtWayland::SurfaceExtensionGlobal(this));
+    connect(m_surfExtGlob.data(), &QtWayland::SurfaceExtensionGlobal::extendedSurfaceReady, this, &LipstickCompositor::onExtendedSurfaceReady);
 
     setRetainedSelectionEnabled(true);
 
@@ -210,6 +214,23 @@ void LipstickCompositor::onExtendedSurfaceReady(QtWayland::ExtendedSurface *extS
     LipstickCompositorWindow *window = surfaceWindow(surface);
     if(window)
         window->setExtendedSurface(extSurface);
+
+    connect(extSurface, &QtWayland::ExtendedSurface::raiseRequested, this, [this, window]() {
+        windowRaised(window);
+    });
+    connect(extSurface, &QtWayland::ExtendedSurface::lowerRequested, this, [this, window]() {
+        windowLowered(window);
+    });
+}
+
+void LipstickCompositor::onAlienSurfaceCreated(AlienSurface *alienSurface, QWaylandSurface *surface)
+{
+    LipstickCompositorWindow * const item = new LipstickCompositorWindow(m_nextWindowId++, alienSurface);
+
+    m_windows.insert(item->windowId(), item);
+
+    connect(surface, &QWaylandSurface::damaged, this, &LipstickCompositor::surfaceDamaged);
+    connect(surface, &QWaylandSurface::redraw, this, &LipstickCompositor::windowSwapped);
 }
 
 bool LipstickCompositor::openUrl(QWaylandClient *client, const QUrl &url)

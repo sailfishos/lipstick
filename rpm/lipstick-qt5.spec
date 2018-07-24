@@ -113,6 +113,7 @@ Translation files for the lipstick package.
 %qmake5 VERSION=%{version}
 
 make %{?_smp_mflags}
+make -C doc lipstick_doc notification_doc
 
 %install
 rm -rf %{buildroot}
@@ -154,11 +155,11 @@ mkdir -p %{buildroot}/%{icondirectory}
 
 %files doc
 %defattr(-,root,root,-)
-#%{_datadir}/doc/lipstick/*
+%{_datadir}/doc/lipstick/*
 
 %files notification-doc
 %defattr(-,root,root,-)
-#%{_datadir}/doc/lipstick-notification/*
+%{_datadir}/doc/lipstick-notification/*
 
 %files ts-devel
 %defattr(-,root,root,-)

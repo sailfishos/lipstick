@@ -33,6 +33,7 @@
 
 #include <QQmlEngine>
 #include <QWaylandXdgSurfaceV5>
+#include "alienmanager/aliensurface.h"
 
 LipstickCompositorWindow::LipstickCompositorWindow(
         int windowId, const QString &category, QWaylandSurface *surface)
@@ -50,6 +51,8 @@ LipstickCompositorWindow::LipstickCompositorWindow(
     , m_focusOnTouch(false)
     , m_hasVisibleReferences(false)
     , m_transient(false)
+    , m_exposed(true)
+    , m_exposedAsCover(false)
 {
     setFlags(QQuickItem::ItemIsFocusScope | flags());
 
@@ -171,6 +174,19 @@ LipstickCompositorWindow::LipstickCompositorWindow(
     setTitle(m_xdgSurface->title());
 }
 
+LipstickCompositorWindow::LipstickCompositorWindow(int windowId, AlienSurface *alienSurface)
+    : LipstickCompositorWindow(windowId, QString(), alienSurface->surface())
+{
+    m_alienSurface = alienSurface;
+    m_isAlien = true;
+
+    connect(m_alienSurface.data(), &AlienSurface::titleChanged, this, &LipstickCompositorWindow::setTitle);
+    connect(m_alienSurface.data(), &AlienSurface::pong, this, &LipstickCompositorWindow::pong);
+
+    setTitle(m_alienSurface->title());
+}
+
+
 LipstickCompositorWindow::~LipstickCompositorWindow()
 {
     // We don't want tryRemove() posting an event anymore, we're dying anyway
@@ -247,6 +263,8 @@ void LipstickCompositorWindow::resize(const QSize &size)
 {
     if (m_wlShellSurface) {
         m_wlShellSurface->sendConfigure(size, QWaylandWlShellSurface::BottomLeftEdge);
+    } else if (m_alienSurface) {
+        m_alienSurface->resize(size);
     }
 }
 
@@ -269,6 +287,8 @@ void LipstickCompositorWindow::close()
         // Works with applications that support xdg-shell-v5. Qt applications don't by default
         // but can if QT_WAYLAND_SHELL_INTEGRATION=xdg-shell-v5 is exported.
         m_xdgSurface->sendClose();
+    } else if (m_alienSurface) {
+        m_alienSurface->close();
     } else if (QWaylandSurface *surface = m_wlShellSurface ? QWaylandQuickItem::surface() : nullptr) {
         // This is a somewhat brutal method. It will disconnect the socket connection to the
         // application and Qt at least does not know how to deal with that gracefully and will
@@ -285,8 +305,60 @@ void LipstickCompositorWindow::closePopup()
         m_xdgSurface->sendClose();
     } else if (m_extSurface) {
         m_extSurface->send_close();
+    } else if (m_alienSurface) {
+        m_alienSurface->close();
     }
 }
+
+
+bool LipstickCompositorWindow::isExposed() const
+{
+    return m_exposed;
+}
+
+void LipstickCompositorWindow::setExposed(bool exposed)
+{
+    if (m_exposed != exposed) {
+        m_exposed = exposed;
+
+        if (m_alienSurface) {
+            if (m_exposed) {
+                m_alienSurface->show(false);
+            } else if (m_exposedAsCover) {
+                m_alienSurface->show(true);
+            } else {
+                m_alienSurface->hide();
+            }
+        }
+
+        emit exposedChanged();
+    }
+}
+
+bool LipstickCompositorWindow::isExposedAsCover() const
+{
+    return m_exposedAsCover;
+}
+
+void LipstickCompositorWindow::setExposedAsCover(bool exposed)
+{
+    if (m_exposedAsCover != exposed) {
+        m_exposedAsCover = exposed;
+
+        if (m_alienSurface) {
+            if (m_exposed) {
+                // We don't care about the cover state.
+            } else if (m_exposedAsCover) {
+                m_alienSurface->show(true);
+            } else {
+                m_alienSurface->hide();
+            }
+        }
+
+        emit exposedAsCoverChanged();
+    }
+}
+
 
 qint16 LipstickCompositorWindow::windowFlags()
 {

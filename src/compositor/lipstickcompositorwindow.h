@@ -34,9 +34,9 @@ class QWaylandXdgSurfaceV5;
 
 QT_END_NAMESPACE
 
+class AlienSurface;
 class LipstickCompositor;
 class LipstickCompositorWindowHwcNode;
-
 class WindowPropertyMap;
 
 class LIPSTICK_EXPORT LipstickCompositorWindow : public QWaylandQuickItem
@@ -58,12 +58,16 @@ class LIPSTICK_EXPORT LipstickCompositorWindow : public QWaylandQuickItem
 
     Q_PROPERTY(bool focusOnTouch READ focusOnTouch WRITE setFocusOnTouch NOTIFY focusOnTouchChanged)
 
+    Q_PROPERTY(bool exposed READ isExposed WRITE setExposed NOTIFY exposedChanged)
+    Q_PROPERTY(bool exposedAsCover READ isExposedAsCover WRITE setExposedAsCover NOTIFY exposedAsCoverChanged)
+
     Q_PROPERTY(WindowPropertyMap *properties READ windowProperties CONSTANT)
 
 public:
     LipstickCompositorWindow(int windowId, const QString &, QWaylandSurface *surface = nullptr);
     LipstickCompositorWindow(int windowId, const QString &, QWaylandWlShellSurface *wlSurface);
     LipstickCompositorWindow(int windowId, const QString &, QWaylandXdgSurfaceV5 *xdgSurface);
+    LipstickCompositorWindow(int windowId, AlienSurface *alienSurface);
     ~LipstickCompositorWindow();
 
     QVariant userData() const;
@@ -99,6 +103,12 @@ public:
     WindowPropertyMap *windowProperties();
     QVariant windowProperty(const QString &key);
 
+    bool isExposed() const;
+    void setExposed(bool exposed);
+
+    bool isExposedAsCover() const;
+    void setExposedAsCover(bool exposed);
+
     QtWayland::ExtendedSurface *extendedSurface();
 
     Q_INVOKABLE void resize(const QSize &size);
@@ -126,6 +136,8 @@ signals:
     void focusOnTouchChanged();
     void windowFlagsChanged();
     void pong();
+    void exposedChanged();
+    void exposedAsCoverChanged();
 
 private slots:
     void handleTouchCancel();
@@ -153,6 +165,7 @@ private:
     QPointer<QtWayland::ExtendedSurface> m_extSurface;
     QPointer<QWaylandWlShellSurface> m_wlShellSurface;
     QPointer<QWaylandXdgSurfaceV5> m_xdgSurface;
+    QPointer<AlienSurface> m_alienSurface;
     QScopedPointer<WindowPropertyMap> m_windowProperties;
 
     LipstickCompositor * const m_compositor;
@@ -168,6 +181,8 @@ private:
     bool m_focusOnTouch : 1;
     bool m_hasVisibleReferences : 1;
     bool m_transient : 1;
+    bool m_exposed : 1;
+    bool m_exposedAsCover : 1;
 };
 
 #endif // LIPSTICKCOMPOSITORWINDOW_H

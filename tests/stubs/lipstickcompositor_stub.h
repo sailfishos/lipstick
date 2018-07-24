@@ -12,8 +12,12 @@
 QT_BEGIN_NAMESPACE
 namespace QtWayland {
 class ExtendedSurface : public QObject {};
+class SurfaceExtensionGlobal {};
 }
 QT_END_NAMESPACE
+
+
+class AlienManager {};
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
