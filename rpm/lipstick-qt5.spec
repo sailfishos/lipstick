@@ -154,11 +154,11 @@ mkdir -p %{buildroot}/%{icondirectory}
 
 %files doc
 %defattr(-,root,root,-)
-#%{_datadir}/doc/lipstick/*
+%{_datadir}/doc/lipstick/*
 
 %files notification-doc
 %defattr(-,root,root,-)
-#%{_datadir}/doc/lipstick-notification/*
+%{_datadir}/doc/lipstick-notification/*
 
 %files ts-devel
 %defattr(-,root,root,-)
