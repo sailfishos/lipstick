@@ -17,15 +17,12 @@
 #define CONNECTIONSELECTOR_H
 
 #include <QObject>
-#include "lipstickglobal.h"
+#include <lipstickglobal.h>
+#include <lipstickwindow.h>
 
-class HomeWindow;
-
-class LIPSTICK_EXPORT ConnectionSelector : public QObject
+class LIPSTICK_EXPORT ConnectionSelector : public LipstickWindow
 {
     Q_OBJECT
-    Q_PROPERTY(bool windowVisible READ windowVisible WRITE setWindowVisible NOTIFY windowVisibleChanged)
-
 public:
     /*!
      * Creates a connection selector.
@@ -39,32 +36,11 @@ public:
      */
     virtual ~ConnectionSelector();
 
-    /*!
-     * Returns whether the window is visible or not.
-     *
-     * \return \c true if the window is visible, \c false otherwise
-     */
-    bool windowVisible() const;
-
-    /*!
-     * Sets the visibility of the window.
-     *
-     * \param visible \c true if the window should be visible, \c false otherwise
-     */
-    void setWindowVisible(bool visible);
-
 private slots:
     /*!
      * Creates the window.
      */
-    void createWindow();
-
-signals:
-    //! Sent when the visibility of the window has changed.
-    void windowVisibleChanged();
-
-private:
-    HomeWindow *m_window;
+    void createWindow() override;
 };
 
 #endif // CONNECTIONSELECTOR_H

@@ -28,42 +28,11 @@
 #include "lipstickqmlpath.h"
 
 ShutdownScreen::ShutdownScreen(QObject *parent) :
-    QObject(parent),
+    LipstickWindow (parent),
     QDBusContext(),
-    m_window(0),
-    m_systemState(new MeeGo::QmSystemState(this))
+     m_systemState(new MeeGo::QmSystemState(this))
 {
     connect(m_systemState, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)), this, SLOT(applySystemState(MeeGo::QmSystemState::StateIndication)));
-}
-
-void ShutdownScreen::setWindowVisible(bool visible)
-{
-    if (visible) {
-        if (m_window == 0) {
-            m_window = new HomeWindow();
-            m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-            m_window->setCategory(QLatin1String("notification"));
-            m_window->setWindowTitle("Shutdown");
-            m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-            m_window->setContextProperty("shutdownScreen", this);
-            m_window->setContextProperty("shutdownMode", m_shutdownMode);
-            m_window->setSource(QmlPath::to("system/ShutdownScreen.qml"));
-            m_window->installEventFilter(new CloseEventEater(this));
-        }
-
-        if (!m_window->isVisible()) {
-            m_window->show();
-            emit windowVisibleChanged();
-        }
-    } else if (m_window != 0 && m_window->isVisible()) {
-        m_window->hide();
-        emit windowVisibleChanged();
-    }
-}
-
-bool ShutdownScreen::windowVisible() const
-{
-    return m_window != 0 && m_window->isVisible();
 }
 
 void ShutdownScreen::applySystemState(MeeGo::QmSystemState::StateIndication what)
@@ -100,6 +69,21 @@ void ShutdownScreen::applySystemState(MeeGo::QmSystemState::StateIndication what
 
         default:
             break;
+    }
+}
+
+void ShutdownScreen::createWindow()
+{
+    if (!m_window) {
+        m_window = new HomeWindow();
+        m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+        m_window->setCategory(QLatin1String("notification"));
+        m_window->setWindowTitle("Shutdown");
+        m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+        m_window->setContextProperty("shutdownScreen", this);
+        m_window->setContextProperty("shutdownMode", m_shutdownMode);
+        m_window->setSource(QmlPath::to("system/ShutdownScreen.qml"));
+        m_window->installEventFilter(new CloseEventEater(this));
     }
 }
 

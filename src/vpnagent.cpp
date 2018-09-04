@@ -27,8 +27,7 @@
 #include "lipstickqmlpath.h"
 
 VpnAgent::VpnAgent(QObject *parent) :
-    QObject(parent),
-    m_window(0),
+    LipstickWindow(parent),
     m_connections(new VpnModel(this))
 {
     QTimer::singleShot(0, this, SLOT(createWindow()));
@@ -36,37 +35,20 @@ VpnAgent::VpnAgent(QObject *parent) :
 
 VpnAgent::~VpnAgent()
 {
-    delete m_window;
 }
 
 void VpnAgent::createWindow()
 {
-    m_window = new HomeWindow();
-    m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-    m_window->setCategory(QLatin1String("dialog"));
-    m_window->setWindowTitle("VPN Agent");
-    m_window->setContextProperty("vpnAgent", this);
-    m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-    m_window->setSource(QmlPath::to("connectivity/VpnAgent.qml"));
-    m_window->installEventFilter(new CloseEventEater(this));
-}
-
-void VpnAgent::setWindowVisible(bool visible)
-{
-    if (visible) {
-        if (!m_window->isVisible()) {
-            m_window->showFullScreen();
-            emit windowVisibleChanged();
-        }
-    } else if (m_window != 0 && m_window->isVisible()) {
-        m_window->hide();
-        emit windowVisibleChanged();
+    if (!m_window) {
+        m_window = new HomeWindow();
+        m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+        m_window->setCategory(QLatin1String("dialog"));
+        m_window->setWindowTitle("VPN Agent");
+        m_window->setContextProperty("vpnAgent", this);
+        m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+        m_window->setSource(QmlPath::to("connectivity/VpnAgent.qml"));
+        m_window->installEventFilter(new CloseEventEater(this));
     }
-}
-
-bool VpnAgent::windowVisible() const
-{
-    return m_window != 0 && m_window->isVisible();
 }
 
 void VpnAgent::respond(const QString &path, const QVariantMap &details)

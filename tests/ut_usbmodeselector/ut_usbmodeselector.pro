@@ -7,6 +7,7 @@ QT += qml quick dbus
 
 # unit test and unit
 SOURCES += \
+    $$SRCDIR/lipstickwindow.cpp \
     $$SRCDIR/usbmodeselector.cpp \
     $$NOTIFICATIONSRCDIR/lipsticknotification.cpp \
     $$STUBSDIR/stubbase.cpp \
@@ -14,6 +15,7 @@ SOURCES += \
     qusbmoded_stub.cpp
 
 HEADERS += \
+    $$SRCDIR/lipstickwindow.h \
     $$SRCDIR/usbmodeselector.h \
     $$NOTIFICATIONSRCDIR/notificationmanager.h \
     $$NOTIFICATIONSRCDIR/lipsticknotification.h \

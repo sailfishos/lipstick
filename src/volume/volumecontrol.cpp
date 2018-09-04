@@ -33,8 +33,7 @@
 #include <mce/mode-names.h>
 
 VolumeControl::VolumeControl(QObject *parent) :
-    QObject(parent),
-    m_window(0),
+    LipstickWindow(parent),
     m_pulseAudioControl(new PulseAudioControl(this)),
     m_hwKeyResource(new ResourcePolicy::ResourceSet("event")),
     m_hwKeysAcquired(false),
@@ -96,7 +95,6 @@ VolumeControl::~VolumeControl()
     m_mceRequest = 0;
 
     m_hwKeyResource->deleteResource(ResourcePolicy::ScaleButtonType);
-    delete m_window;
 }
 
 void VolumeControl::inputPolicyChanged(const QString &status)
@@ -159,24 +157,6 @@ int VolumeControl::safeVolume() const
 int VolumeControl::restrictedVolume() const
 {
     return !warningAcknowledged() ? safeVolume() : maximumVolume();
-}
-
-void VolumeControl::setWindowVisible(bool visible)
-{
-    if (visible) {
-        if (m_window && !m_window->isVisible()) {
-            m_window->show();
-            emit windowVisibleChanged();
-        }
-    } else if (m_window != 0 && m_window->isVisible()) {
-        m_window->hide();
-        emit windowVisibleChanged();
-    }
-}
-
-bool VolumeControl::windowVisible() const
-{
-    return m_window != 0 && m_window->isVisible();
 }
 
 bool VolumeControl::warningAcknowledged() const
@@ -357,13 +337,15 @@ void VolumeControl::handleMediaStateChanged(const QString &state)
 
 void VolumeControl::createWindow()
 {
-    m_window = new HomeWindow();
-    m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-    m_window->setCategory(QLatin1String("notification"));
-    m_window->setWindowTitle("Volume");
-    m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-    m_window->setSource(QmlPath::to("volumecontrol/VolumeControl.qml"));
-    m_window->installEventFilter(new CloseEventEater(this));
+    if (!m_window) {
+        m_window = new HomeWindow();
+        m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+        m_window->setCategory(QLatin1String("notification"));
+        m_window->setWindowTitle("Volume");
+        m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+        m_window->setSource(QmlPath::to("volumecontrol/VolumeControl.qml"));
+        m_window->installEventFilter(new CloseEventEater(this));
+    }
 }
 
 bool VolumeControl::eventFilter(QObject *, QEvent *event)

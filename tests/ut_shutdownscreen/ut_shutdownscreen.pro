@@ -8,6 +8,7 @@ PKGCONFIG += dsme_dbus_if thermalmanager_dbus_if usb_moded
 
 # unit test and unit
 SOURCES += \
+    $$SRCDIR/lipstickwindow.cpp \
     $$SRCDIR/shutdownscreen.cpp \
     $$NOTIFICATIONSRCDIR/lipsticknotification.cpp \
     $$STUBSDIR/stubbase.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
     ut_shutdownscreen.cpp
 
 HEADERS += \
+    $$SRCDIR/lipstickwindow.h \
     $$SRCDIR/shutdownscreen.h \
     $$NOTIFICATIONSRCDIR/notificationmanager.h \
     $$NOTIFICATIONSRCDIR/lipsticknotification.h \

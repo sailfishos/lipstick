@@ -18,32 +18,16 @@
 
 #include <QObject>
 #include <QDBusContext>
-#include "lipstickglobal.h"
+#include <lipstickglobal.h>
+#include <lipstickwindow.h>
 #include <qmsystemstate.h>
 
-class HomeWindow;
-
-class LIPSTICK_EXPORT ShutdownScreen : public QObject, protected QDBusContext
+class LIPSTICK_EXPORT ShutdownScreen : public LipstickWindow, protected QDBusContext
 {
     Q_OBJECT
-    Q_PROPERTY(bool windowVisible READ windowVisible WRITE setWindowVisible NOTIFY windowVisibleChanged)
 
 public:
     explicit ShutdownScreen(QObject *parent = 0);
-
-    /*!
-     * Returns whether the window is visible or not.
-     *
-     * \return \c true if the window is visible, \c false otherwise
-     */
-    bool windowVisible() const;
-
-    /*!
-     * Sets the visibility of the window.
-     *
-     * \param visible \c true if the window should be visible, \c false otherwise
-     */
-    void setWindowVisible(bool visible);
 
     /*!
      * Sets the shutdown mode for showing the shutdown screen.
@@ -51,10 +35,6 @@ public:
      * \param mode a UI frontend specific shutdown mode identifier
      */
     void setShutdownMode(const QString &mode);
-
-signals:
-    //! Sent when the visibility of the window has changed.
-    void windowVisibleChanged();
 
 private slots:
     /*!
@@ -65,6 +45,8 @@ private slots:
      */
     void applySystemState(MeeGo::QmSystemState::StateIndication what);
 
+    void createWindow() override;
+
 private:
     /*!
      * Shows a system notification.
@@ -73,9 +55,6 @@ private:
      * \param body the body text of the notification
      */
     void createAndPublishNotification(const QString &category, const QString &body);
-
-    //! The volume control window
-    HomeWindow *m_window;
 
     //! For getting the system state
     MeeGo::QmSystemState *m_systemState;

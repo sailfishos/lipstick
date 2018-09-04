@@ -19,39 +19,24 @@
 #include <QObject>
 #include <QMap>
 #include <QStringList>
-#include "lipstickglobal.h"
+#include <lipstickglobal.h>
+#include <lipstickwindow.h>
 
-class HomeWindow;
 class QUsbModed;
 
 namespace NemoDeviceLock {
 class DeviceLock;
 }
 
-class LIPSTICK_EXPORT USBModeSelector : public QObject
+class LIPSTICK_EXPORT USBModeSelector : public LipstickWindow
 {
     Q_OBJECT
-    Q_PROPERTY(bool windowVisible READ windowVisible WRITE setWindowVisible NOTIFY windowVisibleChanged)
     Q_PROPERTY(QStringList supportedUSBModes READ supportedUSBModes NOTIFY supportedUSBModesChanged)
     Q_PROPERTY(QStringList availableUSBModes READ availableUSBModes NOTIFY availableUSBModesChanged)
 
 public:
 
     explicit USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent = 0);
-    
-    /*!
-     * Returns whether the window is visible or not.
-     *
-     * \return \c true if the window is visible, \c false otherwise
-     */
-    bool windowVisible() const;
-
-    /*!
-     * Sets the visibility of the window.
-     *
-     * \param visible \c true if the window should be visible, \c false otherwise
-     */
-    void setWindowVisible(bool visible);
 
     /*!
      * Returns the supported USB modes.
@@ -75,12 +60,6 @@ public:
     Q_INVOKABLE void setUSBMode(QString mode);
 
 signals:
-    //! Signaled when the USB mode dialog is shown.
-    void dialogShown();
-
-    //! Sent when the visibility of the window has changed.
-    void windowVisibleChanged();
-
     //! Sent when the supported USB modes have changed.
     void supportedUSBModesChanged();
 
@@ -109,6 +88,8 @@ private slots:
      */
     void applyCurrentUSBMode();
 
+    void createWindow() override;
+
 private:
 
     /*!
@@ -124,9 +105,6 @@ private:
 
     //! Error code to translation ID mapping
     static QMap<QString, QString> s_errorCodeToTranslationID;
-
-    //! The volume control window
-    HomeWindow *m_window;
 
     //! For getting and setting the USB mode
     QUsbModed *m_usbMode;

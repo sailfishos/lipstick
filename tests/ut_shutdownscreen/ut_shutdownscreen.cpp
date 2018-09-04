@@ -32,7 +32,7 @@ void QQuickView::setSource(const QUrl &)
 }
 
 QHash<QWindow *, bool> qWindowVisible;
-void QWindow::show()
+void QWindow::showFullScreen()
 {
     qWindowVisible[this] = true;
 }

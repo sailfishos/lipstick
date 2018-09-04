@@ -34,6 +34,7 @@ PUBLICHEADERS += \
     homewindow.h \
     lipstickglobal.h \
     lipsticksettings.h \
+    lipstickwindow.h \
     lipstickdbus.h \
     lipstickqmlpath.h \
     components/launcheritem.h \
@@ -120,6 +121,7 @@ SOURCES += \
     volume/volumecontrol.cpp \
     volume/pulseaudiocontrol.cpp \
     notifications/notificationfeedbackplayer.cpp \
+    lipstickwindow.cpp \
     usbmodeselector.cpp \
     shutdownscreen.cpp \
     shutdownscreenadaptor.cpp \

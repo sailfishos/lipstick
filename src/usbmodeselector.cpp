@@ -29,8 +29,7 @@
 QMap<QString, QString> USBModeSelector::s_errorCodeToTranslationID;
 
 USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent) :
-    QObject(parent),
-    m_window(0),
+    LipstickWindow(parent),
     m_usbMode(new QUsbModed(this)),
     m_deviceLock(deviceLock),
     m_previousNotificationId(0)
@@ -56,36 +55,19 @@ void USBModeSelector::applyCurrentUSBMode()
     applyUSBMode(m_usbMode->currentMode());
 }
 
-void USBModeSelector::setWindowVisible(bool visible)
+void USBModeSelector::createWindow()
 {
-    if (visible) {
-        emit dialogShown();
-
-        if (m_window == 0) {
-            m_window = new HomeWindow();
-            m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-            m_window->setCategory(QLatin1String("dialog"));
-            m_window->setWindowTitle("USB Mode");
-            m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-            m_window->setContextProperty("usbModeSelector", this);
-            m_window->setContextProperty("USBMode", m_usbMode);
-            m_window->setSource(QmlPath::to("connectivity/USBModeSelector.qml"));
-            m_window->installEventFilter(new CloseEventEater(this));
-        }
-
-        if (!m_window->isVisible()) {
-            m_window->show();
-            emit windowVisibleChanged();
-        }
-    } else if (m_window != 0 && m_window->isVisible()) {
-        m_window->hide();
-        emit windowVisibleChanged();
+    if (!m_window) {
+        m_window = new HomeWindow();
+        m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+        m_window->setCategory(QLatin1String("dialog"));
+        m_window->setWindowTitle("USB Mode");
+        m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+        m_window->setContextProperty("usbModeSelector", this);
+        m_window->setContextProperty("USBMode", m_usbMode);
+        m_window->setSource(QmlPath::to("connectivity/USBModeSelector.qml"));
+        m_window->installEventFilter(new CloseEventEater(this));
     }
-}
-
-bool USBModeSelector::windowVisible() const
-{
-    return m_window != 0 && m_window->isVisible();
 }
 
 QStringList USBModeSelector::supportedUSBModes() const
@@ -102,9 +84,6 @@ void USBModeSelector::applyUSBMode(QString mode)
 {
     if (mode == QUsbModed::Mode::Connected) {
         if (m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked) {
-            // When the device lock is on and USB is connected, always pretend that the USB mode selection dialog is shown to unlock the touch screen lock
-            emit dialogShown();
-
             if (m_usbMode->configMode() != QUsbModed::Mode::Charging) {
                 // Show a notification instead if configured USB mode is not charging only.
                 NotificationManager *manager = NotificationManager::instance();

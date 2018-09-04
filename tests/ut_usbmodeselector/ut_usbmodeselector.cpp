@@ -60,6 +60,11 @@ void HomeWindow::show()
     homeWindowVisible[this] = true;
 }
 
+void HomeWindow::showFullScreen()
+{
+    homeWindowVisible[this] = true;
+}
+
 void HomeWindow::hide()
 {
     homeWindowVisible[this] = false;
@@ -133,7 +138,7 @@ void Ut_USBModeSelector::testShowDialog()
 {
     QFETCH(QString, mode);
 
-    QSignalSpy spy(usbModeSelector, SIGNAL(dialogShown()));
+    QSignalSpy spy(usbModeSelector, SIGNAL(windowVisibleChanged()));
     usbModeSelector->m_usbMode->setConfigMode(mode);
     usbModeSelector->applyUSBMode(mode);
 
@@ -219,7 +224,7 @@ void Ut_USBModeSelector::testConnectingUSBWhenDeviceIsLockedEmitsDialogShown()
     QFETCH(NemoDeviceLock::DeviceLock::LockState, deviceLocked);
     QFETCH(int, dialogShownCount);
 
-    QSignalSpy spy(usbModeSelector, SIGNAL(dialogShown()));
+    QSignalSpy spy(usbModeSelector, SIGNAL(showUnlockScreen()));
     deviceLock->setState(deviceLocked);
     usbModeSelector->applyUSBMode(QUsbModed::Mode::Connected);
     QCOMPARE(spy.count(), dialogShownCount);

@@ -8,6 +8,7 @@ QMAKE_CXXFLAGS += `pkg-config --cflags-only-I mlite5`
 
 HEADERS += \
     ut_volumecontrol.h \
+    $$SRCDIR/lipstickwindow.h \
     $$VOLUMESRCDIR/volumecontrol.h \
     $$VOLUMESRCDIR/pulseaudiocontrol.h \
     $$UTILITYSRCDIR/closeeventeater.h \
@@ -17,6 +18,7 @@ HEADERS += \
 
 SOURCES += \
     ut_volumecontrol.cpp \
+    $$SRCDIR/lipstickwindow.cpp \
     $$VOLUMESRCDIR/volumecontrol.cpp \
     $$STUBSDIR/stubbase.cpp \
     $$STUBSDIR/homewindow.cpp \

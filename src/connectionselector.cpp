@@ -25,44 +25,27 @@
 #include "connectionselector.h"
 #include "lipstickqmlpath.h"
 
-ConnectionSelector::ConnectionSelector(QObject *parent) :
-    QObject(parent),
-    m_window(0)
+ConnectionSelector::ConnectionSelector(QObject *parent)
+    : LipstickWindow(parent)
 {
     QTimer::singleShot(0, this, SLOT(createWindow()));
 }
 
 ConnectionSelector::~ConnectionSelector()
 {
-    delete m_window;
+
 }
 
 void ConnectionSelector::createWindow()
 {
-    m_window = new HomeWindow();
-    m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
-    m_window->setCategory(QLatin1String("dialog"));
-    m_window->setWindowTitle("Connection");
-    m_window->setContextProperty("connectionSelector", this);
-    m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
-    m_window->setSource(QmlPath::to("connectivity/ConnectionSelector.qml"));
-    m_window->installEventFilter(new CloseEventEater(this));
-}
-
-void ConnectionSelector::setWindowVisible(bool visible)
-{
-    if (visible) {
-        if (!m_window->isVisible()) {
-            m_window->showFullScreen();
-            emit windowVisibleChanged();
-        }
-    } else if (m_window != 0 && m_window->isVisible()) {
-        m_window->hide();
-        emit windowVisibleChanged();
+    if (!m_window) {
+        m_window = new HomeWindow();
+        m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
+        m_window->setCategory(QLatin1String("dialog"));
+        m_window->setWindowTitle("Connection");
+        m_window->setContextProperty("connectionSelector", this);
+        m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+        m_window->setSource(QmlPath::to("connectivity/ConnectionSelector.qml"));
+        m_window->installEventFilter(new CloseEventEater(this));
     }
-}
-
-bool ConnectionSelector::windowVisible() const
-{
-    return m_window != 0 && m_window->isVisible();
 }
