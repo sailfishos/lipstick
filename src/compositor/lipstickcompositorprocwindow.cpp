@@ -28,11 +28,10 @@ LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &t
 {
     int id = m_nextWindowId++;
 
-    LipstickCompositorProcWindow *item = new LipstickCompositorProcWindow(id, category, m_window->contentItem());
+    LipstickCompositorProcWindow *item = new LipstickCompositorProcWindow(id, category);
     item->setSize(g.size());
     item->setTitle(title);
     item->setRootItem(rootItem);
-    QObject::connect(item, SIGNAL(destroyed(QObject*)), this, SLOT(windowDestroyed()));
     m_totalWindowCount++;
     m_mappedSurfaces.insert(id, item);
     m_windows.insert(id, item);
@@ -50,8 +49,8 @@ LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &t
     return item;
 }
 
-LipstickCompositorProcWindow::LipstickCompositorProcWindow(int windowId, const QString &c, QQuickItem *parent)
-: LipstickCompositorWindow(windowId, c, 0, parent)
+LipstickCompositorProcWindow::LipstickCompositorProcWindow(int windowId, const QString &category)
+    : LipstickCompositorWindow(windowId, category)
 {
 }
 
@@ -61,26 +60,12 @@ LipstickCompositorProcWindow::LipstickCompositorProcWindow(int windowId, const Q
 void LipstickCompositorProcWindow::hide()
 {
     LipstickCompositor *c = LipstickCompositor::instance();
-    c->surfaceUnmapped(this);
+    c->surfaceUnmapped(this, nullptr);
 }
 
 bool LipstickCompositorProcWindow::isInProcess() const
 {
     return true;
-}
-
-QString LipstickCompositorProcWindow::title() const
-{
-    return m_title;
-}
-
-void LipstickCompositorProcWindow::setTitle(const QString &t)
-{
-    if (t == m_title)
-        return;
-
-    m_title = t;
-    titleChanged();
 }
 
 QQuickItem *LipstickCompositorProcWindow::rootItem()

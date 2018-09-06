@@ -1,5 +1,7 @@
 system(qdbusxml2cpp compositor.xml -a lipstickcompositoradaptor -c LipstickCompositorAdaptor -l LipstickCompositor -i lipstickcompositor.h)
 
+include(alienmanager/alienmanager.pri)
+
 INCLUDEPATH += $$PWD
 
 PUBLICHEADERS += \
@@ -8,6 +10,7 @@ PUBLICHEADERS += \
     $$PWD/lipstickcompositorprocwindow.h \
     $$PWD/lipstickcompositoradaptor.h \
     $$PWD/windowmodel.h \
+    $$PWD/windowpropertymap.h
 
 HEADERS += \
     $$PWD/windowpixmapitem.h \
@@ -22,6 +25,7 @@ SOURCES += \
     $$PWD/lipstickcompositoradaptor.cpp \
     $$PWD/windowmodel.cpp \
     $$PWD/windowpixmapitem.cpp \
+    $$PWD/windowpropertymap.cpp \
     $$PWD/hwcrenderstage.cpp \
     $$PWD/hwcimage.cpp \
 

@@ -1,5 +1,7 @@
 include(../common.pri)
 TARGET = ut_notificationpreviewpresenter
+
+QT += qml quick dbus waylandcompositor
 INCLUDEPATH += \
     $$SRCDIR \
     $$NOTIFICATIONSRCDIR \
@@ -8,12 +10,6 @@ INCLUDEPATH += \
     $$SRCDIR/compositor \
     $$QMSYSTEM2 \
     $$SCREENLOCKSRCDIR
-
-QT += \
-    dbus \
-    qml \
-    quick \
-    waylandcompositor
 
 # unit test and unit
 SOURCES += \
@@ -35,6 +31,7 @@ HEADERS += \
     $$TOUCHSCREENSRCDIR/touchscreen.h \
     $$UTILITYSRCDIR/closeeventeater.h \
     $$COMPOSITORSRCDIR/lipstickcompositor.h \
+    $$COMPOSITORSRCDIR/windowpropertymap.h \
     $$QMSYSTEM2/qmdisplaystate.h \
     $$SRCDIR/homewindow.h \
     $$STUBSDIR/nemo-devicelock/devicelock.h

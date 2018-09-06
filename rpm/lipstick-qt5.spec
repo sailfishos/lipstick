@@ -40,9 +40,10 @@ BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.6
 BuildRequires:  pkgconfig(systemsettings)
 BuildRequires:  pkgconfig(nemodevicelock)
+BuildRequires:  pkgconfig(ssu-sysinfo)
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  qt5-qtgui-devel >= 5.2.1+git24
-BuildRequires:  qt5-qtwayland-wayland_egl-devel >= 5.4.0+git26
+BuildRequires:  qt5-qtwayland-compositor-devel >= 5.9.5
 BuildRequires:  doxygen
 BuildRequires:  qt5-qttools-qthelp-devel
 Conflicts:   meegotouch-systemui < 1.5.7
@@ -56,6 +57,7 @@ A QML toolkit for homescreen creation
 Summary:    Development files for lipstick
 License:    LGPLv2.1
 Requires:   %{name} = %{version}-%{release}
+Requires:   qt5-qtwayland-compositor-devel >= 5.9.5
 
 %description devel
 Files useful for building homescreens.
@@ -75,15 +77,6 @@ Requires:   %{name} = %{version}-%{release}
 
 %description tools
 Tools for the lipstick package (warning: these tools installed by default).
-
-%package simplecompositor
-Summary:    Lipstick Simple Compositor
-License:    LGPLv2.1
-Requires:   %{name} = %{version}-%{release}
-
-%description simplecompositor
-Debugging tool to debug the compositor logic without pulling in all of the
-homescreen and all the other app logic lipstick has.
 
 %package doc
 Summary:    Documentation for lipstick
@@ -120,6 +113,7 @@ Translation files for the lipstick package.
 %qmake5 VERSION=%{version}
 
 make %{?_smp_mflags}
+make -C doc lipstick_doc notification_doc
 
 %install
 rm -rf %{buildroot}
@@ -158,11 +152,6 @@ mkdir -p %{buildroot}/%{icondirectory}
 %files tools
 %defattr(-,root,root,-)
 %{_bindir}/notificationtool
-
-%files simplecompositor
-%defattr(-,root,root,-)
-%{_bindir}/simplecompositor
-%{_datadir}/lipstick/simplecompositor/*
 
 %files doc
 %defattr(-,root,root,-)

@@ -13,7 +13,13 @@ DEFINES += LIPSTICK_BUILD_LIBRARY
 DEFINES += VERSION=\\\"$${VERSION}\\\"
 DEFINES += MESA_EGL_NO_X11_HEADERS
 
-CONFIG += qt wayland-scanner c++11
+CONFIG += \
+    hide_symbols \
+    warning_clean \
+    warnings_are_errors \
+    wayland-scanner
+
+
 INSTALLS = target ts_install engineering_english_install
 target.path = $$[QT_INSTALL_LIBS]
 
@@ -152,6 +158,7 @@ PKGCONFIG += \
     nemodevicelock \
     ngf-qt5 \
     Qt5SystemInfo \
+    ssu-sysinfo \
     systemsettings \
     thermalmanager_dbus_if \
     usb-moded-qt5
@@ -176,12 +183,8 @@ packagesExist(contextkit-statefs) {
 QT += dbus xml qml quick sql gui gui-private sensors
 
 QMAKE_CXXFLAGS += \
-    -Werror \
-    -Wfatal-errors \
     -g \
-    -fPIC \
-    -fvisibility=hidden \
-    -fvisibility-inlines-hidden
+    -fPIC
 
 QMAKE_LFLAGS += \
     -pie \

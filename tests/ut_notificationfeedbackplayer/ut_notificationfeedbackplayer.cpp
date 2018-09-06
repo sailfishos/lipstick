@@ -17,9 +17,11 @@
 #include "notificationmanager.h"
 #include "notificationfeedbackplayer.h"
 #include "lipstickcompositor_stub.h"
+#include "lipstickcompositorwindow.h"
 #include "lipsticknotification.h"
 #include "ngfclient_stub.h"
 #include "ut_notificationfeedbackplayer.h"
+#include "windowpropertymap.h"
 
 NotificationManager::NotificationManager(QObject *parent, bool owner) : QObject(parent)
 {
@@ -95,12 +97,6 @@ LipstickNotification *createNotification(uint id, int urgency = 0, QVariant prio
     return notification;
 }
 
-QVariantMap qWaylandSurfaceWindowProperties;
-QVariantMap QWaylandSurface::windowProperties() const
-{
-    return qWaylandSurfaceWindowProperties;
-}
-
 void QTimer::singleShot(int, const QObject *receiver, const char *member)
 {
     // The "member" string is of form "1member()", so remove the trailing 1 and the ()
@@ -109,6 +105,13 @@ void QTimer::singleShot(int, const QObject *receiver, const char *member)
     strncpy(modifiedMember, member + 1, memberLength);
     modifiedMember[memberLength] = 0;
     QMetaObject::invokeMethod(const_cast<QObject *>(receiver), modifiedMember, Qt::DirectConnection);
+}
+
+WindowPropertyMap qWaylandSurfaceWindowProperties(nullptr, nullptr);
+
+WindowPropertyMap *LipstickCompositorWindow::windowProperties()
+{
+    return &qWaylandSurfaceWindowProperties;
 }
 
 void Ut_NotificationFeedbackPlayer::initTestCase()
@@ -342,7 +345,9 @@ void Ut_NotificationFeedbackPlayer::testNotificationPreviewsDisabled()
     QFETCH(int, playCount);
 
     gLipstickCompositorStub->stubSetReturnValue("surfaceForId", surface);
-    qWaylandSurfaceWindowProperties = windowProperties;
+    for (auto it = windowProperties.begin(); it != windowProperties.end(); ++it) {
+        qWaylandSurfaceWindowProperties.insert(it.key(), it.value());
+    }
 
     createNotification(1, urgency);
     player->addNotification(1);

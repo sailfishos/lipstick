@@ -30,6 +30,7 @@
 #include <compositor/lipstickcompositorwindow.h>
 #include <compositor/windowmodel.h>
 #include <compositor/windowpixmapitem.h>
+#include <compositor/windowpropertymap.h>
 #include <lipstickapi.h>
 #include <hwcimage.h>
 
@@ -70,6 +71,8 @@ void LipstickPlugin::registerTypes(const char *uri)
 
     qmlRegisterType<LipstickCompositorWindow>();
     qmlRegisterType<QObjectListModel>();
+    qmlRegisterType<WindowPropertyMap>();
+    qmlRegisterType<QWaylandKeymap>();
 
     qmlRegisterRevision<QQuickWindow,1>("org.nemomobile.lipstick", 0, 1);
 }
