@@ -488,6 +488,12 @@ NotificationList NotificationManager::GetNotificationsByCategory(const QString &
     return NotificationList(notificationList);
 }
 
+QString NotificationManager::systemApplicationName() const
+{
+    //% "System"
+    return qtTrId("qtn_ap_lipstick");
+}
+
 uint NotificationManager::nextAvailableNotificationID()
 {
     bool idIncreased = false;

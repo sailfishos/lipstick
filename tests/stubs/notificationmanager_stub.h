@@ -302,5 +302,9 @@ NotificationManager::~NotificationManager()
     gNotificationManagerStub->NotificationManagerDestructor();
 }
 
+QString NotificationManager::systemApplicationName() const
+{
+    return QString();
+}
 
 #endif
