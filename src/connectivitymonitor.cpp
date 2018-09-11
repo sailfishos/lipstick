@@ -26,7 +26,8 @@ ConnectivityMonitor::ConnectivityMonitor(QObject *parent)
     qDBusRegisterMetaType<PathProperties>();
     qDBusRegisterMetaType<PathPropertiesArray>();
 
-    connect(connmanManager_, &ConnmanManagerProxy::ServicesChanged, this, [this](const PathPropertiesArray &services, const QList<QDBusObjectPath> &removedPaths) {
+    connect(connmanManager_, &ConnmanManagerProxy::ServicesChanged,
+            this, [this](const PathPropertiesArray &services, const QList<QDBusObjectPath> &removedPaths) {
         const QList<QString> original(activeConnectionTypes());
 
         foreach (const QDBusObjectPath &objectPath, removedPaths) {
@@ -42,7 +43,6 @@ ConnectivityMonitor::ConnectivityMonitor(QObject *parent)
             const QString type(properties[QStringLiteral("Type")].toString());
             if (type == QStringLiteral("cellular") || type == QStringLiteral("wifi")) {
                 const QString state(properties[QStringLiteral("State")].toString());
-                const QString name(properties[QStringLiteral("Name")].toString());
                 if (state == QStringLiteral("online")) {
                     serviceActive(type, path);
                 } else {
