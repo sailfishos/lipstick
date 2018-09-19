@@ -67,5 +67,5 @@ void ThermalNotifier::createAndPublishNotification(const QString &category, cons
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_CATEGORY, category);
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
-    manager->Notify(qApp->applicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
+    manager->Notify(manager->systemApplicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
 }

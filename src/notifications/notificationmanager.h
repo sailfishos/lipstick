@@ -144,6 +144,9 @@ public:
      */
     NotificationList GetNotificationsByCategory(const QString &category);
 
+    // App name for system notifications originating from Lipstick itself
+    QString systemApplicationName() const;
+
 signals:
     /*!
      * A completed notification is one that has timed out, or has been dismissed by the user.

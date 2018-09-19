@@ -89,9 +89,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     translator->load(QLocale(), "lipstick", "-", "/usr/share/translations");
     installTranslator(translator);
 
-    // Set the application name, as used in notifications
-    //% "System"
-    setApplicationName(qtTrId("qtn_ap_lipstick"));
+    setApplicationName("Lipstick");
     setApplicationVersion(VERSION);
 
     // Initialize the QML engine

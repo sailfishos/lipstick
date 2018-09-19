@@ -253,7 +253,7 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationID id)
     hints.insert(LipstickNotification::HINT_CATEGORY, info.category);
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, info.message);
     QueuedNotification queued;
-    queued.number = manager->Notify(qApp->applicationName(), 0, info.icon,
+    queued.number = manager->Notify(manager->systemApplicationName(), 0, info.icon,
                                     QString(), QString(), QStringList(), hints, -1);
     queued.id = id;
     queued.time = m_timeline.elapsed();
