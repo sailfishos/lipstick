@@ -76,7 +76,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     , m_mainWindowInstance(0)
     , m_qmlPath(qmlPath)
     , m_homeReadySent(false)
-    , m_screenshotService(0)
     , m_connmanVpn(0)
     , m_online(false)
 {
@@ -127,8 +126,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     if (!systemBus.registerService(LIPSTICK_DBUS_SERVICE_NAME)) {
         qWarning("Unable to register D-Bus service %s: %s", LIPSTICK_DBUS_SERVICE_NAME, systemBus.lastError().message().toUtf8().constData());
     }
-
-    m_screenshotService = new ScreenshotService(this);
 
     // Bring automatic VPNs up and down when connectivity state changes
     auto performUpDown = [this](const QList<QString> &activeTypes) {
@@ -408,7 +405,7 @@ void HomeApplication::connectFrameSwappedSignal(bool mainWindowVisible)
     }
 }
 
-void HomeApplication::takeScreenshot(const QString &path)
+bool HomeApplication::takeScreenshot(const QString &path)
 {
-    m_screenshotService->saveScreenshot(path);
+    return ScreenshotService::saveScreenshot(path);
 }

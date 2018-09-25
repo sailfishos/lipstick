@@ -101,7 +101,7 @@ public:
 
     TouchScreen::DisplayState displayState();
     void setDisplayOff();
-    void takeScreenshot(const QString &path);
+    bool takeScreenshot(const QString &path);
 
 signals:
     /*!
@@ -188,8 +188,6 @@ private:
 
     //! Whether the home ready signal has been sent or not
     bool m_homeReadySent;
-
-    ScreenshotService *m_screenshotService;
 
     VpnAgent *m_vpnAgent;
     ConnmanVpnProxy * m_connmanVpn;
