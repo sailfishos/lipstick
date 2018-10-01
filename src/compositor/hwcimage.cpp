@@ -16,21 +16,27 @@
 #include "hwcimage.h"
 #include "hwcrenderstage.h"
 
+#include "eglhybrisbuffer.h"
+
 #include <QRunnable>
 #include <QThreadPool>
 
 #include <QQuickWindow>
 #include <QSGSimpleTextureNode>
 #include <QFileInfo>
+#include <QImageReader>
 
 #include <private/qquickitem_p.h>
-
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-
-static bool hwcimage_is_enabled();
+#include <private/qmemrotate_p.h>
 
 #define HWCIMAGE_LOAD_EVENT ((QEvent::Type) (QEvent::User + 1))
+
+static QRgb swizzleWithAlpha(QRgb rgb)
+{
+    return ((rgb << 16) & 0x00FF0000)
+         | ((rgb >> 16) & 0x000000FF)
+         | ( rgb        & 0xFF00FF00);
+}
 
 class HwcImageLoadRequest : public QRunnable, public QEvent
 {
@@ -46,42 +52,240 @@ public:
     }
 
     void execute() {
-        image = QImage(file).convertToFormat(QImage::Format_RGB32);
+        QImageReader reader(file);
 
-        if (rotation != 0) {
-            QTransform xform;
-            xform.rotate(rotation);
-            image = image.transformed(xform, Qt::FastTransformation);
+        const QSize originalSize = reader.size();
+
+
+        if (!originalSize.isValid()) {
+            qCWarning(LIPSTICK_LOG_HWC, "%s is not a valid file or doesn't support reading image size: %s", qPrintable(file), qPrintable(reader.errorString()));
+            return;
+        } else if (Q_UNLIKELY(rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270)) {
+            qCWarning(LIPSTICK_LOG_HWC, "%d is not a supported rotation: %s", rotation, qPrintable(file));
+            return;
         }
 
-        if (textureSize.width() > 0 && textureSize.height() > 0)
-            image = image.scaled(textureSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-        else if (maxTextureSize > 0) {
-            if (image.width() > maxTextureSize || image.height() > maxTextureSize) {
-                qreal s = maxTextureSize / (qreal) qMax(image.width(), image.height());
-                image = image.scaled(image.size() * s, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        const bool transpose = rotation % 180 != 0;
+
+        QSize imageSize = originalSize;
+
+        if (textureSize.width() > 0 && textureSize.height() > 0) {
+            imageSize = transpose ? textureSize.transposed() : textureSize;
+        }
+
+        if (maxTextureSize > 0) {
+            imageSize = QSize(
+                        qMin(imageSize.width(), maxTextureSize),
+                        qMin(imageSize.height(), maxTextureSize));
+        }
+
+        QSize scaledSize = originalSize.scaled(imageSize, Qt::KeepAspectRatioByExpanding);
+
+        if (imageSize != scaledSize) {
+            QRect clipRect(
+                        (scaledSize.width() - imageSize.width()) / 2,
+                        (scaledSize.height() - imageSize.height()) / 2,
+                        imageSize.width(),
+                        imageSize.height());
+            reader.setScaledClipRect(clipRect);
+        }
+
+        reader.setScaledSize(scaledSize);
+        reader.setBackgroundColor(Qt::black);
+
+        if (transpose) {
+            scaledSize.transpose();
+        }
+
+        static const bool bgraBuffers = qEnvironmentVariableIntValue("QT_OPENGL_NO_BGRA") == 0;
+
+        if (const EglHybrisFunctions * const eglFunctions = EglHybrisFunctions::instance()) {
+            const EglHybrisBuffer::Usage usage = EglHybrisBuffer::Write | EglHybrisBuffer::Texture | EglHybrisBuffer::Composer;
+
+            switch (reader.imageFormat()) {
+            case QImage::Format_ARGB32:
+            case QImage::Format_RGB32:
+                hybrisBuffer = new EglHybrisBuffer(
+                            bgraBuffers ? EglHybrisBuffer::BGRA : EglHybrisBuffer::RGBX,
+                            imageSize,
+                            usage,
+                            *eglFunctions);
+                break;
+            default:
+                break;
             }
         }
 
-        if (image.size().isValid()) {
+        int stride = 0;
+        uchar * const bytes = hybrisBuffer && hybrisBuffer->allocate()
+                ? hybrisBuffer->lock(EglHybrisBuffer::Write, &stride)
+                : nullptr;
+        if (!bytes) {
+            hybrisBuffer = EglHybrisBuffer::Pointer();
+        }
 
-            QPainter p(&image);
+        if (bytes && rotation == 0 && bgraBuffers && !overlay.isValid() && effect.isEmpty()) {
+            image = QImage(bytes, imageSize.width(), imageSize.height(), stride, reader.imageFormat());
+
+            if (!reader.read(&image)) {
+                qCWarning(LIPSTICK_LOG_HWC, "Error reading %s: %s", qPrintable(file), qPrintable(reader.errorString()));
+
+                hybrisBuffer->unlock();
+                hybrisBuffer = EglHybrisBuffer::Pointer();
+
+                return;
+            }
+        } else {
+            image = reader.read();
+
+            if (image.isNull()) {
+                qCWarning(LIPSTICK_LOG_HWC, "Error reading %s: %s", qPrintable(file), qPrintable(reader.errorString()));
+                return;
+            }
+        }
+
+        if ((overlay.isValid() || !effect.isEmpty())) {
+            QPainter painter(&image);
 
             // Apply overlay
-            if (overlay.isValid())
-                p.fillRect(image.rect(), overlay);
+            if (overlay.isValid()) {
+                if (bytes && !bgraBuffers) {
+                    // Counter swizzle the background color.
+                    QRgb red = overlay.red();
+                    overlay.setRed(overlay.blue());
+                    overlay.setBlue(red);
+                }
+
+                painter.fillRect(image.rect(), overlay);
+            }
 
             // Apply glass..
             if (effect.contains(QStringLiteral("glass"))) {
                 QImage glass("/usr/share/themes/sailfish-default/meegotouch/icons/graphic-shader-texture.png");
-                glass = glass.scaled(glass.width(), glass.height(),
-                                     Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-                p.save();
-                p.setOpacity(0.1);
-                p.setCompositionMode(QPainter::CompositionMode_Plus);
-                p.fillRect(image.rect(), glass);
-                p.restore();
+
+                if (rotation != 0) { // Counter rotate the glass effect so it is reset when the entire picture is rotated.
+                    QTransform transform;
+                    transform.rotate(-rotation);
+                    glass = glass.transformed(transform);
+                }
+
+                painter.save();
+                painter.setOpacity(0.1);
+                painter.setCompositionMode(QPainter::CompositionMode_Plus);
+                painter.fillRect(image.rect(), glass);
+                painter.restore();
             }
+        }
+
+        if (!bytes || bytes == image.constBits()) {
+            // No data copies or transforms are required.
+        } else if (bgraBuffers) {
+            switch (rotation) {
+            case 0:
+                if (image.bytesPerLine() == stride) {
+                    memcpy(bytes, image.constBits(), image.byteCount());
+                } else {
+                    uchar *row = bytes;
+                    const int length = image.width() * 4;
+                    const int height = image.height();
+                    for (int y = 0; y < height; ++y, row += stride) {
+                        memcpy(row, image.constScanLine(y), length);
+                    }
+                }
+                break;
+            case 90:
+                qt_memrotate270(
+                            reinterpret_cast<const quint32 *>(image.bits()),
+                            image.width(),
+                            image.height(),
+                            image.bytesPerLine(),
+                            reinterpret_cast<quint32 *>(bytes),
+                            stride);
+                break;
+            case 180:
+                qt_memrotate180(
+                            reinterpret_cast<const quint32 *>(image.bits()),
+                            image.width(),
+                            image.height(),
+                            image.bytesPerLine(),
+                            reinterpret_cast<quint32 *>(bytes),
+                            stride);
+                break;
+            case 270:
+                qt_memrotate90(
+                            reinterpret_cast<const quint32 *>(image.bits()),
+                            image.width(),
+                            image.height(),
+                            image.bytesPerLine(),
+                            reinterpret_cast<quint32 *>(bytes),
+                            stride);
+                break;
+            }
+        } else {
+            const int inStride = image.bytesPerLine();
+            const int outStride = stride;
+            const int width = image.width();
+            const int height = image.height();
+
+            switch (rotation) {
+            case 0: {
+                const uchar *in = image.bits();
+                uchar *out = bytes;
+
+                for (int y = 0; y < height; ++y, in += inStride, out += outStride) {
+                    const QRgb * const inRow = reinterpret_cast<const QRgb *>(in);
+                    QRgb * const outRow = reinterpret_cast<QRgb *>(out);
+                    for (int x = 0; x < width; ++x) {
+                        outRow[x] = swizzleWithAlpha(inRow[x]);
+                    }
+                }
+                break;
+            }
+            // Don't worry too much about optimizing these, there's presently no known combination
+            // of the hwcomposer (and therefore rotation) and no BGRA support.
+            case 90: {
+                const uchar *in = image.bits() + (inStride * (height - 1));
+                uchar *out = bytes;
+
+                for (int y = 0; y < height; ++y, in += 4, out += outStride) {
+                    QRgb * const outRow = reinterpret_cast<QRgb *>(out);
+                    for (int x = 0; x < width; ++x) {
+                        outRow[x] = swizzleWithAlpha(*reinterpret_cast<const QRgb *>(in - (inStride * x)));
+                    }
+                }
+                break;
+            }
+            case 180: {
+                const uchar *in = image.bits() + (inStride * (height - 1));
+                uchar *out = bytes;
+
+                for (int y = 0; y < height; ++y, in -= inStride, out += outStride) {
+                    const QRgb * const inRow = reinterpret_cast<const QRgb *>(in);
+                    QRgb * const outRow = reinterpret_cast<QRgb *>(out);
+                    for (int x = 0; x < width; ++x) {
+                        outRow[x] = swizzleWithAlpha(inRow[width - x]);
+                    }
+                }
+                break;
+            }
+            case 270: {
+                const uchar *in = image.bits() + (4 * (width - 1));
+                uchar *out = bytes;
+
+                for (int y = 0; y < height; ++y, in -= 4, out += outStride) {
+                    QRgb * const outRow = reinterpret_cast<QRgb *>(out);
+                    for (int x = 0; x < width; ++x) {
+                        outRow[x] = swizzleWithAlpha(*reinterpret_cast<const QRgb *>(in + (inStride * x)));
+                    }
+                }
+                break;
+            }
+            }
+        }
+
+        if (hybrisBuffer) {
+            hybrisBuffer->unlock();
+            image = QImage();
         }
     }
 
@@ -97,13 +301,14 @@ public:
         mutex.unlock();
     }
 
+    QExplicitlySharedDataPointer<EglHybrisBuffer> hybrisBuffer;
     QImage image;
     QString file;
     QString effect;
     QColor overlay;
     QSize textureSize;
     qreal pixelRatio;
-    qreal rotation;
+    int rotation;
     int maxTextureSize;
 
     HwcImage *hwcImage;
@@ -142,7 +347,7 @@ HwcImage::~HwcImage()
   */
 void HwcImage::setRotationHandler(QQuickItem *item)
 {
-    if (!hwcimage_is_enabled()) {
+    if (!HwcRenderStage::isHwcEnabled()) {
         qCDebug(LIPSTICK_LOG_HWC, "HwcImage ignoring rotation handler as HWC is disabled");
         return;
     }
@@ -305,8 +510,10 @@ void HwcImage::reload()
 
 void HwcImage::apply(HwcImageLoadRequest *req)
 {
+
+    m_hybrisBuffer = req->hybrisBuffer;
     m_image = req->image;
-    QSize s = m_image.size();
+    QSize s = m_hybrisBuffer ? m_hybrisBuffer->size() : m_image.size();
     setSize(s);
     m_status = s.isValid() ? Ready : Error;
     emit statusChanged();
@@ -378,28 +585,22 @@ class HwcImageTexture : public QSGTexture
     Q_OBJECT
 
 public:
-    HwcImageTexture(EGLClientBuffer buffer, EGLImageKHR image, const QSize &size, HwcRenderStage *hwc);
+    HwcImageTexture(const EglHybrisBuffer::Pointer &buffer, HwcRenderStage *hwc);
     ~HwcImageTexture();
-    void release();
 
     int textureId() const { return m_id; }
-    QSize textureSize() const { return m_size; }
-    bool hasAlphaChannel() const { return false; }
+    QSize textureSize() const { return m_buffer->size(); }
+    bool hasAlphaChannel() const { return m_buffer->format() != EglHybrisBuffer::RGBX; }
     bool hasMipmaps() const { return false; }
     void bind();
 
-    static QSGTexture *create(const QImage &image, QQuickWindow *window);
-
-    void *handle() const;
+    void *handle() const { return m_buffer->handle(); }
 
 private:
-    GLuint m_id;
-    HwcRenderStage *m_hwc;
-    EGLClientBuffer m_buffer;
-    EGLImageKHR m_image;
-    QSize m_size;
-    void *m_handle;
-    bool m_bound;
+    EglHybrisBuffer::Pointer m_buffer;
+    HwcRenderStage * const m_hwc;
+    GLuint m_id = 0;
+    bool m_bound = false;
 };
 
 class HwcImageNode : public QSGSimpleTextureNode
@@ -408,26 +609,20 @@ public:
     HwcImageNode() {
         qCDebug(LIPSTICK_LOG_HWC) << "HwcImageNode is created...";
         qsgnode_set_description(this, QStringLiteral("hwc-image-node"));
+        setOwnsTexture(true);
     }
     ~HwcImageNode() {
         qCDebug(LIPSTICK_LOG_HWC) << "HwcImageNode is gone...";
-        releaseTexture();
     }
     void *handle() const {
         HwcImageTexture *t = static_cast<HwcImageTexture *>(texture());
         return t ? t->handle() : 0;
     }
-    void releaseTexture() {
-        if (HwcImageTexture *t = qobject_cast<HwcImageTexture *>(texture()))
-            t->release();
-        else
-            delete texture();
-    }
 };
 
 HwcImageNode *HwcImage::updateActualPaintNode(QSGNode *old)
 {
-    if ((m_updateImage && m_image.isNull()) || width() <= 0 || height() <= 0) {
+    if ((m_updateImage && m_image.isNull() && !m_hybrisBuffer) || width() <= 0 || height() <= 0) {
         delete old;
         return 0;
     }
@@ -437,13 +632,15 @@ HwcImageNode *HwcImage::updateActualPaintNode(QSGNode *old)
         tn = new HwcImageNode();
 
     if (m_updateImage) {
-        tn->releaseTexture();
-        QSGTexture *t = HwcImageTexture::create(m_image, window());
-        if (t)
-            tn->setTexture(t);
-        else
-            tn->setTexture(window()->createTextureFromImage(m_image));
+        tn->setTexture(m_hybrisBuffer
+                    ? new HwcImageTexture(
+                            m_hybrisBuffer,
+                            HwcRenderStage::isHwcEnabled()
+                                ? static_cast<HwcRenderStage *>(QQuickWindowPrivate::get(window())->customRenderStage)
+                                : nullptr)
+                    : window()->createTextureFromImage(m_image));
         m_image = QImage();
+        m_hybrisBuffer = EglHybrisBuffer::Pointer();
         m_updateImage = false;
     }
     tn->setRect(0, 0, width(), height());
@@ -469,8 +666,7 @@ QMatrix4x4 HwcImage::reverseTransform() const
 
 QSGNode *HwcImage::updatePaintNode(QSGNode *old, UpdatePaintNodeData *)
 {
-
-    if (!hwcimage_is_enabled()) {
+    if (!HwcRenderStage::isHwcEnabled()) {
         qCDebug(LIPSTICK_LOG_HWC) << "HwcImage" << this << "updating paint node without HWC support";
         return updateActualPaintNode(old);
     }
@@ -525,141 +721,31 @@ QSGNode *HwcImage::updatePaintNode(QSGNode *old, UpdatePaintNodeData *)
     return hwcNode;
 }
 
-
-// from hybris_nativebuffer.h in libhybris
-#define HYBRIS_USAGE_SW_WRITE_RARELY    0x00000020
-#define HYBRIS_USAGE_HW_TEXTURE         0x00000100
-#define HYBRIS_USAGE_HW_COMPOSER        0x00000800
-#define HYBRIS_PIXEL_FORMAT_RGBA_8888   1
-#define HYBRIS_PIXEL_FORMAT_RGB_888     3
-#define HYBRIS_PIXEL_FORMAT_BGRA_8888   5
-
-#define EGL_NATIVE_BUFFER_HYBRIS        0x3140
-
-extern "C" {
-    typedef EGLBoolean (EGLAPIENTRYP _eglHybrisCreateNativeBuffer)(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint *stride, EGLClientBuffer *buffer);
-    typedef EGLBoolean (EGLAPIENTRYP _eglHybrisLockNativeBuffer)(EGLClientBuffer buffer, EGLint usage, EGLint l, EGLint t, EGLint w, EGLint h, void **vaddr);
-    typedef EGLBoolean (EGLAPIENTRYP _eglHybrisUnlockNativeBuffer)(EGLClientBuffer buffer);
-    typedef EGLBoolean (EGLAPIENTRYP _eglHybrisReleaseNativeBuffer)(EGLClientBuffer buffer);
-    typedef EGLBoolean (EGLAPIENTRYP _eglHybrisNativeBufferHandle)(EGLDisplay dpy, EGLClientBuffer buffer, void **handle);
-
-    typedef void (EGLAPIENTRYP _glEGLImageTargetTexture2DOES)(GLenum target, EGLImageKHR image);
-    typedef EGLImageKHR (EGLAPIENTRYP _eglCreateImageKHR)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attribs);
-    typedef EGLBoolean (EGLAPIENTRYP _eglDestroyImageKHR)(EGLDisplay dpy, EGLImageKHR image);
-}
-
-static _glEGLImageTargetTexture2DOES glEGLImageTargetTexture2DOES = 0;
-static _eglCreateImageKHR eglCreateImageKHR = 0;
-static _eglDestroyImageKHR eglDestroyImageKHR = 0;
-
-static _eglHybrisCreateNativeBuffer eglHybrisCreateNativeBuffer = 0;
-static _eglHybrisLockNativeBuffer eglHybrisLockNativeBuffer = 0;
-static _eglHybrisUnlockNativeBuffer eglHybrisUnlockNativeBuffer = 0;
-static _eglHybrisReleaseNativeBuffer eglHybrisReleaseNativeBuffer = 0;
-static _eglHybrisNativeBufferHandle eglHybrisNativeBufferHandle = 0;
-
-static void hwcimage_initialize()
+HwcImageTexture::HwcImageTexture(const EglHybrisBuffer::Pointer &buffer, HwcRenderStage *hwc)
+    : m_buffer(buffer)
+    , m_hwc(hwc)
 {
-    static bool initialized = false;
-    if (initialized)
-        return;
-    initialized = true;
-
-    glEGLImageTargetTexture2DOES = (_glEGLImageTargetTexture2DOES) eglGetProcAddress("glEGLImageTargetTexture2DOES");
-    eglCreateImageKHR = (_eglCreateImageKHR) eglGetProcAddress("eglCreateImageKHR");
-    eglDestroyImageKHR = (_eglDestroyImageKHR) eglGetProcAddress("eglDestroyImageKHR");
-    eglHybrisCreateNativeBuffer = (_eglHybrisCreateNativeBuffer) eglGetProcAddress("eglHybrisCreateNativeBuffer");
-    eglHybrisLockNativeBuffer = (_eglHybrisLockNativeBuffer) eglGetProcAddress("eglHybrisLockNativeBuffer");
-    eglHybrisUnlockNativeBuffer = (_eglHybrisUnlockNativeBuffer) eglGetProcAddress("eglHybrisUnlockNativeBuffer");
-    eglHybrisReleaseNativeBuffer = (_eglHybrisReleaseNativeBuffer) eglGetProcAddress("eglHybrisReleaseNativeBuffer");
-    eglHybrisNativeBufferHandle = (_eglHybrisNativeBufferHandle) eglGetProcAddress("eglHybrisNativeBufferHandle");
-}
-
-static bool hwcimage_is_enabled()
-{
-    if (!HwcRenderStage::isHwcEnabled())
-        return false;
-
-    // Check for availablility of EGL_HYBRIS_native_buffer support, which we
-    // need to do hwc layering of background images...
-    static int hybrisBuffers = -1;
-    if (hybrisBuffers < 0) {
-        if (strstr(eglQueryString(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_EXTENSIONS), "EGL_HYBRIS_native_buffer2") == 0) {
-            qCDebug(LIPSTICK_LOG_HWC, "Missing required EGL extensions: 'EGL_HYBRIS_native_buffer2'");
-            hybrisBuffers = 0;
-        } else {
-            hybrisBuffers = 1;
-        }
-    }
-    return hybrisBuffers == 1;
-}
-
-QSGTexture *HwcImageTexture::create(const QImage &image, QQuickWindow *window)
-{
-    hwcimage_initialize();
-
-    if (!hwcimage_is_enabled())
-        return 0;
-
-    EGLClientBuffer buffer = 0;
-    int width = image.width();
-    int height = image.height();
-    int usage = HYBRIS_USAGE_SW_WRITE_RARELY | HYBRIS_USAGE_HW_TEXTURE | HYBRIS_USAGE_HW_COMPOSER;
-    int stride = 0;
-    int format = HYBRIS_PIXEL_FORMAT_BGRA_8888;
-    char *data;
-
-    eglHybrisCreateNativeBuffer(width, height, usage, format, &stride, &buffer);
-    Q_ASSERT(buffer);
-    eglHybrisLockNativeBuffer(buffer, HYBRIS_USAGE_SW_WRITE_RARELY, 0, 0, width, height, (void **) &data);
-    Q_ASSERT(data);
-
-    const int dbpl = stride * 4;
-    const int bpl = qMin(dbpl, image.bytesPerLine());
-    for (int y=0; y<height; ++y)
-        memcpy(data + y * dbpl, image.constScanLine(y), bpl);
-
-    eglHybrisUnlockNativeBuffer(buffer);
-
-    EGLImageKHR eglImage = eglCreateImageKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY),
-                                             EGL_NO_CONTEXT,
-                                             EGL_NATIVE_BUFFER_HYBRIS,
-                                             buffer,
-                                             0);
-    Q_ASSERT(eglImage);
-    Q_ASSERT(QQuickWindowPrivate::get(window));
-    Q_ASSERT(QQuickWindowPrivate::get(window)->customRenderStage);
-
-    return new HwcImageTexture(buffer,
-                               eglImage,
-                               QSize(width, height),
-                               static_cast<HwcRenderStage *>(QQuickWindowPrivate::get(window)->customRenderStage));
-}
-
-
-HwcImageTexture::HwcImageTexture(EGLClientBuffer buffer, EGLImageKHR image, const QSize &size, HwcRenderStage *hwc)
-    : m_hwc(hwc)
-    , m_buffer(buffer)
-    , m_image(image)
-    , m_size(size)
-    , m_bound(false)
-{
-    Q_ASSERT(m_hwc);
     glGenTextures(1, &m_id);
     qCDebug(LIPSTICK_LOG_HWC,
-            "HwcImageTexture(%p) created, size=(%d x %d), texId=%d, buffer=%p, image=%p",
-            this, m_size.width(), m_size.height(), m_id, m_buffer, m_image);
+            "HwcImageTexture(%p) created, size=(%d x %d), texId=%d",
+            this, m_buffer->size().width(), m_buffer->size().height(), m_id);
 }
 
 HwcImageTexture::~HwcImageTexture()
 {
-    Q_ASSERT(m_id == 0); // Should have been deleted via release().
+    glDeleteTextures(1, &m_id);
 
-    eglDestroyImageKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), m_image);
-    eglHybrisReleaseNativeBuffer(m_buffer);
+    if (m_hwc) {
+        m_buffer->ref.ref();
+        // Register for a callback so we can delete ourselves when HWC is done
+        // with our buffer. Chances are the cleanup will happen on the HWC thread,
+        // but this is safe as the EGL resource can be deleted from any thread..
+        m_hwc->signalOnBufferRelease(EglHybrisBuffer::destroy, handle(), m_buffer.data());
+    }
+
     qCDebug(LIPSTICK_LOG_HWC,
-            "HwcImageTexture(%p) destroyed, size=(%d x %d), texId=%d, buffer=%p, image=%p",
-            this, m_size.width(), m_size.height(), m_id, m_buffer, m_image);
+            "HwcImageTexture(%p) destroyed, size=(%d x %d), texId=%d",
+            this, m_buffer->size().width(), m_buffer->size().height(), m_id);
 }
 
 void HwcImageTexture::bind()
@@ -668,39 +754,9 @@ void HwcImageTexture::bind()
     updateBindOptions(!m_bound);
     if (!m_bound) {
         m_bound = true;
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_image);
+        m_buffer->bindToTexture();
     }
 }
-
-void hwcimage_delete_texture(void *, void *callbackData)
-{
-    delete (QObject *) callbackData;
-}
-
-void HwcImageTexture::release()
-{
-    qCDebug(LIPSTICK_LOG_HWC,
-            "HwcImageTexture(%p) released, size=(%d x %d), texId=%d, buffer=%p, image=%p",
-            this, m_size.width(), m_size.height(), m_id, m_buffer, m_image);
-
-    // We're on the render thread, so delete the texture right away
-    Q_ASSERT(m_id);
-    glDeleteTextures(1, &m_id);
-    m_id = 0;
-
-    // Register for a callback so we can delete ourselves when HWC is done
-    // with our buffer. Chances are the cleanup will happen on the HWC thread,
-    // but this is safe as the EGL resource can be deleted from any thread..
-    m_hwc->signalOnBufferRelease(hwcimage_delete_texture, handle(), this);
-}
-
-void *HwcImageTexture::handle() const
-{
-    void *h;
-    eglHybrisNativeBufferHandle(eglGetCurrentDisplay(), m_buffer, &h);
-    return h;
-}
-
 
 #include "hwcimage.moc"
 
