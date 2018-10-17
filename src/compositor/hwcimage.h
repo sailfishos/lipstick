@@ -101,6 +101,7 @@ private slots:
 
 private:
     friend class HwcImageLoadRequest;
+    void reload();
     void apply(HwcImageLoadRequest *);
     QMatrix4x4 reverseTransform() const;
     HwcImageNode *updateActualPaintNode(QSGNode *node);

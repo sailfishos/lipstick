@@ -175,9 +175,7 @@ void HwcImage::setSource(const QUrl &source)
         return;
     m_source = source;
     emit sourceChanged();
-    m_status = Loading;
-    emit statusChanged();
-    polish();
+    reload();
 }
 
 void HwcImage::setOverlayColor(const QColor &color)
@@ -186,7 +184,7 @@ void HwcImage::setOverlayColor(const QColor &color)
         return;
     m_overlayColor = color;
     emit overlayColorChanged();
-    polish();
+    reload();
 }
 
 void HwcImage::setMaxTextureSize(int size)
@@ -195,7 +193,7 @@ void HwcImage::setMaxTextureSize(int size)
         return;
     m_maxTextureSize = size;
     emit maxTextureSizeChanged();
-    polish();
+    reload();
 }
 
 void HwcImage::setTextureSize(const QSize &size)
@@ -204,7 +202,7 @@ void HwcImage::setTextureSize(const QSize &size)
         return;
     m_textureSize = size;
     emit textureSizeChanged();
-    polish();
+    reload();
 }
 
 void HwcImage::setEffect(const QString &effect)
@@ -213,7 +211,7 @@ void HwcImage::setEffect(const QString &effect)
         return;
     m_effect = effect;
     emit effectChanged();
-    polish();
+    reload();
 }
 
 void HwcImage::setPixelRatio(qreal ratio)
@@ -294,6 +292,15 @@ void HwcImage::updatePolish()
         apply(req);
         delete req;
     }
+}
+
+void HwcImage::reload()
+{
+    if (m_status != Loading) {
+        m_status = Loading;
+        emit statusChanged();
+    }
+    polish();
 }
 
 void HwcImage::apply(HwcImageLoadRequest *req)
