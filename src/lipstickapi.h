@@ -17,7 +17,7 @@
 #define LIPSTICKAPI_H
 
 #include <QObject>
-#include "lipstickglobal.h"
+#include "screenshotservice.h"
 
 class LIPSTICK_EXPORT LipstickApi : public QObject
 {
@@ -31,7 +31,7 @@ public:
     bool active() const;
     QObject *compositor() const;
 
-    Q_INVOKABLE void takeScreenshot(const QString &path = QString());
+    Q_INVOKABLE ScreenshotResult *takeScreenshot(const QString &path = QString());
 
 signals:
     void activeChanged();

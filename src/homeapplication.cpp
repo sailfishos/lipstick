@@ -407,5 +407,11 @@ void HomeApplication::connectFrameSwappedSignal(bool mainWindowVisible)
 
 bool HomeApplication::takeScreenshot(const QString &path)
 {
-    return ScreenshotService::saveScreenshot(path);
+    if (ScreenshotResult *result = ScreenshotService::saveScreenshot(path)) {
+        result->waitForFinished();
+
+        return result->status() == ScreenshotResult::Finished;
+    } else {
+        return false;
+    }
 }
