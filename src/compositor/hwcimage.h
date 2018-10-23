@@ -46,11 +46,11 @@ class LIPSTICK_EXPORT HwcImage : public QQuickItem
 public:
     enum Status { Null, Ready, Loading, Error };
 
-	HwcImage();
-	~HwcImage();
+    HwcImage();
+    ~HwcImage();
 
-	void setSource(const QUrl &url);
-	QUrl source() const { return m_source; }
+    void setSource(const QUrl &url);
+    QUrl source() const { return m_source; }
 
     void setOverlayColor(const QColor &color);
     QColor overlayColor() const { return m_overlayColor; }
@@ -79,9 +79,9 @@ public:
 
 protected:
     bool event(QEvent *event);
-	void updatePolish();
+    void updatePolish();
 
-	QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *data);
+    QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *data);
 
 signals:
     void sourceChanged();
@@ -109,7 +109,7 @@ private:
     HwcImageLoadRequest *m_pendingRequest;
     QPointer<QQuickWindow> m_window;
     QQuickItem *m_rotationHandler;
-	QUrl m_source;
+    QUrl m_source;
     QImage m_image;
     QSize m_textureSize;
     QString m_effect;
