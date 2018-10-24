@@ -55,7 +55,7 @@ public:
         }
 
         if (textureSize.width() > 0 && textureSize.height() > 0)
-            image = image.scaled(textureSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            image = image.scaled(textureSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
         else if (maxTextureSize > 0) {
             if (image.width() > maxTextureSize || image.height() > maxTextureSize) {
                 qreal s = maxTextureSize / (qreal) qMax(image.width(), image.height());
