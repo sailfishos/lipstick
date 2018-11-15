@@ -41,6 +41,11 @@ const QString QUsbMode::Mode::Connected(USB_CONNECTED);
 const QString QUsbMode::Mode::DataInUse(DATA_IN_USE);
 const QString QUsbMode::Mode::Disconnected(USB_DISCONNECTED);
 const QString QUsbMode::Mode::ModeRequest(USB_CONNECTED_DIALOG_SHOW);
+const QString QUsbMode::Mode::PreUnmount(USB_PRE_UNMOUNT);
+const QString QUsbMode::Mode::ReMountFailed(RE_MOUNT_FAILED);
+const QString QUsbMode::Mode::ModeSettingFailed(MODE_SETTING_FAILED);
+const QString QUsbMode::Mode::ChargerConnected(CHARGER_CONNECTED);
+const QString QUsbMode::Mode::ChargerDisconnected(CHARGER_DISCONNECTED);
 
 // Modes (from usb_moded-modes.h)
 const QString QUsbMode::Mode::Undefined(MODE_UNDEFINED);
@@ -55,10 +60,53 @@ const QString QUsbMode::Mode::Adb(MODE_ADB);
 const QString QUsbMode::Mode::PCSuite(MODE_PC_SUITE);
 const QString QUsbMode::Mode::Charging(MODE_CHARGING);
 const QString QUsbMode::Mode::Charger(MODE_CHARGER);
+const QString QUsbMode::Mode::ChargingFallback(MODE_CHARGING_FALLBACK);
+const QString QUsbMode::Mode::Busy(MODE_BUSY);
 
 QUsbMode::QUsbMode(QObject *aParent) :
     QObject(aParent)
 {
+}
+
+bool QUsbMode::isEvent(const QString &value)
+{
+    return (value == QUsbMode::Mode::Connected ||
+            value == QUsbMode::Mode::DataInUse ||
+            value == QUsbMode::Mode::Disconnected ||
+            value == QUsbMode::Mode::ModeRequest ||
+            value == QUsbMode::Mode::PreUnmount ||
+            value == QUsbMode::Mode::ReMountFailed ||
+            value == QUsbMode::Mode::ModeSettingFailed ||
+            value == QUsbMode::Mode::ChargerConnected ||
+            value == QUsbMode::Mode::ChargerDisconnected);
+}
+bool QUsbMode::isState(const QString &value)
+{
+    return !isEvent(value);
+}
+
+bool QUsbMode::isWaitingState(const QString &value)
+{
+    return (value == QUsbMode::Mode::Busy ||
+            value == QUsbMode::Mode::Ask ||
+            value == QUsbMode::Mode::ChargingFallback);
+}
+
+bool QUsbMode::isFinalState(const QString &value)
+{
+    return isState(value) && !isWaitingState(value);
+}
+
+bool QUsbMode::isDisconnected(const QString &value)
+{
+    return (value == QUsbMode::Mode::Disconnected ||
+            value == QUsbMode::Mode::ChargerDisconnected ||
+            value == QUsbMode::Mode::Undefined);
+}
+
+bool QUsbMode::isConnected(const QString &value)
+{
+    return !isDisconnected(value) && value != QUsbMode::Mode::Busy;
 }
 
 class QUsbModed::Private
@@ -213,4 +261,3 @@ QStringList QUsbModed::hiddenModes() const
 {
     return QStringList();
 }
-
