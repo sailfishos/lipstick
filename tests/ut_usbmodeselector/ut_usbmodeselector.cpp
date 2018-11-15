@@ -135,7 +135,7 @@ void Ut_USBModeSelector::testShowDialog()
 
     QSignalSpy spy(usbModeSelector, SIGNAL(dialogShown()));
     usbModeSelector->m_usbMode->setConfigMode(mode);
-    usbModeSelector->applyUSBMode(mode);
+    usbModeSelector->handleUSBEvent(mode);
 
     QCOMPARE(homeWindows.count(), 1);
 
@@ -170,8 +170,8 @@ void Ut_USBModeSelector::testHideDialog()
     QFETCH(QString, mode);
 
     usbModeSelector->m_usbMode->setConfigMode(QUsbModed::Mode::Ask);
-    usbModeSelector->applyUSBMode(QUsbModed::Mode::Ask);
-    usbModeSelector->applyUSBMode(mode);
+    usbModeSelector->handleUSBEvent(QUsbModed::Mode::Ask);
+    usbModeSelector->handleUSBEvent(mode);
     QCOMPARE(homeWindowVisible[homeWindows.first()], false);
 }
 
@@ -199,7 +199,7 @@ void Ut_USBModeSelector::testUSBNotifications()
     QFETCH(QString, category);
     QFETCH(QString, body);
 
-    usbModeSelector->applyUSBMode(mode);
+    usbModeSelector->handleUSBEvent(mode);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), category);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), body);
@@ -221,7 +221,7 @@ void Ut_USBModeSelector::testConnectingUSBWhenDeviceIsLockedEmitsDialogShown()
 
     QSignalSpy spy(usbModeSelector, SIGNAL(dialogShown()));
     deviceLock->setState(deviceLocked);
-    usbModeSelector->applyUSBMode(QUsbModed::Mode::Connected);
+    usbModeSelector->handleUSBEvent(QUsbModed::Mode::Connected);
     QCOMPARE(spy.count(), dialogShownCount);
 }
 

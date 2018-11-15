@@ -40,6 +40,7 @@ USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject
         s_errorCodeToTranslationID.insert("mount_failed", "qtn_usb_mount_failed");
     }
 
+    connect(m_usbMode, SIGNAL(eventReceived(QString)), this, SLOT(handleUSBEvent(QString)));
     connect(m_usbMode, SIGNAL(currentModeChanged()), this, SLOT(applyCurrentUSBMode()));
     connect(m_usbMode, SIGNAL(usbStateError(QString)), this, SLOT(showError(QString)));
     connect(m_usbMode, SIGNAL(supportedModesChanged()), this, SIGNAL(supportedUSBModesChanged()));
@@ -53,7 +54,8 @@ USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject
 
 void USBModeSelector::applyCurrentUSBMode()
 {
-    applyUSBMode(m_usbMode->currentMode());
+    /* Treat usb mode changes as events */
+    handleUSBEvent(m_usbMode->currentMode());
 }
 
 void USBModeSelector::setWindowVisible(bool visible)
@@ -98,7 +100,7 @@ QStringList USBModeSelector::availableUSBModes() const
     return m_usbMode->availableModes();
 }
 
-void USBModeSelector::applyUSBMode(QString mode)
+void USBModeSelector::handleUSBEvent(QString mode)
 {
     if (mode == QUsbModed::Mode::Connected) {
         if (m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked) {
@@ -119,8 +121,7 @@ void USBModeSelector::applyUSBMode(QString mode)
     } else if (mode == QUsbModed::Mode::Ask ||
                mode == QUsbModed::Mode::ModeRequest) {
         setWindowVisible(true);
-    } else if (mode != QUsbModed::Mode::Charging &&
-               mode != QUsbModed::Mode::Undefined) {
+    } else if (QUsbMode::isFinalState(mode)) {
         // Hide the mode selection dialog and show a mode notification
         setWindowVisible(false);
         showNotification(mode);

@@ -38,7 +38,7 @@ class LIPSTICK_EXPORT USBModeSelector : public QObject
 public:
 
     explicit USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent = 0);
-    
+
     /*!
      * Returns whether the window is visible or not.
      *
@@ -95,7 +95,7 @@ private slots:
      *
      * \param mode the USB mode to show UI elements for
      */
-    void applyUSBMode(QString mode);
+    void handleUSBEvent(QString mode);
 
     /*!
      * Shows an error string matching the given error code, if any.
