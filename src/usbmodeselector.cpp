@@ -26,7 +26,9 @@
 
 #include <nemo-devicelock/devicelock.h>
 
-QMap<QString, QString> USBModeSelector::s_errorCodeToTranslationID;
+namespace {
+QMap<QString, const char *> s_errorCodeToTranslationID;
+}
 
 USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent) :
     QObject(parent),
@@ -36,8 +38,11 @@ USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject
     m_previousNotificationId(0)
 {
     if (s_errorCodeToTranslationID.isEmpty()) {
-        s_errorCodeToTranslationID.insert("qtn_usb_filessystem_inuse", "qtn_usb_filessystem_inuse");
-        s_errorCodeToTranslationID.insert("mount_failed", "qtn_usb_mount_failed");
+        // Note: not really clear which errors should trigger notifications, or if even these should in practice show
+        //% "USB filesystem in use"
+        s_errorCodeToTranslationID.insert("data_in_use", QT_TRID_NOOP("qtn_usb_filessystem_inuse"));
+        //% "USB mount failed"
+        s_errorCodeToTranslationID.insert("mount_failed", QT_TRID_NOOP("qtn_usb_mount_failed"));
     }
 
     connect(m_usbMode, SIGNAL(eventReceived(QString)), this, SLOT(handleUSBEvent(QString)));
@@ -183,8 +188,7 @@ void USBModeSelector::showError(const QString &errorCode)
         NotificationManager *manager = NotificationManager::instance();
         QVariantHash hints;
         hints.insert(LipstickNotification::HINT_CATEGORY, "device.error");
-        //% "USB connection error occurred"
-        hints.insert(LipstickNotification::HINT_PREVIEW_BODY, qtTrId(s_errorCodeToTranslationID.value(errorCode).toUtf8().constData()));
+        hints.insert(LipstickNotification::HINT_PREVIEW_BODY, qtTrId(s_errorCodeToTranslationID.value(errorCode)));
         manager->Notify(manager->systemApplicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
     }
 }
