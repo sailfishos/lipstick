@@ -121,11 +121,6 @@ private:
     void notificationClosed(uint id);
 
 private:
-
-    //! Error code to translation ID mapping
-    static QMap<QString, QString> s_errorCodeToTranslationID;
-
-    //! The volume control window
     HomeWindow *m_window;
 
     //! For getting and setting the USB mode
