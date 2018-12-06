@@ -9,6 +9,7 @@ PKGCONFIG += dsme_dbus_if thermalmanager_dbus_if usb_moded
 # unit test and unit
 SOURCES += \
     $$SRCDIR/shutdownscreen.cpp \
+    $$SRCDIR/privilegeddbuscontext.cpp \
     $$NOTIFICATIONSRCDIR/lipsticknotification.cpp \
     $$STUBSDIR/stubbase.cpp \
     $$STUBSDIR/homewindow.cpp \

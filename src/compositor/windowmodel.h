@@ -18,13 +18,16 @@
 
 #include "lipstickdbus.h"
 #include "lipstickglobal.h"
+#include "privilegeddbuscontext.h"
+
 #include <QQmlParserStatus>
 #include <QAbstractListModel>
 
 class LipstickCompositor;
 class LipstickCompositorWindow;
 class LIPSTICK_EXPORT WindowModel : public QAbstractListModel,
-                                    public QQmlParserStatus
+                                    public QQmlParserStatus,
+                                    public PrivilegedDBusContext
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)

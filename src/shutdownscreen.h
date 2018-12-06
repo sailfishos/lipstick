@@ -20,10 +20,11 @@
 #include <QDBusContext>
 #include "lipstickglobal.h"
 #include <qmsystemstate.h>
+#include <privilegeddbuscontext.h>
 
 class HomeWindow;
 
-class LIPSTICK_EXPORT ShutdownScreen : public QObject, protected QDBusContext
+class LIPSTICK_EXPORT ShutdownScreen : public QObject, protected PrivilegedDBusContext
 {
     Q_OBJECT
     Q_PROPERTY(bool windowVisible READ windowVisible WRITE setWindowVisible NOTIFY windowVisibleChanged)
@@ -86,8 +87,6 @@ private:
 #ifdef UNIT_TEST
     friend class Ut_ShutdownScreen;
 #endif
-
-    bool isPrivileged();
 };
 
 #endif // SHUTDOWNSCREEN_H
