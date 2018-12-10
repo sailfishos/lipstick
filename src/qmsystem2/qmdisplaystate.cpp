@@ -66,7 +66,13 @@ void QmDisplayState::connectNotify(const QMetaMethod &signal) {
                                                  MCE_SIGNAL_IF,
                                                  MCE_DISPLAY_SIG,
                                                  priv,
-                                                 SLOT(slotDisplayStateChanged(const QString&)));
+                                                 SLOT(slotDisplayStateChanged(QString)));
+
+            QDBusConnection::systemBus().callWithCallback(
+                        QDBusMessage::createMethodCall(
+                            MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_DISPLAY_STATUS_GET),
+                            priv,
+                            SLOT(slotDisplayStateChanged(QString)));
         }
         priv->connectCount[SIGNAL_DISPLAY_STATE]++;
     }
@@ -87,7 +93,7 @@ void QmDisplayState::disconnectNotify(const QMetaMethod &signal) {
                                                     MCE_SIGNAL_IF,
                                                     MCE_DISPLAY_SIG,
                                                     priv,
-                                                    SLOT(slotDisplayStateChanged(const QString&)));
+                                                    SLOT(slotDisplayStateChanged(QString)));
         }
     }
 }
