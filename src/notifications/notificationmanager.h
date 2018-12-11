@@ -23,6 +23,8 @@
 #include <QSet>
 #include <QDBusContext>
 
+#include <privilegeddbuscontext.h>
+
 class AndroidPriorityStore;
 class CategoryDefinitionStore;
 class QSqlDatabase;
@@ -37,7 +39,7 @@ class QSqlDatabase;
  * The service is registered as org.freedesktop.Notifications on the D-Bus
  * session bus in the path /org/freedesktop/Notifications.
  */
-class LIPSTICK_EXPORT NotificationManager : public QObject, public QDBusContext
+class LIPSTICK_EXPORT NotificationManager : public QObject, public PrivilegedDBusContext
 {
     Q_OBJECT
 
@@ -381,9 +383,6 @@ private:
      * \param args list of values to be bound to the positional placeholders ('?' -character) in the command.
      */
     void execSQL(const QString &command, const QVariantList &args = QVariantList());
-
-    uint callerProcessId() const;
-    bool isPrivileged() const;
 
     //! The singleton notification manager instance
     static NotificationManager *s_instance;
