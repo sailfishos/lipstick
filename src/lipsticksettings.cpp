@@ -105,6 +105,16 @@ void LipstickSettings::exportScreenProperties()
         physicalDotsPerInchConf.set(primaryScreen->physicalDotsPerInch());
         physicalDotsPerInchConf.sync();
     }
+    MGConfItem physicalDotsPerInchXConf("/lipstick/screen/primary/physicalDotsPerInchX");
+    if (physicalDotsPerInchXConf.value(defaultValue) != primaryScreen->physicalDotsPerInchX()) {
+        physicalDotsPerInchXConf.set(primaryScreen->physicalDotsPerInchX());
+        physicalDotsPerInchXConf.sync();
+    }
+    MGConfItem physicalDotsPerInchYConf("/lipstick/screen/primary/physicalDotsPerInchY");
+    if (physicalDotsPerInchYConf.value(defaultValue) != primaryScreen->physicalDotsPerInchY()) {
+        physicalDotsPerInchYConf.set(primaryScreen->physicalDotsPerInchY());
+        physicalDotsPerInchYConf.sync();
+    }
 }
 
 QString LipstickSettings::blankingPolicy()
