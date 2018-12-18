@@ -71,6 +71,7 @@ public:
     bool focusOnTouch() const;
     void setFocusOnTouch(bool focusOnTouch);
 
+    Q_INVOKABLE void resize(const QSize &size);
 
 protected:
     void itemChange(ItemChange change, const ItemChangeData &data);
@@ -89,6 +90,7 @@ signals:
     void mouseRegionBoundsChanged();
     void committed();
     void focusOnTouchChanged();
+    void resized();
 
 private slots:
     void handleTouchCancel();
