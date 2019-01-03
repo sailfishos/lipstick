@@ -20,11 +20,13 @@
 #include "lipstickglobal.h"
 #include <QQmlParserStatus>
 #include <QAbstractListModel>
+#include <QDBusContext>
 
 class LipstickCompositor;
 class LipstickCompositorWindow;
 class LIPSTICK_EXPORT WindowModel : public QAbstractListModel,
-                                    public QQmlParserStatus
+                                    public QQmlParserStatus,
+                                    public QDBusContext
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
@@ -64,6 +66,7 @@ private:
     void titleChanged(int);
 
     void refresh();
+    bool isPrivileged() const;
 
     bool m_complete:1;
     QList<int> m_items;
