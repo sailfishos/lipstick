@@ -76,7 +76,7 @@ private slots:
 
 private:
     //! Check whether feedbacks should be enabled for the given notification
-    bool isEnabled(LipstickNotification *notification);
+    bool isEnabled(LipstickNotification *notification, int minimumPriority);
 
     //! Non-graphical feedback player
     Ngf::Client *m_ngfClient;
