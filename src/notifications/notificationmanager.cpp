@@ -138,6 +138,7 @@ NotificationManager *NotificationManager::instance(bool owner)
 
 NotificationManager::NotificationManager(QObject *parent, bool owner) :
     QObject(parent),
+    QDBusContext(),
     m_previousNotificationID(0),
     m_categoryDefinitionStore(new CategoryDefinitionStore(CATEGORY_DEFINITION_FILE_DIRECTORY, MAX_CATEGORY_DEFINITION_FILES, this)),
     m_androidPriorityStore(new AndroidPriorityStore(ANDROID_PRIORITY_DEFINITION_PATH, this)),
@@ -1061,6 +1062,31 @@ void NotificationManager::execSQL(const QString &command, const QVariantList &ar
     }
 
     m_databaseCommitTimer.start();
+}
+
+uint NotificationManager::callerProcessId() const
+{
+    if (calledFromDBus()) {
+        return connection().interface()->servicePid(message().service()).value();
+    } else {
+        return QCoreApplication::applicationPid();
+    }
+}
+
+bool NotificationManager::isPrivileged() const
+{
+    if (!calledFromDBus()) {
+        return true;
+    }
+
+    uint pid = callerProcessId();
+    QFileInfo info(QString("/proc/%1").arg(pid));
+    if (info.group() != QLatin1String("privileged") && info.owner() != QLatin1String("root")) {
+        QString errorString = QString("PID %1 is not in privileged group").arg(pid);
+        sendErrorReply(QDBusError::AccessDenied, errorString);
+        return false;
+    }
+    return true;
 }
 
 void NotificationManager::invokeAction(const QString &action)

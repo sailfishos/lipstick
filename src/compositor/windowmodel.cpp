@@ -173,7 +173,7 @@ void WindowModel::refresh()
 void WindowModel::launchProcess(const QString &binaryName)
 {
     LipstickCompositor *c = LipstickCompositor::instance();
-    if (!m_complete || !c || !isPrivileged())
+    if (!m_complete || !c)
         return;
 
     QStringList binaryParts = binaryName.split(QRegExp(QRegExp("\\s+")));
