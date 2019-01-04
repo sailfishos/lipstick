@@ -14,6 +14,8 @@
 ****************************************************************************/
 
 #include <QDBusConnection>
+#include <QDBusConnectionInterface>
+#include <QFileInfo>
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositor.h"
 #include "windowmodel.h"
@@ -167,6 +169,22 @@ void WindowModel::refresh()
     }
 
     endResetModel();
+}
+
+bool WindowModel::isPrivileged() const
+{
+    if (!calledFromDBus()) {
+        return true;
+    }
+
+    uint pid = connection().interface()->servicePid(message().service()).value();
+    QFileInfo info(QString("/proc/%1").arg(pid));
+    if (info.group() != QLatin1String("privileged") && info.owner() != QLatin1String("root")) {
+        QString errorString = QString("PID %1 is not in privileged group").arg(pid);
+        sendErrorReply(QDBusError::AccessDenied, errorString);
+        return false;
+    }
+    return true;
 }
 
 // used by mapplauncherd to bring a binary to the front

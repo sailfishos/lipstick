@@ -54,8 +54,7 @@ PUBLICHEADERS += \
     qmsystem2/system_global.h \
     vpnagent.h \
     connectivitymonitor.h \
-    connectionselector.h \
-    privilegeddbuscontext.h
+    connectionselector.h
 
 INSTALLS += publicheaderfiles dbus_policy
 publicheaderfiles.files = $$PUBLICHEADERS
@@ -138,7 +137,6 @@ SOURCES += \
     qmsystem2/qmsystemstate.cpp \
     qmsystem2/qmthermal.cpp \
     qmsystem2/qmipcinterface.cpp \
-    privilegeddbuscontext.cpp \
 
 CONFIG += link_pkgconfig mobility qt warn_on depend_includepath qmake_cache target_qt
 CONFIG -= link_prl

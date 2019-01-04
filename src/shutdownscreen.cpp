@@ -29,6 +29,7 @@
 
 ShutdownScreen::ShutdownScreen(QObject *parent) :
     QObject(parent),
+    QDBusContext(),
     m_window(0),
     m_systemState(new MeeGo::QmSystemState(this))
 {
@@ -118,4 +119,25 @@ void ShutdownScreen::setShutdownMode(const QString &mode)
 
     m_shutdownMode = mode;
     applySystemState(MeeGo::QmSystemState::Shutdown);
+}
+
+bool ShutdownScreen::isPrivileged()
+{
+    if (!calledFromDBus()) {
+        // Local function calls are always privileged
+        return true;
+    }
+
+    // Get the PID of the calling process
+    pid_t pid = connection().interface()->servicePid(message().service());
+
+    // The /proc/<pid> directory is owned by EUID:EGID of the process
+    QFileInfo info(QString("/proc/%1").arg(pid));
+    if (info.group() != "privileged" && info.owner() != "root") {
+        sendErrorReply(QDBusError::AccessDenied,
+                QString("PID %1 is not in privileged group").arg(pid));
+        return false;
+    }
+
+    return true;
 }

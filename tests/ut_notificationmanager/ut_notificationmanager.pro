@@ -8,7 +8,6 @@ PKGCONFIG += mlite5
 # unit test and unit
 SOURCES += \
     ut_notificationmanager.cpp \
-    $$SRCDIR/privilegeddbuscontext.cpp \
     $$NOTIFICATIONSRCDIR/notificationmanager.cpp \
     $$NOTIFICATIONSRCDIR/lipsticknotification.cpp \
     $$STUBSDIR/stubbase.cpp \
