@@ -11,6 +11,7 @@ Group:      System/Libraries
 License:    LGPLv2.1
 URL:        http://github.com/nemomobile/lipstick
 Source0:    %{name}-%{version}.tar.bz2
+Source1:    %{name}.privileges
 Requires:   mce >= 1.87.0
 Requires:   pulseaudio-modules-nemo-mainvolume >= 6.0.19
 Requires(post): /sbin/ldconfig
@@ -47,7 +48,7 @@ BuildRequires:  doxygen
 BuildRequires:  qt5-qttools-qthelp-devel
 Conflicts:   meegotouch-systemui < 1.5.7
 Obsoletes:   libnotificationsystem0
-Obsoletes:   lipstick-qt5-screenshot
+Obsoletes:   %{name}-screenshot
 
 %description
 A QML toolkit for homescreen creation
@@ -126,6 +127,9 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/%{icondirectory}
 %qmake5_install
 
+mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
+install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
+
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
@@ -133,27 +137,23 @@ mkdir -p %{buildroot}/%{icondirectory}
 %files
 %defattr(-,root,root,-)
 %config %{_sysconfdir}/dbus-1/system.d/lipstick.conf
-%{_libdir}/liblipstick-qt5.so.*
-%dir %{_libdir}/qt5/qml/org/nemomobile/lipstick
-%{_libdir}/qt5/qml/org/nemomobile/lipstick/liblipstickplugin.so
-%{_libdir}/qt5/qml/org/nemomobile/lipstick/qmldir
-%{_datadir}/translations/lipstick_eng_en.qm
-%dir %{_datadir}/lipstick
-%dir %{_datadir}/lipstick/notificationcategories
-%{_datadir}/lipstick/notificationcategories/*.conf
-%{_datadir}/lipstick/androidnotificationpriorities
+%{_libdir}/lib%{name}.so.*
+%{_libdir}/qt5/qml/org/nemomobile/lipstick
+%{_datadir}/translations/*.qm
+%{_datadir}/lipstick
+%{_datadir}/mapplauncherd/privileges.d/*
 %dir %{icondirectory}
 
 %files devel
 %defattr(-,root,root,-)
-%{_includedir}/lipstick-qt5/*.h
-%{_libdir}/liblipstick-qt5.so
-%{_libdir}/liblipstick-qt5.prl
-%{_libdir}/pkgconfig/lipstick-qt5.pc
+%{_includedir}/%{name}
+%{_libdir}/lib%{name}.so
+%{_libdir}/lib%{name}.prl
+%{_libdir}/pkgconfig/%{name}.pc
 
 %files tests
 %defattr(-,root,root,-)
-/opt/tests/lipstick-tests/*
+/opt/tests/lipstick-tests
 
 %files tools
 %defattr(-,root,root,-)
@@ -162,16 +162,16 @@ mkdir -p %{buildroot}/%{icondirectory}
 %files simplecompositor
 %defattr(-,root,root,-)
 %{_bindir}/simplecompositor
-%{_datadir}/lipstick/simplecompositor/*
+%{_datadir}/lipstick/simplecompositor
 
 %files doc
 %defattr(-,root,root,-)
-%{_datadir}/doc/lipstick/*
+%{_datadir}/doc/lipstick
 
 %files notification-doc
 %defattr(-,root,root,-)
-%{_datadir}/doc/lipstick-notification/*
+%{_datadir}/doc/lipstick-notification
 
 %files ts-devel
 %defattr(-,root,root,-)
-%{_datadir}/translations/source/lipstick.ts
+%{_datadir}/translations/source/*.ts
