@@ -11,6 +11,7 @@ Group:      System/Libraries
 License:    LGPLv2.1
 URL:        http://github.com/nemomobile/lipstick
 Source0:    %{name}-%{version}.tar.bz2
+Source1:    %{name}.privileges
 Requires:   mce >= 1.87.0
 Requires:   pulseaudio-modules-nemo-mainvolume >= 6.0.19
 Requires(post): /sbin/ldconfig
@@ -126,6 +127,9 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/%{icondirectory}
 %qmake5_install
 
+mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
+install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
+
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
@@ -140,6 +144,7 @@ mkdir -p %{buildroot}/%{icondirectory}
 %{_datadir}/translations/lipstick_eng_en.qm
 %dir %{_datadir}/lipstick
 %dir %{_datadir}/lipstick/notificationcategories
+%{_datadir}/mapplauncherd/privileges.d/*
 %{_datadir}/lipstick/notificationcategories/*.conf
 %{_datadir}/lipstick/androidnotificationpriorities
 %dir %{icondirectory}
