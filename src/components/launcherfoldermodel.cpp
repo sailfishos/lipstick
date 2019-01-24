@@ -380,6 +380,7 @@ LauncherFolderModel::LauncherFolderModel(QObject *parent)
     , m_initialized(false)
 {
     connect(m_launcherModel, &LauncherModel::directoriesChanged, this, &LauncherFolderModel::directoriesChanged);
+    connect(m_launcherModel, &LauncherModel::urlDirectoriesChanged, this, &LauncherFolderModel::urlDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::blacklistedApplicationsChanged);
     connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::updateblacklistedApplications);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
@@ -395,6 +396,7 @@ LauncherFolderModel::LauncherFolderModel(InitializationMode, QObject *parent)
     , m_initialized(false)
 {
     connect(m_launcherModel, &LauncherModel::directoriesChanged, this, &LauncherFolderModel::directoriesChanged);
+    connect(m_launcherModel, &LauncherModel::urlDirectoriesChanged, this, &LauncherFolderModel::urlDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::blacklistedApplicationsChanged);
     connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::updateblacklistedApplications);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
@@ -451,6 +453,16 @@ QStringList LauncherFolderModel::directories() const
 void LauncherFolderModel::setDirectories(QStringList dirs)
 {
     m_launcherModel->setDirectories(dirs);
+}
+
+QStringList LauncherFolderModel::urlDirectories() const
+{
+    return m_launcherModel->urlDirectories();
+}
+
+void LauncherFolderModel::setUrlDirectories(const QStringList &directories)
+{
+    m_launcherModel->setUrlDirectories(directories);
 }
 
 QStringList LauncherFolderModel::iconDirectories() const

@@ -96,6 +96,7 @@ class LIPSTICK_EXPORT LauncherFolderModel : public LauncherFolderItem
     Q_OBJECT
     Q_PROPERTY(QString scope READ scope WRITE setScope NOTIFY scopeChanged)
     Q_PROPERTY(QStringList directories READ directories WRITE setDirectories NOTIFY directoriesChanged)
+    Q_PROPERTY(QStringList urlDirectories READ urlDirectories WRITE setUrlDirectories NOTIFY urlDirectoriesChanged)
     Q_PROPERTY(QStringList iconDirectories READ iconDirectories WRITE setIconDirectories NOTIFY iconDirectoriesChanged)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories NOTIFY categoriesChanged)
     Q_PROPERTY(QStringList blacklistedApplications READ blacklistedApplications WRITE setBlacklistedApplications NOTIFY blacklistedApplicationsChanged)
@@ -108,6 +109,9 @@ public:
 
     QStringList directories() const;
     void setDirectories(QStringList);
+
+    QStringList urlDirectories() const;
+    void setUrlDirectories(const QStringList &directories);
 
     QStringList iconDirectories() const;
     void setIconDirectories(QStringList);
@@ -131,6 +135,7 @@ public slots:
 signals:
     void scopeChanged();
     void directoriesChanged();
+    void urlDirectoriesChanged();
     void iconDirectoriesChanged();
     void categoriesChanged();
     void blacklistedApplicationsChanged();

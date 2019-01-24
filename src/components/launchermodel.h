@@ -36,6 +36,7 @@ class LIPSTICK_EXPORT LauncherModel : public QObjectListModel
     Q_DISABLE_COPY(LauncherModel)
 
     Q_PROPERTY(QStringList directories READ directories WRITE setDirectories NOTIFY directoriesChanged)
+    Q_PROPERTY(QStringList urlDirectories READ urlDirectories WRITE setUrlDirectories NOTIFY urlDirectoriesChanged)
     Q_PROPERTY(QStringList iconDirectories READ iconDirectories WRITE setIconDirectories NOTIFY iconDirectoriesChanged)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories NOTIFY categoriesChanged)
     Q_PROPERTY(QStringList blacklistedApplications READ blacklistedApplications WRITE setBlacklistedApplications NOTIFY blacklistedApplicationsChanged)
@@ -59,6 +60,9 @@ public:
 
     QStringList directories() const;
     void setDirectories(QStringList);
+
+    QStringList urlDirectories() const;
+    void setUrlDirectories(const QStringList &directories);
 
     QStringList iconDirectories() const;
     void setIconDirectories(QStringList);
@@ -89,6 +93,7 @@ public slots:
 
 signals:
     void directoriesChanged();
+    void urlDirectoriesChanged();
     void iconDirectoriesChanged();
     void categoriesChanged();
     void blacklistedApplicationsChanged();
@@ -119,6 +124,7 @@ private:
     LauncherItem *temporaryItemToReplace();
 
     QStringList m_directories;
+    QStringList m_urlDirectories;
     QStringList m_iconDirectories;
     QStringList m_categories;
     QStringList m_blacklistedApplications;
