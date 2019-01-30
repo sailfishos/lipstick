@@ -170,6 +170,12 @@ bool QUsbModed::setCurrentMode(QString aMode)
     return true;
 }
 
+QString QUsbModed::targetMode() const
+{
+    // Let target mode be always the same as the configured mode here
+    return iPrivate->iConfigMode;
+}
+
 bool QUsbModed::setConfigMode(QString aMode)
 {
     if (iPrivate->iConfigMode != aMode) {
@@ -203,6 +209,10 @@ void QUsbModed::onGetModeRequestFinished(QDBusPendingCallWatcher *)
 {
 }
 
+void QUsbModed::onGetTargetModeFinished(QDBusPendingCallWatcher*)
+{
+}
+
 void QUsbModed::updateSupportedModes(QString)
 {
 }
@@ -224,6 +234,14 @@ void QUsbModed::onUsbConfigChanged(QString, QString, QString)
 }
 
 void QUsbModed::onUsbStateChanged(QString)
+{
+}
+
+void QUsbModed::onUsbEventReceived(QString)
+{
+}
+
+void QUsbModed::onUsbTargetStateChanged(QString)
 {
 }
 

@@ -28,6 +28,15 @@
 
 #include <nemo-devicelock/devicelock.h>
 
+#ifdef HAVE_CONTEXTSUBSCRIBER
+#include "contextproperty_stub.h"
+#endif
+
+static void setStubProperty(QString const &name, QString const &value)
+{
+    getContextPropertyStub(name)->stubSetReturnValue("value", QVariant(value));
+}
+
 HomeWindow::HomeWindow()
 {
 }
@@ -98,6 +107,9 @@ void Ut_USBModeSelector::cleanupTestCase()
 
 void Ut_USBModeSelector::init()
 {
+#ifdef HAVE_CONTEXTSUBSCRIBER
+    setStubProperty("Battery.ChargingState", "idle");
+#endif
     deviceLock = new NemoDeviceLock::DeviceLock(this);
     usbModeSelector = new USBModeSelector(deviceLock);
     usbModeSelector->m_usbMode->setCurrentMode(QUsbModed::Mode::Undefined);
@@ -135,7 +147,7 @@ void Ut_USBModeSelector::testShowDialog()
 
     QSignalSpy spy(usbModeSelector, SIGNAL(dialogShown()));
     usbModeSelector->m_usbMode->setConfigMode(mode);
-    usbModeSelector->handleUSBEvent(mode);
+    usbModeSelector->handleUSBState();
 
     QCOMPARE(homeWindows.count(), 1);
 
@@ -170,8 +182,8 @@ void Ut_USBModeSelector::testHideDialog()
     QFETCH(QString, mode);
 
     usbModeSelector->m_usbMode->setConfigMode(QUsbModed::Mode::Ask);
-    usbModeSelector->handleUSBEvent(QUsbModed::Mode::Ask);
-    usbModeSelector->handleUSBEvent(mode);
+    usbModeSelector->m_usbMode->setCurrentMode(QUsbModed::Mode::Ask);
+    usbModeSelector->handleUSBState();
     QCOMPARE(homeWindowVisible[homeWindows.first()], false);
 }
 
@@ -199,7 +211,8 @@ void Ut_USBModeSelector::testUSBNotifications()
     QFETCH(QString, category);
     QFETCH(QString, body);
 
-    usbModeSelector->handleUSBEvent(mode);
+    usbModeSelector->m_usbMode->setCurrentMode(QUsbModed::Mode::Ask);
+    usbModeSelector->handleUSBState();
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), category);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), body);
@@ -241,7 +254,7 @@ void Ut_USBModeSelector::testShowError()
 
 void Ut_USBModeSelector::testSetUSBMode()
 {
-    usbModeSelector->setUSBMode(QUsbModed::Mode::Charging);
+    usbModeSelector->setMode(QUsbModed::Mode::Charging);
     QCOMPARE(usbModeSelector->m_usbMode->currentMode(), QUsbModed::Mode::Charging);
 }
 
