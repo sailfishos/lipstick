@@ -94,22 +94,9 @@ void NotificationPreviewPresenter::showNextNotification()
     } else {
         LipstickNotification *notification = m_notificationQueue.takeFirst();
 
-        const bool screenLocked = m_screenLock->isScreenLocked() && m_screenLock->displayState() == TouchScreen::DisplayOff;
-        const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
-        const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
-
-        bool show = true;
-        if (deviceLocked) {
-            if (!notificationIsCritical) {
-                show = false;
-            } else {
-                show = m_deviceLock->showNotifications();
-            }
-        } else if (screenLocked) {
-            if (!notificationIsCritical) {
-                show = false;
-            }
-        }
+        // This is checked before queueing the notification but check again because e.g. the device
+        // lock state might have changed.
+        bool show = notificationShouldBeShown(notification);
 
         if (!show) {
             if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) { // Suppress feedback if locked out.
@@ -208,9 +195,39 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
         return false; // would show up constantly as preview
     }
 
-    const bool screenLocked = m_screenLock->isScreenLocked();
+    // We use two different presentation styles: one that can be clicked and one that cannot.
+    // Check for configurations that can't be correctly activated.
+    if (notification->remoteActions().count() == 0) {
+        if (!notification->previewSummary().isEmpty() && !notification->previewBody().isEmpty()) {
+            // Notifications with preview summary + preview body should have actions, as tapping on the preview pop-up should trigger some action
+            qWarning() << "Notification has both preview summary and preview body but no actions. Remove the preview body or add an action:"
+                       << notification->appName() << notification->category() << notification->previewSummary() << notification->previewBody();
+        }
+    } else {
+        if (!notification->previewSummary().isEmpty() && notification->previewBody().isEmpty()) {
+            // Notifications with preview summary but no body should not have any actions, as the small preview banner is too small to receive presses
+            qWarning() << "Warning: Notification has an action but only shows a preview summary. Add a preview body or remove the actions:"
+                       << notification->appName() << notification->category() << notification->previewSummary() << notification->previewBody();
+        } else if ((notification->previewSummary().isEmpty() && notification->previewBody().isEmpty()) && notification->hints().value("transient").toBool()) {
+            qWarning() << "Warning: Notification has actions but is transient and without a preview, its actions will not be triggerable from the UI:"
+                       << notification->appName() << notification->category() << notification->previewSummary() << notification->previewBody();
+        }
+    }
+
+    const bool screenLocked = m_screenLock->isScreenLocked() && m_screenLock->displayState() == TouchScreen::DisplayOff;
     const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
     const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
+    const bool showNotificationWhileDeviceLocked = notification->presentationStyle() == LipstickNotification::MinimalStyle || m_deviceLock->showNotifications();
+
+    if (deviceLocked
+            && !notificationIsCritical
+            && !showNotificationWhileDeviceLocked) {
+        return false;
+    }
+
+    if (screenLocked && !notificationIsCritical) {
+        return false;
+    }
 
     uint mode = AllNotificationsEnabled;
     QWaylandSurface *surface = LipstickCompositor::instance()->surfaceForId(LipstickCompositor::instance()->topmostWindowId());
@@ -218,8 +235,7 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
         mode = surface->windowProperties().value("NOTIFICATION_PREVIEWS_DISABLED", uint(AllNotificationsEnabled)).toUInt();
     }
 
-    return ((!screenLocked && !deviceLocked) || notificationIsCritical) &&
-            (mode == AllNotificationsEnabled ||
+    return (mode == AllNotificationsEnabled ||
              (mode == ApplicationNotificationsDisabled && notificationIsCritical) ||
              (mode == SystemNotificationsDisabled && !notificationIsCritical));
 }

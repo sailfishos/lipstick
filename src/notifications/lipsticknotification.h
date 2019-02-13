@@ -55,6 +55,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(int maxContentLines READ maxContentLines CONSTANT)
     Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
+    Q_PROPERTY(PresentationStyle presentationStyle READ presentationStyle NOTIFY presentationStyleChanged)
 
 public:
     //! Standard hint: The urgency level.
@@ -141,6 +142,12 @@ public:
 
     //! Nemo hint: play vibra feedback
     static const char *HINT_VIBRA;
+
+    enum PresentationStyle {
+        DefaultNotificationStyle,  // has summary and body, and possibly actions
+        MinimalStyle   // has summary only, and no actions
+    };
+    Q_ENUM(PresentationStyle)
 
     /*!
      * Creates an object for storing information about a single notification.
@@ -270,6 +277,8 @@ public:
 
     bool hasProgress() const;
 
+    PresentationStyle presentationStyle() const;
+
     //! \internal
     quint64 internalTimestamp() const;
 
@@ -341,6 +350,9 @@ signals:
 
     void hasProgressChanged();
     void progressChanged();
+
+    //! Sent when the presentation style has been modified
+    void presentationStyleChanged();
 
 private:
     void updateHintValues();

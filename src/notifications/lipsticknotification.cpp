@@ -166,7 +166,13 @@ QStringList LipstickNotification::actions() const
 
 void LipstickNotification::setActions(const QStringList &actions)
 {
+    PresentationStyle oldStyle = presentationStyle();
+
     m_actions = actions;
+
+    if (oldStyle != presentationStyle()) {
+        emit presentationStyleChanged();
+    }
 }
 
 QVariantHash LipstickNotification::hints() const
@@ -192,6 +198,7 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     QString oldCategory = category();
     qreal oldProgress = progress();
     bool oldHasProgress = hasProgress();
+    PresentationStyle oldStyle = presentationStyle();
 
     m_hints = hints;
     updateHintValues();
@@ -240,6 +247,10 @@ void LipstickNotification::setHints(const QVariantHash &hints)
 
     if (oldProgress != progress()) {
         emit progressChanged();
+    }
+
+    if (oldStyle != presentationStyle()) {
+        emit presentationStyleChanged();
     }
 
     emit hintsChanged();
@@ -408,6 +419,13 @@ qreal LipstickNotification::progress() const
 bool LipstickNotification::hasProgress() const
 {
     return m_hints.contains(LipstickNotification::HINT_PROGRESS);
+}
+
+LipstickNotification::PresentationStyle LipstickNotification::presentationStyle() const
+{
+    bool hasActions = m_actions.count() > 0;
+    bool hasMultipleLines = previewSummary().length() > 0 && previewBody().length() > 0;
+    return hasActions || hasMultipleLines ? LipstickNotification::DefaultNotificationStyle : LipstickNotification::MinimalStyle;
 }
 
 quint64 LipstickNotification::internalTimestamp() const
