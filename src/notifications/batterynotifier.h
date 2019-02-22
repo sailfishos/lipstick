@@ -125,6 +125,13 @@ private:
     ChargingState getState() const;
     ChargerType getCharger() const;
 
+    /*! Determines whether the current device is a USB device that will by
+     * handled by usb_moded.
+     *
+     * \returns true if the device will be handled by usb_moded, false o/w.
+     */
+    bool isUsbDevice() const;
+
     //! Low battery notifier for getting notifications about low battery state
     LowBatteryNotifier *m_lowBatteryNotifier;
 

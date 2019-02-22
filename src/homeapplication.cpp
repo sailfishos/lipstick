@@ -181,6 +181,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     m_qmlEngine->rootContext()->setContextProperty("LipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("volumeControl", m_volumeControl);
     m_qmlEngine->rootContext()->setContextProperty("connectivityMonitor", m_connectivityMonitor);
+    m_qmlEngine->rootContext()->setContextProperty("usbModeSelector", m_usbModeSelector);
 
     connect(this, SIGNAL(homeReady()), this, SLOT(sendStartupNotifications()));
 }

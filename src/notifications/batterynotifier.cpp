@@ -109,7 +109,9 @@ void BatteryNotifier::prepareNotification()
             toRemove << NotificationRemoveCharger
                      << NotificationChargingComplete
                      << NotificationLowBattery;
-            if (m_chargingCompletion == NeedsCharging) {
+            // In the case of USB devices, charging notifications on
+            // connection are handled by USBModeSelector rather than here.
+            if (m_chargingCompletion == NeedsCharging && !isUsbDevice()) {
                 toSend << NotificationCharging;
             }
         } else {
@@ -342,4 +344,10 @@ BatteryNotifier::ChargerType BatteryNotifier::getCharger() const
                : (name == ""
                   ? ChargerNo
                   : ChargerUnknown)));
+}
+
+bool BatteryNotifier::isUsbDevice() const
+{
+    QString name(propertyString(m_chargerType));
+    return (name == "dcp" || name == "cdp" || name == "usb");
 }
