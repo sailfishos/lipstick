@@ -124,8 +124,8 @@ void BatteryNotifier::prepareNotification()
 
     if ((isLevelChanged || isStateChanged) && !isAnyChargingState) {
         if (newState.level == BatteryLow) {
+            // lowBatteryAlert is called immediately, and will send NotificationLowBattery
             startLowBatteryNotifier();
-            toSend << NotificationLowBattery;
         } else if (isLevelChanged && m_lastState.state == StateDischarging) {
             toRemove << NotificationLowBattery;
 
