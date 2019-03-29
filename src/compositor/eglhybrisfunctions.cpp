@@ -17,9 +17,17 @@
 
 #include <QGlobalStatic>
 
+static const char* checked_strstr(const char *haystack, const char *needle)
+{
+    if (!haystack || !needle) {
+        return 0;
+    }
+    return strstr(haystack, needle);
+}
+
 struct SupportedEglHybrisFunctions : public EglHybrisFunctions
 {
-    const bool supported = strstr(eglQueryString(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_EXTENSIONS), "EGL_HYBRIS_native_buffer2") != 0
+    const bool supported = checked_strstr(eglQueryString(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_EXTENSIONS), "EGL_HYBRIS_native_buffer2") != 0
             && glEGLImageTargetTexture2DOES
             && eglCreateImageKHR
             && eglDestroyImageKHR
