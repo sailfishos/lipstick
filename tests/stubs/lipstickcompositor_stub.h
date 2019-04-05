@@ -377,6 +377,9 @@ LipstickCompositorStub *gLipstickCompositorStub = &gDefaultLipstickCompositorStu
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
 LipstickCompositor::LipstickCompositor()
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    : m_output(this, this, QString(), QString())
+#endif
 {
     gLipstickCompositorStub->LipstickCompositorConstructor();
 }
@@ -625,6 +628,19 @@ void LipstickCompositor::timerEvent(QTimerEvent *e)
     gLipstickCompositorStub->timerEvent(e);
 }
 
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+
+QWaylandQuickCompositor::QWaylandQuickCompositor(const char *, ExtensionFlags)
+{
+}
+
+QWaylandOutput::QWaylandOutput(QWaylandCompositor *, QWindow *, const QString &, const QString &)
+    : d_ptr(nullptr)
+{
+}
+
+#else
+
 QWaylandCompositor::QWaylandCompositor(QWindow *, const char *, QWaylandCompositor::ExtensionFlags)
 {
 }
@@ -632,5 +648,7 @@ QWaylandCompositor::QWaylandCompositor(QWindow *, const char *, QWaylandComposit
 QWaylandQuickCompositor::QWaylandQuickCompositor(QQuickWindow *, const char *, QWaylandCompositor::ExtensionFlags)
 {
 }
+
+#endif
 
 #endif

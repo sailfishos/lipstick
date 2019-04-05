@@ -16,10 +16,15 @@
 #ifndef LIPSTICKCOMPOSITOR_H
 #define LIPSTICKCOMPOSITOR_H
 
+#include <QtCompositorVersion>
+
 #include <QQuickWindow>
 #include "lipstickglobal.h"
 #include "homeapplication.h"
 #include <QQmlParserStatus>
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#include <QWaylandQuickOutput>
+#endif
 #include <QWaylandQuickCompositor>
 #include <QWaylandSurfaceItem>
 #include <QPointer>
@@ -36,6 +41,10 @@ class LipstickKeymap;
 namespace ContentAction {
 class Action;
 }
+
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+typedef QWaylandClient WaylandClient;
+#endif
 
 class LIPSTICK_EXPORT LipstickCompositor : public QQuickWindow, public QWaylandQuickCompositor,
                                            public QQmlParserStatus
@@ -206,6 +215,10 @@ private:
     QQmlComponent *shaderEffectComponent();
 
     static LipstickCompositor *m_instance;
+
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    QWaylandQuickOutput m_output;
+#endif
 
     int m_totalWindowCount;
     QHash<int, LipstickCompositorWindow *> m_mappedSurfaces;

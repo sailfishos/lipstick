@@ -38,10 +38,19 @@
 #include <private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformintegration.h>
 
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#include <QWaylandClient>
+#endif
+
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    : QWaylandQuickCompositor(nullptr, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+    , m_output(this, this, QString(), QString())
+#else
     : QWaylandQuickCompositor(this, 0, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+#endif
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
     , m_homeActive(true)
@@ -162,7 +171,14 @@ void LipstickCompositor::onVisibleChanged(bool visible)
 
 void LipstickCompositor::componentComplete()
 {
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    QScreen * const screen = QGuiApplication::primaryScreen();
+
+    m_output.setGeometry(QRect(QPoint(0, 0), screen->size()));
+    m_output.setPhysicalSize(screen->physicalSize().toSize());
+#else
     QWaylandCompositor::setOutputGeometry(QRect(0, 0, width(), height()));
+#endif
 }
 
 void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)
@@ -297,7 +313,11 @@ int LipstickCompositor::windowIdForLink(QWaylandSurface *s, uint link) const
         QWaylandSurface *windowSurface = iter.value()->surface();
 
         if (windowSurface && windowSurface->client() && s->client() &&
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+            windowSurface->client()->processId() == s->client()->processId() &&
+#else
             windowSurface->processId() == s->processId() &&
+#endif
             windowSurface->windowProperties().value("WINID", uint(0)).toUInt() == link)
             return iter.value()->windowId();
     }
@@ -355,7 +375,12 @@ void LipstickCompositor::setTopmostWindowId(int id)
         QWaylandSurface *surface = surfaceForId(m_topmostWindowId);
 
         if (surface)
+
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+            pid = surface->client()->processId();
+#else
             pid = surface->processId();
+#endif
 
         if (m_topmostWindowProcessId != pid) {
             m_topmostWindowProcessId = pid;

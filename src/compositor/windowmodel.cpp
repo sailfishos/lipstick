@@ -20,6 +20,10 @@
 #include "lipstickcompositor.h"
 #include "windowmodel.h"
 
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#include <QWaylandClient>
+#endif
+
 WindowModel::WindowModel()
 : m_complete(false)
 {
@@ -70,7 +74,11 @@ QVariant WindowModel::data(const QModelIndex &index, int role) const
         return m_items.at(idx);
     } else if (role == Qt::UserRole + 2) {
         QWaylandSurface *s = c->surfaceForId(m_items.at(idx));
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+        return s?s->client()->processId():0;
+#else
         return s?s->processId():0;
+#endif
     } else if (role == Qt::UserRole + 3) {
         LipstickCompositorWindow *w = static_cast<LipstickCompositorWindow *>(c->windowForId(m_items.at(idx)));
         return w->title();
