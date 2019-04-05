@@ -13,9 +13,14 @@
 **
 ****************************************************************************/
 
+#include <QtCompositorVersion>
+
 #include <QCoreApplication>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#include <QWaylandClient>
+#endif
 #include <QTimer>
 #include <sys/types.h>
 #include <signal.h>
@@ -27,6 +32,7 @@
 #include <EGL/egl.h>
 #include <private/qwlsurface_p.h>
 #include <private/qquickwindow_p.h>
+
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)
@@ -85,7 +91,11 @@ bool LipstickCompositorWindow::isAlien() const
 qint64 LipstickCompositorWindow::processId() const
 {
     if (surface())
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+        return surface()->client()->processId();
+#else
         return surface()->processId();
+#endif
     else return 0;
 }
 
