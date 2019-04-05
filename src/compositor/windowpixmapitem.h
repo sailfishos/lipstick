@@ -68,7 +68,6 @@ public:
 
 protected:
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *);
-    virtual void geometryChanged(const QRectF &, const QRectF &);
 
 signals:
     void windowIdChanged();
@@ -92,7 +91,6 @@ private:
     void cleanupOpenGL();
 
     QPointer<LipstickCompositorWindow> m_item;
-    QQuickItem *m_shaderEffect;
     int m_id;
     bool m_opaque;
     qreal m_radius;

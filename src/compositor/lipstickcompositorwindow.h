@@ -65,8 +65,6 @@ public:
 
     Q_INVOKABLE void terminateProcess(int killTimeout);
 
-    QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *);
-
     bool focusOnTouch() const;
     void setFocusOnTouch(bool focusOnTouch);
 
@@ -94,14 +92,12 @@ signals:
 private slots:
     void handleTouchCancel();
     void killProcess();
-    void connectSurfaceSignals();
 
 private:
     friend class LipstickCompositor;
     friend class WindowPixmapItem;
     void imageAddref(QQuickItem *item);
     void imageRelease(QQuickItem *item);
-    void onSync();
 
     bool canRemove() const;
     void tryRemove();
@@ -109,6 +105,7 @@ private:
     void refreshGrabbedKeys();
     void handleTouchEvent(QTouchEvent *e);
 
+    qint64 m_processId;
     int m_windowId;
     bool m_isAlien;
     QString m_category;
@@ -118,9 +115,7 @@ private:
     bool m_mouseRegionValid:1;
     bool m_interceptingTouch:1;
     bool m_mapped : 1;
-    bool m_noHardwareComposition: 1;
     bool m_focusOnTouch : 1;
-    bool m_hasVisibleReferences : 1;
     QVariant m_data;
     QRegion m_mouseRegion;
     QList<int> m_grabbedKeys;
@@ -128,7 +123,6 @@ private:
         QPointer<QWaylandSurface> oldFocus;
         QList<int> keys;
     } m_pressedGrabbedKeys;
-    QList<QMetaObject::Connection> m_surfaceConnections;
     QVector<QQuickItem *> m_refs;
 };
 

@@ -658,7 +658,7 @@ public:
 
 
 WindowPixmapItem::WindowPixmapItem()
-: m_item(0), m_shaderEffect(0), m_id(0), m_opaque(false), m_radius(0), m_xOffset(0), m_yOffset(0)
+: m_item(0), m_id(0), m_opaque(false), m_radius(0), m_xOffset(0), m_yOffset(0)
 , m_xScale(1), m_yScale(1), m_unmapLock(0), m_hasBuffer(false), m_hasPixmap(false), m_surfaceDestroyed(false), m_haveSnapshot(false)
 , m_textureProvider(0)
 {
@@ -986,13 +986,6 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     return node;
 }
 
-void WindowPixmapItem::geometryChanged(const QRectF &n, const QRectF &o)
-{
-    QQuickItem::geometryChanged(n, o);
-
-    if (m_shaderEffect) m_shaderEffect->setSize(n.size());
-}
-
 void WindowPixmapItem::updateItem()
 {
     LipstickCompositor *c = LipstickCompositor::instance();
@@ -1002,8 +995,6 @@ void WindowPixmapItem::updateItem()
         LipstickCompositorWindow *w = static_cast<LipstickCompositorWindow *>(c->windowForId(m_id));
 
         if (!w) {
-            delete m_shaderEffect;
-            m_shaderEffect = 0;
             if (m_hasPixmap && !m_haveSnapshot) {
                 m_hasPixmap = false;
                 emit hasPixmapChanged();
@@ -1011,7 +1002,6 @@ void WindowPixmapItem::updateItem()
             return;
         } else if (w->surface()) {
             m_item = w;
-            delete m_shaderEffect; m_shaderEffect = 0;
             m_item->setDelayRemove(true);
             connect(m_item->surface(), &QWaylandSurface::sizeChanged, this, &WindowPixmapItem::handleWindowSizeChanged);
             connect(m_item->surface(), &QWaylandSurface::configure, this, &WindowPixmapItem::configure);
@@ -1019,15 +1009,6 @@ void WindowPixmapItem::updateItem()
             connect(m_item.data(), &QObject::destroyed, this, &WindowPixmapItem::itemDestroyed);
             m_windowSize = m_item->surface()->size();
             m_unmapLock = new QWaylandUnmapLock(m_item->surface());
-        } else {
-            if (!m_shaderEffect) {
-                m_shaderEffect = static_cast<QQuickItem *>(c->shaderEffectComponent()->create());
-                Q_ASSERT(m_shaderEffect);
-                m_shaderEffect->setParentItem(this);
-                m_shaderEffect->setSize(QSizeF(width(), height()));
-            }
-
-            m_shaderEffect->setProperty("window", qVariantFromValue((QObject *)w));
         }
 
         w->imageAddref(this);

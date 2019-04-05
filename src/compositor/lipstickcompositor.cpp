@@ -34,7 +34,6 @@
 #include "lipstickrecorder.h"
 #include <qpa/qwindowsysteminterface.h>
 #include "alienmanager/alienmanager.h"
-#include "hwcrenderstage.h"
 #include "logging.h"
 #include <private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformintegration.h>
@@ -45,16 +44,19 @@
 #include <systemd/sd-login.h>
 #include <unistd.h>
 
+
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
-LipstickCompositor::LipstickCompositor()
+LipstickCompositor::LipstickCompositor()    
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    : QWaylandQuickCompositor(nullptr, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+    , m_output(this, this, QString(), QString())
+#else
     : QWaylandQuickCompositor(this, 0, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+#endif
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
     , m_homeActive(true)
-    , m_shaderEffect(0)
-    , m_fullscreenSurface(0)
-    , m_directRenderingActive(false)
     , m_topmostWindowId(0)
     , m_topmostWindowProcessId(0)
     , m_topmostWindowOrientation(Qt::PrimaryOrientation)
@@ -105,8 +107,6 @@ LipstickCompositor::LipstickCompositor()
     addGlobalInterface(m_recorder);
     addGlobalInterface(new AlienManagerGlobal);
 
-    HwcRenderStage::initialize(this);
-
     QObject::connect(m_mceNameOwner, &QMceNameOwner::validChanged,
                      this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
     QObject::connect(m_mceNameOwner, &QMceNameOwner::nameOwnerChanged,
@@ -134,8 +134,6 @@ LipstickCompositor::~LipstickCompositor()
     // are destroyed, so disconnect it.
     disconnect(this, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
 
-    delete m_shaderEffect;
-
     m_instance = nullptr;
 }
 
@@ -158,7 +156,7 @@ void LipstickCompositor::homeApplicationAboutToDestroy()
         delete w;
     }
 
-    cleanupGraphicsResources();
+    QWaylandQuickCompositor::cleanupGraphicsResources();
 
     m_instance = 0;
     delete this;
@@ -177,12 +175,18 @@ void LipstickCompositor::onVisibleChanged(bool visible)
 
 void LipstickCompositor::componentComplete()
 {
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    QScreen * const screen = QGuiApplication::primaryScreen();
+
+    m_output.setGeometry(QRect(QPoint(0, 0), screen->size()));
+    m_output.setPhysicalSize(screen->physicalSize().toSize());
+#else
     QWaylandCompositor::setOutputGeometry(QRect(0, 0, width(), height()));
+#endif
 }
 
 void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)
 {
-    Q_UNUSED(surface)
     connect(surface, SIGNAL(mapped()), this, SLOT(surfaceMapped()));
     connect(surface, SIGNAL(unmapped()), this, SLOT(surfaceUnmapped()));
     connect(surface, SIGNAL(sizeChanged()), this, SLOT(surfaceSizeChanged()));
@@ -304,17 +308,18 @@ bool LipstickCompositor::completed()
     return m_completed;
 }
 
-int LipstickCompositor::windowIdForLink(QWaylandSurface *s, uint link) const
+int LipstickCompositor::windowIdForLink(int siblingId, uint link) const
 {
-    for (QHash<int, LipstickCompositorWindow *>::ConstIterator iter = m_windows.begin();
-         iter != m_windows.end(); ++iter) {
+    if (LipstickCompositorWindow *sibling = m_windows.value(siblingId)) {
+        for (LipstickCompositorWindow *window : m_windows) {
+            QWaylandSurface *windowSurface  = window->surface();
 
-        QWaylandSurface *windowSurface = iter.value()->surface();
-
-        if (windowSurface && windowSurface->client() && s->client() &&
-            windowSurface->processId() == s->processId() &&
-            windowSurface->windowProperties().value("WINID", uint(0)).toUInt() == link)
-            return iter.value()->windowId();
+            if (windowSurface
+                    && sibling->processId() == window->processId()
+                    && windowSurface->windowProperties().value("WINID", uint(0)).toUInt() == link) {
+                return window->windowId();
+            }
+        }
     }
 
     return 0;
@@ -339,22 +344,6 @@ void LipstickCompositor::surfaceDamaged(const QRegion &)
     }
 }
 
-void LipstickCompositor::setFullscreenSurface(QWaylandSurface *surface)
-{
-    if (surface == m_fullscreenSurface)
-        return;
-
-    // Prevent flicker when returning to composited mode
-    if (!surface && m_fullscreenSurface) {
-        foreach (QWaylandSurfaceView *view, m_fullscreenSurface->views())
-            static_cast<QWaylandSurfaceItem *>(view)->update();
-    }
-
-    m_fullscreenSurface = surface;
-
-    emit fullscreenSurfaceChanged();
-}
-
 QObject *LipstickCompositor::clipboard() const
 {
     return QGuiApplication::clipboard();
@@ -366,11 +355,9 @@ void LipstickCompositor::setTopmostWindowId(int id)
         m_topmostWindowId = id;
         emit topmostWindowIdChanged();
 
-        int pid = -1;
-        QWaylandSurface *surface = surfaceForId(m_topmostWindowId);
+        LipstickCompositorWindow *window = m_windows.value(id);
 
-        if (surface)
-            pid = surface->processId();
+        int pid = window ? window->processId() : -1;
 
         if (m_topmostWindowProcessId != pid) {
             m_topmostWindowProcessId = pid;
@@ -395,20 +382,6 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
 static LipstickCompositorWindow *surfaceWindow(QWaylandSurface *surface)
 {
     return surface->views().isEmpty() ? 0 : static_cast<LipstickCompositorWindow *>(surface->views().first());
-}
-
-void LipstickCompositor::onSurfaceDying()
-{
-    QWaylandSurface *surface = static_cast<QWaylandSurface *>(sender());
-    LipstickCompositorWindow *item = surfaceWindow(surface);
-
-    if (surface == m_fullscreenSurface)
-        setFullscreenSurface(0);
-
-    if (item) {
-        item->m_windowClosed = true;
-        item->tryRemove();
-    }
 }
 
 void LipstickCompositor::activateLogindSession()
@@ -553,7 +526,6 @@ void LipstickCompositor::surfaceMapped()
     }
 
     item->setSize(surface->size());
-    QObject::connect(surface, &QWaylandSurface::surfaceDestroyed, this, &LipstickCompositor::onSurfaceDying);
     m_totalWindowCount++;
     m_mappedSurfaces.insert(item->windowId(), item);
 
@@ -648,9 +620,6 @@ void LipstickCompositor::windowPropertyChanged(const QString &property)
 
 void LipstickCompositor::surfaceUnmapped(QWaylandSurface *surface)
 {
-    if (surface == m_fullscreenSurface)
-        setFullscreenSurface(0);
-
     LipstickCompositorWindow *window = surfaceWindow(surface);
     if (window)
         emit windowHidden(window);
@@ -667,9 +636,6 @@ void LipstickCompositor::surfaceUnmapped(LipstickCompositorWindow *item)
 
     emit windowCountChanged();
     emit windowRemoved(item);
-
-    item->m_windowClosed = true;
-    item->tryRemove();
 
     if (gc != ghostWindowCount())
         emit ghostWindowCountChanged();
@@ -689,22 +655,6 @@ void LipstickCompositor::windowRemoved(int id)
 {
     for (int ii = 0; ii < m_windowModels.count(); ++ii)
         m_windowModels.at(ii)->remItem(id);
-}
-
-QQmlComponent *LipstickCompositor::shaderEffectComponent()
-{
-    const char *qml_source =
-        "import QtQuick 2.0\n"
-        "ShaderEffect {\n"
-            "property QtObject window\n"
-            "property ShaderEffectSource source: ShaderEffectSource { sourceItem: window }\n"
-        "}";
-
-    if (!m_shaderEffect) {
-        m_shaderEffect = new QQmlComponent(qmlEngine(this));
-        m_shaderEffect->setData(qml_source, QUrl());
-    }
-    return m_shaderEffect;
 }
 
 void LipstickCompositor::setTopmostWindowOrientation(Qt::ScreenOrientation topmostWindowOrientation)

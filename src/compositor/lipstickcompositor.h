@@ -16,10 +16,15 @@
 #ifndef LIPSTICKCOMPOSITOR_H
 #define LIPSTICKCOMPOSITOR_H
 
+#include <QtCompositorVersion>
+
 #include <QQuickWindow>
 #include "lipstickglobal.h"
 #include "homeapplication.h"
 #include <QQmlParserStatus>
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#include <QWaylandQuickOutput>
+#endif
 #include <QWaylandQuickCompositor>
 #include <QWaylandSurfaceItem>
 #include <QPointer>
@@ -55,6 +60,11 @@ struct QueuedSetUpdatesEnabledCall
     bool m_enable;
 };
 
+
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+typedef QWaylandClient WaylandClient;
+#endif
+
 class LIPSTICK_EXPORT LipstickCompositor
     : public QQuickWindow
     , public QWaylandQuickCompositor
@@ -68,8 +78,6 @@ class LIPSTICK_EXPORT LipstickCompositor
     Q_PROPERTY(int ghostWindowCount READ ghostWindowCount NOTIFY ghostWindowCountChanged)
     Q_PROPERTY(bool homeActive READ homeActive WRITE setHomeActive NOTIFY homeActiveChanged)
     Q_PROPERTY(bool debug READ debug CONSTANT)
-    Q_PROPERTY(QWaylandSurface* fullscreenSurface READ fullscreenSurface WRITE setFullscreenSurface NOTIFY fullscreenSurfaceChanged)
-    Q_PROPERTY(bool directRenderingActive READ directRenderingActive NOTIFY directRenderingActiveChanged)
     Q_PROPERTY(int topmostWindowId READ topmostWindowId WRITE setTopmostWindowId NOTIFY topmostWindowIdChanged)
     Q_PROPERTY(Qt::ScreenOrientation topmostWindowOrientation READ topmostWindowOrientation WRITE setTopmostWindowOrientation NOTIFY topmostWindowOrientationChanged)
     Q_PROPERTY(Qt::ScreenOrientation screenOrientation READ screenOrientation WRITE setScreenOrientation NOTIFY screenOrientationChanged)
@@ -97,10 +105,6 @@ public:
 
     bool homeActive() const;
     void setHomeActive(bool);
-
-    QWaylandSurface *fullscreenSurface() const { return m_fullscreenSurface; }
-    void setFullscreenSurface(QWaylandSurface *surface);
-    bool directRenderingActive() const { return m_directRenderingActive; }
 
     int topmostWindowId() const { return m_topmostWindowId; }
     void setTopmostWindowId(int id);
@@ -159,8 +163,6 @@ signals:
     void availableWinIdsChanged();
 
     void homeActiveChanged();
-    void fullscreenSurfaceChanged();
-    void directRenderingActiveChanged();
     void topmostWindowIdChanged();
     void privateTopmostWindowProcessIdChanged(int pid);
     void topmostWindowOrientationChanged();
@@ -202,7 +204,6 @@ private slots:
     void setScreenOrientationFromSensor();
     void clipboardDataChanged();
     void onVisibleChanged(bool visible);
-    void onSurfaceDying();
     void updateKeymap();
     void initialize();
     void processQueuedSetUpdatesEnabledCalls();
@@ -216,7 +217,7 @@ private:
 
     void surfaceUnmapped(LipstickCompositorWindow *item);
 
-    int windowIdForLink(QWaylandSurface *, uint) const;
+    int windowIdForLink(int, uint) const;
 
     void surfaceUnmapped(QWaylandSurface *);
 
@@ -226,11 +227,13 @@ private:
     void readContent();
     void surfaceCommitted();
 
-    QQmlComponent *shaderEffectComponent();
-
     void activateLogindSession();
 
     static LipstickCompositor *m_instance;
+
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    QWaylandQuickOutput m_output;
+#endif
 
     int m_totalWindowCount;
     QHash<int, LipstickCompositorWindow *> m_mappedSurfaces;
@@ -241,9 +244,6 @@ private:
 
     bool m_homeActive;
 
-    QQmlComponent *m_shaderEffect;
-    QWaylandSurface *m_fullscreenSurface;
-    bool m_directRenderingActive;
     int m_topmostWindowId;
     int m_topmostWindowProcessId;
     Qt::ScreenOrientation m_topmostWindowOrientation;
