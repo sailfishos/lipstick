@@ -158,6 +158,32 @@ QVariant extract(const QDBusArgument &arg)
     return QVariant::fromValue(rv);
 }
 
+// Extracts a boolean value and removes it from the map
+bool ExtractRequestBool(QVariantMap &extracted, const QString key, bool defaultValue) {
+    bool result = defaultValue;
+    QVariantMap::iterator it = extracted.find(key);
+    while (it != extracted.end()) {
+        bool found = false;
+        if (it.key() == key) {
+            QVariantMap field(it.value().value<QVariantMap>());
+            QString type = field.value(QStringLiteral("Type")).toString();
+            QString requirement = field.value(QStringLiteral("Requirement")).toString();
+            QString value = field.value(QStringLiteral("Value")).toString();
+
+            if ((type == QStringLiteral("string")) && (requirement == QStringLiteral("mandatory"))) {
+                qDebug() << "VPNUI extracted " << it.key() << ": " << value;
+                result = (value == QStringLiteral("1"));
+                it = extracted.erase(it);
+                found = true;
+            }
+        }
+        if (!found) {
+            it++;
+        }
+    }
+    return result;
+}
+
 }
 
 QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMap &details)
@@ -168,10 +194,16 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
         *it = extract<QVariantMap>(it.value().value<QDBusArgument>());
     }
 
+    const bool allowCredentialStorage(ExtractRequestBool(extracted, "AllowStoreCredentials", true));
+    const bool allowCredentialRetrieval(ExtractRequestBool(extracted, "AllowRetrieveCredentials", true));
+
+    qDebug() << "VPNUI final AllowStoreCredentials: " << allowCredentialStorage;
+    qDebug() << "VPNUI final AllowRetrieveCredentials: " << allowCredentialRetrieval;
+
     // Can we supply the requested data from stored credentials?
     const QString objectPath(path.path());
     const bool storeCredentials(m_connections->connectionCredentialsEnabled(objectPath));
-    if (storeCredentials) {
+    if (storeCredentials && allowCredentialRetrieval) {
         const QVariantMap credentials(m_connections->connectionCredentials(objectPath));
 
         bool satisfied(true);
@@ -228,7 +260,9 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
         }
     }
 
-    extracted.insert(QStringLiteral("storeCredentials"), QVariant::fromValue(storeCredentials));
+    if (allowCredentialStorage) {
+        extracted.insert(QStringLiteral("storeCredentials"), QVariant::fromValue(storeCredentials));
+    }
 
     // Inform the caller that the reponse will be asynchronous
     QDBusContext::setDelayedReply(true);
