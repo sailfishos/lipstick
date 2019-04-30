@@ -33,6 +33,10 @@ class QOrientationSensor;
 class LipstickRecorderManager;
 class LipstickKeymap;
 
+namespace ContentAction {
+class Action;
+}
+
 class LIPSTICK_EXPORT LipstickCompositor : public QQuickWindow, public QWaylandQuickCompositor,
                                            public QQmlParserStatus
 {
@@ -153,6 +157,11 @@ signals:
     void completedChanged();
 
     void showUnlockScreen();
+
+    void openUrlRequested(
+            const QUrl &url,
+            const ContentAction::Action &defaultAction,
+            const QList<ContentAction::Action> &candidateActions);
 
 private slots:
     void surfaceMapped();

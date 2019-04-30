@@ -188,11 +188,26 @@ bool LipstickCompositor::openUrl(WaylandClient *client, const QUrl &url)
 bool LipstickCompositor::openUrl(const QUrl &url)
 {
 #if defined(HAVE_CONTENTACTION)
-    ContentAction::Action action = url.scheme() == "file"? ContentAction::Action::defaultActionForFile(url.toString()) : ContentAction::Action::defaultActionForScheme(url.toString());
-    if (action.isValid()) {
-        action.trigger();
+    const bool isFile = url.scheme() == QLatin1String("file");
+    ContentAction::Action defaultAction = isFile
+            ? ContentAction::Action::defaultActionForFile(url)
+            : ContentAction::Action::defaultActionForScheme(url.toString());
+
+    static const QMetaMethod requestSignal = QMetaMethod::fromSignal(
+                &LipstickCompositor::openUrlRequested);
+    if (isSignalConnected(requestSignal)) {
+        openUrlRequested(
+                    url,
+                    defaultAction,
+                    isFile
+                        ? ContentAction::Action::actionsForFile(url)
+                        : ContentAction::Action::actionsForScheme(url.toString()));
+        return true;
+    } else if (defaultAction.isValid()) {
+        defaultAction.trigger();
     }
-    return action.isValid();
+
+    return defaultAction.isValid();
 #else
     Q_UNUSED(url)
     return false;
