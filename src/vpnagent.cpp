@@ -167,24 +167,22 @@ T extract(const QDBusArgument &arg)
 bool ExtractRequestBool(QVariantMap &extracted, const QString &key, bool defaultValue) {
     bool result = defaultValue;
     QVariantMap::iterator it = extracted.find(key);
-    while (it != extracted.end()) {
-        if (it.key() == key) {
-            const QVariantMap field(it.value().value<QVariantMap>());
-            const QString type = field.value(QStringLiteral("Type")).toString();
-            const QString requirement = field.value(QStringLiteral("Requirement")).toString();
+    while ((it != extracted.end()) && (it.key() == key)) {
+        const QVariantMap field(it.value().value<QVariantMap>());
+        const QString type = field.value(QStringLiteral("Type")).toString();
+        const QString requirement = field.value(QStringLiteral("Requirement")).toString();
 
-            if ((type == QStringLiteral("boolean")) && (requirement == QStringLiteral("control"))) {
-                result = field.value(QStringLiteral("Value")).toBool();
-                it = extracted.erase(it);
-                break;
-            }
+        if ((type == QStringLiteral("boolean")) && (requirement == QStringLiteral("control"))) {
+            result = field.value(QStringLiteral("Value")).toBool();
+            it = extracted.erase(it);
+            break;
         }
         it++;
     }
     return result;
 }
 
-void CompleteEmptyValues(QVariantMap &field) {
+void AddMissingAttributes(QVariantMap &field) {
     if (!field.contains(QStringLiteral("Requirement"))) {
         field.insert(QStringLiteral("Requirement"), QVariant(QStringLiteral("optional")));
     }
@@ -210,7 +208,7 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
     QVariantMap extracted(details);
     for (QVariantMap::iterator it = extracted.begin(), end = extracted.end(); it != end; ++it) {
         QVariantMap field = extract<QVariantMap>(it.value().value<QDBusArgument>());
-        CompleteEmptyValues(field);
+        AddMissingAttributes(field);
         *it = QVariant::fromValue(field);
     }
 

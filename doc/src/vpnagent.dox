@@ -1,0 +1,293 @@
+/*! \page vpnagent VPN Agent
+ *
+ * \section overview Overview
+ *
+ * Lipstick provides an implementation of the VPN Agent interface used by
+ * connman to collect VPN credentials (e.g. username, password) from the user
+ * when needed for connecting to a VPN service.
+ *
+ * Lipstick registers a dbus endpoint on the system bus with destination
+ * address \c org.nemomobile.lipstick and object path
+ * \c /org/nemomobile/lipstick/vpnagent providing the following methods (See
+ * \l VpnAgent for the internal implementation of these methods):
+ *
+ * \code
+ * void Release()
+ * void ReportError(object service, string error)
+ * dict RequestInput(object service, dict fields)
+ * void Cancel()
+ * \endcode
+ *
+ * When connman calls \c RequestInput(), lipstick displays a system dialogue to
+ * the user containing the input fields requested by connman. The dialogue is
+ * built dynamically based on the parameters passed by connman when calling
+ * the method.
+ *
+ * General details about the interface can be found in the connman documentation
+ * \c connman/doc/vpn-agent-api.txt
+ *
+ * There are a number of Sailfish-specific extensions to the standard API
+ * which are detailed here. These details should be read in conjunction with the
+ * connman documentation.
+ *
+ * \subsection format Data structure format
+ *
+ * Throughout this document, data structures are represented in gdbus format.
+ * <ol>
+ *   <li>Strings are wrapped in <b>'apostrophes'</b>.</li>
+ *   <li>Variants are wrapped in <b>&lt;angle brackets&gt;</b>.</li>
+ *   <li>Dictionarieis are wrapped in <b>{braces}</b> and split into
+ *     <b>'key':value</b> pairs separated by commas:
+ *     <b>{'key1': value1, 'key2': value2, ...}</b>.
+ *   </li>
+ * </ol>
+ *
+ * \section specifics Sailfish-specific behavior
+ *
+ * \subsection title Changing the dialogue title
+ *
+ * The default title of the dialogue is shown as <b>Connect to \c NAME</b>
+ * where \c NAME is the human-readable freetext name given to the connection
+ * when it was configured.
+ *
+ * This title can be overridden by passing the following additional entry
+ * in the \c fields dictionary passed as a parameter to the \c RequestInput()
+ * method.
+ *
+ * \code
+ * 'Title': <{'Type':        <'string'>,
+ *            'Requirement': <'control'>,
+ *            'Value':       <'TITLE STRING'>
+ *           }>
+ * \endcode
+ *
+ * Where <tt>TITLE STRING</tt> should be replaced with the title to be displayed.
+ *
+ * In other words, the key must be 'Title' (case-sensitive), and the value
+ * should be a dictionary containing three further keys: 'Type' with value
+ * 'string', 'Requirement' with value 'control', and 'Value' with value
+ * containing the string to display as the title of the dialogue.
+ *
+ * \subsection description Adding a description to the dialogue
+ *
+ * By default the dialogue is displayed without any further description
+ * other than the informational fields. An explicit description can be
+ * added to the top of the dialogue by including the following entry in
+ * the \c fields dictionary passed as a parameter to the \c RequestInput()
+ * method.
+ *
+ * \code
+ * 'Description': <{'Type':        <'string'>,
+ *                  'Requirement': <'control'>,
+ *                  'Value':       <'DESCRIPTION STRING'>
+ *                 }>
+ * \endcode
+ *
+ * Where <tt>DESCRIPTON STRING</tt> should be replaced with the description to be
+ * displayed.
+ *
+ * In other words, the key must be 'Description' (case-sensitive), and the
+ * value should be a dictionary containing three further keys: 'Type' with
+ * value 'string', 'Requirement' with value 'control', and 'Value' with
+ * value containing the description string to display.
+ *
+ * \subsection keynames Overriding the display names
+ *
+ * Most entries passed to \c RequestInput() in the \c fields dictionary
+ * parameter will be displayed using their untranslated key name as the field
+ * name. There are some built-in exceptions to this and when the key value is
+ * one of the following, a translated variant may be displayed instead.
+ *
+ * <table>
+ * <tr><th>Key</th><th>String displayed in translated form</th></tr>
+ * <tr><td>Host</td><td>Host</td></tr>
+ * <tr><td>Username</td><td>Username</td></tr>
+ * <tr><td>OpenVPN.Username</td><td>Username</td></tr>
+ * <tr><td>Password</td><td>Password</td></tr>
+ * <tr><td>OpenVPN.Password</td><td>Password</td></tr>
+ * <tr><td>OpenConnect.CACert</td><td>Additional CA keys file</td></tr>
+ * <tr><td>OpenConnect.ClientCert</td><td>Client certificate file</td></tr>
+ * <tr><td>OpenConnect.ServerCert</td><td>Server certificate hash</td></tr>
+ * <tr><td>OpenConnect.VPNHost</td><td>Server after authentication</td></tr>
+ * <tr><td>OpenConnect.Cookie</td><td>WebVPN cookie data</td></tr>
+ * </table>
+ *
+ * The field name to be displayed can also be overridden by passing a further
+ * entry in the dictiontary with the following form.
+ *
+ * \code
+ * 'KEY.displayName': <{'Type':        <'string'>,
+ *                      'Requirement': <'control'>,
+ *                      'Value':       <'NAME STRING'>
+ *                     }>
+ * \endcode
+ *
+ * Where \c KEY is the key name to replace, and <tt>NAME STRING</tt> is the
+ * string that will be displayed as the field name instead of the key. The
+ * display string must be pre-translated by the caller.
+ *
+ * This does not affect the keys used in the dictionary returned to the calling
+ * process, which provides the responses from the user.
+ *
+ * \subsection informational Displaying informational items
+ *
+ * If you want to display some information text to the user, informational
+ * items can be added (as part of the standard protocol). They are displayed at
+ * the top of the dialogue, after the title and description (if there is one)
+ * but before any entry fields. The ordering of the informational items can't
+ * be controlled (see \ref ordering).
+ *
+ * By default, apart from the description, each info string is prefixed in the
+ * dialogue by the dictionary key. To supress this behaviour, send a display
+ * name override (see \ref keynames) with an empty string as the value. For
+ * example:
+ *
+ * \code
+ * 'Infotext':             <{'Type':        <'string'>,
+ *                           'Requirement': <'informational'>,
+ *                           'Value':       <'Please enter your credentials'>
+ *                          }>,
+ * 'Infotext.displayName': <{'Type':        <'string'>,
+ *                           'Requirement': <'control'>,
+ *                           'Value':       <''>
+ *                          }>
+ * \endcode
+ *
+ * \subsection storage Controlling storage and retrieval of credentials
+ *
+ * By default lipstick will add a checkbox to the dialogue offering to store
+ * the user's credentials for future connections. If the user selects this
+ * option, future calls to \c RequestInput() will return immediately with the
+ * stored values, and the dialogue will be suppressed.
+ *
+ * The credential values are stored by lipstick separately from the connman
+ * configuration.
+ *
+ * Some VPN implementations may choose to override this behaviour, so that
+ * no such option is offered to the user. Controlling the ability to store
+ * and retrieve credentials can be managed by the caller including one or
+ * both of the following two keys in the \c fields dictionary passed to
+ * \c RequestInput():
+ *
+ * <table>
+ * <tr><th>Key</th><th>Value</th><th>Description</th></tr>
+ * <tr>
+ *   <td rowspan="2">AllowStoreCredentials</td>
+ *   <td>true</td>
+ *   <td>Display a checkbox to the user offering the option of storing the
+ *       user's credentials.</td>
+ * </tr>
+ * <tr>
+ *   <td>false</td>
+ *   <td>Do not offer any option to store credentials, and don't store
+ *       them.</td>
+ * </tr>
+ * <tr>
+ *   <td rowspan="2">AllowRetrieveCredentials</td>
+ *   <td>true</td>
+ *   <td>Attempt to retrieve the credentials from storage. If they exist, send
+ *       them directly to the requester and don't display a dialogue to the
+ *       user.</td>
+ * </tr>
+ * <tr>
+ *   <td>false</td>
+ *   <td>Don't attempt to retrieve credentials from storage. Show a dialogue to
+ *       the user even if credentials were previously stored.</td>
+ * </tr>
+ * </table>
+ *
+ * The keys should be passed in the following formats.
+ *
+ * \code
+ * 'AllowStoreCredentials':    <{'Type':        <'boolean'>,
+ *                               'Requirement': <'control'>,
+ *                               'Value':       <true/false>
+ *                              }>
+ *
+ * 'AllowRetrieveCredentials': <{'Type':        <'boolean'>,
+ *                               'Requirement': <'control'>,
+ *                               'Value':       <true/false>
+ *                              }>
+ *
+ * \endcode
+ *
+ * \subsection ordering Field ordering
+ *
+ * The VPN Agent dbus API requires parameters to be passed in the form of a
+ * dictionary, which is an unordered data structure. As such, it's not possible
+ * to directly specify the ordering the fields will be displayed in.
+ *
+ * The lipstick implementation therefore automatically groups fields and uses
+ * some heuristics to try to present the field to the user in a sensible way.
+ * The title and description are presented first, followed by informational
+ * items. These are followed by the username, then the mandatory fields, then
+ * the optional fields. Within these groupings, the ordering should be
+ * considered as arbitrary.
+ *
+ * \section examples Examples
+ *
+ * The following call will show a dialogue with standard title, no description,
+ * and with the two editable fields "Username" and "Password". A checkbox
+ * option will offer to save the credentials for future user. If credentials
+ * have previously been stored for this connection, they will be returned to the
+ * caller and the dialogue will be suppressed.
+ *
+ * \code
+ * gdbus call --system --dest org.nemomobile.lipstick --object-path            \
+ *   /org/nemomobile/lipstick/vpnagent --method                                \
+ *   net.connman.vpn.Agent.RequestInput /net/connman/vpn/connectionname        \
+ *   "{'Username':                                                             \
+ *     <{'Type': <'string'>,   'Requirement': <'mandatory'>, 'Value': <''>}>,  \
+ *   'Password':                                                               \
+ *     <{'Type': <'password'>, 'Requirement': <'mandatory'>, 'Value': <''>}>   \
+ *   }"
+ * \endcode
+ *
+ * The following call will show the same dialogue, but without the checkbox
+ * offering to save credentials. If any previous credentials have been stored
+ * for this connection, they will not be used.
+ *
+ * \code
+ * gdbus call --system --dest org.nemomobile.lipstick --object-path            \
+ *   /org/nemomobile/lipstick/vpnagent --method                                \
+ *   net.connman.vpn.Agent.RequestInput /net/connman/vpn/connectionname        \
+ *   "{'Username':                                                             \
+ *     <{'Type': <'string'>,   'Requirement': <'mandatory'>, 'Value': <''>}>,  \
+ *   'Password':                                                               \
+ *     <{'Type': <'password'>, 'Requirement': <'mandatory'>, 'Value': <''>}>,  \
+ *   'AllowStoreCredentials':                                                  \
+ *     <{'Type': <'boolean'>,  'Requirement': <'control'>,   'Value':          \
+ *       <false>}>,                                                            \
+ *   'AllowRetrieveCredentials':                                               \
+ *     <{'Type': <'boolean'>,  'Requirement': <'control'>,   'Value':          \
+ *       <false>}>                                                             \
+ *   }"
+ * \endcode
+ *
+ * The following call will show a dialogue with title "Connect the VPN",
+ * followed by the description "Enter your credentials to connect", followed
+ * by the fields "Username" and "Password". There will be no option to save
+ * credentials, however if any previously entered credentials have been stored
+ * they will be returned and the dialogue will be suppressed.
+ *
+ * \code
+ * gdbus call --system --dest org.nemomobile.lipstick --object-path            \
+ *   /org/nemomobile/lipstick/vpnagent --method                                \
+ *   net.connman.vpn.Agent.RequestInput /net/connman/vpn/connectionname        \
+ *   "{'Username':                                                             \
+ *     <{'Type': <'string'>,   'Requirement': <'mandatory'>, 'Value': <''>}>,  \
+ *   'Password':                                                               \
+ *     <{'Type': <'password'>, 'Requirement': <'mandatory'>, 'Value': <''>}>,  \
+ *   'AllowStoreCredentials':                                                  \
+ *     <{'Type': <'boolean'>,  'Requirement': <'control'>,   'Value':          \
+ *       <false>}>,                                                            \
+ *   'Description':                                                            \
+ *     <{'Type': <'string'>,   'Requirement': <'control'>,   'Value':          \
+ *       <'Enter your credentials to connect'>}>,                              \
+ *   'Title':                                                                  \
+ *     <{'Type': <'string'>,    'Requirement': <'control'>,  'Value':          \
+ *       <'Connect the VPN'>}>                                                 \
+ *   }"
+ * \endcode
+ *
+ */
