@@ -77,14 +77,19 @@ void VpnAgent::respond(const QString &path, const QVariantMap &details)
     QVariantMap response;
     for (QVariantMap::const_iterator it = details.cbegin(), end = details.cend(); it != end; ++it) {
         const QString name(it.key());
-        if (name == QStringLiteral("storeCredentials")) {
-            storeCredentials = it.value().value<bool>();
+        const QVariantMap &field(it.value().value<QVariantMap>());
+        const QVariant fieldValue = field.value(QStringLiteral("Value"));
+        const QString fieldRequirement = field.value(QStringLiteral("Requirement")).toString();
+        const QString fieldType = field.value(QStringLiteral("Type")).toString();
+        if ((name == QStringLiteral("storeCredentials"))
+                && (fieldRequirement == QStringLiteral("control"))
+                && (fieldType == QStringLiteral("boolean"))) {
+            storeCredentials = fieldValue.toBool();
         } else {
-            const QVariantMap &field(it.value().value<QVariantMap>());
-            const QVariant fieldValue = field.value(QStringLiteral("Value"));
-            const QString fieldRequirement = field.value(QStringLiteral("Requirement")).toString();
             if (fieldRequirement == QStringLiteral("mandatory") ||
-                (fieldRequirement != QStringLiteral("informational") && fieldValue.isValid())) {
+                (fieldRequirement != QStringLiteral("informational")
+                 && fieldRequirement != QStringLiteral("control")
+                 && fieldValue.isValid())) {
                 response.insert(it.key(), fieldValue);
             }
         }
@@ -151,11 +156,48 @@ void VpnAgent::ReportError(const QDBusObjectPath &path, const QString &message)
 namespace {
 
 template<typename T>
-QVariant extract(const QDBusArgument &arg)
+T extract(const QDBusArgument &arg)
 {
     T rv;
     arg >> rv;
-    return QVariant::fromValue(rv);
+    return rv;
+}
+
+// Extracts a boolean value and removes it from the map
+bool ExtractRequestBool(QVariantMap &extracted, const QString &key, bool defaultValue) {
+    bool result = defaultValue;
+    QVariantMap::iterator it = extracted.find(key);
+    while ((it != extracted.end()) && (it.key() == key)) {
+        const QVariantMap field(it.value().value<QVariantMap>());
+        const QString type = field.value(QStringLiteral("Type")).toString();
+        const QString requirement = field.value(QStringLiteral("Requirement")).toString();
+
+        if ((type == QStringLiteral("boolean")) && (requirement == QStringLiteral("control"))) {
+            result = field.value(QStringLiteral("Value")).toBool();
+            it = extracted.erase(it);
+            break;
+        }
+        it++;
+    }
+    return result;
+}
+
+void AddMissingAttributes(QVariantMap &field) {
+    if (!field.contains(QStringLiteral("Requirement"))) {
+        field.insert(QStringLiteral("Requirement"), QVariant(QStringLiteral("optional")));
+    }
+    if (!field.contains(QStringLiteral("Type"))) {
+        field.insert(QStringLiteral("Type"), QVariant(QStringLiteral("string")));
+    }
+    if (!field.contains(QStringLiteral("Value"))) {
+        const QString fieldType = field.value(QStringLiteral("Type")).toString();
+        if (fieldType == "boolean") {
+            field.insert(QStringLiteral("Value"), false);
+        }
+        else {
+            field.insert(QStringLiteral("Value"), QStringLiteral(""));
+        }
+    }
 }
 
 }
@@ -165,13 +207,18 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
     // Extract the details from DBus marshalling
     QVariantMap extracted(details);
     for (QVariantMap::iterator it = extracted.begin(), end = extracted.end(); it != end; ++it) {
-        *it = extract<QVariantMap>(it.value().value<QDBusArgument>());
+        QVariantMap field = extract<QVariantMap>(it.value().value<QDBusArgument>());
+        AddMissingAttributes(field);
+        *it = QVariant::fromValue(field);
     }
+
+    const bool allowCredentialStorage(ExtractRequestBool(extracted, "AllowStoreCredentials", true));
+    const bool allowCredentialRetrieval(ExtractRequestBool(extracted, "AllowRetrieveCredentials", true));
 
     // Can we supply the requested data from stored credentials?
     const QString objectPath(path.path());
     const bool storeCredentials(m_connections->connectionCredentialsEnabled(objectPath));
-    if (storeCredentials) {
+    if (storeCredentials && allowCredentialRetrieval) {
         const QVariantMap credentials(m_connections->connectionCredentials(objectPath));
 
         bool satisfied(true);
@@ -228,7 +275,13 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
         }
     }
 
-    extracted.insert(QStringLiteral("storeCredentials"), QVariant::fromValue(storeCredentials));
+    if (allowCredentialStorage) {
+        QVariantMap field;
+        field.insert(QStringLiteral("Requirement"), QVariant::fromValue(QStringLiteral("control")));
+        field.insert(QStringLiteral("Type"), QVariant::fromValue(QStringLiteral("boolean")));
+        field.insert(QStringLiteral("Value"), QVariant::fromValue(storeCredentials));
+        extracted.insert(QStringLiteral("storeCredentials"), field);
+    }
 
     // Inform the caller that the reponse will be asynchronous
     QDBusContext::setDelayedReply(true);
