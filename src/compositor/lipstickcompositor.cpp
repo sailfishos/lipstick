@@ -408,8 +408,21 @@ void LipstickCompositor::initialize()
     if (!systemBus.registerObject("/", this)) {
         qWarning("Unable to register object at path /: %s", systemBus.lastError().message().toUtf8().constData());
     }
-    if (!systemBus.registerService("org.nemomobile.compositor")) {
-        qWarning("Unable to register D-Bus service org.nemomobile.compositor: %s", systemBus.lastError().message().toUtf8().constData());
+
+    /* We might have for example minui based encryption unlock ui
+     * running as compositor and waiting to be able to hand-off
+     * to us -> use ReplaceExistingService to facilitate this.
+     */
+    QDBusReply<QDBusConnectionInterface::RegisterServiceReply> reply =
+        systemBus.interface()->registerService(QStringLiteral("org.nemomobile.compositor"),
+                                               QDBusConnectionInterface::ReplaceExistingService,
+                                               QDBusConnectionInterface::DontAllowReplacement);
+    if (!reply.isValid()) {
+        qWarning("Unable to register D-Bus service org.nemomobile.compositor: %s",
+                 reply.error().message().toUtf8().constData());
+    } else if (reply.value() != QDBusConnectionInterface::ServiceRegistered) {
+        qWarning("Unable to register D-Bus service org.nemomobile.compositor: %s",
+                 "Did not get primary name ownership");
     }
 }
 
