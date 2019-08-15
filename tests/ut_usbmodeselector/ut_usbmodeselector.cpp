@@ -28,15 +28,6 @@
 
 #include <nemo-devicelock/devicelock.h>
 
-#ifdef HAVE_CONTEXTSUBSCRIBER
-#include "contextproperty_stub.h"
-#endif
-
-static void setStubProperty(QString const &name, QString const &value)
-{
-    getContextPropertyStub(name)->stubSetReturnValue("value", QVariant(value));
-}
-
 HomeWindow::HomeWindow()
 {
 }
@@ -107,9 +98,6 @@ void Ut_USBModeSelector::cleanupTestCase()
 
 void Ut_USBModeSelector::init()
 {
-#ifdef HAVE_CONTEXTSUBSCRIBER
-    setStubProperty("Battery.ChargingState", "idle");
-#endif
     deviceLock = new NemoDeviceLock::DeviceLock(this);
     usbModeSelector = new USBModeSelector(deviceLock);
     usbModeSelector->m_usbMode->setCurrentMode(QUsbModed::Mode::Undefined);

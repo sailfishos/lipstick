@@ -1,10 +1,8 @@
 TEMPLATE = subdirs
 SUBDIRS = \
-          ut_batterynotifier \
           ut_closeeventeater \
           ut_launchermodel \
           ut_lipsticksettings \
-          ut_lowbatterynotifier \
           ut_lipsticknotification \
           ut_notificationfeedbackplayer \
           ut_notificationlistmodel \
