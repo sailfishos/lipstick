@@ -1,6 +1,8 @@
 /***************************************************************************
 **
-** Copyright (C) 2012 Jolla Ltd.
+** Copyright (C) 2012-2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
+**
 ** Contact: Robin Burchell <robin.burchell@jollamobile.com>
 **
 ** This file is part of lipstick.
@@ -498,19 +500,19 @@ QString NotificationManager::systemApplicationName() const
 
 uint NotificationManager::nextAvailableNotificationID()
 {
-    bool idIncreased = false;
-
-    // Try to find an unused ID. Increase the ID at least once but only up to 2^32-1 times.
-    for (uint i = 0; i < UINT32_MAX && (!idIncreased || m_notifications.contains(m_previousNotificationID)); i++, idIncreased = true) {
-        m_previousNotificationID++;
-
-        if (m_previousNotificationID == 0) {
-            // 0 is not a valid ID so skip it
-            m_previousNotificationID = 1;
-        }
+    /* Find an unused ID. It is assumed that we will never end up
+     * in a situation where even close to significant portion of
+     * all possible ID numbers would be in use. If that ever happens
+     * this will turn into forever loop.
+     */
+    for (;;) {
+        uint id = ++m_previousNotificationID;
+        // 0 is not a valid ID so skip it
+        if (!id)
+            continue;
+        if (!m_notifications.contains(id))
+            return id;
     }
-
-    return m_previousNotificationID;
 }
 
 void NotificationManager::removeNotificationsWithCategory(const QString &category)

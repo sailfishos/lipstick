@@ -1,7 +1,9 @@
 /***************************************************************************
 **
 ** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (C) 2012 Jolla Ltd.
+** Copyright (C) 2012-2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
+**
 ** Contact: Robin Burchell <robin.burchell@jollamobile.com>
 **
 ** This file is part of lipstick.
@@ -16,194 +18,380 @@
 #include <QCoreApplication>
 #include <QStringList>
 #include <QTimer>
-#include <QDebug>
-#include "lowbatterynotifier.h"
 #include "notificationmanager.h"
 #include "lipsticknotification.h"
 #include "batterynotifier.h"
-#include <contextproperty.h>
+#include <time.h>
+#include <keepalive/backgroundactivity.h>
 
-// timeout to check is charging being started
-//
-// TODO There should be some environment variable used by different
-// parties to share charging start-up timeouts
-//
-// - for usb cable - enough time for user to choose usb mode or
-// mode the be chosen automatically
-static int checkChargingStartedTimeoutUsb = 15 * 1000;
+// How much slack to include in keepalive wakeup ranges [s]
+static const int HEARTBEAT_INTERVAL = 12;
 
-// - for wall charger - just enough time for charging being started
-static int checkChargingStartedTimeoutWall = 3 * 1000;
+// Delay range for repeating battery low warnings [s]
+static const int LOW_BATTERY_INTERVAL_LOW = 30 * 60;
+static const int LOW_BATTERY_INTERVAL_HIGH = (LOW_BATTERY_INTERVAL_LOW
+                                              + HEARTBEAT_INTERVAL);
 
+// Maximum expected delay between charger connect and start of charging [ms]
+static const int CHARGING_FAILURE_DELAY = 3 * 1000;
 
-static inline QString propertyString(ContextProperty *p)
+// Delay between 1st property change notification and state evaluation [ms]
+static const int STATE_EVALUATION_DELAY = 100;
+
+BatteryNotifier::BatteryNotifier(QObject *parent)
+    : QObject(parent)
+    , m_lowBatteryRepeatLevel(0)
+    , m_notificationManager(NotificationManager::instance())
+    , m_mceChargerType(new QMceChargerType(this))
+    , m_mceChargerState(new QMceChargerState(this))
+    , m_mceBatteryStatus(new QMceBatteryStatus(this))
+    , m_mceBatteryLevel(new QMceBatteryLevel(this))
+    , m_mcePowerSaveMode(new QMcePowerSaveMode(this))
+    , m_mceDisplay(new QMceDisplay(this))
+    , m_mceTkLock(new QMceTkLock(this))
+    , m_mceCallState(new QMceCallState(this))
+    , m_usbModed(new QUsbModed(this))
+    , m_lowBatteryRepeatActivity(new BackgroundActivity(this))
 {
-    return p->value().toString().trimmed();
-}
+    connect(m_notificationManager, &NotificationManager::NotificationClosed,
+            this, &BatteryNotifier::onNotificationClosed);
+    connect(m_mceChargerType, &QMceChargerType::validChanged,
+            this, &BatteryNotifier::onChargerTypeChanged);
+    connect(m_mceChargerType, &QMceChargerType::typeChanged,
+            this, &BatteryNotifier::onChargerTypeChanged);
+    connect(m_mceChargerState, &QMceChargerState::validChanged,
+            this, &BatteryNotifier::onChargerStateChanged);
+    connect(m_mceChargerState, &QMceChargerState::chargingChanged,
+            this, &BatteryNotifier::onChargerStateChanged);
+    connect(m_mceBatteryStatus, &QMceBatteryStatus::validChanged,
+            this, &BatteryNotifier::onBatteryStatusChanged);
+    connect(m_mceBatteryStatus, &QMceBatteryStatus::statusChanged,
+            this, &BatteryNotifier::onBatteryStatusChanged);
+    connect(m_mceBatteryLevel, &QMceBatteryLevel::validChanged,
+            this, &BatteryNotifier::onBatteryLevelChanged);
+    connect(m_mceBatteryLevel, &QMceBatteryLevel::percentChanged,
+            this, &BatteryNotifier::onBatteryLevelChanged);
+    connect(m_mcePowerSaveMode, &QMcePowerSaveMode::validChanged,
+            this, &BatteryNotifier::onPowerSaveModeChanged);
+    connect(m_mcePowerSaveMode, &QMcePowerSaveMode::activeChanged,
+            this, &BatteryNotifier::onPowerSaveModeChanged);
+    connect(m_mceDisplay, &QMceDisplay::validChanged,
+            this, &BatteryNotifier::onDisplayChanged);
+    connect(m_mceDisplay, &QMceDisplay::stateChanged,
+            this, &BatteryNotifier::onDisplayChanged);
+    connect(m_mceTkLock, &QMceTkLock::validChanged,
+            this, &BatteryNotifier::onTkLockChanged);
+    connect(m_mceTkLock, &QMceTkLock::lockedChanged,
+            this, &BatteryNotifier::onTkLockChanged);
+    connect(m_mceCallState, &QMceCallState::validChanged,
+            this, &BatteryNotifier::onCallStateChanged);
+    connect(m_mceCallState, &QMceCallState::stateChanged,
+            this, &BatteryNotifier::onCallStateChanged);
+    connect(m_mceCallState, &QMceCallState::typeChanged,
+            this, &BatteryNotifier::onCallStateChanged);
+    connect(m_usbModed, &QUsbModed::targetModeChanged,
+            this, &BatteryNotifier::onTargetUsbModeChanged);
 
-BatteryNotifier::BatteryNotifier(QObject *parent) :
-    QObject(parent),
-    m_lowBatteryNotifier(0),
-    m_touchScreenLockActive(false),
-    m_batteryLevel(new ContextProperty("Battery.Level", this)),
-    m_chargingState(new ContextProperty("Battery.ChargingState", this)),
-    m_chargerType(new ContextProperty("Battery.ChargerType", this)),
-    m_psm(new ContextProperty("System.PowerSaveMode", this)),
-    m_lastState({BatteryUnknown, StateUnknown, ChargerNo}),
-    m_mode(ModeNormal),
-    m_chargingCompletion(NeedsCharging)
-{
-    connect(m_batteryLevel, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
-    connect(m_chargingState, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
-    connect(m_chargerType, SIGNAL(valueChanged()), this, SLOT(onPropertyChanged()));
-    connect(m_psm, SIGNAL(valueChanged()), this, SLOT(onPowerSaveModeChanged()));
+    m_evaluateStateTimer.setInterval(STATE_EVALUATION_DELAY);
+    m_evaluateStateTimer.setSingleShot(true);
+    connect(&m_evaluateStateTimer, &QTimer::timeout,
+            this, &BatteryNotifier::onEvaluateStateTimeout);
 
-    m_timeline.start();
+    m_chargingFailureTimer.setInterval(CHARGING_FAILURE_DELAY);
+    m_chargingFailureTimer.setSingleShot(true);
+    connect(&m_chargingFailureTimer, &QTimer::timeout,
+            this, &BatteryNotifier::onChargingFailureTimeout);
 
-    m_preNotificationTimer.setInterval(1000);
-    m_preNotificationTimer.setSingleShot(true);
-    connect(&m_preNotificationTimer, SIGNAL(timeout()),
-            this, SLOT(prepareNotification()));
+    m_lowBatteryRepeatActivity->setWakeupRange(LOW_BATTERY_INTERVAL_LOW,
+                                               LOW_BATTERY_INTERVAL_HIGH);
+    connect(m_lowBatteryRepeatActivity, &BackgroundActivity::running,
+            this, &BatteryNotifier::onBatteryLowTimeout);
 
-    QTimer::singleShot(0, this, SLOT(initBattery()));
+    scheduleStateEvaluation();
 }
 
 BatteryNotifier::~BatteryNotifier()
 {
 }
 
-void BatteryNotifier::initBattery()
+void BatteryNotifier::onNotificationClosed(uint id, uint reason)
 {
-    onPropertyChanged();
-}
-
-void BatteryNotifier::lowBatteryAlert()
-{
-    sendNotification(NotificationLowBattery);
-}
-
-void BatteryNotifier::prepareNotification()
-{
-    State newState;
-    newState.state = getState();
-    newState.level = getLevel();
-    newState.charger = getCharger();
-
-    bool isStateChanged = newState.state != m_lastState.state,
-        isLevelChanged = newState.level != m_lastState.level,
-        isChargerChanged = newState.charger != m_lastState.charger,
-        isAnyChargingState = (newState.state == StateCharging
-                          || newState.state == StateIdle);
-    NotificationList toRemove;
-    QList<NotificationID> toSend;
-
-    if (isStateChanged) {
-        if (newState.state == StateIdle) {
-            stopLowBatteryNotifier();
-            if (m_chargingCompletion == NeedsCharging) {
-                toRemove << NotificationCharging;
-                toSend << NotificationChargingComplete;
-            }
-        } else if (newState.state == StateCharging) {
-            stopLowBatteryNotifier();
-            toRemove << NotificationRemoveCharger
-                     << NotificationChargingComplete
-                     << NotificationLowBattery;
-            // In the case of USB devices, charging notifications on
-            // connection are handled by USBModeSelector rather than here.
-            if (m_chargingCompletion == NeedsCharging && !isUsbDevice()) {
-                toSend << NotificationCharging;
-            }
-        } else {
-            toRemove << NotificationChargingComplete
-                     << NotificationRemoveCharger
-                     << NotificationCharging
-                     << NotificationChargingNotStarted;
-        }
-    }
-
-    if ((isLevelChanged || isStateChanged) && !isAnyChargingState) {
-        if (newState.level == BatteryLow) {
-            // lowBatteryAlert is called immediately, and will send NotificationLowBattery
-            startLowBatteryNotifier();
-        } else if (isLevelChanged && m_lastState.state == StateDischarging) {
-            toRemove << NotificationLowBattery;
-
-            if (newState.level == BatteryEmpty) {
-                toSend << NotificationRechargeBattery;
-            } else {
-                stopLowBatteryNotifier();
-                toRemove << NotificationRechargeBattery;
-            }
-        }
-    }
-
-    if (isChargerChanged) {
-        if (newState.charger == ChargerNo) {
-            m_checkChargingTimer.reset();
-            toRemove << NotificationCharging
-                     << NotificationChargingComplete;
-
-            if (m_lastState.charger == ChargerWall)
-                toSend << NotificationRemoveCharger;
-        } else if (m_lastState.charger == ChargerNo && !isAnyChargingState) {
-            // charger is inserted but battery is still discharging
-            m_checkChargingTimer.reset(new QTimer());
-            m_checkChargingTimer->setSingleShot(true);
-            // unknown charger is also checked after wall charger
-            // timeout
-            int timeout = (newState.charger == ChargerUsb
-                           ? checkChargingStartedTimeoutUsb
-                           : checkChargingStartedTimeoutWall);
-            m_checkChargingTimer->setInterval(timeout);
-            connect(m_checkChargingTimer.data(), SIGNAL(timeout()),
-                    this, SLOT(checkIsChargingStarted()));
-            m_checkChargingTimer->start();
-        }
-    }
-    if (isStateChanged) {
-        if (!isAnyChargingState) {
-            m_chargingCompletion = NeedsCharging;
-        } else if (newState.state == StateIdle) {
-            m_chargingCompletion = FullyCharged;
-        }
-    }
-
-    // call always to cleanup expired notifications
-    removeNotification(toRemove);
-
-    foreach(NotificationID id, toSend)
-        sendNotification(id);
-
-    m_lastState = newState;
-}
-
-void BatteryNotifier::checkIsChargingStarted()
-{
-    if (m_lastState.charger != ChargerNo && m_lastState.state == StateDischarging) {
-        sendNotification(NotificationChargingNotStarted);
+    Q_UNUSED(reason);
+    for (QList<QueuedNotification>::iterator queuedNotification = m_notifications.begin();
+         queuedNotification != m_notifications.end();) {
+        if (queuedNotification->m_id == id)
+            queuedNotification = m_notifications.erase(queuedNotification);
+        else
+            ++queuedNotification;
     }
 }
 
-void BatteryNotifier::onPropertyChanged()
+void BatteryNotifier::onChargerTypeChanged()
 {
-    if (!m_preNotificationTimer.isActive()) {
-        m_preNotificationTimer.start();
+    if (m_mceChargerType->valid()) {
+        m_currentState.m_chargerType = m_mceChargerType->type();
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onChargerStateChanged()
+{
+    if (m_mceChargerState->valid()) {
+        m_currentState.m_chargerState = m_mceChargerState->charging();
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onBatteryStatusChanged()
+{
+    if (m_mceBatteryStatus->valid()) {
+        m_currentState.m_batteryStatus = m_mceBatteryStatus->status();
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onBatteryLevelChanged()
+{
+    if (m_mceBatteryLevel->valid()) {
+        m_currentState.m_batteryLevel = m_mceBatteryLevel->percent();
+        scheduleStateEvaluation();
     }
 }
 
 void BatteryNotifier::onPowerSaveModeChanged()
 {
-    Mode newMode = m_psm->value().toInt() ? ModePSM : ModeNormal;
-    if (m_mode != newMode) {
-        sendNotification(newMode == ModePSM
-                         ? NotificationEnteringPSM
-                         : NotificationExitingPSM);
-        m_mode = newMode;
+    if (m_mcePowerSaveMode->valid()) {
+        m_currentState.m_powerSaveMode = m_mcePowerSaveMode->active();
+        scheduleStateEvaluation();
     }
 }
 
-void BatteryNotifier::sendNotification(BatteryNotifier::NotificationID id)
+void BatteryNotifier::onDisplayChanged()
+{
+    if (m_mceDisplay->valid()) {
+        m_currentState.m_displayState = m_mceDisplay->state();
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onTkLockChanged()
+{
+    if (m_mceTkLock->valid()) {
+        m_currentState.m_tkLock = m_mceTkLock->locked();
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onCallStateChanged()
+{
+    if (m_mceCallState->valid()) {
+        m_currentState.m_callState = m_mceCallState->state();
+        m_currentState.m_callType = m_mceCallState->type();
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onTargetUsbModeChanged()
+{
+    const QString mode(m_usbModed->targetMode());
+
+    if (m_currentState.m_usbMode != mode) {
+        m_currentState.m_usbMode = mode;
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onBatteryLowTimeout()
+{
+    sendNotification(NotificationLowBattery);
+    m_lowBatteryRepeatLevel = m_currentState.m_batteryLevel - 2;
+    m_lowBatteryRepeatActivity->wait();
+}
+
+void BatteryNotifier::onChargingFailureTimeout()
+{
+    sendNotification(NotificationChargingNotStarted);
+}
+
+void BatteryNotifier::onEvaluateStateTimeout()
+{
+    NotificationTypeSet toRemove;
+    NotificationTypeList toSend;
+    updateDerivedProperties();
+    for (int type = NotificationFirst; type <= NotificationLast; ++type)
+        evaluateNotificationTriggering(static_cast<NotificationType>(type),
+                                       m_previousState, m_currentState,
+                                       toRemove, toSend);
+    removeNotifications(toRemove);
+    foreach(NotificationType type, toSend)
+        sendNotification(type);
+    m_previousState = m_currentState;
+    updateLowBatteryNotifier();
+}
+
+void BatteryNotifier::scheduleStateEvaluation()
+{
+    if (!m_evaluateStateTimer.isActive())
+        m_evaluateStateTimer.start();
+}
+
+void BatteryNotifier::updateDerivedProperties()
+{
+    /* Update minimum battery level we expect to see while charging.
+     *
+     * While discharging / doing battery full maintenance charging:
+     * -> track current battery level value
+     *
+     * While charging:
+     * -> track maximum battery level value
+     *
+     * Allow one to two percent drops to make false positives less likely.
+     */
+    if (m_currentState.m_chargerState == false
+        || m_currentState.m_batteryStatus == QMceBatteryStatus::Full
+        || m_currentState.m_batteryLevel > m_currentState.m_minimumBatteryLevel)
+        m_currentState.m_minimumBatteryLevel = m_currentState.m_batteryLevel - 1;
+
+    /* Suppress / remove charging notifications when it is expected
+     * that usb mode selection specific notifications will pop up.
+     *
+     * Due to dynamic nature of available usb modes, the condition:
+     *   "suppress on dynamic mode activation"
+     * needs to be implemented in sort of reversed logic:
+     *   "suppress when target mode is not one of known built-in modes"
+     *
+     * Basically:
+     *
+     * - Undefined (disconnected), Charger (wall charger), Charging
+     *   (connected to pc, for charging only): Notifications in
+     *   these situatios are handled here -> no suppressing.
+     *
+     * - ChargingFallback: Shows up when device lock is preventing
+     *   either Ask or automatic mode selection -> usb mode handling
+     *   will issue "unlock first" notification -> suppress charging
+     *   notification to make room for it.
+     *
+     * - Ask: Mode selection dialog is on screen, for now it is
+     *   assumed that it is ok to show charging notification banner
+     *   on top of it -> no suppressing
+     *
+     * - Everything else: Assume it is dynamic mode, that will have
+     *   an associated notification from usb mode handling -> suppress
+     *   charging notifications
+     */
+    const QString mode(m_currentState.m_usbMode);
+    m_currentState.m_suppressCharging = (mode != QUsbMode::Mode::Undefined
+                                         && mode != QUsbMode::Mode::Ask
+                                         && mode != QUsbMode::Mode::Charging
+                                         && mode != QUsbMode::Mode::Charger);
+}
+
+bool BatteryNotifier::notificationTriggeringEdge(BatteryNotifier::NotificationType type)
+{
+    switch (type) {
+    case BatteryNotifier::NotificationRemoveCharger:
+        return false;
+    default:
+        return true;
+    }
+}
+
+bool BatteryNotifier::evaluateNotificationLevel(BatteryNotifier::NotificationType type,
+                                                const BatteryNotifier::State &state)
+{
+    bool level = false;
+    switch (type) {
+    case BatteryNotifier::NotificationCharging:
+        /* Charging, battery is not full, and we are not expecting
+         * usb-mode related notifications. */
+        level = (state.m_chargerState == true
+                 && state.m_batteryStatus != QMceBatteryStatus::Full
+                 && state.m_suppressCharging == false);
+        break;
+    case BatteryNotifier::NotificationChargingComplete:
+        /* Battery is full (implies charging), and we are not
+         * expecting usb-mode related notifications. */
+        level = (state.m_batteryStatus == QMceBatteryStatus::Full
+                 && state.m_suppressCharging == false);
+        break;
+    case BatteryNotifier::NotificationRechargeBattery:
+        /* Battery empty (implies not charging) */
+        level = (state.m_batteryStatus == QMceBatteryStatus::Empty);
+        break;
+    case BatteryNotifier::NotificationLowBattery:
+        /* Battery low (implies not charging) */
+        level = (state.m_batteryStatus == QMceBatteryStatus::Low);
+        break;
+    case BatteryNotifier::NotificationRemoveCharger:
+        /* Condition is "connected to wall charger", but we trigger
+         * on falling edge i.e. on wall charger disconnect. */
+        level = (state.m_chargerType == QMceChargerType::DCP
+                 || state.m_chargerType == QMceChargerType::HVDCP);
+        break;
+    case BatteryNotifier::NotificationChargingNotStarted:
+        /* Charger is connected, but charging has not commenced
+         * within expected time frame. */
+        level = (state.m_chargerType != QMceChargerType::None
+                 && state.m_chargerState == false);
+        break;
+    case BatteryNotifier::NotificationEnteringPSM:
+        level = (state.m_powerSaveMode == true);
+        break;
+    case BatteryNotifier::NotificationExitingPSM:
+        level = (state.m_powerSaveMode == false);
+        break;
+    case BatteryNotifier::NotificationNotEnoughPower:
+        /* Battery level has dropped since charger was connected. */
+        level = (state.m_batteryLevel < state.m_minimumBatteryLevel);
+        break;
+    }
+    return level;
+}
+
+void BatteryNotifier::evaluateNotificationTriggering(NotificationType type,
+                                                     const State &previousState,
+                                                     const State &currentState,
+                                                     NotificationTypeSet &toRemove,
+                                                     NotificationTypeList &toSend)
+{
+    bool previousLevel = evaluateNotificationLevel(type, previousState);
+    bool currentLevel = evaluateNotificationLevel(type, currentState);
+    if (previousLevel != currentLevel) {
+        if (currentLevel == notificationTriggeringEdge(type)) {
+            switch (type) {
+            case NotificationLowBattery:
+                startLowBatteryNotifier();
+                break;
+            case NotificationChargingNotStarted:
+                m_chargingFailureTimer.start();
+                break;
+            case NotificationCharging:
+                /* Make sure 'disconnect charger' notification gets
+                 * hidden also on connect to pc */
+                toRemove << NotificationRemoveCharger;
+                toSend << type;
+                break;
+            default:
+                toSend << type;
+                break;
+            }
+        } else {
+            switch (type) {
+            case NotificationLowBattery:
+                stopLowBatteryNotifier();
+                break;
+            case NotificationChargingNotStarted:
+                m_chargingFailureTimer.stop();
+                break;
+            default:
+                break;
+            }
+            toRemove << type;
+        }
+    }
+}
+
+void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
 {
     static const struct NotificationInfo {
         QString category;
@@ -242,112 +430,81 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationID id)
          //% "Low battery"
          qtTrId("qtn_ener_lowbatt"),
          ""},
-        {"x-nemo.battery.notenoughpower", // NotificationNoEnoughPower
+        {"x-nemo.battery.notenoughpower", // NotificationNotEnoughPower
          //% "Not enough power to charge"
          qtTrId("qtn_ener_nopowcharge"),
          "icon-m-energy-management-insufficient-power"}
     };
-    Q_ASSERT(id < sizeof(description) / sizeof(description[0]));
-    NotificationInfo const &info = description[id];
+    Q_ASSERT(type < sizeof(description) / sizeof(description[0]));
+    NotificationInfo const &info = description[type];
 
-    NotificationManager *manager = NotificationManager::instance();
+    /* Purge any existing notification items of the same type */
+    for (QList<QueuedNotification>::iterator queuedNotification = m_notifications.begin();
+         queuedNotification != m_notifications.end();) {
+        if (queuedNotification->m_type == type) {
+            uint id = queuedNotification->m_id;
+            queuedNotification = m_notifications.erase(queuedNotification);
+            m_notificationManager->CloseNotification(id);
+        } else {
+            ++queuedNotification;
+        }
+    }
+
+    /* Add fresh notification item */
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_CATEGORY, info.category);
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, info.message);
-    QueuedNotification queued;
-    queued.number = manager->Notify(manager->systemApplicationName(), 0, info.icon,
-                                    QString(), QString(), QStringList(), hints, -1);
-    queued.id = id;
-    queued.time = m_timeline.elapsed();
-    if (m_notifications.size() == 3) // saves only last 3
-        m_notifications.pop_front();
-    m_notifications.push_back(queued);
+    QueuedNotification queuedNotification;
+    queuedNotification.m_type = type;
+    queuedNotification.m_id = m_notificationManager->Notify(m_notificationManager->systemApplicationName(),
+                                                            0,
+                                                            info.icon,
+                                                            QString(),
+                                                            QString(),
+                                                            QStringList(),
+                                                            hints,
+                                                            -1);
+    m_notifications.push_back(queuedNotification);
 }
 
-void BatteryNotifier::removeNotification(const NotificationList &ids)
+void BatteryNotifier::removeNotifications(const NotificationTypeSet &toRemove)
 {
-    NotificationManager *manager = NotificationManager::instance();
-    qint64 now = m_timeline.elapsed();
-    for (QList<QueuedNotification>::iterator it = m_notifications.begin();
-         it != m_notifications.end();) {
-        // inherited: notification is shown for < 5 sec?
-        if (now - it->time < 5000) {
-            if (!ids.contains(it->id)) {
-                ++it;
-                continue;
-            }
-
-            manager->CloseNotification(it->number);
+    for (QList<QueuedNotification>::iterator queuedNotification = m_notifications.begin();
+         queuedNotification != m_notifications.end();) {
+        if (toRemove.contains(queuedNotification->m_type)) {
+            uint id = queuedNotification->m_id;
+            queuedNotification = m_notifications.erase(queuedNotification);
+            m_notificationManager->CloseNotification(id);
+        } else {
+            ++queuedNotification;
         }
-        it = m_notifications.erase(it);
-    }
-}
-
-void BatteryNotifier::setTouchScreenLockActive(bool active)
-{
-    m_touchScreenLockActive = active;
-    if (m_lowBatteryNotifier != NULL) {
-        m_lowBatteryNotifier->setTouchScreenLockActive(active);
     }
 }
 
 void BatteryNotifier::startLowBatteryNotifier()
 {
-    if (m_lowBatteryNotifier == NULL) {
-        m_lowBatteryNotifier = new LowBatteryNotifier();
-        connect(m_lowBatteryNotifier, SIGNAL(lowBatteryAlert()), this, SLOT(lowBatteryAlert()));
-    }
-
-    m_lowBatteryNotifier->setTouchScreenLockActive(m_touchScreenLockActive);
-    m_lowBatteryNotifier->sendLowBatteryAlert();
+    m_lowBatteryRepeatActivity->run();
 }
 
 void BatteryNotifier::stopLowBatteryNotifier()
 {
-    if (m_lowBatteryNotifier != NULL) {
-        delete m_lowBatteryNotifier;
-        m_lowBatteryNotifier = NULL;
+    m_lowBatteryRepeatActivity->stop();
+}
+
+void BatteryNotifier::updateLowBatteryNotifier()
+{
+    if (m_lowBatteryRepeatActivity->isWaiting()) {
+        /* We have ongoing battery low warning repeat cycle */
+        bool active = (m_currentState.m_displayState != QMceDisplay::DisplayOff
+                       && m_currentState.m_tkLock == false);
+        bool incall = m_currentState.m_callState != QMceCallState::None;
+        if (active || incall) {
+            /* Device is in "active use" */
+            if (m_currentState.m_batteryLevel <= m_lowBatteryRepeatLevel) {
+                /* Significant battery level drop since the last warning
+                 * -> repeat the warning immediately. */
+                m_lowBatteryRepeatActivity->run();
+            }
+        }
     }
-}
-
-BatteryNotifier::BatteryLevel BatteryNotifier::getLevel() const
-{
-    QString name(propertyString(m_batteryLevel));
-    return (name == "normal"
-            ? BatteryNormal
-            : (name == "low"
-               ? BatteryLow
-               : (name == "empty"
-                  ? BatteryEmpty
-                  : BatteryUnknown)));
-}
-
-BatteryNotifier::ChargingState BatteryNotifier::getState() const
-{
-    QString name(propertyString(m_chargingState));
-    return (name == "charging"
-            ? StateCharging
-            : (name == "discharging"
-               ? StateDischarging
-               : (name == "idle"
-                  ? StateIdle
-                  : StateUnknown)));
-}
-
-BatteryNotifier::ChargerType BatteryNotifier::getCharger() const
-{
-    QString name(propertyString(m_chargerType));
-    return ((name == "dcp" || name == "cdp")
-            ? ChargerWall
-            : (name == "usb"
-               ? ChargerUsb
-               : (name == ""
-                  ? ChargerNo
-                  : ChargerUnknown)));
-}
-
-bool BatteryNotifier::isUsbDevice() const
-{
-    QString name(propertyString(m_chargerType));
-    return (name == "dcp" || name == "cdp" || name == "usb");
 }

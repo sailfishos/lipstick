@@ -23,10 +23,3 @@ HEADERS += \
     $$STUBSDIR/nemo-devicelock/devicelock.h \
     ut_usbmodeselector.h \
     $$SRCDIR/homewindow.h \
-
-packagesExist(contextkit-statefs) {
-    DEFINES += HAVE_CONTEXTSUBSCRIBER
-    HEADERS += /usr/include/contextproperty.h
-} else {
-    warning("Contextsubscriber not found")
-}

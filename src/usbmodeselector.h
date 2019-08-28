@@ -1,7 +1,9 @@
 /***************************************************************************
 **
 ** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (C) 2012-2015 Jolla Ltd.
+** Copyright (C) 2012-2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
+**
 ** Contact: Robin Burchell <robin.burchell@jollamobile.com>
 **
 ** This file is part of lipstick.
@@ -22,7 +24,6 @@
 
 class HomeWindow;
 class QUsbModed;
-class ContextProperty;
 
 namespace NemoDeviceLock {
 class DeviceLock;
@@ -191,24 +192,6 @@ private:
      */
     void updateModePreparing();
 
-    /*!
-     * Callback triggered by a change in state of the statefs
-     * "Battery.ChargingState" context property. This allows us to decide
-     * whether or not the battery needs charging, or is fully charged.
-     * The derived result is stored in \l m_needsCharging and accessed
-     * using \l chargingAndNotFull().
-     */
-    void batteryStateChanged();
-
-    /*!
-     * Used to determine whether or not the charge is increasing in the
-     * battery. This is equivalent to the battery being in a charging state,
-     * and not yet fullly charged.
-     *
-     * \returns true if the battery is charging and not full, false o/w.
-     */
-    bool chargingAndNotFull();
-
 private:
     //! For getting and setting the USB mode
     QUsbModed *m_usbMode;
@@ -221,12 +204,6 @@ private:
 
     //! State indicating whether the device is preparing a USB mode or not
     QString m_preparingMode;
-
-    //! Charging state obtained from statefs, used to derive \c m_needsCharging.
-    ContextProperty *m_chargingState;
-
-    //! Indicates whether the battery is full or needs charging, from statefs.
-    bool m_needsCharging;
 
 #ifdef UNIT_TEST
     friend class Ut_USBModeSelector;

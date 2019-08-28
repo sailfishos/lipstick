@@ -1,7 +1,9 @@
 /***************************************************************************
 **
 ** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (C) 2012-2015 Jolla Ltd.
+** Copyright (C) 2012-2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
+**
 ** Contact: Robin Burchell <robin.burchell@jollamobile.com>
 **
 ** This file is part of lipstick.
@@ -17,7 +19,6 @@
 #include <QQmlContext>
 #include <QScreen>
 #include <qusbmoded.h>
-#include <contextproperty.h>
 #include "homewindow.h"
 #include "utilities/closeeventeater.h"
 #include "notifications/notificationmanager.h"
@@ -27,19 +28,12 @@
 
 #include <nemo-devicelock/devicelock.h>
 
-static inline QString propertyString(ContextProperty *p)
-{
-    return p->value().toString().trimmed();
-}
-
 USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent) :
     QObject(parent),
     m_usbMode(new QUsbModed(this)),
     m_deviceLock(deviceLock),
     m_windowVisible(false),
-    m_preparingMode(),
-    m_chargingState(new ContextProperty("Battery.ChargingState", this)),
-    m_needsCharging(true)
+    m_preparingMode()
 {
     connect(m_usbMode, &QUsbModed::eventReceived, this, &USBModeSelector::handleUSBEvent);
     connect(m_usbMode, &QUsbModed::currentModeChanged, this, &USBModeSelector::handleUSBState);
@@ -47,11 +41,9 @@ USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject
     connect(m_usbMode, SIGNAL(usbStateError(QString)), this, SIGNAL(showError(QString)));
     connect(m_usbMode, SIGNAL(supportedModesChanged()), this, SIGNAL(supportedModesChanged()));
     connect(m_usbMode, &QUsbModed::availableModesChanged, this, &USBModeSelector::availableModesChanged);
-    connect(m_chargingState, &ContextProperty::valueChanged, this, &USBModeSelector::batteryStateChanged);
 
     // Lazy initialize to improve startup time
     QTimer::singleShot(500, this, &USBModeSelector::handleUSBState);
-    QTimer::singleShot(500, this, &USBModeSelector::batteryStateChanged);
 }
 
 void USBModeSelector::setWindowVisible(bool visible)
@@ -103,10 +95,6 @@ void USBModeSelector::handleUSBEvent(const QString &event)
     } else if (event == QUsbMode::Mode::ChargerConnected) {
         // Hide the mode selection dialog and show a mode notification
         setWindowVisible(false);
-        // Check and notification originally from batterynotifier.cpp
-        if (chargingAndNotFull()) {
-            emit showNotification(Notification::Charging);
-        }
     }
 }
 
@@ -118,6 +106,7 @@ void USBModeSelector::handleUSBState()
     // Diag, Adb, PCSuite, Charging, Charger, ChargingFallback, Busy
 
     QString mode = m_usbMode->currentMode();
+    USBModeSelector::Notification type = Notification::Invalid;
 
     updateModePreparing();
 
@@ -125,22 +114,18 @@ void USBModeSelector::handleUSBState()
         // This probably isn't necessary, as it'll be handled by ModeRequest
         setWindowVisible(true);
     } else if (mode == QUsbMode::Mode::ChargingFallback) {
-        // Check and notification originally from batterynotifier.cpp
-        if (chargingAndNotFull()) {
-            emit showNotification(Notification::Charging);
-        }
+        // Do nothing
     } else if (mode == QUsbMode::Mode::Charging) {
         // Hide the mode selection dialog and show a mode notification
         setWindowVisible(false);
-        // Check and notification originally from batterynotifier.cpp
-        if (chargingAndNotFull()) {
-            emit showNotification(Notification::Charging);
-        }
     } else if (QUsbMode::isFinalState(mode)) {
         // Hide the mode selection dialog and show a mode notification
         setWindowVisible(false);
-        emit showNotification(convertModeToNotification(mode));
+        type = convertModeToNotification(mode);
     }
+
+    if (type != Notification::Invalid && type != Notification::Charging)
+        emit showNotification(type);
 }
 
 void USBModeSelector::setMode(const QString &mode)
@@ -199,7 +184,7 @@ QUsbModed * USBModeSelector::getUsbModed()
 
 USBModeSelector::Notification USBModeSelector::convertModeToNotification(const QString &mode) const
 {
-    Notification type;
+    Notification type = Notification::Invalid;
 
     if (mode == QUsbModed::Mode::Disconnected) {
         type = Notification::Disconnected;
@@ -219,31 +204,7 @@ USBModeSelector::Notification USBModeSelector::convertModeToNotification(const Q
         type = Notification::Diag;
     } else if (mode == QUsbModed::Mode::Host) {
         type = Notification::Host;
-    } else if ((mode == QUsbMode::Mode::ChargingFallback) ||
-               (mode == QUsbMode::Mode::Charging) ||
-               (mode == QUsbMode::Mode::ChargerConnected)) {
-        type = Notification::Charging;
-    } else {
-        type = Notification::Invalid;
     }
 
     return type;
-}
-
-bool USBModeSelector::chargingAndNotFull()
-{
-    QString name(propertyString(m_chargingState));
-
-    return (name == "charging") && m_needsCharging;
-}
-
-void USBModeSelector::batteryStateChanged()
-{
-    QString name(propertyString(m_chargingState));
-
-    if (!(name == "charging" || name == "idle")) {
-        m_needsCharging = true;
-    } else if (name == "idle") {
-        m_needsCharging = false;
-    }
 }

@@ -68,7 +68,6 @@ HEADERS += \
     notifications/notificationmanageradaptor.h \
     notifications/categorydefinitionstore.h \
     notifications/batterynotifier.h \
-    notifications/lowbatterynotifier.h \
     notifications/notificationfeedbackplayer.h \
     notifications/androidprioritystore.h \
     screenlock/screenlock.h \
@@ -112,7 +111,6 @@ SOURCES += \
     notifications/notificationlistmodel.cpp \
     notifications/notificationpreviewpresenter.cpp \
     notifications/batterynotifier.cpp \
-    notifications/lowbatterynotifier.cpp \
     notifications/androidprioritystore.cpp \
     screenlock/screenlock.cpp \
     screenlock/screenlockadaptor.cpp \
@@ -141,7 +139,6 @@ SOURCES += \
 CONFIG += link_pkgconfig mobility qt warn_on depend_includepath qmake_cache target_qt
 CONFIG -= link_prl
 PKGCONFIG += \
-    contextkit-statefs \
     dbus-1 \
     dbus-glib-1 \
     dsme_dbus_if \
@@ -150,6 +147,7 @@ PKGCONFIG += \
     libsystemd-daemon \
     mlite5 \
     mce \
+    mce-qt5 \
     nemodevicelock \
     ngf-qt5 \
     Qt5SystemInfo \
@@ -165,13 +163,6 @@ packagesExist(contentaction5) {
     DEFINES += HAVE_CONTENTACTION
 } else {
     warning("contentaction doesn't exist; falling back to exec - this may not work so great")
-}
-
-packagesExist(contextkit-statefs) {
-    PKGCONFIG += contextkit-statefs
-    DEFINES += HAVE_CONTEXTSUBSCRIBER
-} else {
-    warning("Contextsubscriber not found")
 }
 
 QT += dbus xml qml quick sql gui gui-private sensors
