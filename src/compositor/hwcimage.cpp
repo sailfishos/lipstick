@@ -470,14 +470,14 @@ void HwcImage::updatePolish()
     req->effect = m_effect;
     req->overlay = m_overlayColor;
     req->pixelRatio = m_pixelRatio;
-    req->rotation = m_rotationHandler ? hwcimage_get_rotation(m_rotationHandler) : 0;
+    req->rotation = m_rotationHandler ? qRound(hwcimage_get_rotation(m_rotationHandler)) : 0;
     req->maxTextureSize = m_maxTextureSize;
 
     if (m_maxTextureSize > 0 && m_textureSize.width() > 0 && m_textureSize.height() > 0)
         qWarning() << "HwcImage: both 'textureSize' and 'maxTextureSize' are set; 'textureSize' will take presedence" << this;
 
     qCDebug(LIPSTICK_LOG_HWC,
-            "Scheduling HwcImage request, source=%s, (%d x %d), eff=%s, olay=%s, rot=%f, pr=%f, %s",
+            "Scheduling HwcImage request, source=%s, (%d x %d), eff=%s, olay=%s, rot=%d, pr=%f, %s",
             qPrintable(m_source.toString()),
             m_textureSize.width(), m_textureSize.height(),
             qPrintable(m_effect),
@@ -533,7 +533,7 @@ bool HwcImage::event(QEvent *e)
                       && m_pixelRatio == req->pixelRatio
                       && m_overlayColor == req->overlay;
         qCDebug(LIPSTICK_LOG_HWC,
-                "HwcImage request completed: %s, source=%s, (%d x %d), eff=%s, olay=%s, rot=%f, pr=%f",
+                "HwcImage request completed: %s, source=%s, (%d x %d), eff=%s, olay=%s, rot=%d, pr=%f",
                 (accept ? "accepted" : "rejected"),
                 qPrintable(req->file),
                 req->textureSize.width(), req->textureSize.height(),
