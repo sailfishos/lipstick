@@ -72,6 +72,7 @@ bool VpnAgent::windowVisible() const
 void VpnAgent::respond(const QString &path, const QVariantMap &details)
 {
     bool storeCredentials = false;
+    bool keepCredentials = false;
 
     // Marshall our response
     QVariantMap response;
@@ -85,6 +86,10 @@ void VpnAgent::respond(const QString &path, const QVariantMap &details)
                 && (fieldRequirement == QStringLiteral("control"))
                 && (fieldType == QStringLiteral("boolean"))) {
             storeCredentials = fieldValue.toBool();
+        } else if ((name == QStringLiteral("keepCredentials"))
+                && (fieldRequirement == QStringLiteral("control"))
+                && (fieldType == QStringLiteral("boolean"))) {
+            keepCredentials = fieldValue.toBool();
         } else {
             if (fieldRequirement == QStringLiteral("mandatory") ||
                 (fieldRequirement != QStringLiteral("informational")
@@ -97,7 +102,7 @@ void VpnAgent::respond(const QString &path, const QVariantMap &details)
 
     if (storeCredentials) {
         m_connections->setConnectionCredentials(path, response);
-    } else {
+    } else if (!keepCredentials) { // Clearing explicitly disabled
         m_connections->disableConnectionCredentials(path);
     }
 
@@ -214,6 +219,13 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
 
     const bool allowCredentialStorage(ExtractRequestBool(extracted, "AllowStoreCredentials", true));
     const bool allowCredentialRetrieval(ExtractRequestBool(extracted, "AllowRetrieveCredentials", true));
+    /*
+     * When the second request is something else that is to be kept in memory
+     * only and is not for VPN agent to keep, the requester can set this flag
+     * to avoid the credentials from being cleared out. By default this is false
+     * and in such case is not saved.
+     */
+    const bool keepCredentials(ExtractRequestBool(extracted, "KeepCredentials", false));
 
     // Can we supply the requested data from stored credentials?
     const QString objectPath(path.path());
@@ -254,7 +266,7 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
             }
         }
 
-        if (failureIt != extracted.end()) {
+        if (failureIt != extracted.end() && !keepCredentials) {
             // Hide this property from the user agent
             extracted.erase(failureIt);
         } else {
@@ -281,6 +293,20 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
         field.insert(QStringLiteral("Type"), QVariant::fromValue(QStringLiteral("boolean")));
         field.insert(QStringLiteral("Value"), QVariant::fromValue(storeCredentials));
         extracted.insert(QStringLiteral("storeCredentials"), field);
+    }
+
+    /*
+     * By default this is false if not set. This value needs to be explicitely
+     * set to retain the credentials although storing and retrieval is disabled.
+     * This is used with Private Key passwords, which are stored in memory but
+     * not in VPN agent and the actual credentials are required to be stored.
+     */
+    if (keepCredentials) {
+        QVariantMap field;
+        field.insert(QStringLiteral("Requirement"), QVariant::fromValue(QStringLiteral("control")));
+        field.insert(QStringLiteral("Type"), QVariant::fromValue(QStringLiteral("boolean")));
+        field.insert(QStringLiteral("Value"), QVariant::fromValue(keepCredentials));
+        extracted.insert(QStringLiteral("keepCredentials"), field);
     }
 
     // Inform the caller that the reponse will be asynchronous
