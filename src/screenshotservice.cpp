@@ -141,6 +141,12 @@ void ScreenshotWriter::run()
     const quint64 status = m_image.save(m_path)
             ? ScreenshotResult::Finished
             : ScreenshotResult::Error;
+    const QByteArray path = m_path.toUtf8();
+    int r = chown(path.constData(), getuid(), getgid());
+    if (r != 0) {
+        qWarning() << "Screenshot owner/group could not be set" << strerror(errno);
+    }
+
     ssize_t unused = ::write(m_notifierId, &status, sizeof(status));
     Q_UNUSED(unused);
 }
