@@ -74,7 +74,7 @@ static QStringList defaultDirectories()
         userLocalLauncherDir.mkpath(userLocalAppsPath);
     }
 
-    return QStringList() << QStringLiteral(LAUNCHER_APPS_PATH) << userLocalAppsPath;
+    return QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
 }
 
 Q_GLOBAL_STATIC(LauncherDBus, _launcherDBus);
