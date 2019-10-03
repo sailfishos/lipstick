@@ -5,7 +5,7 @@ Name:       lipstick-qt5
 %define icondirectory %{_datadir}/icons/hicolor/86x86/apps
 
 Summary:    QML toolkit for homescreen creation
-Version:    0.33.1
+Version:    0.34.7
 Release:    1
 Group:      System/Libraries
 License:    LGPLv2.1
@@ -45,7 +45,7 @@ BuildRequires:  qt5-qtgui-devel >= 5.2.1+git24
 BuildRequires:  qt5-qtwayland-wayland_egl-devel >= 5.4.0+git26
 BuildRequires:  doxygen
 BuildRequires:  qt5-qttools-qthelp-devel
-Conflicts:   meegotouch-systemui < 1.5.7
+BuildRequires:  nemo-qml-plugin-systemsettings >= 0.5.27
 Obsoletes:   libnotificationsystem0
 Obsoletes:   %{name}-screenshot
 
