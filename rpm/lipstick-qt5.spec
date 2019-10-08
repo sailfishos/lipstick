@@ -21,7 +21,6 @@ BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Quick) >= 5.2.1
 BuildRequires:  pkgconfig(Qt5Xml)
 BuildRequires:  pkgconfig(Qt5Sql)
-BuildRequires:  pkgconfig(Qt5SystemInfo)
 BuildRequires:  pkgconfig(Qt5Test)
 BuildRequires:  pkgconfig(Qt5Sensors)
 BuildRequires:  pkgconfig(contentaction5)

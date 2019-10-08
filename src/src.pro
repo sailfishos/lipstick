@@ -150,7 +150,6 @@ PKGCONFIG += \
     mce-qt5 \
     nemodevicelock \
     ngf-qt5 \
-    Qt5SystemInfo \
     systemsettings \
     thermalmanager_dbus_if \
     usb-moded-qt5
