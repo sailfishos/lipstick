@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2016 Jolla Ltd.
-** Contact: Matt Vogt <matthew.vogt@jollamobile.com>
+** Copyright (c) 2016 - 2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -22,7 +22,7 @@
 #include <QDBusObjectPath>
 #include <QList>
 
-#include "vpnmodel.h"
+#include "settingsvpnmodel.h"
 
 #include "lipstickglobal.h"
 
@@ -86,7 +86,7 @@ signals:
 
 private:
     HomeWindow *m_window;
-    VpnModel *m_connections;
+    SettingsVpnModel *m_connections;
 
     struct Request {
         Request(const QString &path, const QVariantMap &details, const QDBusMessage &request);
