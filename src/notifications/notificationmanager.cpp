@@ -25,6 +25,7 @@
 #include <QStandardPaths>
 #include <QFile>
 #include <QFileInfo>
+#include <aboutsettings.h>
 #include <mremoteaction.h>
 #include <mdesktopentry.h>
 #include <sys/statfs.h>
@@ -453,7 +454,8 @@ void NotificationManager::markNotificationDisplayed(uint id)
 QString NotificationManager::GetServerInformation(QString &vendor, QString &version, QString &spec_version)
 {
     QString name = qApp->applicationName();
-    vendor = "Nemo Mobile";
+    AboutSettings settings;
+    vendor = settings.operatingSystemName();
     version = qApp->applicationVersion();
     spec_version = "1.2";
     return name;

@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2015 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This file is part of lipstick.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License version 2.1 as published by the Free Software Foundation
+ * and appearing in the file LICENSE.LGPL included in the packaging
+ * of this file.
+ */
+
 import org.nemomobile.lipstick 0.1
 import QtQuick 2.2
 
@@ -29,6 +42,7 @@ Compositor
         repeat: false
         onTriggered: {
             print("setting the first batch of sources...", root.doAsync ? "async" : "sync");
+            // Note: This is default content of the main user.
             image1.source = "/home/nemo/Pictures/Jolla/Jolla_01.jpg"
             image2.source = "/home/nemo/Pictures/Jolla/Jolla_02.jpg"
             // image3.source = "/home/nemo/Pictures/Jolla/Jolla_03.jpg"

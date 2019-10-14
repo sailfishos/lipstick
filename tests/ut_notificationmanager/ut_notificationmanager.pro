@@ -19,5 +19,7 @@ HEADERS += \
     $$NOTIFICATIONSRCDIR/lipsticknotification.h \
     $$NOTIFICATIONSRCDIR/notificationmanageradaptor.h \
     $$NOTIFICATIONSRCDIR/categorydefinitionstore.h \
-    $$NOTIFICATIONSRCDIR/androidprioritystore.h
+    $$NOTIFICATIONSRCDIR/androidprioritystore.h \
+    /usr/include/systemsettings/aboutsettings.h
 
+QMAKE_CXXFLAGS += `pkg-config --cflags-only-I systemsettings`
