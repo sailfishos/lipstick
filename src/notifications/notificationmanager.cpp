@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2012-2019 Jolla Ltd.
+** Copyright (c) 2012 - 2019 Jolla Ltd.
 ** Copyright (c) 2019 Open Mobile Platform LLC.
 **
 ** Contact: Robin Burchell <robin.burchell@jollamobile.com>
@@ -22,6 +22,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlTableModel>
+#include <QStandardPaths>
 #include <QFile>
 #include <QFileInfo>
 #include <mremoteaction.h>
@@ -51,9 +52,6 @@ static const char *CATEGORY_DEFINITION_FILE_DIRECTORY = "/usr/share/lipstick/not
 
 //! The number configuration files to load into the event type store.
 static const uint MAX_CATEGORY_DEFINITION_FILES = 100;
-
-//! Path of the privileged storage directory relative to the home directory
-static const char *PRIVILEGED_DATA_PATH = "/.local/share/system/privileged";
 
 //! Path to probe for desktop entries
 static const char *DESKTOP_ENTRY_PATH = "/usr/share/applications/";
@@ -666,7 +664,7 @@ void NotificationManager::restoreNotifications(bool update)
 
 bool NotificationManager::connectToDatabase()
 {
-    QString databasePath = "/home/nemo" + QString(PRIVILEGED_DATA_PATH) + QDir::separator() + "Notifications";
+    QString databasePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/system/privileged/Notifications");
     if (!QDir::root().exists(databasePath)) {
         QDir::root().mkpath(databasePath);
     }
