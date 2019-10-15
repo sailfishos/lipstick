@@ -63,6 +63,7 @@ void Ut_NotificationManager::testCapabilities()
     QCOMPARE((bool)capabilities.contains("body"), true);
     QCOMPARE((bool)capabilities.contains("actions"), true);
     QCOMPARE((bool)capabilities.contains("persistence"), true);
+    QCOMPARE((bool)capabilities.contains("sound"), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ICON), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ITEM_COUNT), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_TIMESTAMP), true);
