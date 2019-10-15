@@ -195,6 +195,7 @@ QStringList NotificationManager::GetCapabilities()
     return QStringList() << "body"
                          << "actions"
                          << "persistence"
+                         << "sound"
                          << LipstickNotification::HINT_ICON
                          << LipstickNotification::HINT_ITEM_COUNT
                          << LipstickNotification::HINT_TIMESTAMP

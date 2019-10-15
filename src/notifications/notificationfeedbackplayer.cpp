@@ -77,6 +77,16 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                 properties.insert("media.vibra", false);
             }
 
+            QString soundFile = notification->hints().value(LipstickNotification::HINT_SOUND_FILE).toString();
+            if (!soundFile.isEmpty()) {
+                if (soundFile.startsWith(QStringLiteral("file://")))
+                    soundFile.remove(0, 7);
+
+                properties.insert(QStringLiteral("sound.filename"), soundFile);
+                // Sound is enabled explicitly if sound-file hint is set.
+                properties.insert(QStringLiteral("sound.enabled"), true);
+            }
+
             foreach (const QString &item, feedbackItems) {
                 m_ngfClient->stop(item);
                 m_idToEventId.insert(notification, m_ngfClient->play(item, properties));

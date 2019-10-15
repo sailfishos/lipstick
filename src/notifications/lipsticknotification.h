@@ -75,6 +75,9 @@ public:
     //! Standard hint: If true, audible feedback should be should be suppressed during notification feedback.
     static const char *HINT_SUPPRESS_SOUND;
 
+    //! Standard hint: If set, override possible audible feedback sound.
+    static const char *HINT_SOUND_FILE;
+
     //! Nemo hint: Icon of the notification. Might take precedence over appIcon depending on platform implementation.
     static const char *HINT_ICON;
 
