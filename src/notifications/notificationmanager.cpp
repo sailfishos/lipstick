@@ -45,9 +45,6 @@
 //! The android priority store path
 static const char *ANDROID_PRIORITY_DEFINITION_PATH = "/usr/share/lipstick/androidnotificationpriorities";
 
-//! The android bridge process name
-static const char *ANDROID_BRIDGE_PROCESS = "alien_bridge_server";
-
 //! The category definitions directory
 static const char *CATEGORY_DEFINITION_FILE_DIRECTORY = "/usr/share/lipstick/notificationcategories";
 
@@ -250,7 +247,9 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
         const QDBusReply<uint> pidReply(connection().interface()->servicePid(callerService));
         if (pidReply.isValid()) {
             pidProperties = processProperties(pidReply.value());
-            androidOrigin = (pidProperties.first == QString::fromLatin1(ANDROID_BRIDGE_PROCESS));
+            // A4 and A8.
+            androidOrigin = (pidProperties.first == QLatin1String("alien_bridge_server") ||
+                             pidProperties.first == QLatin1String("apkd-bridge"));
         }
     }
 
