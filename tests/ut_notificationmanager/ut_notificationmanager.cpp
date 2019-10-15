@@ -15,6 +15,8 @@
 
 #include <QtTest/QtTest>
 #include "ut_notificationmanager.h"
+#include "aboutsettings_stub.h"
+
 #include "notificationmanager.h"
 #include "notificationmanageradaptor_stub.h"
 #include "lipsticknotification.h"
@@ -90,9 +92,12 @@ void Ut_NotificationManager::testServerInformation()
     QString name, vendor, version, spec_version;
     qApp->setApplicationName("testApp");
     qApp->setApplicationVersion("1.2.3");
+    QString testVendor("test vendor");
+    gAboutSettingsStub->stubSetReturnValue(OperatingSystemName, testVendor);
+
     name = NotificationManager::instance()->GetServerInformation(vendor, version, spec_version);
     QCOMPARE(name, qApp->applicationName());
-    QCOMPARE(vendor, QString("Nemo Mobile"));
+    QCOMPARE(vendor, testVendor);
     QCOMPARE(version, qApp->applicationVersion());
     QCOMPARE(spec_version, QString("1.2"));
 }
