@@ -48,6 +48,7 @@ const char *LipstickNotification::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-l
 const char *LipstickNotification::HINT_RESTORED = "x-nemo-restored";
 const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
 const char *LipstickNotification::HINT_VIBRA = "x-nemo-vibrate";
+const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
 
 LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
                                            const QString &appIcon, const QString &summary, const QString &body,

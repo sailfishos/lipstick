@@ -12,7 +12,7 @@
  * \subsection unsupported Unsupported elements of the specification
  *
  *   - Some optional features of the specification are not supported: body text
- *     containing markup is not supported, and sound emission is not supported.
+ *     containing markup is not supported.
  *   - Multiple actions per notification are correctly handled, but the user
  *     interface provides no means for displaying or activating actions other
  *     than "default".
@@ -20,7 +20,6 @@
  *        - 'action-icons'
  *        - 'desktop-entry'
  *        - 'image-data'
- *        - 'sound-file'
  *        - 'sound-name'
  *        - 'x'
  *        - 'y'
@@ -64,6 +63,8 @@
  *     notifications. When such an action is executed, the notification manager
  *     makes the D-Bus call defined for the action. See the
  *     \c x-nemo-remote-action-actionname hint.
+ *   - The service implements the \c "sound" capability which allows changing audible
+ *     feedback behavior using \c "sound-file" and \c "suppress-sound" hints.
  *   - The service implements a number of extensions via hints; these are reported
  *     as capabilities, and their use is described in the \c Hints section.
  *
