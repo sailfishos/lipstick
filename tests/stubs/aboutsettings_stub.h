@@ -28,6 +28,7 @@ static const auto Imei = QStringLiteral("imei");
 static const auto Serial = QStringLiteral("serial");
 static const auto LocalizedOperatingSystemName = QStringLiteral("localizedOperatingSystemName");
 static const auto OperatingSystemName = QStringLiteral("operatingSystemName");
+static const auto LocalizedSoftwareVersion = QStringLiteral("localizedSoftwareVersion");
 static const auto BaseOperatingSystemName = QStringLiteral("baseOperatingSystemName");
 static const auto SoftwareVersion = QStringLiteral("softwareVersion");
 static const auto SoftwareVersionId = QStringLiteral("softwareVersionId");
@@ -41,6 +42,7 @@ public:
     virtual void AboutSettingsConstructor(QObject *parent);
     virtual void AboutSettingsDestructor();
     virtual QString operatingSystemName() const;
+    virtual QString localizedSoftwareVersion() const;
 
     virtual qlonglong totalDiskSpace() const;
     virtual qlonglong availableDiskSpace() const;
@@ -75,6 +77,12 @@ QString AboutSettingsStub::operatingSystemName() const
 {
     stubMethodEntered(OperatingSystemName);
     return stubReturnValue<QString>(OperatingSystemName);
+}
+
+QString AboutSettingsStub::localizedSoftwareVersion() const
+{
+    stubMethodEntered(LocalizedSoftwareVersion);
+    return stubReturnValue<QString>(LocalizedSoftwareVersion);
 }
 
 qlonglong AboutSettingsStub::totalDiskSpace() const
@@ -176,6 +184,11 @@ AboutSettings::~AboutSettings()
 QString AboutSettings::operatingSystemName() const
 {
     return gAboutSettingsStub->operatingSystemName();
+}
+
+QString AboutSettings::localizedSoftwareVersion() const
+{
+    return gAboutSettingsStub->localizedSoftwareVersion();
 }
 
 qlonglong AboutSettings::totalDiskSpace() const
