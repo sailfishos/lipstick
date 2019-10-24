@@ -93,23 +93,7 @@ void NotificationPreviewPresenter::showNextNotification()
         setCurrentNotification(0);
     } else {
         LipstickNotification *notification = m_notificationQueue.takeFirst();
-
-        const bool screenLocked = m_screenLock->isScreenLocked() && m_screenLock->displayState() == TouchScreen::DisplayOff;
-        const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
-        const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
-
-        bool show = true;
-        if (deviceLocked) {
-            if (!notificationIsCritical) {
-                show = false;
-            } else {
-                show = m_deviceLock->showNotifications();
-            }
-        } else if (screenLocked) {
-            if (!notificationIsCritical) {
-                show = false;
-            }
-        }
+        bool show = notificationShouldBeShown(notification);
 
         if (!show) {
             if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) { // Suppress feedback if locked out.
@@ -201,8 +185,11 @@ void NotificationPreviewPresenter::createWindowIfNecessary()
 
 bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotification *notification)
 {
-    if (notification->hidden() || notification->restored() || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty()))
+    if (notification->hidden()
+            || notification->restored()
+            || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty())) {
         return false;
+    }
 
     if (notification->hasProgress()) {
         return false; // would show up constantly as preview
@@ -210,7 +197,29 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
 
     const bool screenLocked = m_screenLock->isScreenLocked();
     const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
-    const bool notificationIsCritical = notification->urgency() >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
+    const bool notificationIsCritical = notification->urgency() >= 2
+            || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
+    const bool notificationIsPublic = notification->hints().value(LipstickNotification::HINT_VISIBILITY).toString()
+            .compare(QLatin1String("public"), Qt::CaseInsensitive) == 0;
+
+    bool show = true;
+
+    if (notificationIsPublic) {
+    } else if (deviceLocked) {
+        if (!notificationIsCritical) {
+            show = false;
+        } else {
+            show = m_deviceLock->showNotifications();
+        }
+    } else if (screenLocked) {
+        if (!notificationIsCritical) {
+            show = false;
+        }
+    }
+
+    if (!show) {
+        return false;
+    }
 
     uint mode = AllNotificationsEnabled;
     QWaylandSurface *surface = LipstickCompositor::instance()->surfaceForId(LipstickCompositor::instance()->topmostWindowId());
@@ -218,10 +227,9 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
         mode = surface->windowProperties().value("NOTIFICATION_PREVIEWS_DISABLED", uint(AllNotificationsEnabled)).toUInt();
     }
 
-    return ((!screenLocked && !deviceLocked) || notificationIsCritical) &&
-            (mode == AllNotificationsEnabled ||
-             (mode == ApplicationNotificationsDisabled && notificationIsCritical) ||
-             (mode == SystemNotificationsDisabled && !notificationIsCritical));
+    return (mode == AllNotificationsEnabled
+            || (mode == ApplicationNotificationsDisabled && notificationIsCritical)
+            || (mode == SystemNotificationsDisabled && !notificationIsCritical));
 }
 
 void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *notification)

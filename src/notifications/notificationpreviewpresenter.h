@@ -85,7 +85,6 @@ private slots:
     void createWindowIfNecessary();
 
 private:
-    //! Checks whether the given notification has a preview body and a preview summary.
     bool notificationShouldBeShown(LipstickNotification *notification);
 
     //! Sets the given notification as the current notification

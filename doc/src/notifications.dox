@@ -89,6 +89,7 @@
  *       - \c x-nemo-preview-summary: summary text to be shown in the preview banner for the notification, if any.
  *       - \c x-nemo-max-content-lines: the maximum number of content lines to display in the events view, inclusive of the summary. If 1, then no body lines will be displayed.
  *       - \c x-nemo-remote-action-actionname: details of the D-Bus call to be made when the action "actionname" is executed. "actionname" should be listed in the notification's \c actions array. The required format is "serviceName objectPath interface methodName [argument...]", where each argument must be separately encoded by serializing to QDataStream, then encoding the resulting byte sequence to Base64.
+ *       - \c x-nemo-visibility: the confidentiality of the notification. Currently allows "public" to make notification show even on locked device, "private" and "secret" like on Android API might come later if needed.
  *
  *   - The following hints are used by system notifications, and may be excluded from application notifications:
  *       - \c x-nemo-feedback: a token used to generate a pre-defined feedback event when the notification preview is displayed
