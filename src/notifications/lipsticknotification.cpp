@@ -26,6 +26,7 @@ const char *LipstickNotification::HINT_TRANSIENT = "transient";
 const char *LipstickNotification::HINT_RESIDENT = "resident";
 const char *LipstickNotification::HINT_IMAGE_PATH = "image-path";
 const char *LipstickNotification::HINT_SUPPRESS_SOUND = "suppress-sound";
+const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
 const char *LipstickNotification::HINT_ICON = "x-nemo-icon";
 const char *LipstickNotification::HINT_ITEM_COUNT = "x-nemo-item-count";
 const char *LipstickNotification::HINT_PRIORITY = "x-nemo-priority";
@@ -48,7 +49,7 @@ const char *LipstickNotification::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-l
 const char *LipstickNotification::HINT_RESTORED = "x-nemo-restored";
 const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
 const char *LipstickNotification::HINT_VIBRA = "x-nemo-vibrate";
-const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
+const char *LipstickNotification::HINT_VISIBILITY = "x-nemo-visibility";
 
 LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
                                            const QString &appIcon, const QString &summary, const QString &body,

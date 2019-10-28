@@ -145,6 +145,9 @@ public:
     //! Nemo hint: play vibra feedback
     static const char *HINT_VIBRA;
 
+    //! Nemo hint: Indicates the confidentiality of the notification
+    static const char *HINT_VISIBILITY;
+
     /*!
      * Creates an object for storing information about a single notification.
      *
