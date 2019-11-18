@@ -62,6 +62,7 @@ LauncherItem::LauncherItem(const QString &packageName, const QString &label,
     , m_customTitle(label)
     , m_customIconFilename(iconPath)
     , m_serial(0)
+    , m_isBlacklisted(false)
 {
     if (!desktopFile.isEmpty()) {
         setFilePath(desktopFile);

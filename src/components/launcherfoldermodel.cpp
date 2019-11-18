@@ -826,7 +826,14 @@ void LauncherFolderModel::load()
 
     for (int i = 0; i < loadedItems.count(); ++i) {
         if (!loadedItems.at(i)) {
-            addItem(m_launcherModel->get(i));
+            LauncherItem *item = qobject_cast<LauncherItem*>(m_launcherModel->get(i));
+            if (item) {
+                if (!item->isBlacklisted()) {
+                    addItem(item);
+                } else {
+                    m_blacklistedApplications.insert(item->filePath(), QString::number(itemCount()));
+                }
+            }
         }
     }
 
