@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Aaron Kennedy <aaron.kennedy@jollamobile.com>
+** Copyright (c) 2013-2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -25,6 +25,9 @@
 #include <QPointer>
 #include <QTimer>
 #include <MGConfItem>
+#include <QDBusConnection>
+#include <QDBusContext>
+#include <QDBusMessage>
 
 class WindowModel;
 class LipstickCompositorWindow;
@@ -32,13 +35,31 @@ class LipstickCompositorProcWindow;
 class QOrientationSensor;
 class LipstickRecorderManager;
 class LipstickKeymap;
+class QMceNameOwner;
 
 namespace ContentAction {
 class Action;
 }
 
-class LIPSTICK_EXPORT LipstickCompositor : public QQuickWindow, public QWaylandQuickCompositor,
-                                           public QQmlParserStatus
+struct QueuedSetUpdatesEnabledCall
+{
+    QueuedSetUpdatesEnabledCall(const QDBusConnection &connection, const QDBusMessage &message, bool enable)
+    : m_connection(connection)
+    , m_message(message)
+    , m_enable(enable)
+    {
+    }
+
+    QDBusConnection m_connection;
+    QDBusMessage m_message;
+    bool m_enable;
+};
+
+class LIPSTICK_EXPORT LipstickCompositor
+    : public QQuickWindow
+    , public QWaylandQuickCompositor
+    , public QQmlParserStatus
+    , public QDBusContext
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
@@ -118,6 +139,7 @@ public:
 
     bool completed();
 
+    void setUpdatesEnabledNow(bool enabled);
     void setUpdatesEnabled(bool enabled);
     QWaylandSurfaceView *createView(QWaylandSurface *surf) Q_DECL_OVERRIDE;
 
@@ -183,6 +205,7 @@ private slots:
     void onSurfaceDying();
     void updateKeymap();
     void initialize();
+    void processQueuedSetUpdatesEnabledCalls();
 
 private:
     friend class LipstickCompositorWindow;
@@ -234,6 +257,8 @@ private:
     LipstickKeymap *m_keymap;
     int m_fakeRepaintTimerId;
 
+    QList<QueuedSetUpdatesEnabledCall> m_queuedSetUpdatesEnabledCalls;
+    QMceNameOwner *m_mceNameOwner;
 };
 
 #endif // LIPSTICKCOMPOSITOR_H

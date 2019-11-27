@@ -1,3 +1,18 @@
+/***************************************************************************
+**
+** Copyright (c) 2013-2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
+**
+** This file is part of lipstick.
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
+
 #ifndef LIPSTICKCOMPOSITOR_STUB
 #define LIPSTICKCOMPOSITOR_STUB
 
@@ -374,7 +389,6 @@ QWaylandSurfaceView *LipstickCompositorStub::createView(QWaylandSurface *surf)
 LipstickCompositorStub gDefaultLipstickCompositorStub;
 LipstickCompositorStub *gLipstickCompositorStub = &gDefaultLipstickCompositorStub;
 
-
 // 4. CREATE A PROXY WHICH CALLS THE STUB
 LipstickCompositor::LipstickCompositor()
 {
@@ -630,6 +644,10 @@ QWaylandCompositor::QWaylandCompositor(QWindow *, const char *, QWaylandComposit
 }
 
 QWaylandQuickCompositor::QWaylandQuickCompositor(QQuickWindow *, const char *, QWaylandCompositor::ExtensionFlags)
+{
+}
+
+void LipstickCompositor::processQueuedSetUpdatesEnabledCalls()
 {
 }
 
