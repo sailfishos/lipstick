@@ -125,11 +125,11 @@ protected:
     void timerEvent(QTimerEvent *e) Q_DECL_OVERRIDE;
 
 signals:
-    void windowAdded(QObject *window);
-    void windowRemoved(QObject *window);
-    void windowRaised(QObject *window);
-    void windowLowered(QObject *window);
-    void windowHidden(QObject *window);
+    void windowAdded(LipstickCompositorWindow *window);
+    void windowRemoved(LipstickCompositorWindow *window);
+    void windowRaised(LipstickCompositorWindow *window);
+    void windowLowered(LipstickCompositorWindow *window);
+    void windowHidden(LipstickCompositorWindow *window);
 
     void windowCountChanged();
     void ghostWindowCountChanged();
