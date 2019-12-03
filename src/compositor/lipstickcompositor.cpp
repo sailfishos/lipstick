@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Aaron Kennedy <aaron.kennedy@jollamobile.com>
+** Copyright (c) 2013-2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -37,6 +37,8 @@
 #include "hwcrenderstage.h"
 #include <private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformintegration.h>
+#include <qmcenameowner.h>
+#include <dbus/dbus-protocol.h>
 
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
@@ -59,6 +61,8 @@ LipstickCompositor::LipstickCompositor()
     , m_onUpdatesDisabledUnfocusedWindowId(0)
     , m_keymap(0)
     , m_fakeRepaintTimerId(0)
+    , m_queuedSetUpdatesEnabledCalls()
+    , m_mceNameOwner(new QMceNameOwner(this))
 {
     setColor(Qt::black);
     setRetainedSelectionEnabled(true);
@@ -97,7 +101,12 @@ LipstickCompositor::LipstickCompositor()
 
     HwcRenderStage::initialize(this);
 
-    setUpdatesEnabled(false);
+    QObject::connect(m_mceNameOwner, &QMceNameOwner::validChanged,
+                     this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
+    QObject::connect(m_mceNameOwner, &QMceNameOwner::nameOwnerChanged,
+                     this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
+
+    setUpdatesEnabledNow(false);
     QTimer::singleShot(0, this, SLOT(initialize()));
 
     setClientFullScreenHint(true);
@@ -759,7 +768,7 @@ void LipstickCompositor::clipboardDataChanged()
         overrideSelection(const_cast<QMimeData *>(mimeData));
 }
 
-void LipstickCompositor::setUpdatesEnabled(bool enabled)
+void LipstickCompositor::setUpdatesEnabledNow(bool enabled)
 {
     if (m_updatesEnabled != enabled) {
         m_updatesEnabled = enabled;
@@ -798,6 +807,40 @@ void LipstickCompositor::setUpdatesEnabled(bool enabled)
     if (m_updatesEnabled && !m_completed) {
         m_completed = true;
         emit completedChanged();
+    }
+}
+
+void LipstickCompositor::setUpdatesEnabled(bool enabled)
+{
+    if (!calledFromDBus()) {
+        setUpdatesEnabledNow(enabled);
+    } else {
+        if (message().isReplyRequired())
+            setDelayedReply(true);
+        m_queuedSetUpdatesEnabledCalls.append(QueuedSetUpdatesEnabledCall(connection(), message(), enabled));
+        QMetaObject::invokeMethod(this, "processQueuedSetUpdatesEnabledCalls", Qt::QueuedConnection);
+    }
+}
+
+void LipstickCompositor::processQueuedSetUpdatesEnabledCalls()
+{
+    if (m_mceNameOwner->valid()) {
+        while (!m_queuedSetUpdatesEnabledCalls.isEmpty()) {
+            QueuedSetUpdatesEnabledCall queued(m_queuedSetUpdatesEnabledCalls.takeFirst());
+            if (queued.m_message.service() != m_mceNameOwner->nameOwner()) {
+                if (queued.m_message.isReplyRequired()) {
+                    QDBusMessage reply(queued.m_message.createErrorReply(DBUS_ERROR_ACCESS_DENIED,
+                                                                         "Only mce is allowed to call this method"));
+                    queued.m_connection.send(reply);
+                }
+            } else {
+                setUpdatesEnabledNow(queued.m_enable);
+                if (queued.m_message.isReplyRequired()) {
+                    QDBusMessage reply(queued.m_message.createReply());
+                    queued.m_connection.send(reply);
+                }
+            }
+        }
     }
 }
 
