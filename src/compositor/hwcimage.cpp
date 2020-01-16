@@ -18,6 +18,8 @@
 
 #include "eglhybrisbuffer.h"
 
+#include <MGConfItem>
+
 #include <QRunnable>
 #include <QThreadPool>
 
@@ -30,6 +32,7 @@
 #include <private/qmemrotate_p.h>
 
 #define HWCIMAGE_LOAD_EVENT ((QEvent::Type) (QEvent::User + 1))
+#define DEFAULT_THEME "sailfish-default"
 
 static QRgb swizzleWithAlpha(QRgb rgb)
 {
@@ -161,7 +164,14 @@ public:
 
             // Apply glass..
             if (effect.contains(QStringLiteral("glass"))) {
-                QImage glass("/usr/share/themes/sailfish-default/meegotouch/icons/graphic-shader-texture.png");
+                const auto shaderImageTemplate = QStringLiteral("/usr/share/themes/%1/meegotouch/icons/graphic-shader-texture.png");
+                const auto themeName = MGConfItem("/meegotouch/theme/name").value(DEFAULT_THEME).toString();
+                auto shaderImage = shaderImageTemplate.arg(themeName);
+                if (themeName != QStringLiteral(DEFAULT_THEME) && !QFile::exists(shaderImage)) {
+                    qCDebug(LIPSTICK_LOG_HWC, "Shader texture file does not exist: %s", qPrintable(shaderImage));
+                    shaderImage = shaderImageTemplate.arg(DEFAULT_THEME);
+                }
+                QImage glass(shaderImage);
 
                 if (rotation != 0) { // Counter rotate the glass effect so it is reset when the entire picture is rotated.
                     QTransform transform;
