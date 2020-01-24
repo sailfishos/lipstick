@@ -12,6 +12,7 @@ TARGET = lipstick-qt5
 DEFINES += LIPSTICK_BUILD_LIBRARY
 DEFINES += VERSION=\\\"$${VERSION}\\\"
 DEFINES += MESA_EGL_NO_X11_HEADERS
+DEFINES += EGL_NO_X11
 
 CONFIG += qt wayland-scanner c++11
 INSTALLS = target ts_install engineering_english_install
@@ -167,7 +168,6 @@ packagesExist(contentaction5) {
 QT += dbus xml qml quick sql gui gui-private sensors
 
 QMAKE_CXXFLAGS += \
-    -Werror \
     -Wfatal-errors \
     -g \
     -fPIC \
