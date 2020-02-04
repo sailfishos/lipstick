@@ -1,8 +1,8 @@
 /***************************************************************************
 **
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (C) 2012-2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (c) 2012 - 2020 Jolla Ltd.
+** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ** Contact: Robin Burchell <robin.burchell@jollamobile.com>
 **
@@ -342,7 +342,8 @@ bool BatteryNotifier::evaluateNotificationLevel(BatteryNotifier::NotificationTyp
         break;
     case BatteryNotifier::NotificationNotEnoughPower:
         /* Battery level has dropped since charger was connected. */
-        level = (state.m_batteryLevel < state.m_minimumBatteryLevel);
+        level = (state.m_batteryLevel >= 0
+                 && state.m_batteryLevel < state.m_minimumBatteryLevel);
         break;
     }
     return level;
@@ -501,7 +502,8 @@ void BatteryNotifier::updateLowBatteryNotifier()
         bool incall = m_currentState.m_callState != QMceCallState::None;
         if (active || incall) {
             /* Device is in "active use" */
-            if (m_currentState.m_batteryLevel <= m_lowBatteryRepeatLevel) {
+            if (m_currentState.m_batteryLevel >= 0
+                && m_currentState.m_batteryLevel <= m_lowBatteryRepeatLevel) {
                 /* Significant battery level drop since the last warning
                  * -> repeat the warning immediately. */
                 m_lowBatteryRepeatActivity->run();
