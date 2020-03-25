@@ -145,7 +145,7 @@ PKGCONFIG += \
     dsme_dbus_if \
     keepalive \
     libresourceqt5 \
-    libsystemd-daemon \
+    libsystemd \
     mlite5 \
     mce \
     mce-qt5 \
