@@ -25,6 +25,7 @@
 
 #include <unistd.h>
 #include <sys/eventfd.h>
+#include <sys/select.h>
 
 ScreenshotResult::ScreenshotResult(QObject *parent)
     : QObject(parent)
