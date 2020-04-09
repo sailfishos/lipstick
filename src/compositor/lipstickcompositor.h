@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2013-2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -228,6 +228,8 @@ private:
 
     QQmlComponent *shaderEffectComponent();
 
+    void activateLogindSession();
+
     static LipstickCompositor *m_instance;
 
     int m_totalWindowCount;
@@ -259,6 +261,9 @@ private:
 
     QList<QueuedSetUpdatesEnabledCall> m_queuedSetUpdatesEnabledCalls;
     QMceNameOwner *m_mceNameOwner;
+
+    QString m_logindSession;
+    uint m_sessionActivationTries;
 };
 
 #endif // LIPSTICKCOMPOSITOR_H
