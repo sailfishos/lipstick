@@ -90,7 +90,7 @@ HEADERS += \
     qmsystem2/qmdisplaystate_p.h \
     qmsystem2/qmipcinterface_p.h \
     qmsystem2/qmthermal_p.h \
-
+    logging.h \
 
 SOURCES += \
     homeapplication.cpp \
@@ -136,6 +136,7 @@ SOURCES += \
     qmsystem2/qmsystemstate.cpp \
     qmsystem2/qmthermal.cpp \
     qmsystem2/qmipcinterface.cpp \
+    logging.cpp \
 
 CONFIG += link_pkgconfig mobility qt warn_on depend_includepath qmake_cache target_qt
 CONFIG -= link_prl
