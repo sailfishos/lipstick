@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Robin Burchell <robin.burchell@jollamobile.com>
+** Copyright (c) 2013 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

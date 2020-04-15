@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2015 - 2020 Jolla Ltd.
-** Copyright (C) 2019 - 2020 Open Mobile Platform LLC.
+** Copyright (c) 2015 - 2020 Jolla Ltd.
+** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **

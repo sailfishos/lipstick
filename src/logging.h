@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **

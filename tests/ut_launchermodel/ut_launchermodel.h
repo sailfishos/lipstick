@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Thomas Perl <thomas.perl@jolla.com>
+** Copyright (c) 2014 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

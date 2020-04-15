@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Matt Vogt <matt.vogt@jollamobile.com>
+** Copyright (c) 2015 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

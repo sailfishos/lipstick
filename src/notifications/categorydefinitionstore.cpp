@@ -1,8 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (C) 2012 Jolla Ltd.
-** Contact: Robin Burchell <robin.burchell@jollamobile.com>
+** Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (c) 2012 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

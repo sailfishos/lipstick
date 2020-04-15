@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2016 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (c) 2016 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

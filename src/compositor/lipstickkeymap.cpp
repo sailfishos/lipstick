@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Andres Gomez <andres.gomez@jolla.com>
+** Copyright (c) 2015 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

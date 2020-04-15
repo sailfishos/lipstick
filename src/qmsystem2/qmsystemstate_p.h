@@ -3,7 +3,7 @@
  * @brief Contains QmSystemStatePrivate
 
    <p>
-   Copyright (C) 2009-2011 Nokia Corporation
+   Copyright (c) 2009-2011 Nokia Corporation
 
    @author Timo Olkkonen <ext-timo.p.olkkonen@nokia.com>
 
