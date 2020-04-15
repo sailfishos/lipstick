@@ -1,10 +1,9 @@
 /***************************************************************************
 **
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (C) 2012-2019 Jolla Ltd.
+** Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** Copyright (c) 2012-2019 Jolla Ltd.
 ** Copyright (c) 2019 Open Mobile Platform LLC.
 **
-** Contact: Robin Burchell <robin.burchell@jollamobile.com>
 **
 ** This file is part of lipstick.
 **

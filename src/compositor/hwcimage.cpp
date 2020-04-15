@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Gunnar Sletta <gunnar.sletta@jollamobile.com>
+** Copyright (c) 2015 - 2020 Jolla Ltd.
+** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -17,6 +17,7 @@
 #include "hwcrenderstage.h"
 
 #include "eglhybrisbuffer.h"
+#include "logging.h"
 
 #include <MGConfItem>
 
@@ -51,7 +52,7 @@ public:
     }
 
     ~HwcImageLoadRequest() {
-        qCDebug(LIPSTICK_LOG_HWC, "HwcImageLoadRequest completed and destroyed...");
+        qCDebug(lcLipstickHwcLog, "HwcImageLoadRequest completed and destroyed...");
     }
 
     void execute() {
@@ -61,10 +62,10 @@ public:
 
 
         if (!originalSize.isValid()) {
-            qCWarning(LIPSTICK_LOG_HWC, "%s is not a valid file or doesn't support reading image size: %s", qPrintable(file), qPrintable(reader.errorString()));
+            qCWarning(lcLipstickHwcLog, "%s is not a valid file or doesn't support reading image size: %s", qPrintable(file), qPrintable(reader.errorString()));
             return;
         } else if (Q_UNLIKELY(rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270)) {
-            qCWarning(LIPSTICK_LOG_HWC, "%d is not a supported rotation: %s", rotation, qPrintable(file));
+            qCWarning(lcLipstickHwcLog, "%d is not a supported rotation: %s", rotation, qPrintable(file));
             return;
         }
 
@@ -131,7 +132,7 @@ public:
             image = QImage(bytes, imageSize.width(), imageSize.height(), stride, reader.imageFormat());
 
             if (!reader.read(&image)) {
-                qCWarning(LIPSTICK_LOG_HWC, "Error reading %s: %s", qPrintable(file), qPrintable(reader.errorString()));
+                qCWarning(lcLipstickHwcLog, "Error reading %s: %s", qPrintable(file), qPrintable(reader.errorString()));
 
                 hybrisBuffer->unlock();
                 hybrisBuffer = EglHybrisBuffer::Pointer();
@@ -142,7 +143,7 @@ public:
             image = reader.read();
 
             if (image.isNull()) {
-                qCWarning(LIPSTICK_LOG_HWC, "Error reading %s: %s", qPrintable(file), qPrintable(reader.errorString()));
+                qCWarning(lcLipstickHwcLog, "Error reading %s: %s", qPrintable(file), qPrintable(reader.errorString()));
                 return;
             }
         }
@@ -168,7 +169,7 @@ public:
                 const auto themeName = MGConfItem("/meegotouch/theme/name").value(DEFAULT_THEME).toString();
                 auto shaderImage = shaderImageTemplate.arg(themeName);
                 if (themeName != QStringLiteral(DEFAULT_THEME) && !QFile::exists(shaderImage)) {
-                    qCDebug(LIPSTICK_LOG_HWC, "Shader texture file does not exist: %s", qPrintable(shaderImage));
+                    qCDebug(lcLipstickHwcLog, "Shader texture file does not exist: %s", qPrintable(shaderImage));
                     shaderImage = shaderImageTemplate.arg(DEFAULT_THEME);
                 }
                 QImage glass(shaderImage);
@@ -358,7 +359,7 @@ HwcImage::~HwcImage()
 void HwcImage::setRotationHandler(QQuickItem *item)
 {
     if (!HwcRenderStage::isHwcEnabled()) {
-        qCDebug(LIPSTICK_LOG_HWC, "HwcImage ignoring rotation handler as HWC is disabled");
+        qCDebug(lcLipstickHwcLog, "HwcImage ignoring rotation handler as HWC is disabled");
         return;
     }
 
@@ -372,7 +373,7 @@ void HwcImage::setRotationHandler(QQuickItem *item)
     emit rotationHandlerChanged();
     polish();
 
-    qCDebug(LIPSTICK_LOG_HWC) << "HwcImage" << this << "tracking rotation handler" << item;
+    qCDebug(lcLipstickHwcLog) << "HwcImage" << this << "tracking rotation handler" << item;
 }
 
 void HwcImage::setAsynchronous(bool is)
@@ -448,7 +449,7 @@ void HwcImage::handlerRotationChanged()
 {
     qreal rotation = hwcimage_get_rotation(m_rotationHandler);
     bool is90 = qFuzzyCompare(0.0, fmod(rotation, 90));
-    qCDebug(LIPSTICK_LOG_HWC, " - rotation changed: %6.3f, 90 degree=%s", rotation, is90 ? "yes" : "no");
+    qCDebug(lcLipstickHwcLog, " - rotation changed: %6.3f, 90 degree=%s", rotation, is90 ? "yes" : "no");
     if (is90 && m_textureRotation != rotation)
         polish();
 }
@@ -465,7 +466,7 @@ void HwcImage::updatePolish()
     }
 
     if (!QFileInfo(m_source.toLocalFile()).exists()) {
-        qCDebug(LIPSTICK_LOG_HWC, "HwcImage: source file does not exist (%s)", qPrintable(m_source.toString()));
+        qCDebug(lcLipstickHwcLog, "HwcImage: source file does not exist (%s)", qPrintable(m_source.toString()));
         return;
     }
 
@@ -486,7 +487,7 @@ void HwcImage::updatePolish()
     if (m_maxTextureSize > 0 && m_textureSize.width() > 0 && m_textureSize.height() > 0)
         qWarning() << "HwcImage: both 'textureSize' and 'maxTextureSize' are set; 'textureSize' will take presedence" << this;
 
-    qCDebug(LIPSTICK_LOG_HWC,
+    qCDebug(lcLipstickHwcLog,
             "Scheduling HwcImage request, source=%s, (%d x %d), eff=%s, olay=%s, rot=%d, pr=%f, %s",
             qPrintable(m_source.toString()),
             m_textureSize.width(), m_textureSize.height(),
@@ -542,7 +543,7 @@ bool HwcImage::event(QEvent *e)
                       && m_textureSize == req->textureSize
                       && m_pixelRatio == req->pixelRatio
                       && m_overlayColor == req->overlay;
-        qCDebug(LIPSTICK_LOG_HWC,
+        qCDebug(lcLipstickHwcLog,
                 "HwcImage request completed: %s, source=%s, (%d x %d), eff=%s, olay=%s, rot=%d, pr=%f",
                 (accept ? "accepted" : "rejected"),
                 qPrintable(req->file),
@@ -617,12 +618,12 @@ class HwcImageNode : public QSGSimpleTextureNode
 {
 public:
     HwcImageNode() {
-        qCDebug(LIPSTICK_LOG_HWC) << "HwcImageNode is created...";
+        qCDebug(lcLipstickHwcLog) << "HwcImageNode is created...";
         qsgnode_set_description(this, QStringLiteral("hwc-image-node"));
         setOwnsTexture(true);
     }
     ~HwcImageNode() {
-        qCDebug(LIPSTICK_LOG_HWC) << "HwcImageNode is gone...";
+        qCDebug(lcLipstickHwcLog) << "HwcImageNode is gone...";
     }
     void *handle() const {
         HwcImageTexture *t = static_cast<HwcImageTexture *>(texture());
@@ -677,7 +678,7 @@ QMatrix4x4 HwcImage::reverseTransform() const
 QSGNode *HwcImage::updatePaintNode(QSGNode *old, UpdatePaintNodeData *)
 {
     if (!HwcRenderStage::isHwcEnabled()) {
-        qCDebug(LIPSTICK_LOG_HWC) << "HwcImage" << this << "updating paint node without HWC support";
+        qCDebug(lcLipstickHwcLog) << "HwcImage" << this << "updating paint node without HWC support";
         return updateActualPaintNode(old);
     }
 
@@ -698,7 +699,7 @@ QSGNode *HwcImage::updatePaintNode(QSGNode *old, UpdatePaintNodeData *)
     HwcNode *hwcNode = 0;
 
     if (old) {
-        qCDebug(LIPSTICK_LOG_HWC) << "HwcImage" << this << "updating paint existing node";
+        qCDebug(lcLipstickHwcLog) << "HwcImage" << this << "updating paint existing node";
         hwcNode = static_cast<HwcNode *>(old);
         HwcImageNode *contentNode = updateActualPaintNode(hwcNode->firstChild()->firstChild());
         if (contentNode == 0) {
@@ -713,7 +714,7 @@ QSGNode *HwcImage::updatePaintNode(QSGNode *old, UpdatePaintNodeData *)
         static_cast<QSGTransformNode *>(hwcNode->firstChild())->setMatrix(reverseTransform());
         hwcNode->update(contentNode, contentNode->handle());
     } else if (HwcImageNode *contentNode = updateActualPaintNode(0)) {
-        qCDebug(LIPSTICK_LOG_HWC) << "HwcImage" << this << "creating new node";
+        qCDebug(lcLipstickHwcLog) << "HwcImage" << this << "creating new node";
         hwcNode = new HwcNode(window());
         QSGTransformNode *xnode = new QSGTransformNode();
         xnode->setMatrix(reverseTransform());
@@ -736,7 +737,7 @@ HwcImageTexture::HwcImageTexture(const EglHybrisBuffer::Pointer &buffer, HwcRend
     , m_hwc(hwc)
 {
     glGenTextures(1, &m_id);
-    qCDebug(LIPSTICK_LOG_HWC,
+    qCDebug(lcLipstickHwcLog,
             "HwcImageTexture(%p) created, size=(%d x %d), texId=%d",
             this, m_buffer->size().width(), m_buffer->size().height(), m_id);
 }
@@ -753,7 +754,7 @@ HwcImageTexture::~HwcImageTexture()
         m_hwc->signalOnBufferRelease(EglHybrisBuffer::destroy, handle(), m_buffer.data());
     }
 
-    qCDebug(LIPSTICK_LOG_HWC,
+    qCDebug(lcLipstickHwcLog,
             "HwcImageTexture(%p) destroyed, size=(%d x %d), texId=%d",
             this, m_buffer->size().width(), m_buffer->size().height(), m_id);
 }

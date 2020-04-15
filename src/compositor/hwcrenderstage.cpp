@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Gunnar Sletta <gunnar.sletta@jollamobile.com>
+** Copyright (c) 2015 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -17,6 +17,7 @@
 #include "hwcinterface.h"
 
 #include "lipstickcompositor.h"
+#include "logging.h"
 
 #include <private/qguiapplication_p.h>
 #include <qpa/qplatformintegration.h>
@@ -27,8 +28,6 @@
 #include <private/qsgrenderer_p.h>
 
 #include <EGL/egl.h>
-
-Q_LOGGING_CATEGORY(LIPSTICK_LOG_HWC, "qt.lipstick.hwc")
 
 const QEvent::Type HWC_BufferRelease = (QEvent::Type) (QEvent::User + 1);
 
@@ -128,7 +127,7 @@ void HwcRenderStage::initialize(LipstickCompositor *lipstick)
     EGLDisplay eglDisplay = iface->nativeResourceForIntegration("egldisplay");
     Q_ASSERT(eglDisplay);
 
-    qCDebug(LIPSTICK_LOG_HWC, "EGL Extensions: %s", eglQueryString(eglDisplay, EGL_EXTENSIONS));
+    qCDebug(lcLipstickHwcLog, "EGL Extensions: %s", eglQueryString(eglDisplay, EGL_EXTENSIONS));
 
     void *compositor = iface->nativeResourceForIntegration(HWC_INTERFACE_STRING);
     if (!compositor) {
@@ -180,10 +179,10 @@ static void hwc_renderstage_invalidate(void *hwc)
 
 static void hwc_renderstage_dump_layerlist(HwcInterface::LayerList *list)
 {
-    qCDebug(LIPSTICK_LOG_HWC, " - eglRenderingEnabled: %d", list->eglRenderingEnabled);
+    qCDebug(lcLipstickHwcLog, " - eglRenderingEnabled: %d", list->eglRenderingEnabled);
     for (int i=0; i<list->layerCount; ++i) {
         const HwcInterface::Layer &l = list->layers[i];
-        qCDebug(LIPSTICK_LOG_HWC, " - layer %d: target=(%d,%d, %dx%d), source=(%d,%d, %dx%d) handle=%p, accepted=%d",
+        qCDebug(lcLipstickHwcLog, " - layer %d: target=(%d,%d, %dx%d), source=(%d,%d, %dx%d) handle=%p, accepted=%d",
                 i,
                 l.tx, l.ty, l.tw, l.th,
                 l.sx, l.sy, l.sw, l.sh,
@@ -263,15 +262,15 @@ bool HwcRenderStage::render()
             // it.
             if (m_invalidationCountdown > 0 && m_layerList != m_hwc->acceptedLayerList()) {
                 --m_invalidationCountdown;
-                qCDebug(LIPSTICK_LOG_HWC, "HwcRenderStage::render(): invalidation countdown: %d", m_invalidationCountdown);
+                qCDebug(lcLipstickHwcLog, "HwcRenderStage::render(): invalidation countdown: %d", m_invalidationCountdown);
                 scheduleAgain = true;
             }
 
             if (scheduleAgain) {
                 m_layerList = hwc_renderstage_create_list(m_nodesToTry);
                 m_layerList->eglRenderingEnabled = !layersOnly;
-                if (LIPSTICK_LOG_HWC().isDebugEnabled()) {
-                    qCDebug(LIPSTICK_LOG_HWC, "HwcRenderStage::render(), scheduling new layer list (using GL)");
+                if (lcLipstickHwcLog().isDebugEnabled()) {
+                    qCDebug(lcLipstickHwcLog, "HwcRenderStage::render(), scheduling new layer list (using GL)");
                     hwc_renderstage_dump_layerlist(m_layerList);
                 }
                 foreach (HwcNode *n, m_nodesInList)
@@ -285,8 +284,8 @@ bool HwcRenderStage::render()
                 m_invalidationCountdown = 0;
                 if (m_scheduledLayerList) {
                     // newly accepted, toggle blocking in the scene graph...
-                    if (LIPSTICK_LOG_HWC().isDebugEnabled()) {
-                        qCDebug(LIPSTICK_LOG_HWC, "HwcRenderStage::render(), layer list was accepted (using HWC%s)",
+                    if (lcLipstickHwcLog().isDebugEnabled()) {
+                        qCDebug(lcLipstickHwcLog, "HwcRenderStage::render(), layer list was accepted (using HWC%s)",
                                 m_layerList->eglRenderingEnabled ? "+GL" : "");
                         hwc_renderstage_dump_layerlist(m_layerList);
                     }
@@ -316,10 +315,10 @@ bool HwcRenderStage::render()
             }
 
         } else {
-            if (LIPSTICK_LOG_HWC().isDebugEnabled()) {
+            if (lcLipstickHwcLog().isDebugEnabled()) {
                 static bool once = false;
                 if (m_layerList || !once) {
-                    qCDebug(LIPSTICK_LOG_HWC, "HwcRenderStage::render(), no layers (using GL)");
+                    qCDebug(lcLipstickHwcLog, "HwcRenderStage::render(), no layers (using GL)");
                     once = true;
                 }
             }
@@ -367,7 +366,7 @@ void HwcRenderStage::disableHwc()
 {
     if (!m_layerList)
         return;
-    qCDebug(LIPSTICK_LOG_HWC, "HwcRenderStage: Hwc has been disabled, using only GL");
+    qCDebug(lcLipstickHwcLog, "HwcRenderStage: Hwc has been disabled, using only GL");
     foreach (HwcNode *n, m_nodesInList)
         n->setBlocked(false);
     m_nodesInList.clear();

@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2018 Jolla Ltd.
-** Contact: Andrew den Exter <andrew.den.exter@jolla.com>
+** Copyright (c) 2018 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

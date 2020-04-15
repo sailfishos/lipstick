@@ -4,7 +4,6 @@
 ** Copyright (c) 2012 - 2020 Jolla Ltd.
 ** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
-** Contact: Robin Burchell <robin.burchell@jollamobile.com>
 **
 ** This file is part of lipstick.
 **

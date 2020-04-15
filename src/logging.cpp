@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (c) 2014 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -12,25 +12,7 @@
 **
 ****************************************************************************/
 
-#ifndef UT_LAUNCHERMODEL_H
-#define UT_LAUNCHERMODEL_H
+#include "logging.h"
 
-#include <QObject>
-
-class LauncherModel;
-
-class Ut_LauncherModel : public QObject
-{
-    Q_OBJECT
-
-private slots:
-    void init();
-    void cleanup();
-    void testUpdating();
-    void testUpdatingFileAppears();
-
-private:
-    LauncherModel *launcherModel;
-};
-
-#endif /* UT_LAUNCHERMODEL_H */
+Q_LOGGING_CATEGORY(lcLipstickCoreLog, "org.sailfishos.lipstick", QtWarningMsg)
+Q_LOGGING_CATEGORY(lcLipstickHwcLog, "org.sailfishos.lipstick.hwc", QtWarningMsg)

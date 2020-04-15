@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Giulio Camuffo <giulio.camuffo@jollamobile.com>
+** Copyright (c) 2014 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **

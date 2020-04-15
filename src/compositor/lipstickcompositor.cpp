@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2013-2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -35,10 +35,15 @@
 #include <qpa/qwindowsysteminterface.h>
 #include "alienmanager/alienmanager.h"
 #include "hwcrenderstage.h"
+#include "logging.h"
 #include <private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformintegration.h>
 #include <qmcenameowner.h>
 #include <dbus/dbus-protocol.h>
+#include <sys/types.h>
+#include <systemd/sd-bus.h>
+#include <systemd/sd-login.h>
+#include <unistd.h>
 
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
@@ -63,6 +68,7 @@ LipstickCompositor::LipstickCompositor()
     , m_fakeRepaintTimerId(0)
     , m_queuedSetUpdatesEnabledCalls()
     , m_mceNameOwner(new QMceNameOwner(this))
+    , m_sessionActivationTries(0)
 {
     setColor(Qt::black);
     setRetainedSelectionEnabled(true);
@@ -405,8 +411,77 @@ void LipstickCompositor::onSurfaceDying()
     }
 }
 
+void LipstickCompositor::activateLogindSession()
+{
+    m_sessionActivationTries++;
+
+    if (m_logindSession.isEmpty()) {
+        /* Find the current session based on uid */
+        uid_t uid = getuid();
+        char **sessions = NULL;
+        uid_t *uids = NULL;
+        uint count = 0;
+        if (sd_seat_get_sessions("seat0", &sessions, &uids, &count) > 0) {
+            for (uint i = 0; i < count; ++i) {
+                if (uids[i] == uid) {
+                    m_logindSession = sessions[i];
+                    break;
+                }
+            }
+            for (char **s = sessions; *s ; ++s)
+                free(*s);
+        }
+        free(sessions);
+        free(uids);
+
+        if (m_logindSession.isEmpty()) {
+            qCWarning(lcLipstickCoreLog) << "Could not read session id, could not activate session";
+            return;
+        }
+    }
+
+    if (sd_session_is_active(m_logindSession.toUtf8()) > 0) {
+        qCInfo(lcLipstickCoreLog) << "Session" << m_logindSession << "successfully activated";
+        return;
+    }
+
+    if (m_sessionActivationTries > 10) {
+        qCWarning(lcLipstickCoreLog) << "Could not activate session, giving up";
+        return;
+    }
+
+    QDBusInterface logind(QStringLiteral("org.freedesktop.login1"),
+                          QStringLiteral("/org/freedesktop/login1"),
+                          QStringLiteral("org.freedesktop.login1.Manager"),
+                          QDBusConnection::systemBus());
+
+    if (!logind.isValid()) {
+        qCWarning(lcLipstickCoreLog) << "Logind manager is not a valid interface, could not activate session";
+        return;
+    }
+
+    qCDebug(lcLipstickCoreLog) << "Activating session on seat0";
+
+    QDBusPendingCall call = logind.asyncCall("ActivateSession", m_logindSession);
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
+        QDBusPendingReply<void> reply = *call;
+        if (reply.isError()) {
+            qCWarning(lcLipstickCoreLog) << "Could not activate session:" << reply.error();
+        } else {
+            // VT switching may fail without notice, check status again a bit later
+            QTimer::singleShot(100, this, &LipstickCompositor::activateLogindSession);
+        }
+        call->deleteLater();
+    });
+
+    qCDebug(lcLipstickCoreLog) << "Session" << m_logindSession << "is activating";
+}
+
 void LipstickCompositor::initialize()
 {
+    activateLogindSession();
+
     TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
     reactOnDisplayStateChanges(TouchScreen::DisplayUnknown, touchScreen->currentDisplayState());
     connect(touchScreen, &TouchScreen::displayStateChanged, this, &LipstickCompositor::reactOnDisplayStateChanges);

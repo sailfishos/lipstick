@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Jolla Ltd <andrew.den.exter@jollamobile.com>
+ * Copyright (c) 2013 Jolla Ltd <andrew.den.exter@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *

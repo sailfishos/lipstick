@@ -3,7 +3,7 @@
  * @brief QmIPCInterface
 
    <p>
-   Copyright (C) 2009-2011 Nokia Corporation
+   Copyright (c) 2009-2011 Nokia Corporation
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
    @author Timo Olkkonen <ext-timo.p.olkkonen@nokia.com>

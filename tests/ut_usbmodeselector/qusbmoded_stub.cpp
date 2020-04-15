@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2015 Jolla Ltd.
- * Contact: Slava Monich <slava.monich@jolla.com>
+ * Copyright (c) 2015 Jolla Ltd.
  *
  * You may use this file under the terms of the BSD license as follows:
  *

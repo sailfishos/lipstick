@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (C) 2018 Jolla Ltd.
-** Contact: Andrew den Exter <andrew.den.exter@jolla.com>
+** Copyright (c) 2018 - 2020 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -16,6 +16,7 @@
 #include "eglhybrisbuffer.h"
 #include <QImage>
 #include "hwcrenderstage.h"
+#include "logging.h"
 
 EglHybrisBuffer::EglHybrisBuffer(
         Format format, const QSize &size, Usage usage, const EglHybrisFunctions &functions)
@@ -55,7 +56,7 @@ bool EglHybrisBuffer::allocate()
     if (!eglHybrisCreateNativeBuffer(
                 m_size.width(), m_size.height(), m_usage, m_format, &m_bufferStride, &m_buffer)
             || !m_buffer) {
-        qCWarning(LIPSTICK_LOG_HWC, "EGL native buffer error");
+        qCWarning(lcLipstickHwcLog, "EGL native buffer error");
         return false;
     } else if (!(m_eglImage = eglCreateImageKHR(
             eglGetDisplay(EGL_DEFAULT_DISPLAY),
@@ -63,7 +64,7 @@ bool EglHybrisBuffer::allocate()
             EGL_NATIVE_BUFFER_HYBRIS,
             m_buffer,
             0))) {
-        qCWarning(LIPSTICK_LOG_HWC, "EGLImage allocation error");
+        qCWarning(lcLipstickHwcLog, "EGLImage allocation error");
         return false;
     } else {
         return true;

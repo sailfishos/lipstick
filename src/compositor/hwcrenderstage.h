@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Gunnar Sletta <gunnar.sletta@jollamobile.com>
+** Copyright (c) 2015 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **
@@ -17,8 +16,6 @@
 #define HWCRENDERSTAGE
 
 #include <private/qquickwindow_p.h>
-
-Q_DECLARE_LOGGING_CATEGORY(LIPSTICK_LOG_HWC)
 
 class LipstickCompositor;
 class HwcRenderStage;

@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (c) 2014 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -12,25 +12,13 @@
 **
 ****************************************************************************/
 
-#ifndef UT_LAUNCHERMODEL_H
-#define UT_LAUNCHERMODEL_H
 
-#include <QObject>
+#ifndef LIPSTICK_LOGGING_H
+#define LIPSTICK_LOGGING_H
 
-class LauncherModel;
+#include <QLoggingCategory>
 
-class Ut_LauncherModel : public QObject
-{
-    Q_OBJECT
+Q_DECLARE_LOGGING_CATEGORY(lcLipstickCoreLog)
+Q_DECLARE_LOGGING_CATEGORY(lcLipstickHwcLog)
 
-private slots:
-    void init();
-    void cleanup();
-    void testUpdating();
-    void testUpdatingFileAppears();
-
-private:
-    LauncherModel *launcherModel;
-};
-
-#endif /* UT_LAUNCHERMODEL_H */
+#endif

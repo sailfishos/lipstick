@@ -1,7 +1,6 @@
 /***************************************************************************
 **
-** Copyright (C) 2013-2014 Jolla Ltd.
-** Contact: Aaron Kennedy <aaron.kennedy@jollamobile.com>
+** Copyright (c) 2013-2014 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **
