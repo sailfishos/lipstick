@@ -1,6 +1,6 @@
 /*!
- * @file qmthermal.cpp
- * @brief QmThermal
+ * @file thermal.cpp
+ * @brief Thermal
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
@@ -24,36 +24,36 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#include "qmthermal.h"
-#include "qmthermal_p.h"
+#include "thermal.h"
+#include "thermal_p.h"
 #include <QMetaMethod>
 
-namespace MeeGo {
+namespace DeviceState {
 
-QmThermal::QmThermal(QObject *parent)
+Thermal::Thermal(QObject *parent)
              : QObject(parent) {
-    MEEGO_INITIALIZE(QmThermal)
+    MEEGO_INITIALIZE(Thermal)
 
-    connect(priv, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)),
-            this, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)));
+    connect(priv, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)),
+            this, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)));
 }
 
-QmThermal::~QmThermal() {
-    MEEGO_PRIVATE(QmThermal)
+Thermal::~Thermal() {
+    MEEGO_PRIVATE(Thermal)
 
-    disconnect(priv, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)),
-               this, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)));
+    disconnect(priv, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)),
+               this, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)));
 
-    MEEGO_UNINITIALIZE(QmThermal);
+    MEEGO_UNINITIALIZE(Thermal);
 }
 
-void QmThermal::connectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmThermal)
+void Thermal::connectNotify(const QMetaMethod &signal) {
+    MEEGO_PRIVATE(Thermal)
 
     /* QObject::connect() needs to be thread-safe */
     QMutexLocker locker(&priv->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmThermal::thermalChanged)) {
+    if (signal == QMetaMethod::fromSignal(&Thermal::thermalChanged)) {
         if (0 == priv->connectCount[SIGNAL_THERMAL_STATE]) {
             QDBusConnection::systemBus().connect("",
                                                  thermalmanager_path,
@@ -66,13 +66,13 @@ void QmThermal::connectNotify(const QMetaMethod &signal) {
     }
 }
 
-void QmThermal::disconnectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmThermal)
+void Thermal::disconnectNotify(const QMetaMethod &signal) {
+    MEEGO_PRIVATE(Thermal)
 
     /* QObject::disconnect() needs to be thread-safe */
     QMutexLocker locker(&priv->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmThermal::thermalChanged)) {
+    if (signal == QMetaMethod::fromSignal(&Thermal::thermalChanged)) {
         priv->connectCount[SIGNAL_THERMAL_STATE]--;
 
         if (0 == priv->connectCount[SIGNAL_THERMAL_STATE]) {
@@ -86,8 +86,8 @@ void QmThermal::disconnectNotify(const QMetaMethod &signal) {
     }
 }
 
-QmThermal::ThermalState QmThermal::get() const {
-    MEEGO_PRIVATE_CONST(QmThermal)
+Thermal::ThermalState Thermal::get() const {
+    MEEGO_PRIVATE_CONST(Thermal)
     QString state;
     QList<QVariant> resp;
 
@@ -98,7 +98,7 @@ QmThermal::ThermalState QmThermal::get() const {
     }
 
     state = resp[0].toString();
-    return QmThermalPrivate::stringToState(state);
+    return ThermalPrivate::stringToState(state);
 }
 
-} // MeeGo namespace
+} // DeviceState namespace

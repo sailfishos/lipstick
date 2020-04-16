@@ -1,6 +1,6 @@
 /*!
- * @file qmthermal_p.h
- * @brief Contains QmThermalPrivate
+ * @file thermal_p.h
+ * @brief Contains ThermalPrivate
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
@@ -24,11 +24,11 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#ifndef QMTHERMAL_P_H
-#define QMTHERMAL_P_H
+#ifndef THERMAL_P_H
+#define THERMAL_P_H
 
-#include "qmthermal.h"
-#include "qmipcinterface_p.h"
+#include "thermal.h"
+#include "ipcinterface_p.h"
 
 #include <dsme/thermalmanager_dbus_if.h>
 
@@ -37,54 +37,54 @@
 
 #define SIGNAL_THERMAL_STATE 0
 
-namespace MeeGo
+namespace DeviceState
 {
-    class QmThermalPrivate : public QObject
+    class ThermalPrivate : public QObject
     {
         Q_OBJECT
-        MEEGO_DECLARE_PUBLIC(QmThermal)
+        MEEGO_DECLARE_PUBLIC(Thermal)
 
     public:
-        QmThermalPrivate() {
-            If = new QmIPCInterface(thermalmanager_service,
-                                    thermalmanager_path,
-                                    thermalmanager_interface);
+        ThermalPrivate() {
+            If = new IPCInterface(thermalmanager_service,
+                                  thermalmanager_path,
+                                  thermalmanager_interface);
 
             connectCount[SIGNAL_THERMAL_STATE] = 0;
         }
 
-        ~QmThermalPrivate() {
+        ~ThermalPrivate() {
             if (If) {
                 delete If, If = 0;
             }
         }
 
-        static QmThermal::ThermalState stringToState(const QString& state) {
-            QmThermal::ThermalState mState = QmThermal::Unknown;
+        static Thermal::ThermalState stringToState(const QString& state) {
+            Thermal::ThermalState mState = Thermal::Unknown;
 
             if (state == thermalmanager_thermal_status_normal) {
-                mState = QmThermal::Normal;
+                mState = Thermal::Normal;
             } else if (state == thermalmanager_thermal_status_warning) {
-                mState = QmThermal::Warning;
+                mState = Thermal::Warning;
             } else if (state == thermalmanager_thermal_status_alert) {
-                mState = QmThermal::Alert;
+                mState = Thermal::Alert;
             } else if (state == thermalmanager_thermal_status_low) {
-                mState = QmThermal::LowTemperatureWarning;
+                mState = Thermal::LowTemperatureWarning;
             }
             return mState;
         }
 
         QMutex connectMutex;
         size_t connectCount[1];
-        QmIPCInterface *If;
+        IPCInterface *If;
 
     Q_SIGNALS:
-        void thermalChanged(MeeGo::QmThermal::ThermalState);
+        void thermalChanged(DeviceState::Thermal::ThermalState);
 
     private Q_SLOTS:
         void thermalStateChanged(const QString &state) {
-            emit thermalChanged(QmThermalPrivate::stringToState(state));
+            emit thermalChanged(ThermalPrivate::stringToState(state));
         }
     };
 }
-#endif // QMTHERMAL_P_H
+#endif // THERMAL_P_H

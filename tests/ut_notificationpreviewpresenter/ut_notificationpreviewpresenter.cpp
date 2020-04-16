@@ -23,7 +23,7 @@
 #include "notificationfeedbackplayer_stub.h"
 #include "lipstickcompositor_stub.h"
 #include "closeeventeater_stub.h"
-#include "qmdisplaystate_stub.h"
+#include "displaystate_stub.h"
 #include "lipstickqmlpath_stub.h"
 #include "lipsticksettings.h"
 #include "screenlock/screenlock.h"
@@ -221,7 +221,7 @@ void Ut_NotificationPreviewPresenter::cleanup()
     notificationManagerNotification.clear();
     notificationManagerCloseNotificationIds.clear();
     notificationManagerDisplayedNotificationIds.clear();
-    gQmDisplayStateStub->stubReset();
+    gDisplayStateMonitorStub->stubReset();
 }
 
 void Ut_NotificationPreviewPresenter::testAddNotificationWhenWindowNotOpen()
@@ -503,34 +503,34 @@ void Ut_NotificationPreviewPresenter::testUpdateNotificationRemovesNotificationF
     QCOMPARE(playedFeedbacks(), 2);
 }
 
-Q_DECLARE_METATYPE(MeeGo::QmDisplayState::DisplayState)
+Q_DECLARE_METATYPE(DeviceState::DisplayStateMonitor::DisplayState)
 
 void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLockedAndDisplayIsOff_data()
 {
-    QTest::addColumn<MeeGo::QmDisplayState::DisplayState>("displayState");
+    QTest::addColumn<DeviceState::DisplayStateMonitor::DisplayState>("displayState");
     QTest::addColumn<NemoDeviceLock::DeviceLock::LockState>("lockState");
     QTest::addColumn<int>("urgency");
     QTest::addColumn<int>("notifications");
     QTest::addColumn<int>("playedFeedbackCount");
-    QTest::newRow("Display on, touch screen not locked") << MeeGo::QmDisplayState::On << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Normal) << 1 << 1;
-    QTest::newRow("Display on, touch screen locked") << MeeGo::QmDisplayState::On << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Normal) << 0 << 1;
-    QTest::newRow("Display off, touch screen not locked") << MeeGo::QmDisplayState::Off << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Normal) << 1 << 1;
-    QTest::newRow("Display off, touch screen locked") << MeeGo::QmDisplayState::Off << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Normal) << 0 << 1;
-    QTest::newRow("Display on, touch screen not locked, critical") << MeeGo::QmDisplayState::On << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Critical) << 1 << 1;
-    QTest::newRow("Display on, touch screen locked, critical") << MeeGo::QmDisplayState::On << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Critical) << 1 << 1;
-    QTest::newRow("Display off, touch screen not locked, critical") << MeeGo::QmDisplayState::Off << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Critical) << 1 << 1;
-    QTest::newRow("Display off, touch screen locked, critical") << MeeGo::QmDisplayState::Off << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display on, touch screen not locked") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Normal) << 1 << 1;
+    QTest::newRow("Display on, touch screen locked") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Normal) << 0 << 1;
+    QTest::newRow("Display off, touch screen not locked") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Normal) << 1 << 1;
+    QTest::newRow("Display off, touch screen locked") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Normal) << 0 << 1;
+    QTest::newRow("Display on, touch screen not locked, critical") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display on, touch screen locked, critical") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display off, touch screen not locked, critical") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display off, touch screen locked, critical") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Critical) << 1 << 1;
 }
 
 void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLockedAndDisplayIsOff()
 {
-    QFETCH(MeeGo::QmDisplayState::DisplayState, displayState);
+    QFETCH(DeviceState::DisplayStateMonitor::DisplayState, displayState);
     QFETCH(NemoDeviceLock::DeviceLock::LockState, lockState);
     QFETCH(int, urgency);
     QFETCH(int, notifications);
     QFETCH(int, playedFeedbackCount);
 
-    gQmDisplayStateStub->stubSetReturnValue("get", displayState);
+    gDisplayStateMonitorStub->stubSetReturnValue("get", displayState);
     deviceLock->setState(lockState);
 
     NotificationPreviewPresenter presenter(screenLock, deviceLock);

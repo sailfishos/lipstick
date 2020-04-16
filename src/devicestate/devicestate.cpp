@@ -1,6 +1,6 @@
 /*!
- * @file qmsystemstate.cpp
- * @brief QmSystemState
+ * @file devicestate.cpp
+ * @brief DeviceState
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
@@ -27,8 +27,8 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#include "qmsystemstate.h"
-#include "qmsystemstate_p.h"
+#include "devicestate.h"
+#include "devicestate_p.h"
 
 #include <dsme/thermalmanager_dbus_if.h>
 
@@ -38,32 +38,32 @@
 #include <QMetaMethod>
 
 
-namespace MeeGo {
+namespace DeviceState {
 
-QmSystemState::QmSystemState(QObject *parent)
+DeviceState::DeviceState(QObject *parent)
              : QObject(parent) {
-    MEEGO_INITIALIZE(QmSystemState);
+    MEEGO_INITIALIZE(DeviceState);
 
-    connect(priv, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)),
-            this, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)));
+    connect(priv, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
+            this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
 }
 
-QmSystemState::~QmSystemState() {
-    MEEGO_PRIVATE(QmSystemState)
+DeviceState::~DeviceState() {
+    MEEGO_PRIVATE(DeviceState)
 
-    disconnect(priv, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)),
-               this, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)));
+    disconnect(priv, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
+               this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
 
-    MEEGO_UNINITIALIZE(QmSystemState);
+    MEEGO_UNINITIALIZE(DeviceState);
 }
 
-void QmSystemState::connectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmSystemState)
+void DeviceState::connectNotify(const QMetaMethod &signal) {
+    MEEGO_PRIVATE(DeviceState)
 
     /* QObject::connect() needs to be thread-safe */
     QMutexLocker locker(&priv->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmSystemState::systemStateChanged)) {
+    if (signal == QMetaMethod::fromSignal(&DeviceState::systemStateChanged)) {
         if (0 == priv->connectCount[SIGNAL_SYSTEM_STATE]) {
             QDBusConnection::systemBus().connect(dsme_service,
                                                  dsme_sig_path,
@@ -106,13 +106,13 @@ void QmSystemState::connectNotify(const QMetaMethod &signal) {
     }
 }
 
-void QmSystemState::disconnectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmSystemState)
+void DeviceState::disconnectNotify(const QMetaMethod &signal) {
+    MEEGO_PRIVATE(DeviceState)
 
     /* QObject::disconnect() needs to be thread-safe */
     QMutexLocker locker(&priv->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmSystemState::systemStateChanged)) {
+    if (signal == QMetaMethod::fromSignal(&DeviceState::systemStateChanged)) {
         priv->connectCount[SIGNAL_SYSTEM_STATE]--;
 
         if (0 == priv->connectCount[SIGNAL_SYSTEM_STATE]) {
@@ -156,4 +156,4 @@ void QmSystemState::disconnectNotify(const QMetaMethod &signal) {
     }
 }
 
-} // MeeGo namespace
+} // DeviceState namespace

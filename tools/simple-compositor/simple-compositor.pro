@@ -12,7 +12,7 @@ QT += quick compositor
 SOURCES += main.cpp
 
 DEPENDPATH += ../../src
-INCLUDEPATH += ../../src ../../src/compositor ../../src/qmsystem2 ../../src/touchscreen
+INCLUDEPATH += ../../src ../../src/compositor ../../src/devicestate ../../src/touchscreen
 QMAKE_LIBDIR = ../../src
 LIBS = -llipstick-qt5
 

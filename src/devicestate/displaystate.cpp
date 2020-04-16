@@ -1,6 +1,6 @@
 /*!
- * @file qmdisplaystate.cpp
- * @brief QmDisplayState
+ * @file displaystate.cpp
+ * @brief DisplayStateMonitor
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
@@ -26,40 +26,40 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#include "qmdisplaystate.h"
-#include "qmdisplaystate_p.h"
+#include "displaystate.h"
+#include "displaystate_p.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusReply>
 #include <QMetaMethod>
 
-namespace MeeGo {
+namespace DeviceState {
 
-QmDisplayState::QmDisplayState(QObject *parent)
+DisplayStateMonitor::DisplayStateMonitor(QObject *parent)
               : QObject(parent) {
-     MEEGO_INITIALIZE(QmDisplayState);
+     MEEGO_INITIALIZE(DisplayStateMonitor);
 
-     connect(priv, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)),
-             this, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)));
+     connect(priv, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
+             this, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)));
 }
 
-QmDisplayState::~QmDisplayState() {
-    MEEGO_PRIVATE(QmDisplayState)
+DisplayStateMonitor::~DisplayStateMonitor() {
+    MEEGO_PRIVATE(DisplayStateMonitor)
 
-    disconnect(priv, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)),
-               this, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)));
+    disconnect(priv, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
+               this, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)));
 
-    MEEGO_UNINITIALIZE(QmDisplayState);
+    MEEGO_UNINITIALIZE(DisplayStateMonitor);
 }
 
-void QmDisplayState::connectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmDisplayState)
+void DisplayStateMonitor::connectNotify(const QMetaMethod &signal) {
+    MEEGO_PRIVATE(DisplayStateMonitor)
 
     /* QObject::connect() needs to be thread-safe */
     QMutexLocker locker(&priv->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmDisplayState::displayStateChanged)) {
+    if (signal == QMetaMethod::fromSignal(&DisplayStateMonitor::displayStateChanged)) {
         if (0 == priv->connectCount[SIGNAL_DISPLAY_STATE]) {
             QDBusConnection::systemBus().connect(MCE_SERVICE,
                                                  MCE_SIGNAL_PATH,
@@ -78,13 +78,13 @@ void QmDisplayState::connectNotify(const QMetaMethod &signal) {
     }
 }
 
-void QmDisplayState::disconnectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmDisplayState)
+void DisplayStateMonitor::disconnectNotify(const QMetaMethod &signal) {
+    MEEGO_PRIVATE(DisplayStateMonitor)
 
     /* QObject::disconnect() needs to be thread-safe */
     QMutexLocker locker(&priv->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmDisplayState::displayStateChanged)) {
+    if (signal == QMetaMethod::fromSignal(&DisplayStateMonitor::displayStateChanged)) {
         priv->connectCount[SIGNAL_DISPLAY_STATE]--;
 
         if (0 == priv->connectCount[SIGNAL_DISPLAY_STATE]) {
@@ -98,8 +98,8 @@ void QmDisplayState::disconnectNotify(const QMetaMethod &signal) {
     }
 }
 
-QmDisplayState::DisplayState QmDisplayState::get() const {
-    QmDisplayState::DisplayState state = Unknown;
+DisplayStateMonitor::DisplayState DisplayStateMonitor::get() const {
+    DisplayStateMonitor::DisplayState state = Unknown;
     QDBusReply<QString> displayStateReply = QDBusConnection::systemBus().call(
                                                 QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,
                                                                                MCE_DISPLAY_STATUS_GET));
@@ -119,7 +119,7 @@ QmDisplayState::DisplayState QmDisplayState::get() const {
     return state;
 }
 
-bool QmDisplayState::set(QmDisplayState::DisplayState state) {
+bool DisplayStateMonitor::set(DisplayStateMonitor::DisplayState state) {
     QString method;
 
     switch (state) {
@@ -141,4 +141,4 @@ bool QmDisplayState::set(QmDisplayState::DisplayState state) {
     return true;
 }
 
-} //MeeGo namespace
+} //DeviceState namespace

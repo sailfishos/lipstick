@@ -18,7 +18,7 @@
 #include "ut_touchscreen.h"
 #include "touchscreen.h"
 #include "homeapplication.h"
-#include "qmdisplaystate_stub.h"
+#include "displaystate_stub.h"
 #include "lipsticktest.h"
 
 #include <mce/mode-names.h>
@@ -75,7 +75,7 @@ void Ut_TouchScreen::testTouchBlocking()
     HomeApplication::instance()->touchScreen()->setEnabled(true);
 
     TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
-    updateDisplayState(MeeGo::QmDisplayState::Unknown, MeeGo::QmDisplayState::Off);
+    updateDisplayState(DeviceState::DisplayStateMonitor::Unknown, DeviceState::DisplayStateMonitor::Off);
     touchScreen->inputPolicyChanged(MCE_INPUT_POLICY_DISABLED);
     QVERIFY(touchScreen->touchBlocked());
 
@@ -104,7 +104,7 @@ void Ut_TouchScreen::testTouchBlocking()
     touch = QTouchEvent(QEvent::TouchCancel);
     QCOMPARE(touchScreen->eventFilter(0, &touch), false);
 
-    updateDisplayState(MeeGo::QmDisplayState::Off, MeeGo::QmDisplayState::On);
+    updateDisplayState(DeviceState::DisplayStateMonitor::Off, DeviceState::DisplayStateMonitor::On);
     QVERIFY(touchScreen->touchBlocked());
     touchScreen->inputPolicyChanged(MCE_INPUT_POLICY_ENABLED);
     QSignalSpy touchBlockingSpy(touchScreen, SIGNAL(touchBlockedChanged()));
@@ -149,17 +149,17 @@ void Ut_TouchScreen::testTouchBlocking()
     QCOMPARE(touchScreen->eventFilter(0, &event), false);
 }
 
-void Ut_TouchScreen::updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState)
+void Ut_TouchScreen::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState)
 {
-    emit gQmDisplayStateStub->displayState->displayStateChanged(oldState);
-    emit gQmDisplayStateStub->displayState->displayStateChanged(newState);
+    emit gDisplayStateMonitorStub->displayState->displayStateChanged(oldState);
+    emit gDisplayStateMonitorStub->displayState->displayStateChanged(newState);
 }
 
 void Ut_TouchScreen::fakeDisplayOnAndReady()
 {
     // Fake display state change.
     TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
-    updateDisplayState(MeeGo::QmDisplayState::Off, MeeGo::QmDisplayState::On);
+    updateDisplayState(DeviceState::DisplayStateMonitor::Off, DeviceState::DisplayStateMonitor::On);
     touchScreen->inputPolicyChanged(MCE_INPUT_POLICY_ENABLED);
     QSignalSpy touchBlockingSpy(touchScreen, SIGNAL(touchBlockedChanged()));
     touchBlockingSpy.wait();

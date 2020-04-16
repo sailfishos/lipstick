@@ -17,7 +17,7 @@
 #define UT_SCREENLOCK_H
 
 #include <QObject>
-#include <qmdisplaystate.h>
+#include <displaystate.h>
 
 class ScreenLock;
 
@@ -40,7 +40,7 @@ private slots:
     void testTkLockClose();
 
 private:
-    void updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState);
+    void updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState);
     void fakeDisplayOnAndReady();
 
     ScreenLock *screenLock;

@@ -30,10 +30,10 @@ class LIPSTICK_EXPORT TouchScreen : public QObject
 
 public:
     enum DisplayState {
-        DisplayOff = -1,   // MeeGo::QmDisplayState::Off
-        DisplayDimmed = 0, // MeeGo::QmDisplayState::Dimmed
-        DisplayOn = 1,     // MeeGo::QmDisplayState::On
-        DisplayUnknown     // MeeGo::QmDisplayState::Unknown
+        DisplayOff = -1,   // DeviceState::DisplayStateMonitor::Off
+        DisplayDimmed = 0, // DeviceState::DisplayStateMonitor::Dimmed
+        DisplayOn = 1,     // DeviceState::DisplayStateMonitor::On
+        DisplayUnknown     // DeviceState::DisplayStateMonitor::Unknown
     };
 
     explicit TouchScreen(QObject *parent = 0);

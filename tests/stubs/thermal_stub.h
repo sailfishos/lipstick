@@ -11,47 +11,47 @@
 ** of this file.
 **
 ****************************************************************************/
-#ifndef QMTHERMAL_STUB
-#define QMTHERMAL_STUB
+#ifndef THERMAL_STUB
+#define THERMAL_STUB
 
-#include "qmthermal.h"
+#include "thermal.h"
 #include <stubbase.h>
 
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
-class QmThermalStub : public StubBase
+class ThermalStub : public StubBase
 {
 public:
-    virtual void QmThermalConstructor(QObject *parent);
-    virtual void QmThermalDestructor();
-    virtual MeeGo::QmThermal::ThermalState get() const;
+    virtual void ThermalConstructor(QObject *parent);
+    virtual void ThermalDestructor();
+    virtual DeviceState::Thermal::ThermalState get() const;
     virtual void connectNotify(const QMetaMethod &signal);
     virtual void disconnectNotify(const QMetaMethod &signal);
 };
 
 // 2. IMPLEMENT STUB
-void QmThermalStub::QmThermalConstructor(QObject *parent)
+void ThermalStub::ThermalConstructor(QObject *parent)
 {
     Q_UNUSED(parent);
 
 }
-void QmThermalStub::QmThermalDestructor()
+void ThermalStub::ThermalDestructor()
 {
 
 }
-MeeGo::QmThermal::ThermalState QmThermalStub::get() const
+DeviceState::Thermal::ThermalState ThermalStub::get() const
 {
     stubMethodEntered("get");
-    return stubReturnValue<MeeGo::QmThermal::ThermalState>("get");
+    return stubReturnValue<DeviceState::Thermal::ThermalState>("get");
 }
-void QmThermalStub::connectNotify(const QMetaMethod &signal)
+void ThermalStub::connectNotify(const QMetaMethod &signal)
 {
     QList<ParameterBase *> params;
     params.append( new Parameter<const QMetaMethod &>(signal));
     stubMethodEntered("connectNotify", params);
 }
-void QmThermalStub::disconnectNotify(const QMetaMethod &signal)
+void ThermalStub::disconnectNotify(const QMetaMethod &signal)
 {
     QList<ParameterBase *> params;
     params.append( new Parameter<const QMetaMethod &>(signal));
@@ -61,35 +61,35 @@ void QmThermalStub::disconnectNotify(const QMetaMethod &signal)
 
 
 // 3. CREATE A STUB INSTANCE
-QmThermalStub gDefaultQmThermalStub;
-QmThermalStub *gQmThermalStub = &gDefaultQmThermalStub;
+ThermalStub gDefaultThermalStub;
+ThermalStub *gThermalStub = &gDefaultThermalStub;
 
-namespace MeeGo {
+namespace DeviceState {
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
-QmThermal::QmThermal(QObject *parent)
+Thermal::Thermal(QObject *parent)
 {
-    gQmThermalStub->QmThermalConstructor(parent);
+    gThermalStub->ThermalConstructor(parent);
 }
 
-QmThermal::~QmThermal()
+Thermal::~Thermal()
 {
-    gQmThermalStub->QmThermalDestructor();
+    gThermalStub->ThermalDestructor();
 }
 
-MeeGo::QmThermal::ThermalState QmThermal::get() const
+DeviceState::Thermal::ThermalState Thermal::get() const
 {
-    return gQmThermalStub->get();
+    return gThermalStub->get();
 }
 
-void QmThermal::connectNotify(const QMetaMethod &signal)
+void Thermal::connectNotify(const QMetaMethod &signal)
 {
-    gQmThermalStub->connectNotify(signal);
+    gThermalStub->connectNotify(signal);
 }
 
-void QmThermal::disconnectNotify(const QMetaMethod &signal)
+void Thermal::disconnectNotify(const QMetaMethod &signal)
 {
-    gQmThermalStub->disconnectNotify(signal);
+    gThermalStub->disconnectNotify(signal);
 }
 
 }

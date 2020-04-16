@@ -84,34 +84,34 @@ void Ut_ShutdownScreen::cleanup()
 
 void Ut_ShutdownScreen::testConnections()
 {
-    QCOMPARE(disconnect(shutdownScreen->m_systemState, SIGNAL(systemStateChanged(MeeGo::QmSystemState::StateIndication)), shutdownScreen, SLOT(applySystemState(MeeGo::QmSystemState::StateIndication))), true);
+    QCOMPARE(disconnect(shutdownScreen->m_systemState, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)), shutdownScreen, SLOT(applySystemState(DeviceState::DeviceState::StateIndication))), true);
 }
 
 void Ut_ShutdownScreen::testSystemState()
 {
     QSignalSpy spy(shutdownScreen, SIGNAL(windowVisibleChanged()));
-    shutdownScreen->applySystemState(MeeGo::QmSystemState::ThermalStateFatal);
+    shutdownScreen->applySystemState(DeviceState::DeviceState::ThermalStateFatal);
     QCOMPARE(qQuickViews.count(), 0);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_high_temp"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
-    shutdownScreen->applySystemState(MeeGo::QmSystemState::ShutdownDeniedUSB);
+    shutdownScreen->applySystemState(DeviceState::DeviceState::ShutdownDeniedUSB);
     QCOMPARE(qQuickViews.count(), 0);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 2);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("device.added"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_unplug_usb"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
-    shutdownScreen->applySystemState(MeeGo::QmSystemState::BatteryStateEmpty);
+    shutdownScreen->applySystemState(DeviceState::DeviceState::BatteryStateEmpty);
     QCOMPARE(qQuickViews.count(), 0);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 3);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.shutdown"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_batt_empty"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
-    shutdownScreen->applySystemState(MeeGo::QmSystemState::Shutdown);
+    shutdownScreen->applySystemState(DeviceState::DeviceState::Shutdown);
     QCOMPARE(qQuickViews.count(), 1);
 
     // Check window properties
@@ -125,7 +125,7 @@ void Ut_ShutdownScreen::testSystemState()
     QCOMPARE(qWindowVisible[static_cast<QWindow *>(qQuickViews.first())], true);
     QCOMPARE(spy.count(), 1);
 
-    shutdownScreen->applySystemState(MeeGo::QmSystemState::Reboot);
+    shutdownScreen->applySystemState(DeviceState::DeviceState::Reboot);
     QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownMode").toString(), QString("reboot"));
 }
 

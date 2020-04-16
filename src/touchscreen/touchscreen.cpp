@@ -49,7 +49,7 @@ TouchScreenPrivate::TouchScreenPrivate(TouchScreen *q)
     , inputEnabled(true)
     , touchBlockedState(false)
     , touchUnblockingDelayTimer(0)
-    , displayState(new MeeGo::QmDisplayState(q))
+    , displayState(new DeviceState::DisplayStateMonitor(q))
     , mceRequest(0)
     , q_ptr(q)
 {
@@ -111,7 +111,7 @@ TouchScreen::TouchScreen(QObject *parent)
     , d_ptr(new TouchScreenPrivate(this))
 {
     Q_D(TouchScreen);
-    connect(d->displayState, &MeeGo::QmDisplayState::displayStateChanged, this, [=](MeeGo::QmDisplayState::DisplayState state) {
+    connect(d->displayState, &DeviceState::DisplayStateMonitor::displayStateChanged, this, [=](DeviceState::DisplayStateMonitor::DisplayState state) {
         TouchScreen::DisplayState newState = (TouchScreen::DisplayState)state;
         if (d->currentDisplayState != newState) {
             TouchScreen::DisplayState oldState = d->currentDisplayState;
@@ -191,7 +191,7 @@ void TouchScreen::setEnabled(bool enabled)
 void TouchScreen::setDisplayOff()
 {
     Q_D(TouchScreen);
-    d->displayState->set(MeeGo::QmDisplayState::Off);
+    d->displayState->set(DeviceState::DisplayStateMonitor::Off);
 }
 
 TouchScreen::DisplayState TouchScreen::currentDisplayState() const

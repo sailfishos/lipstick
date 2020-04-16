@@ -1,6 +1,6 @@
 /*!
- * @file qmsystemstate_p.h
- * @brief Contains QmSystemStatePrivate
+ * @file devicestate_p.h
+ * @brief Contains DeviceStatePrivate
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
@@ -24,31 +24,31 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#ifndef QMSYSTEMSTATE_P_H
-#define QMSYSTEMSTATE_P_H
+#ifndef DEVICESTATE_P_H
+#define DEVICESTATE_P_H
 
-#include "qmsystemstate.h"
-#include "qmipcinterface_p.h"
+#include "devicestate.h"
+#include "ipcinterface_p.h"
 #include "dsme/dsme_dbus_if.h"
 
 #include <QMutex>
 
 #define SIGNAL_SYSTEM_STATE 0
 
-namespace MeeGo
+namespace DeviceState
 {
 
-    class QmSystemStatePrivate : public QObject
+    class DeviceStatePrivate : public QObject
     {
         Q_OBJECT
-        MEEGO_DECLARE_PUBLIC(QmSystemState)
+        MEEGO_DECLARE_PUBLIC(DeviceState)
 
     public:
-        QmSystemStatePrivate() {
+        DeviceStatePrivate() {
             connectCount[SIGNAL_SYSTEM_STATE] = 0;
         }
 
-        ~QmSystemStatePrivate() {
+        ~DeviceStatePrivate() {
         }
 
         QMutex connectMutex;
@@ -56,36 +56,36 @@ namespace MeeGo
 
     Q_SIGNALS:
 
-        void systemStateChanged(MeeGo::QmSystemState::StateIndication what);
+        void systemStateChanged(DeviceState::DeviceState::StateIndication what);
 
     private Q_SLOTS:
 
         void emitShutdown() {
-            emit systemStateChanged(QmSystemState::Shutdown);
+            emit systemStateChanged(DeviceState::Shutdown);
         }
 
         void emitThermalShutdown(QString thermalState) {
             // TODO: hardcoded "fatal"
             if (thermalState == "fatal") {
-                emit systemStateChanged(QmSystemState::ThermalStateFatal);
+                emit systemStateChanged(DeviceState::ThermalStateFatal);
             }
         }
 
         void emitBatteryShutdown() {
-            emit systemStateChanged(QmSystemState::BatteryStateEmpty);
+            emit systemStateChanged(DeviceState::BatteryStateEmpty);
         }
 
         void emitSaveData() {
-            emit systemStateChanged(QmSystemState::SaveData);
+            emit systemStateChanged(DeviceState::SaveData);
         }
 
         void emitShutdownDenied(QString reqType, QString reason) {
             // XXX: Move hardcoded strings somewere else
             if (reason == "usb") {
                 if (reqType == "shutdown") {
-                    emit systemStateChanged(QmSystemState::ShutdownDeniedUSB);
+                    emit systemStateChanged(DeviceState::ShutdownDeniedUSB);
                 } else if (reqType == "reboot") {
-                    emit systemStateChanged(QmSystemState::RebootDeniedUSB);
+                    emit systemStateChanged(DeviceState::RebootDeniedUSB);
                 }
             }
         }
@@ -93,9 +93,9 @@ namespace MeeGo
         void emitStateChangeInd(QString state) {
             // TODO: hardcoded "REBOOT"
             if (state == "REBOOT") {
-                emit systemStateChanged(QmSystemState::Reboot);
+                emit systemStateChanged(DeviceState::Reboot);
             }
         }
     };
 }
-#endif // QMSYSTEMSTATE_P_H
+#endif // DEVICESTATE_P_H

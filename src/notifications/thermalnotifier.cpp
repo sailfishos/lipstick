@@ -18,26 +18,26 @@
 
 ThermalNotifier::ThermalNotifier(QObject *parent) :
     QObject(parent),
-    m_thermalState(new MeeGo::QmThermal(this)),
-    m_displayState(new MeeGo::QmDisplayState(this)),
-    m_thermalStateNotifiedWhileScreenIsOn(MeeGo::QmThermal::Normal)
+    m_thermalState(new DeviceState::Thermal(this)),
+    m_displayState(new DeviceState::DisplayStateMonitor(this)),
+    m_thermalStateNotifiedWhileScreenIsOn(DeviceState::Thermal::Normal)
 {
-    connect(m_thermalState, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)), this, SLOT(applyThermalState(MeeGo::QmThermal::ThermalState)));
-    connect(m_displayState, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)), this, SLOT(applyDisplayState(MeeGo::QmDisplayState::DisplayState)));
+    connect(m_thermalState, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)), this, SLOT(applyThermalState(DeviceState::Thermal::ThermalState)));
+    connect(m_displayState, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)), this, SLOT(applyDisplayState(DeviceState::DisplayStateMonitor::DisplayState)));
 }
 
-void ThermalNotifier::applyThermalState(MeeGo::QmThermal::ThermalState state)
+void ThermalNotifier::applyThermalState(DeviceState::Thermal::ThermalState state)
 {
     switch (state) {
-    case MeeGo::QmThermal::Warning:
+    case DeviceState::Thermal::Warning:
         //% "Device is getting hot. Close all apps."
         createAndPublishNotification("x-nemo.battery.temperature", qtTrId("qtn_shut_high_temp_warning"));
         break;
-    case MeeGo::QmThermal::Alert:
+    case DeviceState::Thermal::Alert:
         //% "Device is overheating. turn it off."
         createAndPublishNotification("x-nemo.battery.temperature", qtTrId("qtn_shut_high_temp_alert"));
         break;
-    case MeeGo::QmThermal::LowTemperatureWarning:
+    case DeviceState::Thermal::LowTemperatureWarning:
         //% "Low temperature warning"
         createAndPublishNotification("x-nemo.battery.temperature", qtTrId("qtn_shut_low_temp_warning"));
         break;
@@ -45,15 +45,15 @@ void ThermalNotifier::applyThermalState(MeeGo::QmThermal::ThermalState state)
         break;
     }
 
-    if (m_displayState->get() != MeeGo::QmDisplayState::Off) {
+    if (m_displayState->get() != DeviceState::DisplayStateMonitor::Off) {
         m_thermalStateNotifiedWhileScreenIsOn = state;
     }
 }
 
-void ThermalNotifier::applyDisplayState(MeeGo::QmDisplayState::DisplayState state)
+void ThermalNotifier::applyDisplayState(DeviceState::DisplayStateMonitor::DisplayState state)
 {
-    if (state == MeeGo::QmDisplayState::On) {
-        MeeGo::QmThermal::ThermalState currentThermalState = m_thermalState->get();
+    if (state == DeviceState::DisplayStateMonitor::On) {
+        DeviceState::Thermal::ThermalState currentThermalState = m_thermalState->get();
         if (m_thermalStateNotifiedWhileScreenIsOn != currentThermalState) {
             applyThermalState(currentThermalState);
         }

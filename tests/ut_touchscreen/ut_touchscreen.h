@@ -16,7 +16,7 @@
 #define UT_TOUCHSCREEN_H
 
 #include <QObject>
-#include <qmdisplaystate.h>
+#include <displaystate.h>
 
 class TouchScreen;
 
@@ -34,7 +34,7 @@ private slots:
     void testTouchBlocking();
 
 private:
-    void updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState);
+    void updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState);
     void fakeDisplayOnAndReady();
 
     TouchScreen *touchScreen;

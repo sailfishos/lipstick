@@ -18,7 +18,7 @@
 #include <QObject>
 #include <QDBusContext>
 #include "lipstickglobal.h"
-#include <qmsystemstate.h>
+#include <devicestate.h>
 
 class HomeWindow;
 
@@ -62,7 +62,7 @@ private slots:
      *
      * \param what how the system state has changed
      */
-    void applySystemState(MeeGo::QmSystemState::StateIndication what);
+    void applySystemState(DeviceState::DeviceState::StateIndication what);
 
 private:
     /*!
@@ -77,7 +77,7 @@ private:
     HomeWindow *m_window;
 
     //! For getting the system state
-    MeeGo::QmSystemState *m_systemState;
+    DeviceState::DeviceState *m_systemState;
 
     //! The shutdown mode to be communicated to the UI
     QString m_shutdownMode;

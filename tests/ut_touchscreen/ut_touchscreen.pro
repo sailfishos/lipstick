@@ -4,7 +4,7 @@ QT += dbus qml quick
 CONFIG += link_pkgconfig
 PKGCONFIG += mce
 
-INCLUDEPATH += $$TOUCHSCREENSRCDIR $$UTILITYSRCDIR $$SRCDIR/xtools $$QMSYSTEM2
+INCLUDEPATH += $$TOUCHSCREENSRCDIR $$UTILITYSRCDIR $$SRCDIR/xtools $$DEVICESTATE
 
 SOURCES += ut_touchscreen.cpp \
     $$TOUCHSCREENSRCDIR/touchscreen.cpp \
@@ -13,5 +13,5 @@ SOURCES += ut_touchscreen.cpp \
 
 HEADERS += ut_touchscreen.h \
     $$TOUCHSCREENSRCDIR/touchscreen.h \
-    $$QMSYSTEM2/qmdisplaystate.h \
+    $$DEVICESTATE/displaystate.h \
     $$SRCDIR/homeapplication.h

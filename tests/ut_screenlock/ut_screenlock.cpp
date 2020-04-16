@@ -27,7 +27,7 @@
 #include "touchscreen/touchscreen.h"
 #include "homeapplication.h"
 #include "closeeventeater_stub.h"
-#include "qmdisplaystate_stub.h"
+#include "displaystate_stub.h"
 #include "lipsticktest.h"
 
 TouchScreen *gTouchScreen = 0;
@@ -228,17 +228,17 @@ void Ut_ScreenLock::testTkLockClose()
     QCOMPARE(touchScreen->eventFilter(0, &event), true);
 }
 
-void Ut_ScreenLock::updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState)
+void Ut_ScreenLock::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState)
 {
-    emit gQmDisplayStateStub->displayState->displayStateChanged(oldState);
-    emit gQmDisplayStateStub->displayState->displayStateChanged(newState);
+    emit gDisplayStateMonitorStub->displayState->displayStateChanged(oldState);
+    emit gDisplayStateMonitorStub->displayState->displayStateChanged(newState);
 }
 
 void Ut_ScreenLock::fakeDisplayOnAndReady()
 {
     // Fake display state change.
     TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
-    updateDisplayState(MeeGo::QmDisplayState::Off, MeeGo::QmDisplayState::On);
+    updateDisplayState(DeviceState::DisplayStateMonitor::Off, DeviceState::DisplayStateMonitor::On);
     QSignalSpy touchBlockingSpy(screenLock, SIGNAL(touchBlockedChanged()));
     touchBlockingSpy.wait();
 
