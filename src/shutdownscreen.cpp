@@ -25,6 +25,8 @@
 #include "homeapplication.h"
 #include "shutdownscreen.h"
 #include "lipstickqmlpath.h"
+#include <pwd.h>
+#include <sys/types.h>
 
 ShutdownScreen::ShutdownScreen(QObject *parent) :
     QObject(parent),
@@ -33,6 +35,7 @@ ShutdownScreen::ShutdownScreen(QObject *parent) :
     m_systemState(new DeviceState::DeviceState(this))
 {
     connect(m_systemState, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)), this, SLOT(applySystemState(DeviceState::DeviceState::StateIndication)));
+    connect(m_systemState, SIGNAL(nextUserChanged(uint)), this, SLOT(setNextUser(uint)));
 }
 
 void ShutdownScreen::setWindowVisible(bool visible)
@@ -46,6 +49,7 @@ void ShutdownScreen::setWindowVisible(bool visible)
             m_window->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
             m_window->setContextProperty("shutdownScreen", this);
             m_window->setContextProperty("shutdownMode", m_shutdownMode);
+            m_window->setContextProperty("nextUser", m_nextUser);
             m_window->setSource(QmlPath::to("system/ShutdownScreen.qml"));
             m_window->installEventFilter(new CloseEventEater(this));
         }
@@ -97,8 +101,25 @@ void ShutdownScreen::applySystemState(DeviceState::DeviceState::StateIndication 
             }
             break;
 
+        case DeviceState::DeviceState::UserSwitching:
+            m_shutdownMode = "userswitch";
+            applySystemState(DeviceState::DeviceState::Shutdown);
+            break;
+
         default:
             break;
+    }
+}
+
+void ShutdownScreen::setNextUser(uint uid)
+{
+    struct passwd *pwd = getpwuid((uid_t)uid);
+    if (pwd) {
+        QString name = QString::fromUtf8(pwd->pw_gecos);
+        int i = name.indexOf(QStringLiteral(","));
+        if (i != -1)
+            name.truncate(i);
+        m_nextUser = name;
     }
 }
 

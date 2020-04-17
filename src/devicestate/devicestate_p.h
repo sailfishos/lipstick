@@ -33,6 +33,8 @@
 
 #include <QMutex>
 
+class QDBusServiceWatcher;
+
 #define SIGNAL_SYSTEM_STATE 0
 
 namespace DeviceState
@@ -46,6 +48,7 @@ namespace DeviceState
     public:
         DeviceStatePrivate() {
             connectCount[SIGNAL_SYSTEM_STATE] = 0;
+            userManagerWatcher = nullptr;
         }
 
         ~DeviceStatePrivate() {
@@ -53,10 +56,12 @@ namespace DeviceState
 
         QMutex connectMutex;
         size_t connectCount[1];
+        QDBusServiceWatcher *userManagerWatcher;
 
     Q_SIGNALS:
 
         void systemStateChanged(DeviceState::DeviceState::StateIndication what);
+        void nextUserChanged(uint uid);
 
     private Q_SLOTS:
 
@@ -95,6 +100,11 @@ namespace DeviceState
             if (state == "REBOOT") {
                 emit systemStateChanged(DeviceState::Reboot);
             }
+        }
+
+        void emitUserSwitching(uint uid) {
+            emit nextUserChanged(uid);
+            emit systemStateChanged(DeviceState::UserSwitching);
         }
     };
 }

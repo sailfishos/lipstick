@@ -14,6 +14,7 @@ Source0:    %{name}-%{version}.tar.bz2
 Source1:    %{name}.privileges
 Requires:   mce >= 1.87.0
 Requires:   pulseaudio-modules-nemo-mainvolume >= 6.0.19
+Requires:   user-managerd >= 0.3.0
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 BuildRequires:  pkgconfig(Qt5Core)
@@ -40,6 +41,7 @@ BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.8
 BuildRequires:  pkgconfig(systemsettings) >= 0.5.28
 BuildRequires:  pkgconfig(nemodevicelock)
+BuildRequires:  pkgconfig(sailfishusermanager)
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  qt5-qtgui-devel >= 5.2.1+git24
 BuildRequires:  qt5-qtwayland-wayland_egl-devel >= 5.4.0+git26

@@ -154,7 +154,8 @@ PKGCONFIG += \
     ngf-qt5 \
     systemsettings \
     thermalmanager_dbus_if \
-    usb-moded-qt5
+    usb-moded-qt5 \
+    sailfishusermanager
 
 LIBS += -lrt -lEGL
 

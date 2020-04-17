@@ -31,10 +31,13 @@
 #include "devicestate_p.h"
 
 #include <dsme/thermalmanager_dbus_if.h>
+#include <sailfishusermanagerinterface.h>
 
 #include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QDBusReply>
+#include <QDBusServiceWatcher>
 #include <QMetaMethod>
 
 
@@ -46,6 +49,8 @@ DeviceState::DeviceState(QObject *parent)
 
     connect(priv, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
             this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
+    connect(priv, SIGNAL(nextUserChanged(uint)),
+            this, SIGNAL(nextUserChanged(uint)));
 }
 
 DeviceState::~DeviceState() {
@@ -53,6 +58,8 @@ DeviceState::~DeviceState() {
 
     disconnect(priv, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
                this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
+    disconnect(priv, SIGNAL(nextUserChanged(uint)),
+               this, SIGNAL(nextUserChanged(uint)));
 
     MEEGO_UNINITIALIZE(DeviceState);
 }
@@ -101,6 +108,17 @@ void DeviceState::connectNotify(const QMetaMethod &signal) {
                                                  thermalmanager_state_change_ind,
                                                  priv,
                                                  SLOT(emitThermalShutdown(QString)));
+            priv->userManagerWatcher = new QDBusServiceWatcher(SAILFISH_USERMANAGER_DBUS_INTERFACE,
+                                                               QDBusConnection::systemBus(),
+                                                               QDBusServiceWatcher::WatchForRegistration
+                                                               | QDBusServiceWatcher::WatchForUnregistration,
+                                                               this);
+            connect(priv->userManagerWatcher, &QDBusServiceWatcher::serviceRegistered,
+                    this, &DeviceState::connectUserManager);
+            connect(priv->userManagerWatcher, &QDBusServiceWatcher::serviceUnregistered,
+                    this, &DeviceState::disconnectUserManager);
+            if (QDBusConnection::systemBus().interface()->isServiceRegistered(SAILFISH_USERMANAGER_DBUS_INTERFACE))
+                connectUserManager();
         }
         priv->connectCount[SIGNAL_SYSTEM_STATE]++;
     }
@@ -152,8 +170,33 @@ void DeviceState::disconnectNotify(const QMetaMethod &signal) {
                                                     thermalmanager_state_change_ind,
                                                     priv,
                                                     SLOT(emitThermalShutdown(QString)));
+            disconnectUserManager();
+            priv->userManagerWatcher->deleteLater();
+            priv->userManagerWatcher = nullptr;
         }
     }
+}
+
+void DeviceState::connectUserManager()
+{
+    MEEGO_PRIVATE(DeviceState)
+    QDBusConnection::systemBus().connect(SAILFISH_USERMANAGER_DBUS_INTERFACE,
+                                             SAILFISH_USERMANAGER_DBUS_OBJECT_PATH,
+                                             SAILFISH_USERMANAGER_DBUS_INTERFACE,
+                                             "aboutToChangeCurrentUser",
+                                             priv,
+                                             SLOT(emitUserSwitching(uint)));
+}
+
+void DeviceState::disconnectUserManager()
+{
+    MEEGO_PRIVATE(DeviceState)
+    QDBusConnection::systemBus().disconnect(SAILFISH_USERMANAGER_DBUS_INTERFACE,
+                                            SAILFISH_USERMANAGER_DBUS_OBJECT_PATH,
+                                            SAILFISH_USERMANAGER_DBUS_INTERFACE,
+                                            "aboutToChangeCurrentUser",
+                                            priv,
+                                            SLOT(emitUserChanging(uint)));
 }
 
 } // DeviceState namespace

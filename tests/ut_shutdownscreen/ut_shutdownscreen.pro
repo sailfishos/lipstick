@@ -4,7 +4,7 @@ INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$TOUCHSCREENSRCDIR $$UTILITYSRCDIR
 QT += qml quick dbus
 
 CONFIG += link_pkgconfig
-PKGCONFIG += dsme_dbus_if thermalmanager_dbus_if usb_moded
+PKGCONFIG += dsme_dbus_if thermalmanager_dbus_if usb_moded sailfishusermanager
 
 # unit test and unit
 SOURCES += \

@@ -65,7 +65,8 @@ public:
         SaveData,           //!< Save data
         RebootDeniedUSB,    //!< Reboot denied because USB is connected in mass storage mode
         ShutdownDeniedUSB,  //!< Shutdown denied because USB is connected in mass storage mode
-        Reboot              //!< Reboot
+        Reboot,             //!< Reboot
+        UserSwitching       //!< User switching
     };
 
 public:
@@ -83,9 +84,19 @@ Q_SIGNALS:
      */
     void systemStateChanged(DeviceState::DeviceState::StateIndication what);
 
+    /*!
+     * @brief Sent when user switching happens.
+     * @param uid User id of the user to switch to
+     */
+    void nextUserChanged(uint uid);
+
 protected:
     void connectNotify(const QMetaMethod &signal);
     void disconnectNotify(const QMetaMethod &signal);
+
+private slots:
+    void connectUserManager();
+    void disconnectUserManager();
 
 private:
     Q_DISABLE_COPY(DeviceState)
