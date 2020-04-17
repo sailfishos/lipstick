@@ -124,6 +124,14 @@ void AlienSurface::alien_surface_set_minimized(Resource *resource)
     emit surface()->lowerRequested();
 }
 
+void AlienSurface::alien_surface_snapshot(Resource *resource)
+{
+    Q_UNUSED(resource)
+    // calling configure with hasBuffer = false here will cause
+    // WindowPixmapItem to take a snapshot
+    emit surface()->configure(false);
+}
+
 void AlienSurface::configure(bool hasBuffer)
 {
     if (hasBuffer && m_serial == 0) {

@@ -214,5 +214,13 @@
                 kill it.
             </description>
         </event>
+
+        <request name="snapshot">
+            <description summary="ask the server to take a snapshot of the surface">
+                By calling this request the client asks the compositor to snapshot
+                this surface. The snapshot will be shown on the surface until a new
+                frame is posted.
+            </description>
+        </request>
     </interface>
 </protocol>

@@ -36,6 +36,7 @@ protected:
     void alien_surface_ack_configure(Resource *resource, uint32_t serial) Q_DECL_OVERRIDE;
     void alien_surface_request_state(Resource *resource, wl_array *states, uint32_t serial) Q_DECL_OVERRIDE;
     void alien_surface_set_minimized(Resource *resource) Q_DECL_OVERRIDE;
+    void alien_surface_snapshot(Resource *resource) Q_DECL_OVERRIDE;
 
 private:
     void configure(bool hasBuffer);
