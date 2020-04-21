@@ -4,6 +4,8 @@
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Timo Olkkonen <ext-timo.p.olkkonen@nokia.com>
 

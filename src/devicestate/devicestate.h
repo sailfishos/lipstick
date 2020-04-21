@@ -4,6 +4,8 @@
 
    <p>
    @copyright (C) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
    @license LGPL Lesser General Public License
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
