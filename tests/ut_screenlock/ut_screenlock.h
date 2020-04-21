@@ -1,7 +1,8 @@
 /***************************************************************************
 **
 ** Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012 - 2020 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -17,7 +18,7 @@
 #define UT_SCREENLOCK_H
 
 #include <QObject>
-#include <qmdisplaystate.h>
+#include <displaystate.h>
 
 class ScreenLock;
 
@@ -40,7 +41,7 @@ private slots:
     void testTkLockClose();
 
 private:
-    void updateDisplayState(MeeGo::QmDisplayState::DisplayState oldState, MeeGo::QmDisplayState::DisplayState newState);
+    void updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState);
     void fakeDisplayOnAndReady();
 
     ScreenLock *screenLock;

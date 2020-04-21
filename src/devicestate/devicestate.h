@@ -1,9 +1,11 @@
 /*!
- * @file qmsystemstate.h
- * @brief Contains QmSystemState which provides information and actions on device state.
+ * @file devicestate.h
+ * @brief Contains DeviceState which provides information and actions on device state.
 
    <p>
    @copyright (C) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
    @license LGPL Lesser General Public License
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
@@ -32,25 +34,24 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#ifndef QMSYSTEMSTATE_H
-#define QMSYSTEMSTATE_H
+#ifndef DEVICESTATE_H
+#define DEVICESTATE_H
 
-#include "system_global.h"
 #include <QtCore/qobject.h>
 
 QT_BEGIN_HEADER
 
-namespace MeeGo {
+namespace DeviceState {
 
-class QmSystemStatePrivate;
+class DeviceStatePrivate;
 
 /*!
  * @scope Nokia Meego
  *
- * @class QmSystemState
- * @brief QmSystemState provides information and actions on device state.
+ * @class DeviceState
+ * @brief DeviceState provides information and actions on device state.
  */
-class QmSystemState : public QObject
+class DeviceState : public QObject
 {
     Q_OBJECT
     Q_ENUMS(StateIndication)
@@ -59,13 +60,14 @@ public:
     //! State indication
     enum StateIndication
     {
-        Shutdown = 0, 		//!< Normal shutdown
-        ThermalStateFatal,	//!< Shutdown due to thermal state
-        BatteryStateEmpty,	//!< Shutdown due battery empty within few seconds
+        Shutdown = 0,       //!< Normal shutdown
+        ThermalStateFatal,  //!< Shutdown due to thermal state
+        BatteryStateEmpty,  //!< Shutdown due battery empty within few seconds
         SaveData,           //!< Save data
         RebootDeniedUSB,    //!< Reboot denied because USB is connected in mass storage mode
         ShutdownDeniedUSB,  //!< Shutdown denied because USB is connected in mass storage mode
-        Reboot              //!< Reboot
+        Reboot,             //!< Reboot
+        UserSwitching       //!< User switching
     };
 
 public:
@@ -73,30 +75,38 @@ public:
      * @brief Constructor
      * @param parent The possible parent object
      */
-    QmSystemState(QObject *parent = 0);
-    ~QmSystemState();
+    DeviceState(QObject *parent = 0);
+    ~DeviceState();
 
 Q_SIGNALS:
     /*!
      * @brief Sent when device state indication has been received.
      * @param what Received state indication type
      */
-    void systemStateChanged(MeeGo::QmSystemState::StateIndication what);
+    void systemStateChanged(DeviceState::DeviceState::StateIndication what);
+
+    /*!
+     * @brief Sent when user switching happens.
+     * @param uid User id of the user to switch to
+     */
+    void nextUserChanged(uint uid);
 
 protected:
     void connectNotify(const QMetaMethod &signal);
     void disconnectNotify(const QMetaMethod &signal);
 
+private slots:
+    void connectUserManager();
+    void disconnectUserManager();
+
 private:
-    Q_DISABLE_COPY(QmSystemState)
-    MEEGO_DECLARE_PRIVATE(QmSystemState)
+    Q_DISABLE_COPY(DeviceState)
+    Q_DECLARE_PRIVATE(DeviceState)
+    DeviceStatePrivate *d_ptr;
 };
 
-} // MeeGo namespace
+} // DeviceState namespace
 
 QT_END_HEADER
 
-#endif // QMSYSTEMSTATE_H
-
-// End of file
-
+#endif // DEVICESTATE_H

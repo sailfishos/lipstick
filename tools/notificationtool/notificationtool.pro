@@ -11,7 +11,7 @@ INSTALLS = target
 target.path = /usr/bin
 
 DEPENDPATH += "../../src"
-INCLUDEPATH += "../../src" "../../src/notifications" "../../src/qmsystem2"
+INCLUDEPATH += "../../src" "../../src/notifications" "../../src/devicestate"
 QMAKE_LIBDIR = ../../src
 LIBS = -llipstick-qt5
 

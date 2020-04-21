@@ -1,6 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2016 Jolla Ltd.
+** Copyright (c) 2016 - 2020 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -15,7 +16,7 @@
 #ifndef TOUCHEVENTFILTER_P_H
 #define TOUCHEVENTFILTER_P_H
 
-#include <qmdisplaystate.h>
+#include <displaystate.h>
 
 #include "touchscreen.h"
 #include "homeapplication.h"
@@ -37,7 +38,7 @@ public:
     bool inputEnabled;
     bool touchBlockedState;
     int touchUnblockingDelayTimer;
-    MeeGo::QmDisplayState *displayState;
+    DeviceState::DisplayStateMonitor *displayState;
     QDBusInterface *mceRequest;
 
     TouchScreen *q_ptr;

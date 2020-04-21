@@ -1,9 +1,11 @@
 /*!
- * @file qmthermal.h
- * @brief Contains QmThermal which provides information on device thermal states.
+ * @file thermal.h
+ * @brief Contains Thermal which provides information on device thermal states.
 
    <p>
    @copyright (C) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
    @license LGPL Lesser General Public License
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
@@ -29,28 +31,27 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#ifndef QMTHERMAL_H
-#define QMTHERMAL_H
+#ifndef THERMAL_H
+#define THERMAL_H
 
-#include "system_global.h"
 #include <QtCore/qobject.h>
 
 QT_BEGIN_HEADER
 
-namespace MeeGo{
+namespace DeviceState{
 
-class QmThermalPrivate;
+class ThermalPrivate;
 
 /*!
  * @scope Nokia Meego
  *
- * @class QmThermal
- * @brief QmThermal provides information on device thermal states.
+ * @class Thermal
+ * @brief Thermal provides information on device thermal states.
  */
-class QmThermal : public QObject
+class Thermal : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ThermalState)
+    Q_ENUMS(Thermal)
     Q_PROPERTY(ThermalState state READ get)
 
 public:
@@ -71,12 +72,12 @@ public:
      * @brief Constructor
      * @param parent The possible parent object
      */
-    QmThermal(QObject *parent = 0);
-	
-	/*!
+    Thermal(QObject *parent = 0);
+
+    /*!
      * @brief Destructor
-     */	
-    ~QmThermal();
+     */
+    ~Thermal();
 
     /*!
      * @brief Gets the current thermal state.
@@ -89,22 +90,20 @@ Q_SIGNALS:
      * @brief Sent when device thermal state has changed.
      * @param state Current thermal state
      */
-    void thermalChanged(MeeGo::QmThermal::ThermalState state);
+    void thermalChanged(DeviceState::Thermal::ThermalState state);
 
 protected:
     void connectNotify(const QMetaMethod &signal);
     void disconnectNotify(const QMetaMethod &signal);
 
 private:
-    Q_DISABLE_COPY(QmThermal)
-    MEEGO_DECLARE_PRIVATE(QmThermal)
+    Q_DISABLE_COPY(Thermal)
+    Q_DECLARE_PRIVATE(Thermal)
+    ThermalPrivate *d_ptr;
 };
 
-} // MeeGo namespace
+} // DeviceState namespace
 
 QT_END_HEADER
 
-#endif /*QMTHERMAL_H*/
-
-// End of file
-
+#endif // THERMAL_H

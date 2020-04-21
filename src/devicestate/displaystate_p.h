@@ -1,9 +1,11 @@
 /*!
- * @file qmdisplaystate_p.h
- * @brief Contains QmDisplayStatePrivate
+ * @file displaystate_p.h
+ * @brief Contains DisplayStatePrivate
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Timo Olkkonen <ext-timo.p.olkkonen@nokia.com>
 
@@ -24,10 +26,10 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#ifndef QMDISPLAYSTATE_P_H
-#define QMDISPLAYSTATE_P_H
+#ifndef DISPLAYSTATE_P_H
+#define DISPLAYSTATE_P_H
 
-#include "qmdisplaystate.h"
+#include "displaystate.h"
 
 #include <QMutex>
 
@@ -36,37 +38,36 @@
 
 #define SIGNAL_DISPLAY_STATE 0
 
-namespace MeeGo
+namespace DeviceState
 {
-    class QmDisplayStatePrivate : public QObject
+    class DisplayStateMonitorPrivate : public QObject
     {
         Q_OBJECT;
-        MEEGO_DECLARE_PUBLIC(QmDisplayState)
 
     public:
-        QmDisplayStatePrivate() {
+        DisplayStateMonitorPrivate() {
             connectCount[SIGNAL_DISPLAY_STATE] = 0;
         }
 
-        ~QmDisplayStatePrivate() {
+        ~DisplayStateMonitorPrivate() {
         }
 
         QMutex connectMutex;
         size_t connectCount[1];
 
     Q_SIGNALS:
-        void displayStateChanged(MeeGo::QmDisplayState::DisplayState);
+        void displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState);
 
     private Q_SLOTS:
 
         void slotDisplayStateChanged(const QString& state) {
             if (state == MCE_DISPLAY_OFF_STRING)
-                emit displayStateChanged(QmDisplayState::Off);
+                emit displayStateChanged(DisplayStateMonitor::Off);
             else if (state == MCE_DISPLAY_DIM_STRING)
-                emit displayStateChanged(QmDisplayState::Dimmed);
+                emit displayStateChanged(DisplayStateMonitor::Dimmed);
             else if (state == MCE_DISPLAY_ON_STRING)
-                emit displayStateChanged(QmDisplayState::On);
+                emit displayStateChanged(DisplayStateMonitor::On);
         }
     };
 }
-#endif // QMDISPLAYSTATE_P_H
+#endif // DISPLAYSTATE_P_H

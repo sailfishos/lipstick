@@ -1,9 +1,11 @@
 /*!
- * @file qmdisplaystate.cpp
- * @brief QmDisplayState
+ * @file displaystate.cpp
+ * @brief DisplayStateMonitor
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
    @author Ilya Dogolazky <ilya.dogolazky@nokia.com>
@@ -26,80 +28,81 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#include "qmdisplaystate.h"
-#include "qmdisplaystate_p.h"
+#include "displaystate.h"
+#include "displaystate_p.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusReply>
 #include <QMetaMethod>
 
-namespace MeeGo {
+namespace DeviceState {
 
-QmDisplayState::QmDisplayState(QObject *parent)
-              : QObject(parent) {
-     MEEGO_INITIALIZE(QmDisplayState);
+DisplayStateMonitor::DisplayStateMonitor(QObject *parent)
+              : QObject(parent)
+              , d_ptr(new DisplayStateMonitorPrivate) {
+    Q_D(DisplayStateMonitor);
 
-     connect(priv, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)),
-             this, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)));
+    connect(d, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
+            this, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)));
 }
 
-QmDisplayState::~QmDisplayState() {
-    MEEGO_PRIVATE(QmDisplayState)
+DisplayStateMonitor::~DisplayStateMonitor() {
+    Q_D(DisplayStateMonitor);
 
-    disconnect(priv, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)),
-               this, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)));
+    disconnect(d, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
+               this, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)));
 
-    MEEGO_UNINITIALIZE(QmDisplayState);
+    delete d_ptr;
 }
 
-void QmDisplayState::connectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmDisplayState)
+void DisplayStateMonitor::connectNotify(const QMetaMethod &signal) {
+    Q_D(DisplayStateMonitor);
 
     /* QObject::connect() needs to be thread-safe */
-    QMutexLocker locker(&priv->connectMutex);
+    QMutexLocker locker(&d->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmDisplayState::displayStateChanged)) {
-        if (0 == priv->connectCount[SIGNAL_DISPLAY_STATE]) {
+    if (signal == QMetaMethod::fromSignal(&DisplayStateMonitor::displayStateChanged)) {
+        if (0 == d->connectCount[SIGNAL_DISPLAY_STATE]) {
             QDBusConnection::systemBus().connect(MCE_SERVICE,
                                                  MCE_SIGNAL_PATH,
                                                  MCE_SIGNAL_IF,
                                                  MCE_DISPLAY_SIG,
-                                                 priv,
+                                                 d,
                                                  SLOT(slotDisplayStateChanged(QString)));
 
             QDBusConnection::systemBus().callWithCallback(
                         QDBusMessage::createMethodCall(
                             MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_DISPLAY_STATUS_GET),
-                            priv,
+                            d,
                             SLOT(slotDisplayStateChanged(QString)));
         }
-        priv->connectCount[SIGNAL_DISPLAY_STATE]++;
+        d->connectCount[SIGNAL_DISPLAY_STATE]++;
     }
 }
 
-void QmDisplayState::disconnectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(QmDisplayState)
+void DisplayStateMonitor::disconnectNotify(const QMetaMethod &signal) {
+    Q_D(DisplayStateMonitor);
 
     /* QObject::disconnect() needs to be thread-safe */
-    QMutexLocker locker(&priv->connectMutex);
+    QMutexLocker locker(&d->connectMutex);
 
-    if (signal == QMetaMethod::fromSignal(&QmDisplayState::displayStateChanged)) {
-        priv->connectCount[SIGNAL_DISPLAY_STATE]--;
+    if (signal == QMetaMethod::fromSignal(&DisplayStateMonitor::displayStateChanged)) {
+        d->connectCount[SIGNAL_DISPLAY_STATE]--;
 
-        if (0 == priv->connectCount[SIGNAL_DISPLAY_STATE]) {
+        if (0 == d->connectCount[SIGNAL_DISPLAY_STATE]) {
             QDBusConnection::systemBus().disconnect(MCE_SERVICE,
                                                     MCE_SIGNAL_PATH,
                                                     MCE_SIGNAL_IF,
                                                     MCE_DISPLAY_SIG,
-                                                    priv,
+                                                    d,
                                                     SLOT(slotDisplayStateChanged(QString)));
         }
     }
 }
 
-QmDisplayState::DisplayState QmDisplayState::get() const {
-    QmDisplayState::DisplayState state = Unknown;
+DisplayStateMonitor::DisplayState DisplayStateMonitor::get() const {
+    DisplayStateMonitor::DisplayState state = Unknown;
     QDBusReply<QString> displayStateReply = QDBusConnection::systemBus().call(
                                                 QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,
                                                                                MCE_DISPLAY_STATUS_GET));
@@ -119,7 +122,7 @@ QmDisplayState::DisplayState QmDisplayState::get() const {
     return state;
 }
 
-bool QmDisplayState::set(QmDisplayState::DisplayState state) {
+bool DisplayStateMonitor::set(DisplayStateMonitor::DisplayState state) {
     QString method;
 
     switch (state) {
@@ -141,4 +144,4 @@ bool QmDisplayState::set(QmDisplayState::DisplayState state) {
     return true;
 }
 
-} //MeeGo namespace
+} //DeviceState namespace

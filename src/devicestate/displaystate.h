@@ -1,9 +1,11 @@
 /*!
- * @file qmdisplaystate.h
- * @brief Contains QmDisplayState which provides information and actions on device display state.
+ * @file displaystate.h
+ * @brief Contains DisplayStateMonitor which provides information and actions on device display state.
 
    <p>
    @copyright (C) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
    @license LGPL Lesser General Public License
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
@@ -30,24 +32,23 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#ifndef QMDISPLAYSTATE_H
-#define QMDISPLAYSTATE_H
-#include "system_global.h"
+#ifndef DISPLAYSTATE_H
+#define DISPLAYSTATE_H
 #include <QtCore/qobject.h>
 
 QT_BEGIN_HEADER
 
-namespace MeeGo {
+namespace DeviceState {
 
-class QmDisplayStatePrivate;
+class DisplayStateMonitorPrivate;
 
 /*!
  * @scope Nokia Meego
  *
- * @class QmDisplayState
- * @brief QmDisplayState Provides information and actions on device display state.
+ * @class DisplayStateMonitor
+ * @brief DisplayStateMonitor Provides information and actions on device display state.
  */
-class QmDisplayState : public QObject
+class DisplayStateMonitor : public QObject
 {
     Q_OBJECT
     Q_ENUMS(DisplayState)
@@ -68,8 +69,8 @@ public:
      * Constructor
      * @param parent The parent object
      */
-    QmDisplayState(QObject *parent = 0);
-    ~QmDisplayState();
+    DisplayStateMonitor(QObject *parent = 0);
+    ~DisplayStateMonitor();
 
     /*!
      * @brief Gets the current display state
@@ -89,21 +90,20 @@ Q_SIGNALS:
      * @brief Sent when display state has changed.
      * @param state Current display state
      */
-    void displayStateChanged(MeeGo::QmDisplayState::DisplayState state);
+    void displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState state);
 
 protected:
     void connectNotify(const QMetaMethod &signal);
     void disconnectNotify(const QMetaMethod &signal);
 
 private:
-    Q_DISABLE_COPY(QmDisplayState)
-    MEEGO_DECLARE_PRIVATE(QmDisplayState)
+    Q_DISABLE_COPY(DisplayStateMonitor)
+    Q_DECLARE_PRIVATE(DisplayStateMonitor)
+    DisplayStateMonitorPrivate *d_ptr;
 };
 
-} //MeeGo namespace
+} //DeviceState namespace
 
 QT_END_HEADER
 
-#endif /* QMDISPLAYSTATE_H */
-
-// End of file
+#endif /* DISPLAYSTATE_H */

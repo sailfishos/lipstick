@@ -16,7 +16,7 @@ INCLUDEPATH += ../src \
     ../src/utilities \
     ../src/xtools \
     ../src/compositor \
-    ../src/qmsystem2 \
+    ../src/devicestate \
     ../src/touchscreen
 
 LIBS += -L../src -llipstick-qt5

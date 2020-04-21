@@ -22,7 +22,7 @@ QMAKE_STRIP = echo
 OBJECTS_DIR = .obj
 MOC_DIR = .moc
 
-INCLUDEPATH += utilities touchscreen components xtools 3rdparty qmsystem2
+INCLUDEPATH += utilities touchscreen components xtools 3rdparty devicestate
 
 include(compositor/compositor.pri)
 include(compositor/alienmanager/alienmanager.pri)
@@ -49,10 +49,9 @@ PUBLICHEADERS += \
     notifications/notificationpreviewpresenter.h \
     usbmodeselector.h \
     shutdownscreen.h \
-    qmsystem2/qmdisplaystate.h \
-    qmsystem2/qmsystemstate.h \
-    qmsystem2/qmthermal.h \
-    qmsystem2/system_global.h \
+    devicestate/displaystate.h \
+    devicestate/devicestate.h \
+    devicestate/thermal.h \
     vpnagent.h \
     connectivitymonitor.h \
     connectionselector.h
@@ -86,10 +85,10 @@ HEADERS += \
     connmanmanagerproxy.h \
     connmanserviceproxy.h \
     notifications/thermalnotifier.h \
-    qmsystem2/qmsystemstate_p.h \
-    qmsystem2/qmdisplaystate_p.h \
-    qmsystem2/qmipcinterface_p.h \
-    qmsystem2/qmthermal_p.h \
+    devicestate/devicestate_p.h \
+    devicestate/displaystate_p.h \
+    devicestate/ipcinterface_p.h \
+    devicestate/thermal_p.h \
     logging.h \
 
 SOURCES += \
@@ -132,10 +131,10 @@ SOURCES += \
     lipstickapi.cpp \
     screenshotservice.cpp \
     notifications/thermalnotifier.cpp \
-    qmsystem2/qmdisplaystate.cpp \
-    qmsystem2/qmsystemstate.cpp \
-    qmsystem2/qmthermal.cpp \
-    qmsystem2/qmipcinterface.cpp \
+    devicestate/displaystate.cpp \
+    devicestate/devicestate.cpp \
+    devicestate/thermal.cpp \
+    devicestate/ipcinterface.cpp \
     logging.cpp \
 
 CONFIG += link_pkgconfig mobility qt warn_on depend_includepath qmake_cache target_qt
@@ -154,7 +153,8 @@ PKGCONFIG += \
     ngf-qt5 \
     systemsettings \
     thermalmanager_dbus_if \
-    usb-moded-qt5
+    usb-moded-qt5 \
+    sailfishusermanager
 
 LIBS += -lrt -lEGL
 

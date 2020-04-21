@@ -1,7 +1,8 @@
 /***************************************************************************
 **
 ** Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012 - 2020 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -15,8 +16,8 @@
 #include <QtTest/QtTest>
 #include "thermalnotifier.h"
 #include "homeapplication.h"
-#include "qmdisplaystate_stub.h"
-#include "qmthermal_stub.h"
+#include "displaystate_stub.h"
+#include "thermal_stub.h"
 #include "notificationmanager_stub.h"
 #include "lipsticknotification.h"
 #include "ut_thermalnotifier.h"
@@ -51,7 +52,7 @@ void Ut_ThermalNotifier::init()
 
     gNotificationManagerStub->stubReset();
     gNotificationManagerStub->stubSetReturnValue("Notify", (uint)1);
-    gQmThermalStub->stubReset();
+    gThermalStub->stubReset();
 }
 
 void Ut_ThermalNotifier::cleanup()
@@ -62,25 +63,25 @@ void Ut_ThermalNotifier::cleanup()
 
 void Ut_ThermalNotifier::testConnections()
 {
-    QCOMPARE(disconnect(thermalNotifier->m_thermalState, SIGNAL(thermalChanged(MeeGo::QmThermal::ThermalState)), thermalNotifier, SLOT(applyThermalState(MeeGo::QmThermal::ThermalState))), true);
-    QCOMPARE(disconnect(thermalNotifier->m_displayState, SIGNAL(displayStateChanged(MeeGo::QmDisplayState::DisplayState)), thermalNotifier, SLOT(applyDisplayState(MeeGo::QmDisplayState::DisplayState))), true);
+    QCOMPARE(disconnect(thermalNotifier->m_thermalState, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)), thermalNotifier, SLOT(applyThermalState(DeviceState::Thermal::ThermalState))), true);
+    QCOMPARE(disconnect(thermalNotifier->m_displayState, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)), thermalNotifier, SLOT(applyDisplayState(DeviceState::DisplayStateMonitor::DisplayState))), true);
 }
 
 void Ut_ThermalNotifier::testThermalState()
 {
-    thermalNotifier->applyThermalState(MeeGo::QmThermal::Warning);
+    thermalNotifier->applyThermalState(DeviceState::Thermal::Warning);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_high_temp_warning"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
-    thermalNotifier->applyThermalState(MeeGo::QmThermal::Alert);
+    thermalNotifier->applyThermalState(DeviceState::Thermal::Alert);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 2);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_high_temp_alert"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
-    thermalNotifier->applyThermalState(MeeGo::QmThermal::LowTemperatureWarning);
+    thermalNotifier->applyThermalState(DeviceState::Thermal::LowTemperatureWarning);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 3);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_low_temp_warning"));
@@ -89,33 +90,33 @@ void Ut_ThermalNotifier::testThermalState()
 
 void Ut_ThermalNotifier::testDisplayStateOffDoesNothing()
 {
-    gQmThermalStub->stubSetReturnValue("get", MeeGo::QmThermal::Warning);
+    gThermalStub->stubSetReturnValue("get", DeviceState::Thermal::Warning);
 
-    thermalNotifier->applyDisplayState(MeeGo::QmDisplayState::Off);
+    thermalNotifier->applyDisplayState(DeviceState::DisplayStateMonitor::Off);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 0);
 
-    thermalNotifier->applyDisplayState(MeeGo::QmDisplayState::Dimmed);
+    thermalNotifier->applyDisplayState(DeviceState::DisplayStateMonitor::Dimmed);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 0);
 
-    thermalNotifier->applyDisplayState(MeeGo::QmDisplayState::Unknown);
+    thermalNotifier->applyDisplayState(DeviceState::DisplayStateMonitor::Unknown);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 0);
 }
 
 void Ut_ThermalNotifier::testDisplayStateOnAppliesThermalState()
 {
-    gQmDisplayStateStub->stubSetReturnValue("get", MeeGo::QmDisplayState::On);
-    gQmThermalStub->stubSetReturnValue("get", MeeGo::QmThermal::Warning);
+    gDisplayStateMonitorStub->stubSetReturnValue("get", DeviceState::DisplayStateMonitor::On);
+    gThermalStub->stubSetReturnValue("get", DeviceState::Thermal::Warning);
 
-    thermalNotifier->applyDisplayState(MeeGo::QmDisplayState::On);
+    thermalNotifier->applyDisplayState(DeviceState::DisplayStateMonitor::On);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
 
     // The same thermal state should not get shown again
-    thermalNotifier->applyDisplayState(MeeGo::QmDisplayState::On);
+    thermalNotifier->applyDisplayState(DeviceState::DisplayStateMonitor::On);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
 
     // The different thermal state should get shown
-    gQmThermalStub->stubSetReturnValue("get", MeeGo::QmThermal::Alert);
-    thermalNotifier->applyDisplayState(MeeGo::QmDisplayState::On);
+    gThermalStub->stubSetReturnValue("get", DeviceState::Thermal::Alert);
+    thermalNotifier->applyDisplayState(DeviceState::DisplayStateMonitor::On);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 2);
 }
 

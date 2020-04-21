@@ -1,10 +1,10 @@
 include(../common.pri)
 TARGET = ut_shutdownscreen
-INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$TOUCHSCREENSRCDIR $$UTILITYSRCDIR $$XTOOLSRCDIR $$QMSYSTEM2
+INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$TOUCHSCREENSRCDIR $$UTILITYSRCDIR $$XTOOLSRCDIR $$DEVICESTATE
 QT += qml quick dbus
 
 CONFIG += link_pkgconfig
-PKGCONFIG += dsme_dbus_if thermalmanager_dbus_if usb_moded
+PKGCONFIG += dsme_dbus_if thermalmanager_dbus_if usb_moded sailfishusermanager
 
 # unit test and unit
 SOURCES += \
@@ -13,8 +13,8 @@ SOURCES += \
     $$STUBSDIR/stubbase.cpp \
     $$STUBSDIR/homewindow.cpp \
     $$STUBSDIR/homeapplication.cpp \
-    $$QMSYSTEM2/qmsystemstate.cpp \
-    $$QMSYSTEM2/qmipcinterface.cpp \
+    $$DEVICESTATE/devicestate.cpp \
+    $$DEVICESTATE/ipcinterface.cpp \
     ut_shutdownscreen.cpp
 
 HEADERS += \
@@ -24,8 +24,8 @@ HEADERS += \
     $$UTILITYSRCDIR/closeeventeater.h \
     $$SRCDIR/homeapplication.h \
     $$SRCDIR/homewindow.h \
-    $$QMSYSTEM2/qmsystemstate.h \
-    $$QMSYSTEM2/qmsystemstate_p.h \
-    $$QMSYSTEM2/qmipcinterface_p.h \
+    $$DEVICESTATE/devicestate.h \
+    $$DEVICESTATE/devicestate_p.h \
+    $$DEVICESTATE/ipcinterface_p.h \
     $$STUBSDIR/nemo-devicelock/devicelock.h \
     ut_shutdownscreen.h

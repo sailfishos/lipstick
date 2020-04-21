@@ -1,9 +1,11 @@
 /*!
- * @file qmipcinterface_p.h
- * @brief Contains QmIPCInterface.
+ * @file ipcinterface_p.h
+ * @brief Contains IPCInterface.
 
    <p>
    @copyright (C) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
    @license LGPL Lesser General Public License
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
@@ -30,25 +32,23 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#ifndef QMIPCINTERFACE_P_H
-#define QMIPCINTERFACE_P_H
-
-#include "system_global.h"
+#ifndef IPCINTERFACE_P_H
+#define IPCINTERFACE_P_H
 
 #include <QDBusAbstractInterface>
 
-namespace MeeGo {
+namespace DeviceState {
 
-class QmIPCInterface : public QDBusAbstractInterface
+class IPCInterface : public QDBusAbstractInterface
 {
     Q_OBJECT
 
 public:
-    QmIPCInterface(const char* service,
+    IPCInterface(const char* service,
                    const char* path,
                    const char* interface,
                    QObject *parent = 0);
-    virtual ~QmIPCInterface();
+    virtual ~IPCInterface();
 
     QList<QVariant> get(const QString& method,
                         const QVariant& arg1 = QVariant(),
@@ -63,6 +63,6 @@ public:
                             const QVariant& arg2 = QVariant());
 };
 
-} // MeeGo namespace
+} // DeviceState namespace
 
-#endif // QMIPCINTERFACE_P_H
+#endif // IPCINTERFACE_P_H

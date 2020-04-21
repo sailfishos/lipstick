@@ -1,9 +1,11 @@
 /*!
- * @file qmipcinterface.cpp
- * @brief QmIPCInterface
+ * @file ipcinterface.cpp
+ * @brief IPCInterface
 
    <p>
    Copyright (c) 2009-2011 Nokia Corporation
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Antonio Aloisio <antonio.aloisio@nokia.com>
    @author Timo Olkkonen <ext-timo.p.olkkonen@nokia.com>
@@ -24,13 +26,13 @@
    License along with SystemSW QtAPI.  If not, see <http://www.gnu.org/licenses/>.
    </p>
  */
-#include "qmipcinterface_p.h"
+#include "ipcinterface_p.h"
 
-namespace MeeGo {
+namespace DeviceState {
 
 // Note: QDBusAbstractInterface is used instead of QDBusInterface for performance reasons --
 // QDBusInterface uses blocking D-Bus call in constructor (http://bugreports.qt.nokia.com/browse/QTBUG-14485)
-QmIPCInterface::QmIPCInterface(const char* service,
+IPCInterface::IPCInterface(const char* service,
                                const char* path,
                                const char* interface,
                                QObject *parent)
@@ -41,10 +43,10 @@ QmIPCInterface::QmIPCInterface(const char* service,
                                         parent) {
 }
 
-QmIPCInterface::~QmIPCInterface() {
+IPCInterface::~IPCInterface() {
 }
 
-void QmIPCInterface::callAsynchronously(const QString& method,
+void IPCInterface::callAsynchronously(const QString& method,
                                         const QVariant& arg1,
                                         const QVariant& arg2 ) {
     // As no feedback is needed on the D-Bus call, calling QDBusAbstractInterface
@@ -52,7 +54,7 @@ void QmIPCInterface::callAsynchronously(const QString& method,
     (void)call(QDBus::NoBlock, method, arg1, arg2);
 }
 
-QList<QVariant> QmIPCInterface::get(const QString& method,
+QList<QVariant> IPCInterface::get(const QString& method,
                                     const QVariant& arg1,
                                     const QVariant& arg2) {
     QList<QVariant> results;
@@ -63,4 +65,4 @@ QList<QVariant> QmIPCInterface::get(const QString& method,
     return results;
 }
 
-} // Namespace MeeGo
+} // Namespace DeviceState
