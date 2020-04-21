@@ -31,67 +31,68 @@
 namespace DeviceState {
 
 Thermal::Thermal(QObject *parent)
-             : QObject(parent) {
-    MEEGO_INITIALIZE(Thermal)
+             : QObject(parent)
+             , d_ptr(new ThermalPrivate) {
+    Q_D(Thermal);
 
-    connect(priv, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)),
+    connect(d, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)),
             this, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)));
 }
 
 Thermal::~Thermal() {
-    MEEGO_PRIVATE(Thermal)
+    Q_D(Thermal);
 
-    disconnect(priv, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)),
+    disconnect(d, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)),
                this, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)));
 
-    MEEGO_UNINITIALIZE(Thermal);
+    delete d_ptr;
 }
 
 void Thermal::connectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(Thermal)
+    Q_D(Thermal);
 
     /* QObject::connect() needs to be thread-safe */
-    QMutexLocker locker(&priv->connectMutex);
+    QMutexLocker locker(&d->connectMutex);
 
     if (signal == QMetaMethod::fromSignal(&Thermal::thermalChanged)) {
-        if (0 == priv->connectCount[SIGNAL_THERMAL_STATE]) {
+        if (0 == d->connectCount[SIGNAL_THERMAL_STATE]) {
             QDBusConnection::systemBus().connect("",
                                                  thermalmanager_path,
                                                  thermalmanager_interface,
                                                  thermalmanager_state_change_ind,
-                                                 priv,
+                                                 d,
                                                  SLOT(thermalStateChanged(const QString&)));
         }
-        priv->connectCount[SIGNAL_THERMAL_STATE]++;
+        d->connectCount[SIGNAL_THERMAL_STATE]++;
     }
 }
 
 void Thermal::disconnectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(Thermal)
+    Q_D(Thermal);
 
     /* QObject::disconnect() needs to be thread-safe */
-    QMutexLocker locker(&priv->connectMutex);
+    QMutexLocker locker(&d->connectMutex);
 
     if (signal == QMetaMethod::fromSignal(&Thermal::thermalChanged)) {
-        priv->connectCount[SIGNAL_THERMAL_STATE]--;
+        d->connectCount[SIGNAL_THERMAL_STATE]--;
 
-        if (0 == priv->connectCount[SIGNAL_THERMAL_STATE]) {
+        if (0 == d->connectCount[SIGNAL_THERMAL_STATE]) {
             QDBusConnection::systemBus().disconnect("",
                                                     thermalmanager_path,
                                                     thermalmanager_interface,
                                                     thermalmanager_state_change_ind,
-                                                    priv,
+                                                    d,
                                                     SLOT(thermalStateChanged(const QString&)));
         }
     }
 }
 
 Thermal::ThermalState Thermal::get() const {
-    MEEGO_PRIVATE_CONST(Thermal)
+    Q_D(const Thermal);
     QString state;
     QList<QVariant> resp;
 
-    resp = priv->If->get(thermalmanager_get_thermal_state);
+    resp = d->If->get(thermalmanager_get_thermal_state);
 
     if (resp.isEmpty()) {
         return Error;

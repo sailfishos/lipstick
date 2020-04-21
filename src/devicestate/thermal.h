@@ -32,7 +32,6 @@
 #ifndef THERMAL_H
 #define THERMAL_H
 
-#include "system_global.h"
 #include <QtCore/qobject.h>
 
 QT_BEGIN_HEADER
@@ -97,7 +96,8 @@ protected:
 
 private:
     Q_DISABLE_COPY(Thermal)
-    MEEGO_DECLARE_PRIVATE(Thermal)
+    Q_DECLARE_PRIVATE(Thermal)
+    ThermalPrivate *d_ptr;
 };
 
 } // DeviceState namespace

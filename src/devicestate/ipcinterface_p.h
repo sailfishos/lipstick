@@ -33,8 +33,6 @@
 #ifndef IPCINTERFACE_P_H
 #define IPCINTERFACE_P_H
 
-#include "system_global.h"
-
 #include <QDBusAbstractInterface>
 
 namespace DeviceState {

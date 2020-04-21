@@ -52,7 +52,6 @@ PUBLICHEADERS += \
     devicestate/displaystate.h \
     devicestate/devicestate.h \
     devicestate/thermal.h \
-    devicestate/system_global.h \
     vpnagent.h \
     connectivitymonitor.h \
     connectionselector.h

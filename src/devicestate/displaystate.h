@@ -32,7 +32,6 @@
  */
 #ifndef DISPLAYSTATE_H
 #define DISPLAYSTATE_H
-#include "system_global.h"
 #include <QtCore/qobject.h>
 
 QT_BEGIN_HEADER
@@ -97,7 +96,8 @@ protected:
 
 private:
     Q_DISABLE_COPY(DisplayStateMonitor)
-    MEEGO_DECLARE_PRIVATE(DisplayStateMonitor)
+    Q_DECLARE_PRIVATE(DisplayStateMonitor)
+    DisplayStateMonitorPrivate *d_ptr;
 };
 
 } //DeviceState namespace
@@ -105,5 +105,3 @@ private:
 QT_END_HEADER
 
 #endif /* DISPLAYSTATE_H */
-
-// End of file

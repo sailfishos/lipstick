@@ -35,7 +35,6 @@
 #ifndef DEVICESTATE_H
 #define DEVICESTATE_H
 
-#include "system_global.h"
 #include <QtCore/qobject.h>
 
 QT_BEGIN_HEADER
@@ -100,7 +99,8 @@ private slots:
 
 private:
     Q_DISABLE_COPY(DeviceState)
-    MEEGO_DECLARE_PRIVATE(DeviceState)
+    Q_DECLARE_PRIVATE(DeviceState)
+    DeviceStatePrivate *d_ptr;
 };
 
 } // DeviceState namespace

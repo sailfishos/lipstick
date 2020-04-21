@@ -43,7 +43,6 @@ namespace DeviceState
     class DeviceStatePrivate : public QObject
     {
         Q_OBJECT
-        MEEGO_DECLARE_PUBLIC(DeviceState)
 
     public:
         DeviceStatePrivate() {

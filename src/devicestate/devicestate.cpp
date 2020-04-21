@@ -44,158 +44,159 @@
 namespace DeviceState {
 
 DeviceState::DeviceState(QObject *parent)
-             : QObject(parent) {
-    MEEGO_INITIALIZE(DeviceState);
+             : QObject(parent)
+             , d_ptr(new DeviceStatePrivate) {
+    Q_D(DeviceState);
 
-    connect(priv, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
+    connect(d, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
             this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
-    connect(priv, SIGNAL(nextUserChanged(uint)),
+    connect(d, SIGNAL(nextUserChanged(uint)),
             this, SIGNAL(nextUserChanged(uint)));
 }
 
 DeviceState::~DeviceState() {
-    MEEGO_PRIVATE(DeviceState)
+    Q_D(DeviceState);
 
-    disconnect(priv, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
+    disconnect(d, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
                this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
-    disconnect(priv, SIGNAL(nextUserChanged(uint)),
+    disconnect(d, SIGNAL(nextUserChanged(uint)),
                this, SIGNAL(nextUserChanged(uint)));
 
-    MEEGO_UNINITIALIZE(DeviceState);
+    delete d_ptr;
 }
 
 void DeviceState::connectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(DeviceState)
+    Q_D(DeviceState);
 
     /* QObject::connect() needs to be thread-safe */
-    QMutexLocker locker(&priv->connectMutex);
+    QMutexLocker locker(&d->connectMutex);
 
     if (signal == QMetaMethod::fromSignal(&DeviceState::systemStateChanged)) {
-        if (0 == priv->connectCount[SIGNAL_SYSTEM_STATE]) {
+        if (0 == d->connectCount[SIGNAL_SYSTEM_STATE]) {
             QDBusConnection::systemBus().connect(dsme_service,
                                                  dsme_sig_path,
                                                  dsme_sig_interface,
                                                  dsme_shutdown_ind,
-                                                 priv,
+                                                 d,
                                                  SLOT(emitShutdown()));
             QDBusConnection::systemBus().connect(dsme_service,
                                                  dsme_sig_path,
                                                  dsme_sig_interface,
                                                  dsme_save_unsaved_data_ind,
-                                                 priv,
+                                                 d,
                                                  SLOT(emitSaveData()));
             QDBusConnection::systemBus().connect(dsme_service,
                                                  dsme_sig_path,
                                                  dsme_sig_interface,
                                                  dsme_battery_empty_ind,
-                                                 priv,
+                                                 d,
                                                  SLOT(emitBatteryShutdown()));
             QDBusConnection::systemBus().connect(dsme_service,
                                                  dsme_sig_path,
                                                  dsme_sig_interface,
                                                  dsme_state_req_denied_ind,
-                                                 priv,
+                                                 d,
                                                  SLOT(emitShutdownDenied(QString, QString)));
             QDBusConnection::systemBus().connect(dsme_service,
                                                  dsme_sig_path,
                                                  dsme_sig_interface,
                                                  dsme_state_change_ind,
-                                                 priv,
+                                                 d,
                                                  SLOT(emitStateChangeInd(QString)));
             QDBusConnection::systemBus().connect(thermalmanager_service,
                                                  thermalmanager_path,
                                                  thermalmanager_interface,
                                                  thermalmanager_state_change_ind,
-                                                 priv,
+                                                 d,
                                                  SLOT(emitThermalShutdown(QString)));
-            priv->userManagerWatcher = new QDBusServiceWatcher(SAILFISH_USERMANAGER_DBUS_INTERFACE,
+            d->userManagerWatcher = new QDBusServiceWatcher(SAILFISH_USERMANAGER_DBUS_INTERFACE,
                                                                QDBusConnection::systemBus(),
                                                                QDBusServiceWatcher::WatchForRegistration
                                                                | QDBusServiceWatcher::WatchForUnregistration,
                                                                this);
-            connect(priv->userManagerWatcher, &QDBusServiceWatcher::serviceRegistered,
+            connect(d->userManagerWatcher, &QDBusServiceWatcher::serviceRegistered,
                     this, &DeviceState::connectUserManager);
-            connect(priv->userManagerWatcher, &QDBusServiceWatcher::serviceUnregistered,
+            connect(d->userManagerWatcher, &QDBusServiceWatcher::serviceUnregistered,
                     this, &DeviceState::disconnectUserManager);
             if (QDBusConnection::systemBus().interface()->isServiceRegistered(SAILFISH_USERMANAGER_DBUS_INTERFACE))
                 connectUserManager();
         }
-        priv->connectCount[SIGNAL_SYSTEM_STATE]++;
+        d->connectCount[SIGNAL_SYSTEM_STATE]++;
     }
 }
 
 void DeviceState::disconnectNotify(const QMetaMethod &signal) {
-    MEEGO_PRIVATE(DeviceState)
+    Q_D(DeviceState);
 
     /* QObject::disconnect() needs to be thread-safe */
-    QMutexLocker locker(&priv->connectMutex);
+    QMutexLocker locker(&d->connectMutex);
 
     if (signal == QMetaMethod::fromSignal(&DeviceState::systemStateChanged)) {
-        priv->connectCount[SIGNAL_SYSTEM_STATE]--;
+        d->connectCount[SIGNAL_SYSTEM_STATE]--;
 
-        if (0 == priv->connectCount[SIGNAL_SYSTEM_STATE]) {
+        if (0 == d->connectCount[SIGNAL_SYSTEM_STATE]) {
             QDBusConnection::systemBus().disconnect(dsme_service,
                                                     dsme_sig_path,
                                                     dsme_sig_interface,
                                                     dsme_shutdown_ind,
-                                                    priv,
+                                                    d,
                                                     SLOT(emitShutdown()));
             QDBusConnection::systemBus().disconnect(dsme_service,
                                                     dsme_sig_path,
                                                     dsme_sig_interface,
                                                     dsme_save_unsaved_data_ind,
-                                                    priv,
+                                                    d,
                                                     SLOT(emitSaveData()));
             QDBusConnection::systemBus().disconnect(dsme_service,
                                                     dsme_sig_path,
                                                     dsme_sig_interface,
                                                     dsme_battery_empty_ind,
-                                                    priv,
+                                                    d,
                                                     SLOT(emitBatteryShutdown()));
             QDBusConnection::systemBus().disconnect(dsme_service,
                                                     dsme_sig_path,
                                                     dsme_sig_interface,
                                                     dsme_state_req_denied_ind,
-                                                    priv,
+                                                    d,
                                                     SLOT(emitShutdownDenied(QString, QString)));
             QDBusConnection::systemBus().disconnect(dsme_service,
                                                     dsme_sig_path,
                                                     dsme_sig_interface,
                                                     dsme_state_change_ind,
-                                                    priv,
+                                                    d,
                                                     SLOT(emitStateChangeInd(QString)));
             QDBusConnection::systemBus().disconnect(thermalmanager_service,
                                                     thermalmanager_path,
                                                     thermalmanager_interface,
                                                     thermalmanager_state_change_ind,
-                                                    priv,
+                                                    d,
                                                     SLOT(emitThermalShutdown(QString)));
             disconnectUserManager();
-            priv->userManagerWatcher->deleteLater();
-            priv->userManagerWatcher = nullptr;
+            d->userManagerWatcher->deleteLater();
+            d->userManagerWatcher = nullptr;
         }
     }
 }
 
 void DeviceState::connectUserManager()
 {
-    MEEGO_PRIVATE(DeviceState)
+    Q_D(DeviceState);
     QDBusConnection::systemBus().connect(SAILFISH_USERMANAGER_DBUS_INTERFACE,
                                              SAILFISH_USERMANAGER_DBUS_OBJECT_PATH,
                                              SAILFISH_USERMANAGER_DBUS_INTERFACE,
                                              "aboutToChangeCurrentUser",
-                                             priv,
+                                             d,
                                              SLOT(emitUserSwitching(uint)));
 }
 
 void DeviceState::disconnectUserManager()
 {
-    MEEGO_PRIVATE(DeviceState)
+    Q_D(DeviceState);
     QDBusConnection::systemBus().disconnect(SAILFISH_USERMANAGER_DBUS_INTERFACE,
                                             SAILFISH_USERMANAGER_DBUS_OBJECT_PATH,
                                             SAILFISH_USERMANAGER_DBUS_INTERFACE,
                                             "aboutToChangeCurrentUser",
-                                            priv,
+                                            d,
                                             SLOT(emitUserChanging(uint)));
 }
 

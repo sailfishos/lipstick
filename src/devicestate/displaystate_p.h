@@ -41,7 +41,6 @@ namespace DeviceState
     class DisplayStateMonitorPrivate : public QObject
     {
         Q_OBJECT;
-        MEEGO_DECLARE_PUBLIC(DisplayStateMonitor)
 
     public:
         DisplayStateMonitorPrivate() {
