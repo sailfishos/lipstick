@@ -66,11 +66,12 @@ private slots:
     void applySystemState(DeviceState::DeviceState::StateIndication what);
 
     /*!
-     * Sets nextUser to name of the user that is about to be switched to.
+     * Sets user to uid of the user whose information may be shown on
+     * ShutdownScreen.
      *
      * \param uid user id of the user
      */
-    void setNextUser(uint uid);
+    void setUser(uint uid);
 
 private:
     /*!
@@ -90,8 +91,8 @@ private:
     //! The shutdown mode to be communicated to the UI
     QString m_shutdownMode;
 
-    //! Next user to login, empty if the user session is not about to end
-    QString m_nextUser;
+    //! Uid of current user or uid of next user to login if that is happening
+    uint m_user;
 
 #ifdef UNIT_TEST
     friend class Ut_ShutdownScreen;
