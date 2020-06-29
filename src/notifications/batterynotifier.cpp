@@ -427,8 +427,9 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
          qtTrId("qtn_ener_exit_psnote"),
          ""},
         {"x-nemo.battery.lowbattery", // NotificationLowBattery
-         //% "Low battery"
-         qtTrId("qtn_ener_lowbatt"),
+         //: Shown when the battery is low. %1 = current battery level as a percentage
+         //% "Low battery: %1%"
+         qtTrId("qtn_ener_lowbatt_with_percentage"),
          ""},
         {"x-nemo.battery.notenoughpower", // NotificationNotEnoughPower
          //% "Not enough power to charge"
@@ -450,10 +451,14 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
         }
     }
 
+    const QString &message = type == NotificationLowBattery
+            ? info.message.arg(m_currentState.m_batteryLevel)
+            : info.message;
+
     /* Add fresh notification item */
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_CATEGORY, info.category);
-    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, info.message);
+    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, message);
     hints.insert(LipstickNotification::HINT_VISIBILITY, QLatin1String("public"));
     QueuedNotification queuedNotification;
     queuedNotification.m_type = type;
