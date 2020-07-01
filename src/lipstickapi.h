@@ -23,6 +23,7 @@ class LIPSTICK_EXPORT LipstickApi : public QObject
     Q_OBJECT
     Q_PROPERTY(bool active READ active NOTIFY activeChanged)
     Q_PROPERTY(QObject *compositor READ compositor CONSTANT)
+    Q_PROPERTY(QString notificationSystemApplicationName READ notificationSystemApplicationName CONSTANT)
 
 public:
     LipstickApi(QObject *parent = 0);
@@ -31,6 +32,8 @@ public:
     QObject *compositor() const;
 
     Q_INVOKABLE ScreenshotResult *takeScreenshot(const QString &path = QString());
+
+    QString notificationSystemApplicationName() const;
 
 signals:
     void activeChanged();
