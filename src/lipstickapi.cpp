@@ -16,6 +16,7 @@
 
 #include "homeapplication.h"
 #include "compositor/lipstickcompositor.h"
+#include "notifications/notificationmanager.h"
 
 LipstickApi::LipstickApi(QObject *parent)
 : QObject(parent)
@@ -39,4 +40,9 @@ QObject *LipstickApi::compositor() const
 ScreenshotResult *LipstickApi::takeScreenshot(const QString &path)
 {
     return ScreenshotService::saveScreenshot(path);
+}
+
+QString LipstickApi::notificationSystemApplicationName() const
+{
+    return NotificationManager::instance(false)->systemApplicationName();
 }
