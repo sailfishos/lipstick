@@ -107,6 +107,11 @@ namespace DeviceState
             emit nextUserChanged(uid);
             emit systemStateChanged(DeviceState::UserSwitching);
         }
+
+        void emitUserSwitchingFailed(uint uid) {
+            Q_UNUSED(uid)
+            emit systemStateChanged(DeviceState::UserSwitchingFailed);
+        }
     };
 }
 #endif // DEVICESTATE_P_H

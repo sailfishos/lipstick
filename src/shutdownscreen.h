@@ -55,6 +55,8 @@ public:
 signals:
     //! Sent when the visibility of the window has changed.
     void windowVisibleChanged();
+    //! Sent when user change has failed.
+    void userSwitchFailed();
 
 private slots:
     /*!

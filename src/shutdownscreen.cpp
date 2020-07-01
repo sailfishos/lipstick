@@ -56,6 +56,7 @@ void ShutdownScreen::setWindowVisible(bool visible)
         }
 
         if (!m_window->isVisible()) {
+            m_window->setContextProperty("shutdownMode", m_shutdownMode);
             m_window->show();
             emit windowVisibleChanged();
         }
@@ -105,6 +106,17 @@ void ShutdownScreen::applySystemState(DeviceState::DeviceState::StateIndication 
         case DeviceState::DeviceState::UserSwitching:
             m_shutdownMode = "userswitch";
             applySystemState(DeviceState::DeviceState::Shutdown);
+            break;
+
+        case DeviceState::DeviceState::UserSwitchingFailed:
+            m_shutdownMode = "userswitchFailed";
+            m_window->setContextProperty("shutdownMode", m_shutdownMode);
+            emit userSwitchFailed();
+            QTimer::singleShot(10000, this, [this] {
+                // Allow for some time for the notification to be visible
+                setWindowVisible(false);
+                m_shutdownMode.clear();
+            });
             break;
 
         default:

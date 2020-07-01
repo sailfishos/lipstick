@@ -67,7 +67,8 @@ public:
         RebootDeniedUSB,    //!< Reboot denied because USB is connected in mass storage mode
         ShutdownDeniedUSB,  //!< Shutdown denied because USB is connected in mass storage mode
         Reboot,             //!< Reboot
-        UserSwitching       //!< User switching
+        UserSwitching,      //!< User switching
+        UserSwitchingFailed //!< User switching failed
     };
 
 public:
