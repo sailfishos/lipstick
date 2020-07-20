@@ -195,10 +195,9 @@ QStringList NotificationManager::GetCapabilities()
                          << "actions"
                          << "persistence"
                          << "sound"
-                         << LipstickNotification::HINT_ICON
+                         << LipstickNotification::HINT_APP_ICON
                          << LipstickNotification::HINT_ITEM_COUNT
                          << LipstickNotification::HINT_TIMESTAMP
-                         << LipstickNotification::HINT_PREVIEW_ICON
                          << LipstickNotification::HINT_PREVIEW_BODY
                          << LipstickNotification::HINT_PREVIEW_SUMMARY
                          << "x-nemo-remote-actions"
@@ -285,7 +284,6 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
 
         notification->setAppName(notificationData.appName());
         notification->setDisambiguatedAppName(notificationData.disambiguatedAppName());
-        notification->setAppIcon(notificationData.appIcon());
         notification->setSummary(notificationData.summary());
         notification->setBody(notificationData.body());
         notification->setActions(notificationData.actions());
@@ -306,12 +304,6 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     notification->restartProgressTimer();
 
     if (androidOrigin) {
-        // The app icon should also be the nemo icon
-        const QString icon(hints_.value(LipstickNotification::HINT_ICON).toString());
-        if (icon.isEmpty()) {
-            hints_.insert(LipstickNotification::HINT_ICON, appIcon);
-        }
-
         // If this notification includes a preview, ensure it has a non-empty body and summary
         const QString previewSummary(hints_.value(LipstickNotification::HINT_PREVIEW_SUMMARY).toString());
         const QString previewBody(hints_.value(LipstickNotification::HINT_PREVIEW_BODY).toString());
@@ -349,7 +341,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
             notification->setAppName(pidProperties.first);
         }
         if (notification->appIcon().isEmpty() && !pidProperties.second.isEmpty()) {
-            notification->setAppIcon(pidProperties.second);
+            hints_.insert(LipstickNotification::HINT_APP_ICON, pidProperties.second);
         }
 
         // Unspecified priority should result in medium priority to permit low priorities
@@ -573,9 +565,9 @@ void NotificationManager::applyCategoryDefinition(LipstickNotification *notifica
             if (notification->appName().isEmpty()) {
                 notification->setAppName(value);
             }
-        } else if (key == QString("appIcon")) {
+        } else if (key == QString("app_icon")) {
             if (notification->appIcon().isEmpty()) {
-                notification->setAppIcon(value);
+                hints.insert(LipstickNotification::HINT_APP_ICON, value);
             }
         } else if (key == QString("summary")) {
             if (notification->summary().isEmpty()) {
