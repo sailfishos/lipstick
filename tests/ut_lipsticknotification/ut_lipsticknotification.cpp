@@ -26,7 +26,6 @@ void Ut_Notification::testGettersAndSetters()
     QString appIcon = "appIcon1";
     QString summary = "summary1";
     QString body = "body1";
-    QString previewIcon = "previewIcon1";
     QString previewSummary = "previewSummary1";
     QString previewBody = "previewBody1";
     int urgency = 1;
@@ -40,7 +39,6 @@ void Ut_Notification::testGettersAndSetters()
     hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
     hints.insert(LipstickNotification::HINT_ITEM_COUNT, itemCount);
     hints.insert(LipstickNotification::HINT_PRIORITY, priority);
-    hints.insert(LipstickNotification::HINT_PREVIEW_ICON, previewIcon);
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, previewSummary);
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
     hints.insert(LipstickNotification::HINT_URGENCY, urgency);
@@ -60,7 +58,6 @@ void Ut_Notification::testGettersAndSetters()
     QCOMPARE(notification.actions(), actions);
     QCOMPARE(notification.expireTimeout(), expireTimeout);
     QCOMPARE(notification.timestamp(), timestamp);
-    QCOMPARE(notification.previewIcon(), previewIcon);
     QCOMPARE(notification.previewSummary(), previewSummary);
     QCOMPARE(notification.previewBody(), previewBody);
     QCOMPARE(notification.urgency(), urgency);
@@ -79,7 +76,6 @@ void Ut_Notification::testGettersAndSetters()
     appIcon = "appIcon2";
     summary = "summary2";
     body = "body2";
-    previewIcon = "previewIcon2";
     previewSummary = "previewSummary2";
     previewBody = "previewBody2";
     urgency = 2;
@@ -88,10 +84,10 @@ void Ut_Notification::testGettersAndSetters()
     category = "category2";
     actions = QStringList() << "action2a" << "action2b" << "action2c";
     timestamp = QDateTime::currentDateTime();
+    hints.insert(LipstickNotification::HINT_APP_ICON, appIcon);
     hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
     hints.insert(LipstickNotification::HINT_ITEM_COUNT, itemCount);
     hints.insert(LipstickNotification::HINT_PRIORITY, priority);
-    hints.insert(LipstickNotification::HINT_PREVIEW_ICON, previewIcon);
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, previewSummary);
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
     hints.insert(LipstickNotification::HINT_URGENCY, urgency);
@@ -99,7 +95,6 @@ void Ut_Notification::testGettersAndSetters()
     expireTimeout = 2;
     notification.setAppName(appName);
     notification.setDisambiguatedAppName(disambiguatedAppName);
-    notification.setAppIcon(appIcon);
     notification.setSummary(summary);
     notification.setBody(body);
     notification.setActions(actions);
@@ -113,7 +108,6 @@ void Ut_Notification::testGettersAndSetters()
     QCOMPARE(notification.actions(), actions);
     QCOMPARE(notification.expireTimeout(), expireTimeout);
     QCOMPARE(notification.timestamp(), timestamp);
-    QCOMPARE(notification.previewIcon(), previewIcon);
     QCOMPARE(notification.previewSummary(), previewSummary);
     QCOMPARE(notification.previewBody(), previewBody);
     QCOMPARE(notification.urgency(), urgency);
@@ -125,57 +119,50 @@ void Ut_Notification::testGettersAndSetters()
 void Ut_Notification::testIcon_data()
 {
     QTest::addColumn<QString>("appIcon");
-    QTest::addColumn<QString>("hintIcon");
     QTest::addColumn<QString>("imagePath");
-    QTest::addColumn<QString>("icon");
 
-    QTest::newRow("No app_icon, no hint, no imagePath")
-            << QString() << QString() << QString()
+    QTest::newRow("No app_icon, no imagePath")
+            << QString()
             << QString();
-    QTest::newRow("No app_icon, hint, no imagePath")
-            << QString() << QString("hintIcon") << QString()
-            << QString("hintIcon");
-    QTest::newRow("No app_icon, hint, imagePath")
-            << QString() << QString("hintIcon") << QString("imagePath")
-            << QString("hintIcon");
-    QTest::newRow("No app_icon, no hint, imagePath")
-            << QString() << QString() << QString("imagePath")
+    QTest::newRow("No app_icon, imagePath")
+            << QString()
             << QString("imagePath");
-    QTest::newRow("app_icon, hint, no imagePath")
-            << QString("appIcon") << QString("hintIcon") << QString()
-            << QString("hintIcon");
-    QTest::newRow("app_icon, hint, imagePath")
-            << QString("appIcon") << QString("hintIcon") << QString("imagePath")
-            << QString("hintIcon");
-    QTest::newRow("app_icon, no hint, imagePath")
-            << QString("appIcon") << QString() << QString("imagePath")
+    QTest::newRow("app_icon, no imagePath")
+            << QString("appIcon")
+            << QString();
+    QTest::newRow("app_icon, imagePath")
+            << QString("appIcon")
             << QString("imagePath");
 }
 
 void Ut_Notification::testIcon()
 {
     QFETCH(QString, appIcon);
-    QFETCH(QString, hintIcon);
     QFETCH(QString, imagePath);
-    QFETCH(QString, icon);
 
     QVariantHash hints;
-    if (!hintIcon.isEmpty()) {
-        hints.insert(LipstickNotification::HINT_ICON, hintIcon);
+    if (!appIcon.isEmpty()) {
+        hints.insert(LipstickNotification::HINT_APP_ICON, appIcon);
     }
     if (!imagePath.isEmpty()) {
         hints.insert(LipstickNotification::HINT_IMAGE_PATH, imagePath);
     }
 
-    // The 'icon' properly used to fallback to appIcon if required; but no longer
     LipstickNotification notification1(QString(), QString(), 0, appIcon, QString(), QString(), QStringList(), hints, 0);
     QCOMPARE(notification1.appIcon(), appIcon);
-    QCOMPARE(notification1.icon(), icon);
+    QCOMPARE(notification1.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
+    QCOMPARE(notification1.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
+
     LipstickNotification notification2(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), QVariantHash(), 0);
-    notification2.setAppIcon(appIcon);
     notification2.setHints(hints);
     QCOMPARE(notification2.appIcon(), appIcon);
-    QCOMPARE(notification2.icon(), icon);
+    QCOMPARE(notification2.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
+    QCOMPARE(notification2.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
+
+    LipstickNotification notification3(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
+    QCOMPARE(notification3.appIcon(), appIcon);
+    QCOMPARE(notification3.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
+    QCOMPARE(notification3.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
 }
 
 void Ut_Notification::testSignals()
@@ -184,9 +171,8 @@ void Ut_Notification::testSignals()
     LipstickNotification notification(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
     QSignalSpy summarySpy(&notification, SIGNAL(summaryChanged()));
     QSignalSpy bodySpy(&notification, SIGNAL(bodyChanged()));
-    QSignalSpy iconSpy(&notification, SIGNAL(iconChanged()));
+    QSignalSpy appIconSpy(&notification, SIGNAL(appIconChanged()));
     QSignalSpy timestampSpy(&notification, SIGNAL(timestampChanged()));
-    QSignalSpy previewIconSpy(&notification, SIGNAL(previewIconChanged()));
     QSignalSpy previewSummarySpy(&notification, SIGNAL(previewSummaryChanged()));
     QSignalSpy previewBodySpy(&notification, SIGNAL(previewBodyChanged()));
     QSignalSpy urgencySpy(&notification, SIGNAL(urgencyChanged()));
@@ -201,23 +187,20 @@ void Ut_Notification::testSignals()
     notification.setBody("body");
     QCOMPARE(bodySpy.count(), 1);
 
-    hints.insert(LipstickNotification::HINT_ICON, "icon");
+    hints.insert(LipstickNotification::HINT_APP_ICON, "app_icon");
     notification.setHints(hints);
-    QCOMPARE(iconSpy.count(), 1);
+    QCOMPARE(appIconSpy.count(), 1);
 
     hints.insert(LipstickNotification::HINT_TIMESTAMP, "2012-10-01 18:04:19");
     notification.setHints(hints);
-    QCOMPARE(iconSpy.count(), 1);
+    QCOMPARE(appIconSpy.count(), 1);
     QCOMPARE(timestampSpy.count(), 1);
 
-    hints.insert(LipstickNotification::HINT_PREVIEW_ICON, "previewIcon");
     notification.setHints(hints);
     QCOMPARE(timestampSpy.count(), 1);
-    QCOMPARE(previewIconSpy.count(), 1);
 
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
     notification.setHints(hints);
-    QCOMPARE(previewIconSpy.count(), 1);
     QCOMPARE(previewSummarySpy.count(), 1);
 
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
@@ -239,10 +222,8 @@ void Ut_Notification::testSerialization()
     QString summary = "summary1";
     QString body = "body1";
     QStringList actions = QStringList() << "action1a" << "action1b";
-    QString icon = "icon1";
     QDateTime timestamp = QDateTime::currentDateTime();
     QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_ICON, icon);
     hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
     int expireTimeout = 1;
 
@@ -261,7 +242,6 @@ void Ut_Notification::testSerialization()
     QCOMPARE(n2.body(), n1.body());
     QCOMPARE(n2.actions(), n1.actions());
     QCOMPARE(n2.expireTimeout(), n1.expireTimeout());
-    QCOMPARE(n2.icon(), n1.icon());
     QCOMPARE(n2.timestamp(), n1.timestamp());
 
     // Disambiguated app name is internal only

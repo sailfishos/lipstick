@@ -1,6 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012 - 2019 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -32,15 +33,13 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(QString appName READ appName CONSTANT)
     Q_PROPERTY(QString disambiguatedAppName READ disambiguatedAppName CONSTANT)
     Q_PROPERTY(uint id READ id CONSTANT)
-    Q_PROPERTY(QString appIcon READ appIcon CONSTANT)
+    Q_PROPERTY(QString appIcon READ appIcon NOTIFY appIconChanged)
     Q_PROPERTY(QString summary READ summary NOTIFY summaryChanged)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged)
     Q_PROPERTY(QStringList actions READ actions CONSTANT)
     Q_PROPERTY(QVariantMap hints READ hintValues NOTIFY hintsChanged)
     Q_PROPERTY(int expireTimeout READ expireTimeout CONSTANT)
-    Q_PROPERTY(QString icon READ icon NOTIFY iconChanged)
     Q_PROPERTY(QDateTime timestamp READ timestamp NOTIFY timestampChanged)
-    Q_PROPERTY(QString previewIcon READ previewIcon NOTIFY previewIconChanged)
     Q_PROPERTY(QString previewSummary READ previewSummary NOTIFY previewSummaryChanged)
     Q_PROPERTY(QString previewBody READ previewBody NOTIFY previewBodyChanged)
     Q_PROPERTY(int urgency READ urgency NOTIFY urgencyChanged)
@@ -56,6 +55,8 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
 
 public:
+    enum Urgency { Low = 0, Normal = 1, Critical = 2 };
+
     //! Standard hint: The urgency level.
     static const char *HINT_URGENCY;
 
@@ -77,7 +78,10 @@ public:
     //! Standard hint: If set, override possible audible feedback sound.
     static const char *HINT_SOUND_FILE;
 
-    //! Nemo hint: Icon of the notification. Might take precedence over appIcon depending on platform implementation.
+    //! Standard hint: Icon ID of the application sending the notification.
+    static const char *HINT_APP_ICON;
+
+    //! \obsolete use HINT_APP_ICON instead] Nemo hint: Icon of the notification.
     static const char *HINT_ICON;
 
     //! Nemo hint: Item count represented by the notification.
@@ -89,7 +93,7 @@ public:
     //! Nemo hint: Timestamp of the notification.
     static const char *HINT_TIMESTAMP;
 
-    //! Nemo hint: Icon of the preview of the notification.
+    //! \obsolete Nemo hint: Icon of the preview of the notification.
     static const char *HINT_PREVIEW_ICON;
 
     //! Nemo hint: Body text of the preview of the notification.
@@ -186,9 +190,6 @@ public:
     //! Returns the icon ID of the application sending the notification
     QString appIcon() const;
 
-    //! Sets the icon ID of the application sending the notification
-    void setAppIcon(const QString &appIcon);
-
     //! Returns the summary text for the notification
     QString summary() const;
 
@@ -220,14 +221,8 @@ public:
     //! Sets the expiration timeout for the notification
     void setExpireTimeout(int expireTimeout);
 
-    //! Returns the icon ID for the notification
-    QString icon() const;
-
     //! Returns the timestamp for the notification
     QDateTime timestamp() const;
-
-    //! Returns the icon ID for the preview of the notification
-    QString previewIcon() const;
 
     //! Returns the summary text for the preview of the notification
     QString previewSummary() const;
@@ -265,7 +260,7 @@ public:
     //! Returns an indicator for the notification owner
     QString owner() const;
 
-    //! Returns the maximum number of content lines requested for display
+    //! \obsolete Returns the maximum number of content lines requested for display
     int maxContentLines() const;
 
     //! Returns true if the notification has been restored since it was last modified
@@ -314,14 +309,11 @@ signals:
     //! Sent when the hints have been modified
     void hintsChanged();
 
-    //! Sent when the icon has been modified
-    void iconChanged();
+    //! Sent when the app icon has been modified
+    void appIconChanged();
 
     //! Sent when the timestamp has changed
     void timestampChanged();
-
-    //! Sent when the preview icon has been modified
-    void previewIconChanged();
 
     //! Sent when the preview summary has been modified
     void previewSummaryChanged();
@@ -356,9 +348,6 @@ private:
 
     //! The ID of the notification
     uint m_id;
-
-    //! Icon ID of the application sending the notification
-    QString m_appIcon;
 
     //! Summary text for the notification
     QString m_summary;

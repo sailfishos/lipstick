@@ -1,6 +1,8 @@
+
 /***************************************************************************
 **
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012 - 2019 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -26,6 +28,7 @@ const char *LipstickNotification::HINT_RESIDENT = "resident";
 const char *LipstickNotification::HINT_IMAGE_PATH = "image-path";
 const char *LipstickNotification::HINT_SUPPRESS_SOUND = "suppress-sound";
 const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
+const char *LipstickNotification::HINT_APP_ICON = "app_icon";
 const char *LipstickNotification::HINT_ICON = "x-nemo-icon";
 const char *LipstickNotification::HINT_ITEM_COUNT = "x-nemo-item-count";
 const char *LipstickNotification::HINT_PRIORITY = "x-nemo-priority";
@@ -58,7 +61,6 @@ LipstickNotification::LipstickNotification(const QString &appName, const QString
     m_appName(appName),
     m_disambiguatedAppName(disambiguatedAppName),
     m_id(id),
-    m_appIcon(appIcon),
     m_summary(summary),
     m_body(body),
     m_actions(actions),
@@ -68,6 +70,9 @@ LipstickNotification::LipstickNotification(const QString &appName, const QString
     m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch()),
     m_activeProgressTimer(0)
 {
+    if (!appIcon.isEmpty()) {
+        m_hints.insert(LipstickNotification::HINT_APP_ICON, appIcon);
+    }
     updateHintValues();
 }
 
@@ -86,7 +91,6 @@ LipstickNotification::LipstickNotification(const LipstickNotification &notificat
     m_appName(notification.m_appName),
     m_disambiguatedAppName(notification.m_disambiguatedAppName),
     m_id(notification.m_id),
-    m_appIcon(notification.m_appIcon),
     m_summary(notification.m_summary),
     m_body(notification.m_body),
     m_actions(notification.m_actions),
@@ -126,12 +130,7 @@ uint LipstickNotification::id() const
 
 QString LipstickNotification::appIcon() const
 {
-    return m_appIcon;
-}
-
-void LipstickNotification::setAppIcon(const QString &appIcon)
-{
-    m_appIcon = appIcon;
+    return m_hints.value(LipstickNotification::HINT_APP_ICON).toString();
 }
 
 QString LipstickNotification::summary() const
@@ -182,9 +181,8 @@ QVariantMap LipstickNotification::hintValues() const
 
 void LipstickNotification::setHints(const QVariantHash &hints)
 {
-    QString oldIcon = icon();
+    QString oldAppIcon = appIcon();
     quint64 oldTimestamp = m_timestamp;
-    QString oldPreviewIcon = previewIcon();
     QString oldPreviewSummary = previewSummary();
     QString oldPreviewBody = previewBody();
     int oldUrgency = urgency();
@@ -197,17 +195,13 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     m_hints = hints;
     updateHintValues();
 
-    if (oldIcon != icon()) {
-        emit iconChanged();
+    if (oldAppIcon != appIcon()) {
+        emit appIconChanged();
     }
 
     m_timestamp = m_hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch();
     if (oldTimestamp != m_timestamp) {
         emit timestampChanged();
-    }
-
-    if (oldPreviewIcon != previewIcon()) {
-        emit previewIconChanged();
     }
 
     if (oldPreviewSummary != previewSummary()) {
@@ -256,23 +250,9 @@ void LipstickNotification::setExpireTimeout(int expireTimeout)
     m_expireTimeout = expireTimeout;
 }
 
-QString LipstickNotification::icon() const
-{
-    QString rv(m_hints.value(LipstickNotification::HINT_ICON).toString());
-    if (rv.isEmpty()) {
-        rv = m_hints.value(LipstickNotification::HINT_IMAGE_PATH).toString();
-    }
-    return rv;
-}
-
 QDateTime LipstickNotification::timestamp() const
 {
     return QDateTime::fromMSecsSinceEpoch(m_timestamp);
-}
-
-QString LipstickNotification::previewIcon() const
-{
-    return m_hints.value(LipstickNotification::HINT_PREVIEW_ICON).toString();
 }
 
 QString LipstickNotification::previewSummary() const
@@ -446,10 +426,18 @@ void LipstickNotification::updateHintValues()
     for ( ; it != end; ++it) {
         // Filter out the hints that are represented by other properties
         const QString &hint(it.key());
-        if (hint.compare(LipstickNotification::HINT_ICON, Qt::CaseInsensitive) != 0 &&
+
+        if (hint == LipstickNotification::HINT_ICON) {
+            qWarning() << "Notification sets deprecated hint" << LipstickNotification::HINT_ICON
+                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "instead";
+        } else if (hint == LipstickNotification::HINT_PREVIEW_ICON) {
+            qWarning() << "Notification sets deprecated hint" << LipstickNotification::HINT_PREVIEW_ICON
+                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "instead";
+        }
+
+        if (hint.compare(LipstickNotification::HINT_APP_ICON, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_IMAGE_PATH, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_TIMESTAMP, Qt::CaseInsensitive) != 0 &&
-            hint.compare(LipstickNotification::HINT_PREVIEW_ICON, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_SUMMARY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_BODY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_URGENCY, Qt::CaseInsensitive) != 0 &&
@@ -474,7 +462,6 @@ QDBusArgument &operator<<(QDBusArgument &argument, const LipstickNotification &n
     argument.beginStructure();
     argument << notification.m_appName;
     argument << notification.m_id;
-    argument << notification.m_appIcon;
     argument << notification.m_summary;
     argument << notification.m_body;
     argument << notification.m_actions;
@@ -489,7 +476,6 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, LipstickNotificat
     argument.beginStructure();
     argument >> notification.m_appName;
     argument >> notification.m_id;
-    argument >> notification.m_appIcon;
     argument >> notification.m_summary;
     argument >> notification.m_body;
     argument >> notification.m_actions;

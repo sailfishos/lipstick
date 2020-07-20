@@ -80,11 +80,9 @@
  *          the hints of the notification, unless already defined.
  *
  *   - The service supports the following Nemo specific hints:
- *       - \c x-nemo-icon: icon ID or path for the notification. This may be a file:// URL, else if the string begins with a / it's interpreted to be an absolute path. Otherwise it's interpreted to be an icon ID, in which case the icon with the given ID is fetched from the theme. This hint is deprecated in favor of the standard \c image-path hint.
  *       - \c x-nemo-item-count: the number of items represented by this notification. For example, a single notification can represent four missed calls by setting the count to 4.
  *       - \c x-nemo-priority: the priority of the notification as an integer. Priorities can be used by UI implementations to present notifications in a specific order, for example. If not specified, the priority level will be allocated 50.
  *       - \c x-nemo-timestamp: the timestamp for the notification. Should be set to the time when the event the notification is related to has occurred, not when the notification itself was sent.
- *       - \c x-nemo-preview-icon: icon ID or path to use in the preview banner for the notification, if any.
  *       - \c x-nemo-preview-body: body text to be shown in the preview banner for the notification, if any.
  *       - \c x-nemo-preview-summary: summary text to be shown in the preview banner for the notification, if any.
  *       - \c x-nemo-max-content-lines: the maximum number of content lines to display in the events view, inclusive of the summary. If 1, then no body lines will be displayed.
@@ -120,8 +118,7 @@
  *   - \c hints should contain the following:
  *       - \c category should be "im.received" to categorize the notification to be related to an instant message
  *       - \c urgency should be 1 (normal) since chat messages are not specifically low or high priority
- *       - \c x-nemo-icon should be "icon-lock-chat" to define that the icon with that ID is to be shown on the notification area
- *       - \c x-nemo-preview-icon should be "icon-preview-chat" to define that the icon with that ID is to be shown on the preview banner
+ *       - \c app_icon should be "icon-lock-chat" to define that the icon with that ID is to be shown on the notification area
  *       - \c x-nemo-preview-summary should match the summary text ("John Doe") in order to show it also on the preview banner
  *       - \c x-nemo-preview-body should match the body text ("Hi!") in order to show it also on the preview banner
  *       - \c x-nemo-timestamp should be set to the time when the chat message was sent (or received, depending on the intended application logic)
@@ -144,9 +141,8 @@
  *   - \c hints should contain the following:
  *       - \c category should be "im.received" to categorize the notification to be related to an instant message
  *       - \c urgency should be 1 (normal) since chat messages are not specifically low or high priority
- *       - \c x-nemo-icon should be "icon-lock-chat" to define that the icon with that ID is to be shown on the notification area
+ *       - \c app_icon should be "icon-lock-chat" to define that the icon with that ID is to be shown on the notification area
  *       - \c x-nemo-item-count should be 2 to make the notification represent two chat messages
- *       - \c x-nemo-preview-icon should be "icon-preview-chat" to define that the icon with that ID is to be shown on the preview banner
  *       - \c x-nemo-preview-summary should contain a brief description about the notification to be shown on the preview banner, like "John Doe"
  *       - \c x-nemo-preview-body should contain informative text about the notification to be shown on the preview banner, like "Are you there?"
  *       - \c x-nemo-timestamp should be set to the time when the latest chat message was sent (or received, depending on the intended application logic)
@@ -185,7 +181,7 @@
  *       - \c category should be "device" to categorize the notification to be related to the device
  *       - \c urgency should be 2 (critical) to show the notification over the lock screen
  *       - \c transient should be true to automatically close the notification after display
- *       - \c x-nemo-preview-icon should be "icon-battery-low" to define that the icon with that ID is to be shown on the preview banner
+ *       - \c app_icon should be "icon-battery-low" to define that the icon with that ID is to be shown on the preview banner
  *       - \c x-nemo-preview-body should be "Battery low" in order to show it on the preview banner
  *   - \c expire_timeout should be -1 to let the notification manager choose an appropriate expiration time
  *
@@ -205,7 +201,7 @@
  * \code
  * transient=true
  * urgency=2
- * x-nemo-preview-icon=icon-battery-low
+ * app_icon=icon-battery-low
  * \endcode
  *
  * and Notify() is called with the hints dictionary containing the value \c "device"
@@ -217,7 +213,7 @@
  * transient=true
  * urgency=2
  * x-nemo-preview-body=Charging
- * x-nemo-preview-icon=icon-battery-low
+ * app_icon=icon-battery-low
  * \endcode
  *
  * It is also possible to define the following notification properties in the category
