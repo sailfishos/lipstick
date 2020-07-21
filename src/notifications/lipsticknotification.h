@@ -135,7 +135,7 @@ public:
     //! Nemo hint: Indicates the identifer of the owner for notification
     static const char *HINT_OWNER;
 
-    //! Nemo hint: Specifies the maximum number of content lines to display (including summary)
+    //! \obsolete Nemo hint: Specifies the maximum number of content lines to display (including summary)
     static const char *HINT_MAX_CONTENT_LINES;
 
     //! Nemo hint: Indicates that this notification has been restored from persistent storage since the last update.
