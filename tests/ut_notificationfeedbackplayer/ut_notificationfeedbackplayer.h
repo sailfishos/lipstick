@@ -43,7 +43,6 @@ private slots:
     void testNotificationPreviewsDisabled();
     void testNotificationPriority_data();
     void testNotificationPriority();
-    void testLEDDisabledWhenNoSummaryAndBody_data();
     void testLEDDisabledWhenNoSummaryAndBody();
 
 private:

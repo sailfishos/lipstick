@@ -123,9 +123,6 @@ public:
     //! Nemo hint: Even if priority suggests it, do not turn display on
     static const char *HINT_SUPPRESS_DISPLAY_ON;
 
-    //! Nemo hint: Whether to disable LED feedbacks when there is no body and summary
-    static const char *HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY;
-
     //! Nemo hint: Indicates the origin of the notification
     static const char *HINT_ORIGIN;
 
