@@ -43,7 +43,6 @@ const char *LipstickNotification::HINT_FEEDBACK = "x-nemo-feedback";
 const char *LipstickNotification::HINT_HIDDEN = "x-nemo-hidden";
 const char *LipstickNotification::HINT_DISPLAY_ON = "x-nemo-display-on";
 const char *LipstickNotification::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
-const char *LipstickNotification::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY = "x-nemo-led-disabled-without-body-and-summary";
 const char *LipstickNotification::HINT_ORIGIN = "x-nemo-origin";
 const char *LipstickNotification::HINT_ORIGIN_PACKAGE = "x-nemo-origin-package";
 const char *LipstickNotification::HINT_OWNER = "x-nemo-owner";

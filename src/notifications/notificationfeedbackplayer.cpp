@@ -63,8 +63,7 @@ void NotificationFeedbackPlayer::addNotification(uint id)
         const QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
         if (isEnabled(notification, m_minimumPriority) && !feedbackItems.isEmpty()) {
             QMap<QString, QVariant> properties;
-            if (notification->hints().value(LipstickNotification::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, true).toBool() &&
-                    notification->body().isEmpty() &&
+            if (notification->body().isEmpty() &&
                     notification->summary().isEmpty()) {
                 properties.insert("media.leds", false);
             }
