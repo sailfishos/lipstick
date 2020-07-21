@@ -31,7 +31,6 @@ void Ut_Notification::testGettersAndSetters()
     int urgency = 1;
     int itemCount = 1;
     int priority = 1;
-    int maxContentLines = 3;
     QString category = "category1";
     QStringList actions = QStringList() << "action1a" << "action1b";
     QDateTime timestamp = QDateTime::currentDateTime();
@@ -43,7 +42,6 @@ void Ut_Notification::testGettersAndSetters()
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
     hints.insert(LipstickNotification::HINT_URGENCY, urgency);
     hints.insert(LipstickNotification::HINT_CATEGORY, category);
-    hints.insert(LipstickNotification::HINT_MAX_CONTENT_LINES, maxContentLines);
     hints.insert("x-nemo.testing.custom-hint-value", M_PI);
     int expireTimeout = 1;
 
@@ -64,11 +62,9 @@ void Ut_Notification::testGettersAndSetters()
     QCOMPARE(notification.itemCount(), itemCount);
     QCOMPARE(notification.priority(), priority);
     QCOMPARE(notification.category(), category);
-    QCOMPARE(notification.maxContentLines(), maxContentLines);
     QVERIFY(notification.hintValues().count() > 0);
     QVERIFY(notification.hintValues().contains("x-nemo.testing.custom-hint-value"));
     QVERIFY(!notification.hintValues().contains(LipstickNotification::HINT_CATEGORY));
-    QVERIFY(!notification.hintValues().contains(LipstickNotification::HINT_MAX_CONTENT_LINES));
     QCOMPARE(notification.hintValues().value("x-nemo.testing.custom-hint-value").toDouble(), M_PI);
 
     appName = "appName2";
