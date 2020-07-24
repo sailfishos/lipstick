@@ -303,10 +303,11 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
 
     notification->restartProgressTimer();
 
+    const QString previewSummary(hints_.value(LipstickNotification::HINT_PREVIEW_SUMMARY).toString());
+    const QString previewBody(hints_.value(LipstickNotification::HINT_PREVIEW_BODY).toString());
+
     if (androidOrigin) {
         // If this notification includes a preview, ensure it has a non-empty body and summary
-        const QString previewSummary(hints_.value(LipstickNotification::HINT_PREVIEW_SUMMARY).toString());
-        const QString previewBody(hints_.value(LipstickNotification::HINT_PREVIEW_BODY).toString());
         if (!previewSummary.isEmpty()) {
             if (previewBody.isEmpty()) {
                 hints_.insert(LipstickNotification::HINT_PREVIEW_BODY, QStringLiteral(" "));
@@ -342,6 +343,15 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
         }
         if (notification->appIcon().isEmpty() && !pidProperties.second.isEmpty()) {
             hints_.insert(LipstickNotification::HINT_APP_ICON, pidProperties.second);
+        }
+
+        // Use the summary and body as fallback values for previewSummary and previewBody.
+        // (This can be avoided by setting them explicitly to empty strings.)
+        if (!hints_.contains(LipstickNotification::HINT_PREVIEW_SUMMARY)) {
+            hints_.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, summary);
+        }
+        if (!hints_.contains(LipstickNotification::HINT_PREVIEW_BODY)) {
+            hints_.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
         }
 
         // Unspecified priority should result in medium priority to permit low priorities
