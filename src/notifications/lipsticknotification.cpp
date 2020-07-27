@@ -36,6 +36,7 @@ const char *LipstickNotification::HINT_TIMESTAMP = "x-nemo-timestamp";
 const char *LipstickNotification::HINT_PREVIEW_ICON = "x-nemo-preview-icon";
 const char *LipstickNotification::HINT_PREVIEW_BODY = "x-nemo-preview-body";
 const char *LipstickNotification::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary";
+const char *LipstickNotification::HINT_SUB_TEXT = "x-nemo-sub-text";
 const char *LipstickNotification::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
 const char *LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
 const char *LipstickNotification::HINT_USER_REMOVABLE = "x-nemo-user-removable";
@@ -184,6 +185,7 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     quint64 oldTimestamp = m_timestamp;
     QString oldPreviewSummary = previewSummary();
     QString oldPreviewBody = previewBody();
+    QString oldSubText = subText();
     int oldUrgency = urgency();
     int oldItemCount = itemCount();
     int oldPriority = m_priority;
@@ -209,6 +211,10 @@ void LipstickNotification::setHints(const QVariantHash &hints)
 
     if (oldPreviewBody != previewBody()) {
         emit previewBodyChanged();
+    }
+
+    if (oldSubText != subText()) {
+        emit subTextChanged();
     }
 
     if (oldUrgency != urgency()) {
@@ -262,6 +268,11 @@ QString LipstickNotification::previewSummary() const
 QString LipstickNotification::previewBody() const
 {
     return m_hints.value(LipstickNotification::HINT_PREVIEW_BODY).toString();
+}
+
+QString LipstickNotification::subText() const
+{
+    return m_hints.value(LipstickNotification::HINT_SUB_TEXT).toString();
 }
 
 int LipstickNotification::urgency() const
@@ -439,6 +450,7 @@ void LipstickNotification::updateHintValues()
             hint.compare(LipstickNotification::HINT_TIMESTAMP, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_SUMMARY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_BODY, Qt::CaseInsensitive) != 0 &&
+            hint.compare(LipstickNotification::HINT_SUB_TEXT, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_URGENCY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_ITEM_COUNT, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PRIORITY, Qt::CaseInsensitive) != 0 &&
