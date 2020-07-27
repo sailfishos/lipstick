@@ -42,6 +42,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(QDateTime timestamp READ timestamp NOTIFY timestampChanged)
     Q_PROPERTY(QString previewSummary READ previewSummary NOTIFY previewSummaryChanged)
     Q_PROPERTY(QString previewBody READ previewBody NOTIFY previewBodyChanged)
+    Q_PROPERTY(QString subText READ subText NOTIFY subTextChanged)
     Q_PROPERTY(int urgency READ urgency NOTIFY urgencyChanged)
     Q_PROPERTY(int itemCount READ itemCount NOTIFY itemCountChanged)
     Q_PROPERTY(int priority READ priority NOTIFY priorityChanged)
@@ -101,6 +102,9 @@ public:
 
     //! Nemo hint: Summary text of the preview of the notification.
     static const char *HINT_PREVIEW_SUMMARY;
+
+    //! Nemo hint: Sub-text of the notification.
+    static const char *HINT_SUB_TEXT;
 
     //! Nemo hint: Remote action of the notification. Prefix only: the action identifier is to be appended.
     static const char *HINT_REMOTE_ACTION_PREFIX;
@@ -227,6 +231,9 @@ public:
     //! Returns the body text for the preview of the notification
     QString previewBody() const;
 
+    //! Returns the sub-text for the notification
+    QString subText() const;
+
     //! Returns the urgency of the notification
     int urgency() const;
 
@@ -317,6 +324,9 @@ signals:
 
     //! Sent when the preview body has been modified
     void previewBodyChanged();
+
+    //! Sent when the sub text has been modified
+    void subTextChanged();
 
     //! Sent when the urgency has been modified
     void urgencyChanged();
