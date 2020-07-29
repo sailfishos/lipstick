@@ -458,7 +458,6 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
     /* Add fresh notification item */
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_CATEGORY, info.category);
-    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, message);
     hints.insert(LipstickNotification::HINT_VISIBILITY, QLatin1String("public"));
     QueuedNotification queuedNotification;
     queuedNotification.m_type = type;
@@ -466,7 +465,7 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
                                                             0,
                                                             info.icon,
                                                             QString(),
-                                                            QString(),
+                                                            message,
                                                             QStringList(),
                                                             hints,
                                                             -1);

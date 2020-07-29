@@ -378,26 +378,11 @@ void Ut_NotificationFeedbackPlayer::testNotificationPriority()
     QCOMPARE(gClientStub->stubCallCount("play"), playCount);
 }
 
-void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody_data()
-{
-    QTest::addColumn<QVariant>("disableHint");
-    QTest::addColumn<bool>("mediaParametersDefined");
-
-    QTest::newRow("LED disabled without body and summary not defined") << QVariant() << true;
-    QTest::newRow("LED disabled without body and summary false") << QVariant(false) << false;
-    QTest::newRow("LED disabled without body and summary true") << QVariant(true) << true;
-}
-
 void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody()
 {
-    QFETCH(QVariant, disableHint);
-    QFETCH(bool, mediaParametersDefined);
-
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_FEEDBACK, "feedback");
-    if (disableHint.isValid()) {
-        hints.insert(LipstickNotification::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, disableHint);
-    }
+
     LipstickNotification *notification1 = new LipstickNotification("ut_notificationfeedbackplayer", "", 1, "", "", "", QStringList(), hints, -1);
     LipstickNotification *notification2 = new LipstickNotification("ut_notificationfeedbackplayer", "", 2, "", "summary", "", QStringList(), hints, -1);
     LipstickNotification *notification3 = new LipstickNotification("ut_notificationfeedbackplayer", "", 3, "", "", "body", QStringList(), hints, -1);
@@ -407,13 +392,7 @@ void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody()
 
     player->addNotification(1);
     QCOMPARE(gClientStub->stubCallCount("play"), 1);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).contains("media.leds"), mediaParametersDefined);
-    if (mediaParametersDefined) {
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.leds").toBool(), false);
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.audio").toBool(), true);
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.vibra").toBool(), true);
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.backlight").toBool(), true);
-    }
+    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).contains("media.leds"), false);
 
     player->addNotification(2);
     QCOMPARE(gClientStub->stubCallCount("play"), 2);

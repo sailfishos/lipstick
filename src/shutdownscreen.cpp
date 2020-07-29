@@ -134,8 +134,7 @@ void ShutdownScreen::createAndPublishNotification(const QString &category, const
     NotificationManager *manager = NotificationManager::instance();
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_CATEGORY, category);
-    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
-    manager->Notify(manager->systemApplicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
+    manager->Notify(manager->systemApplicationName(), 0, QString(), QString(), body, QStringList(), hints, -1);
 }
 
 void ShutdownScreen::setShutdownMode(const QString &mode)
