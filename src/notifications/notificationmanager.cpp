@@ -15,7 +15,10 @@
 ****************************************************************************/
 
 #include <QCoreApplication>
+#include <QDataStream>
+#include <QDBusArgument>
 #include <QDebug>
+#include <QImage>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -24,6 +27,7 @@
 #include <QStandardPaths>
 #include <QFile>
 #include <QFileInfo>
+#include <QUrl>
 #include <aboutsettings.h>
 #include <mremoteaction.h>
 #include <mdesktopentry.h>
@@ -237,6 +241,52 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
         timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     }
     hints_.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
+
+    auto it = hints_.find(LipstickNotification::HINT_IMAGE_DATA);
+    if (it != hints_.end()) {
+        const QDBusArgument argument = it->value<QDBusArgument>();
+
+        hints_.erase(it);
+
+        int width = 0;
+        int height = 0;
+        int stride = 0;
+        bool alpha = false;
+        int bitsPerSample = 0;
+        int channels = 0;
+        QByteArray data;
+
+        argument.beginStructure();
+        argument >> width;
+        argument >> height;
+        argument >> stride;
+        argument >> alpha;
+        argument >> bitsPerSample;
+        argument >> channels;
+        argument >> data;
+        argument.endStructure();
+
+        if (bitsPerSample == 8 && channels == 4 && data.size() >= stride * height) {
+            const QImage image(
+                        reinterpret_cast<const uchar *>(data.constData()),
+                        width,
+                        height,
+                        stride,
+                        alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+
+            QBuffer buffer;
+            buffer.open(QIODevice::WriteOnly);
+            image.save(&buffer, "PNG");
+            buffer.close();
+
+            const QUrl url
+                    = QLatin1String("data:image/png;base64,")
+                    + QString::fromUtf8(buffer.data().toBase64());
+
+            hints_.insert(LipstickNotification::HINT_IMAGE_PATH, url.toString());
+        }
+    }
+
 
     QPair<QString, QString> pidProperties;
     bool androidOrigin(false);
