@@ -200,19 +200,6 @@ void Ut_NotificationFeedbackPlayer::testMultipleFeedbackIds()
     QCOMPARE(eventIds, QSet<quint32>() << 1 << 2);
 }
 
-void Ut_NotificationFeedbackPlayer::testHiddenNotification()
-{
-    // Create a notification
-    LipstickNotification *notification = createNotification(1);
-    QVariantHash hints(notification->hints());
-    hints.insert(LipstickNotification::HINT_HIDDEN, true);
-    notification->setHints(hints);
-    player->addNotification(1);
-
-    // Check that NGFAdapter::play() was not called for the feedback
-    QCOMPARE(gClientStub->stubCallCount("play"), 0);
-}
-
 void Ut_NotificationFeedbackPlayer::testNotificationSoundSuppressed()
 {
     gClientStub->stubSetReturnValue("play", (quint32)1);

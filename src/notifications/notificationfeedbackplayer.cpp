@@ -115,7 +115,7 @@ void NotificationFeedbackPlayer::removeNotification(uint id)
 
 bool NotificationFeedbackPlayer::isEnabled(LipstickNotification *notification, int minimumPriority)
 {
-    if (notification->hidden() || notification->restored())
+    if (notification->restored())
         return false;
 
     uint mode = AllNotificationsEnabled;
