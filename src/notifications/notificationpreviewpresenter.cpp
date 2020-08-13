@@ -184,8 +184,7 @@ void NotificationPreviewPresenter::createWindowIfNecessary()
 
 bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotification *notification)
 {
-    if (notification->hidden()
-            || notification->restored()
+    if (notification->restored()
             || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty())) {
         return false;
     }

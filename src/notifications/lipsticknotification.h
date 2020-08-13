@@ -118,9 +118,6 @@ public:
     //! Nemo hint: Feedback of the notification.
     static const char *HINT_FEEDBACK;
 
-    //! Nemo hint: Whether the notification is hidden.
-    static const char *HINT_HIDDEN;
-
     //! Nemo hint: Whether to turn the screen on when displaying preview
     static const char *HINT_DISPLAY_ON;
 
@@ -251,9 +248,6 @@ public:
 
     //! Returns the user removability hint state
     bool isUserRemovableByHint() const;
-
-    //! Returns true if the notification has been hidden to prevent further display
-    bool hidden() const;
 
     //! Returns the remote actions invokable by the notification
     QVariantList remoteActions() const;
