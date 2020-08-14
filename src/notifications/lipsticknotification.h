@@ -246,6 +246,9 @@ public:
     //! Returns the category of the notification
     QString category() const;
 
+    //! Returns whether the notification is transient
+    bool isTransient() const;
+
     //! Returns the user removability of the notification
     bool isUserRemovable() const;
 
