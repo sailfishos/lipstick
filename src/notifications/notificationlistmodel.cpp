@@ -153,5 +153,6 @@ void NotificationListModel::removeNotifications(const QList<uint> &ids)
 
 bool NotificationListModel::notificationShouldBeShown(LipstickNotification *notification)
 {
-    return !notification->body().isEmpty() || !notification->summary().isEmpty();
+    return !notification->isTransient()
+        && (!notification->body().isEmpty() || !notification->summary().isEmpty());
 }
