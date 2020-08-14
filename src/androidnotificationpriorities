@@ -51,3 +51,9 @@ package:eu.siacs.conversations;chat,chat_exists
 
 K9-Mail;email,email_exists
 package:com.fsck.k9;email,email_exists
+
+Teams;chat,chat_exists
+package:com.microsoft.teams;chat,chat_exists
+
+Messenger Lite;chat,chat_exists
+package:com.facebook.mlite;chat,chat_exists
