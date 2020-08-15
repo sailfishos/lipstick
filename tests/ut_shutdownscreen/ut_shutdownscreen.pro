@@ -10,10 +10,13 @@ PKGCONFIG += dsme_dbus_if thermalmanager_dbus_if usb_moded sailfishusermanager
 SOURCES += \
     $$SRCDIR/shutdownscreen.cpp \
     $$NOTIFICATIONSRCDIR/lipsticknotification.cpp \
+    $$NOTIFICATIONSRCDIR/thermalnotifier.cpp \
     $$STUBSDIR/stubbase.cpp \
     $$STUBSDIR/homewindow.cpp \
     $$STUBSDIR/homeapplication.cpp \
     $$DEVICESTATE/devicestate.cpp \
+    $$DEVICESTATE/displaystate.cpp \
+    $$DEVICESTATE/thermal.cpp \
     $$DEVICESTATE/ipcinterface.cpp \
     ut_shutdownscreen.cpp
 
@@ -21,11 +24,16 @@ HEADERS += \
     $$SRCDIR/shutdownscreen.h \
     $$NOTIFICATIONSRCDIR/notificationmanager.h \
     $$NOTIFICATIONSRCDIR/lipsticknotification.h \
+    $$NOTIFICATIONSRCDIR/thermalnotifier.h \
     $$UTILITYSRCDIR/closeeventeater.h \
     $$SRCDIR/homeapplication.h \
     $$SRCDIR/homewindow.h \
     $$DEVICESTATE/devicestate.h \
     $$DEVICESTATE/devicestate_p.h \
+    $$DEVICESTATE/displaystate.h \
+    $$DEVICESTATE/displaystate_p.h \
+    $$DEVICESTATE/thermal.h \
+    $$DEVICESTATE/thermal_p.h \
     $$DEVICESTATE/ipcinterface_p.h \
     $$STUBSDIR/nemo-devicelock/devicelock.h \
     ut_shutdownscreen.h
