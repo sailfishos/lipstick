@@ -365,29 +365,4 @@ void Ut_NotificationFeedbackPlayer::testNotificationPriority()
     QCOMPARE(gClientStub->stubCallCount("play"), playCount);
 }
 
-void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody()
-{
-    QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_FEEDBACK, "feedback");
-
-    LipstickNotification *notification1 = new LipstickNotification("ut_notificationfeedbackplayer", "", 1, "", "", "", QStringList(), hints, -1);
-    LipstickNotification *notification2 = new LipstickNotification("ut_notificationfeedbackplayer", "", 2, "", "summary", "", QStringList(), hints, -1);
-    LipstickNotification *notification3 = new LipstickNotification("ut_notificationfeedbackplayer", "", 3, "", "", "body", QStringList(), hints, -1);
-    notificationManagerNotification.insert(1, notification1);
-    notificationManagerNotification.insert(2, notification2);
-    notificationManagerNotification.insert(3, notification3);
-
-    player->addNotification(1);
-    QCOMPARE(gClientStub->stubCallCount("play"), 1);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).contains("media.leds"), false);
-
-    player->addNotification(2);
-    QCOMPARE(gClientStub->stubCallCount("play"), 2);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).isEmpty(), true);
-
-    player->addNotification(3);
-    QCOMPARE(gClientStub->stubCallCount("play"), 3);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).isEmpty(), true);
-}
-
 QTEST_MAIN(Ut_NotificationFeedbackPlayer)
