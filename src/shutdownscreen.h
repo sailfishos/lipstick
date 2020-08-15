@@ -79,10 +79,11 @@ private:
     /*!
      * Shows a system notification.
      *
-     * \param category the category of the notification
+     * \param icon the icon of the notification
+     * \param feedback the feedback of the notification
      * \param body the body text of the notification
      */
-    void createAndPublishNotification(const QString &category, const QString &body);
+    void publishNotification(const QString &icon, const QString &feedback, const QString &body);
 
     //! The volume control window
     HomeWindow *m_window;

@@ -24,6 +24,13 @@ class ThermalNotifier : public QObject
 public:
     explicit ThermalNotifier(QObject *parent = 0);
 
+    /*!
+     * Shows a system notification.
+     *
+     * \param body the body text of the notification
+     */
+    static void publishTemperatureNotification(const QString &body);
+
 private slots:
     /*!
      * Reacts to thermal state changes by showing the
@@ -42,14 +49,6 @@ private slots:
     void applyDisplayState(DeviceState::DisplayStateMonitor::DisplayState state);
 
 private:
-    /*!
-     * Shows a system notification.
-     *
-     * \param category the category of the notification
-     * \param body the body text of the notification
-     */
-    void createAndPublishNotification(const QString &category, const QString &body);
-
     //! For getting the thermal state
     DeviceState::Thermal *m_thermalState;
 
