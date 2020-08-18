@@ -295,6 +295,11 @@ QString LipstickNotification::category() const
     return m_hints.value(LipstickNotification::HINT_CATEGORY).toString();
 }
 
+bool LipstickNotification::isTransient() const
+{
+    return m_hints.value(LipstickNotification::HINT_TRANSIENT).toBool();
+}
+
 bool LipstickNotification::isUserRemovable() const
 {
     if (hasProgress() && m_activeProgressTimer && m_activeProgressTimer->isActive()) {

@@ -396,45 +396,55 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
     static const struct NotificationInfo {
         QString category;
         QString message;
+        QString feedback;
         QString icon;
     } description[] = {
         {"x-nemo.battery", // NotificationCharging
          //% "Charging"
          qtTrId("qtn_ener_charging"),
+         "",
          ""},
-        {"x-nemo.battery.chargingcomplete", // NotificationChargingComplete
+        {"",    // NotificationChargingComplete
          //% "Charging complete"
          qtTrId("qtn_ener_charcomp"),
-         ""},
-        {"x-nemo.battery.removecharger", // NotificationRemoveCharger
+         "",
+         "icon-system-charging"},
+        {"",    // NotificationRemoveCharger
          //% "Disconnect charger from power supply to save energy"
          qtTrId("qtn_ener_remcha"),
-         ""},
-        {"x-nemo.battery.chargingnotstarted", // NotificationChargingNotStarted
+         "",
+         "icon-system-charging"},
+        {"",    // NotificationChargingNotStarted
          //% "Charging not started. Replace charger."
          qtTrId("qtn_ener_repcharger"),
-         ""},
-        {"x-nemo.battery.recharge", // NotificationRechargeBattery
+         "general_warning",
+         "icon-system-battery"},
+        {"",    // NotificationRechargeBattery
          //% "Recharge battery"
          qtTrId("qtn_ener_rebatt"),
-         ""},
-        {"x-nemo.battery.enterpsm", // NotificationEnteringPSM
+         "battery_empty",
+         "icon-system-battery"},
+        {"",    // NotificationEnteringPSM
          //% "Entering power save mode"
          qtTrId("qtn_ener_ent_psnote"),
-         ""},
-        {"x-nemo.battery.exitpsm", // NotificationExitingPSM
+         "battery_low",
+         "icon-system-battery"},
+        {"",    // NotificationExitingPSM
          //% "Exiting power save mode"
          qtTrId("qtn_ener_exit_psnote"),
-         ""},
-        {"x-nemo.battery.lowbattery", // NotificationLowBattery
+         "",
+         "icon-system-battery"},
+        {"",    // NotificationLowBattery
          //: Shown when the battery is low. %1 = current battery level as a percentage
          //% "Low battery: %1%"
          qtTrId("qtn_ener_lowbatt_with_percentage"),
-         ""},
-        {"x-nemo.battery.notenoughpower", // NotificationNotEnoughPower
+         "battery_low",
+         "icon-system-battery"},
+        {"",    // NotificationNotEnoughPower
          //% "Not enough power to charge"
          qtTrId("qtn_ener_nopowcharge"),
-         "icon-m-energy-management-insufficient-power"}
+         "",
+         "icon-system-battery"}
     };
     Q_ASSERT(type < sizeof(description) / sizeof(description[0]));
     NotificationInfo const &info = description[type];
@@ -457,8 +467,15 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
 
     /* Add fresh notification item */
     QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_CATEGORY, info.category);
+    if (!info.category.isEmpty()) {
+        hints.insert(LipstickNotification::HINT_CATEGORY, info.category);
+    }
+    if (!info.feedback.isEmpty()) {
+        hints.insert(LipstickNotification::HINT_FEEDBACK, info.feedback);
+    }
     hints.insert(LipstickNotification::HINT_VISIBILITY, QLatin1String("public"));
+    hints.insert(LipstickNotification::HINT_URGENCY, LipstickNotification::Critical);
+    hints.insert(LipstickNotification::HINT_TRANSIENT, true);
     QueuedNotification queuedNotification;
     queuedNotification.m_type = type;
     queuedNotification.m_id = m_notificationManager->Notify(m_notificationManager->systemApplicationName(),

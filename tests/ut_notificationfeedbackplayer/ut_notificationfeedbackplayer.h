@@ -42,7 +42,6 @@ private slots:
     void testNotificationPreviewsDisabled();
     void testNotificationPriority_data();
     void testNotificationPriority();
-    void testLEDDisabledWhenNoSummaryAndBody();
 
 private:
     NotificationFeedbackPlayer *player;

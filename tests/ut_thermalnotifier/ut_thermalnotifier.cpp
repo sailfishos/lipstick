@@ -71,20 +71,17 @@ void Ut_ThermalNotifier::testThermalState()
 {
     thermalNotifier->applyThermalState(DeviceState::Thermal::Warning);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_high_temp_warning"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(4), qtTrId("qtn_shut_high_temp_warning"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
     thermalNotifier->applyThermalState(DeviceState::Thermal::Alert);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 2);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_high_temp_alert"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(4), qtTrId("qtn_shut_high_temp_alert"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 
     thermalNotifier->applyThermalState(DeviceState::Thermal::LowTemperatureWarning);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 3);
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_CATEGORY).toString(), QString("x-nemo.battery.temperature"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QVariantHash>(6).value(LipstickNotification::HINT_PREVIEW_BODY).toString(), qtTrId("qtn_shut_low_temp_warning"));
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(4), qtTrId("qtn_shut_low_temp_warning"));
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
 }
 
