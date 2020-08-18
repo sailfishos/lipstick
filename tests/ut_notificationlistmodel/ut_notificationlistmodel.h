@@ -28,7 +28,6 @@ private slots:
     void testNotificationIsOnlyAddedIfNotAlreadyAdded();
     void testNotificationIsNotAddedIfNoSummaryOrBody_data();
     void testNotificationIsNotAddedIfNoSummaryOrBody();
-    void testNotificationIsNotAddedIfHidden();
     void testAlreadyAddedNotificationIsRemovedIfNoLongerAddable();
     void testNotificationRemoval();
     void testNotificationOrdering();

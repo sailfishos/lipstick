@@ -91,17 +91,6 @@ void Ut_NotificationListModel::testNotificationIsNotAddedIfNoSummaryOrBody()
     QCOMPARE(model.itemCount(), addItemCount);
 }
 
-void Ut_NotificationListModel::testNotificationIsNotAddedIfHidden()
-{
-    QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_HIDDEN, true);
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", hints, 1);
-    gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
-    gNotificationManagerStub->stubSetReturnValue("notification", &notification);
-    NotificationListModel model;
-    QCOMPARE(model.itemCount(), 0);
-}
-
 void Ut_NotificationListModel::testAlreadyAddedNotificationIsRemovedIfNoLongerAddable()
 {
     LipstickNotification notification("appName", "appName", 1, "appIcon", "", "", QStringList() << "action", QVariantHash(), 1);

@@ -38,7 +38,6 @@ private slots:
     void testRemoveNotification();
     void testNotificationNotShownIfNoSummaryOrBody_data();
     void testNotificationNotShownIfNoSummaryOrBody();
-    void testNotificationNotShownIfHidden();
     void testNotificationNotShownIfRestored();
     void testShowingOnlyCriticalNotifications();
     void testUpdateNotificationRemovesNotificationFromQueueIfNotShowable();

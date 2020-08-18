@@ -41,7 +41,6 @@ const char *LipstickNotification::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-act
 const char *LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
 const char *LipstickNotification::HINT_USER_REMOVABLE = "x-nemo-user-removable";
 const char *LipstickNotification::HINT_FEEDBACK = "x-nemo-feedback";
-const char *LipstickNotification::HINT_HIDDEN = "x-nemo-hidden";
 const char *LipstickNotification::HINT_DISPLAY_ON = "x-nemo-display-on";
 const char *LipstickNotification::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
 const char *LipstickNotification::HINT_ORIGIN = "x-nemo-origin";
@@ -309,11 +308,6 @@ bool LipstickNotification::isUserRemovableByHint() const
     return (m_hints.value(LipstickNotification::HINT_USER_REMOVABLE, QVariant(true)).toBool());
 }
 
-bool LipstickNotification::hidden() const
-{
-    return m_hints.value(LipstickNotification::HINT_HIDDEN, QVariant(false)).toBool();
-}
-
 QVariantList LipstickNotification::remoteActions() const
 {
     QVariantList rv;
@@ -456,7 +450,6 @@ void LipstickNotification::updateHintValues()
             hint.compare(LipstickNotification::HINT_PRIORITY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_CATEGORY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_USER_REMOVABLE, Qt::CaseInsensitive) != 0 &&
-            hint.compare(LipstickNotification::HINT_HIDDEN, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_ORIGIN, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_OWNER, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_MAX_CONTENT_LINES, Qt::CaseInsensitive) != 0 &&
