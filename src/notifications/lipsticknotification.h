@@ -73,6 +73,9 @@ public:
     //! Standard hint: Icon of the notification: either a file:// URL, an absolute path, or a token to be satisfied by the 'theme' image provider.
     static const char *HINT_IMAGE_PATH;
 
+    //! Standard hint: Icon of the notification: image data.
+    static const char *HINT_IMAGE_DATA;
+
     //! Standard hint: If true, audible feedback should be should be suppressed during notification feedback.
     static const char *HINT_SUPPRESS_SOUND;
 

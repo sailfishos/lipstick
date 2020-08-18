@@ -26,6 +26,7 @@ const char *LipstickNotification::HINT_CATEGORY = "category";
 const char *LipstickNotification::HINT_TRANSIENT = "transient";
 const char *LipstickNotification::HINT_RESIDENT = "resident";
 const char *LipstickNotification::HINT_IMAGE_PATH = "image-path";
+const char *LipstickNotification::HINT_IMAGE_DATA = "image-data";
 const char *LipstickNotification::HINT_SUPPRESS_SOUND = "suppress-sound";
 const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
 const char *LipstickNotification::HINT_APP_ICON = "app_icon";
@@ -440,7 +441,6 @@ void LipstickNotification::updateHintValues()
         }
 
         if (hint.compare(LipstickNotification::HINT_APP_ICON, Qt::CaseInsensitive) != 0 &&
-            hint.compare(LipstickNotification::HINT_IMAGE_PATH, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_TIMESTAMP, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_SUMMARY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_BODY, Qt::CaseInsensitive) != 0 &&
