@@ -14,6 +14,8 @@
 
 #include <NgfClient>
 #include <QWaylandSurface>
+#include <QUrl>
+
 #include "lipstickcompositor.h"
 #include "notificationmanager.h"
 #include "lipsticknotification.h"
@@ -77,8 +79,9 @@ void NotificationFeedbackPlayer::addNotification(uint id)
 
             QString soundFile = notification->hints().value(LipstickNotification::HINT_SOUND_FILE).toString();
             if (!soundFile.isEmpty()) {
-                if (soundFile.startsWith(QStringLiteral("file://")))
-                    soundFile.remove(0, 7);
+                if (soundFile.startsWith(QStringLiteral("file://"))) {
+                    soundFile = QUrl(soundFile).toLocalFile();
+                }
 
                 properties.insert(QStringLiteral("sound.filename"), soundFile);
                 // Sound is enabled explicitly if sound-file hint is set.
