@@ -1,6 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012-2019 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -35,7 +36,8 @@ enum PreviewMode {
 NotificationFeedbackPlayer::NotificationFeedbackPlayer(QObject *parent) :
     QObject(parent),
     m_ngfClient(new Ngf::Client(this)),
-    m_minimumPriority(0)
+    m_minimumPriority(0),
+    m_doNotDisturbSetting(QLatin1String("/lipstick/do_not_disturb"))
 {
     connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));
 
@@ -63,10 +65,10 @@ void NotificationFeedbackPlayer::addNotification(uint id)
         // Play the feedback related to the notification if any
         const QString feedback = notification->hints().value(LipstickNotification::HINT_FEEDBACK).toString();
         const QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
+
         if (isEnabled(notification, m_minimumPriority) && !feedbackItems.isEmpty()) {
             QMap<QString, QVariant> properties;
-            if (notification->body().isEmpty() &&
-                    notification->summary().isEmpty()) {
+            if (notification->body().isEmpty() && notification->summary().isEmpty()) {
                 properties.insert("media.leds", false);
             }
             if (notification->hints().value(LipstickNotification::HINT_SUPPRESS_SOUND, false).toBool()) {
@@ -77,15 +79,21 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                 properties.insert("media.vibra", false);
             }
 
-            QString soundFile = notification->hints().value(LipstickNotification::HINT_SOUND_FILE).toString();
-            if (!soundFile.isEmpty()) {
-                if (soundFile.startsWith(QStringLiteral("file://"))) {
-                    soundFile = QUrl(soundFile).toLocalFile();
-                }
+            if (doNotDisturbMode()) {
+                // no sound or vibra, but led is allowed
+                properties.insert("media.vibra", false);
+                properties.insert("media.audio", false);
+            } else {
+                QString soundFile = notification->hints().value(LipstickNotification::HINT_SOUND_FILE).toString();
+                if (!soundFile.isEmpty()) {
+                    if (soundFile.startsWith(QStringLiteral("file://"))) {
+                        soundFile = QUrl(soundFile).toLocalFile();
+                    }
 
-                properties.insert(QStringLiteral("sound.filename"), soundFile);
-                // Sound is enabled explicitly if sound-file hint is set.
-                properties.insert(QStringLiteral("sound.enabled"), true);
+                    properties.insert(QStringLiteral("sound.filename"), soundFile);
+                    // Sound is enabled explicitly if sound-file hint is set.
+                    properties.insert(QStringLiteral("sound.enabled"), true);
+                }
             }
 
             foreach (const QString &item, feedbackItems) {
@@ -95,7 +103,8 @@ void NotificationFeedbackPlayer::addNotification(uint id)
         }
 
         // vibra played if it's asked regardless of priorities
-        if (isEnabled(notification, 0) && notification->hints().value(LipstickNotification::HINT_VIBRA, false).toBool()) {
+        if (!doNotDisturbMode() && isEnabled(notification, 0)
+                && notification->hints().value(LipstickNotification::HINT_VIBRA, false).toBool()) {
             m_ngfClient->stop("vibra");
             m_idToEventId.insert(notification, m_ngfClient->play("vibra", QMap<QString, QVariant>()));
         }
@@ -147,4 +156,9 @@ void NotificationFeedbackPlayer::setMinimumPriority(int minimumPriority)
     m_minimumPriority = minimumPriority;
 
     emit minimumPriorityChanged();
+}
+
+bool NotificationFeedbackPlayer::doNotDisturbMode() const
+{
+    return m_doNotDisturbSetting.value().toBool();
 }

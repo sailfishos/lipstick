@@ -1,6 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012-2019 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -156,7 +157,8 @@ void NotificationPreviewPresenter::removeNotification(uint id, bool onlyFromQueu
     if (notification != 0) {
         m_notificationQueue.removeAll(notification);
 
-        // If the notification is currently being shown hide it - the next notification will be shown after the current one has been hidden
+        // If the notification is currently being shown hide it
+        // - the next notification will be shown after the current one has been hidden
         if (!onlyFromQueue && m_currentNotification == notification) {
             m_currentNotification = 0;
             emit notificationChanged();
@@ -241,13 +243,16 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
 
         if (notification) {
             // Ask mce to turn the screen on if requested
-            const bool notificationIsCritical = notification->urgency() >= 2 ||
-                                                notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
-            const bool notificationCanUnblank = !notification->hints().value(LipstickNotification::HINT_SUPPRESS_DISPLAY_ON).toBool();
+            const bool notificationIsCritical = notification->urgency() >= 2;
+            const bool displayOnRequested = notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool()
+                    && !m_notificationFeedbackPlayer->doNotDisturbMode();
+            const bool notificationCanUnblank
+                    = !notification->hints().value(LipstickNotification::HINT_SUPPRESS_DISPLAY_ON).toBool();
 
-            if (notificationIsCritical && notificationCanUnblank) {
+            if ((notificationIsCritical || displayOnRequested) && notificationCanUnblank) {
                 QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->id());
-                QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_NOTIFICATION_BEGIN);
+                QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,
+                                                                  MCE_NOTIFICATION_BEGIN);
                 msg.setArguments(QVariantList() << mceIdToAdd << MCE_DURATION << MCE_EXTEND_DURATION);
                 QDBusConnection::systemBus().asyncCall(msg);
             }
