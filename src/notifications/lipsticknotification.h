@@ -49,9 +49,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(QString category READ category NOTIFY categoryChanged)
     Q_PROPERTY(bool userRemovable READ isUserRemovable NOTIFY userRemovableChanged)
     Q_PROPERTY(QVariantList remoteActions READ remoteActions CONSTANT)
-    Q_PROPERTY(QString origin READ origin CONSTANT)
     Q_PROPERTY(QString owner READ owner CONSTANT)
-    Q_PROPERTY(int maxContentLines READ maxContentLines CONSTANT)
     Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
 
@@ -85,9 +83,6 @@ public:
     //! Standard hint: Icon ID of the application sending the notification.
     static const char *HINT_APP_ICON;
 
-    //! \obsolete use HINT_APP_ICON instead] Nemo hint: Icon of the notification.
-    static const char *HINT_ICON;
-
     //! Nemo hint: Item count represented by the notification.
     static const char *HINT_ITEM_COUNT;
 
@@ -96,9 +91,6 @@ public:
 
     //! Nemo hint: Timestamp of the notification.
     static const char *HINT_TIMESTAMP;
-
-    //! \obsolete Nemo hint: Icon of the preview of the notification.
-    static const char *HINT_PREVIEW_ICON;
 
     //! Nemo hint: Body text of the preview of the notification.
     static const char *HINT_PREVIEW_BODY;
@@ -127,17 +119,11 @@ public:
     //! Nemo hint: Even if priority suggests it, do not turn display on
     static const char *HINT_SUPPRESS_DISPLAY_ON;
 
-    //! Nemo hint: Indicates the origin of the notification
-    static const char *HINT_ORIGIN;
-
     //! Nemo hint: Indicates the Android package name from which this notification originates
     static const char *HINT_ORIGIN_PACKAGE;
 
     //! Nemo hint: Indicates the identifer of the owner for notification
     static const char *HINT_OWNER;
-
-    //! \obsolete Nemo hint: Specifies the maximum number of content lines to display (including summary)
-    static const char *HINT_MAX_CONTENT_LINES;
 
     //! Nemo hint: Indicates that this notification has been restored from persistent storage since the last update.
     //! Internal, shouldn't be expected or allowed from d-bus
@@ -258,14 +244,8 @@ public:
     //! Returns the remote actions invokable by the notification
     QVariantList remoteActions() const;
 
-    //! Returns an indicator for the origin of the notification
-    QString origin() const;
-
     //! Returns an indicator for the notification owner
     QString owner() const;
-
-    //! \obsolete Returns the maximum number of content lines requested for display
-    int maxContentLines() const;
 
     //! Returns true if the notification has been restored since it was last modified
     bool restored() const;

@@ -21,6 +21,12 @@
 #include <QDataStream>
 #include <QtDebug>
 
+namespace {
+// deprecated
+const char *HINT_ICON = "x-nemo-icon";
+const char *HINT_PREVIEW_ICON = "x-nemo-preview-icon";
+}
+
 const char *LipstickNotification::HINT_URGENCY = "urgency";
 const char *LipstickNotification::HINT_CATEGORY = "category";
 const char *LipstickNotification::HINT_TRANSIENT = "transient";
@@ -30,11 +36,9 @@ const char *LipstickNotification::HINT_IMAGE_DATA = "image-data";
 const char *LipstickNotification::HINT_SUPPRESS_SOUND = "suppress-sound";
 const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
 const char *LipstickNotification::HINT_APP_ICON = "app_icon";
-const char *LipstickNotification::HINT_ICON = "x-nemo-icon";
 const char *LipstickNotification::HINT_ITEM_COUNT = "x-nemo-item-count";
 const char *LipstickNotification::HINT_PRIORITY = "x-nemo-priority";
 const char *LipstickNotification::HINT_TIMESTAMP = "x-nemo-timestamp";
-const char *LipstickNotification::HINT_PREVIEW_ICON = "x-nemo-preview-icon";
 const char *LipstickNotification::HINT_PREVIEW_BODY = "x-nemo-preview-body";
 const char *LipstickNotification::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary";
 const char *LipstickNotification::HINT_SUB_TEXT = "x-nemo-sub-text";
@@ -44,10 +48,8 @@ const char *LipstickNotification::HINT_USER_REMOVABLE = "x-nemo-user-removable";
 const char *LipstickNotification::HINT_FEEDBACK = "x-nemo-feedback";
 const char *LipstickNotification::HINT_DISPLAY_ON = "x-nemo-display-on";
 const char *LipstickNotification::HINT_SUPPRESS_DISPLAY_ON = "x-nemo-suppress-display-on";
-const char *LipstickNotification::HINT_ORIGIN = "x-nemo-origin";
 const char *LipstickNotification::HINT_ORIGIN_PACKAGE = "x-nemo-origin-package";
 const char *LipstickNotification::HINT_OWNER = "x-nemo-owner";
-const char *LipstickNotification::HINT_MAX_CONTENT_LINES = "x-nemo-max-content-lines";
 const char *LipstickNotification::HINT_RESTORED = "x-nemo-restored";
 const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
 const char *LipstickNotification::HINT_VIBRA = "x-nemo-vibrate";
@@ -371,19 +373,9 @@ QVariantList LipstickNotification::remoteActions() const
     return rv;
 }
 
-QString LipstickNotification::origin() const
-{
-    return m_hints.value(LipstickNotification::HINT_ORIGIN).toString();
-}
-
 QString LipstickNotification::owner() const
 {
     return m_hints.value(LipstickNotification::HINT_OWNER).toString();
-}
-
-int LipstickNotification::maxContentLines() const
-{
-    return m_hints.value(LipstickNotification::HINT_MAX_CONTENT_LINES).toInt();
 }
 
 bool LipstickNotification::restored() const
@@ -437,12 +429,14 @@ void LipstickNotification::updateHintValues()
         // Filter out the hints that are represented by other properties
         const QString &hint(it.key());
 
-        if (hint == LipstickNotification::HINT_ICON) {
-            qWarning() << "Notification sets deprecated hint" << LipstickNotification::HINT_ICON
-                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "instead";
-        } else if (hint == LipstickNotification::HINT_PREVIEW_ICON) {
-            qWarning() << "Notification sets deprecated hint" << LipstickNotification::HINT_PREVIEW_ICON
-                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "instead";
+        if (hint == HINT_ICON) {
+            qWarning() << "Notification sets deprecated hint" << HINT_ICON
+                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "or"
+                       << LipstickNotification::HINT_IMAGE_PATH << "instead";
+        } else if (hint == HINT_PREVIEW_ICON) {
+            qWarning() << "Notification sets deprecated hint" << HINT_PREVIEW_ICON
+                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "or"
+                       << LipstickNotification::HINT_IMAGE_PATH << "instead";
         }
 
         if (hint.compare(LipstickNotification::HINT_APP_ICON, Qt::CaseInsensitive) != 0 &&
@@ -455,9 +449,7 @@ void LipstickNotification::updateHintValues()
             hint.compare(LipstickNotification::HINT_PRIORITY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_CATEGORY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_USER_REMOVABLE, Qt::CaseInsensitive) != 0 &&
-            hint.compare(LipstickNotification::HINT_ORIGIN, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_OWNER, Qt::CaseInsensitive) != 0 &&
-            hint.compare(LipstickNotification::HINT_MAX_CONTENT_LINES, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PROGRESS, Qt::CaseInsensitive) &&
             !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_PREFIX, Qt::CaseInsensitive) &&
             !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX, Qt::CaseInsensitive)) {

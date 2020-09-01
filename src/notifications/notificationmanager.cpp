@@ -206,8 +206,6 @@ QStringList NotificationManager::GetCapabilities()
                          << LipstickNotification::HINT_PREVIEW_SUMMARY
                          << "x-nemo-remote-actions"
                          << LipstickNotification::HINT_USER_REMOVABLE
-                         << LipstickNotification::HINT_ORIGIN
-                         << LipstickNotification::HINT_MAX_CONTENT_LINES
                          << "x-nemo-get-notifications";
 }
 
