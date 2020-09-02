@@ -71,8 +71,6 @@ void Ut_NotificationManager::testCapabilities()
     QCOMPARE((bool)capabilities.contains("x-nemo-remote-actions"), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_USER_REMOVABLE), true);
     QCOMPARE((bool)capabilities.contains("x-nemo-get-notifications"), true);
-    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ORIGIN), true);
-    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_MAX_CONTENT_LINES), true);
 }
 
 void Ut_NotificationManager::testRemovingInexistingNotification()
