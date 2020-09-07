@@ -329,15 +329,16 @@ QVariantList LipstickNotification::remoteActions() const
             ++it;
         }
 
+        QVariantMap vm;
+        vm.insert(QStringLiteral("name"), name);
+        if (!displayName.isEmpty()) {
+            vm.insert(QStringLiteral("displayName"), displayName);
+        }
+
         const QString hint(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_PREFIX + name).toString());
         if (!hint.isEmpty()) {
             const QString icon(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX + name).toString());
 
-            QVariantMap vm;
-            vm.insert(QStringLiteral("name"), name);
-            if (!displayName.isEmpty()) {
-                vm.insert(QStringLiteral("displayName"), displayName);
-            }
             if (!icon.isEmpty()) {
                 vm.insert(QStringLiteral("icon"), icon);
             }
@@ -365,9 +366,9 @@ QVariantList LipstickNotification::remoteActions() const
                 }
                 vm.insert(QStringLiteral("arguments"), args);
             }
-
-            rv.append(vm);
         }
+
+        rv.append(vm);
     }
 
     return rv;
