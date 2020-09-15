@@ -187,6 +187,7 @@ void NotificationPreviewPresenter::createWindowIfNecessary()
 bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotification *notification)
 {
     if (notification->restored()
+            || (notification->urgency() == LipstickNotification::Low && !notification->isTransient())
             || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty())) {
         return false;
     }
@@ -197,7 +198,7 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
 
     const bool screenLocked = m_screenLock->isScreenLocked();
     const bool deviceLocked = m_deviceLock->state() >= NemoDeviceLock::DeviceLock::Locked;
-    const bool notificationIsCritical = notification->urgency() >= 2
+    const bool notificationIsCritical = notification->urgency() >= LipstickNotification::Critical
             || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
     const bool notificationIsPublic = notification->hints().value(LipstickNotification::HINT_VISIBILITY).toString()
             .compare(QLatin1String("public"), Qt::CaseInsensitive) == 0;
@@ -243,7 +244,7 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
 
         if (notification) {
             // Ask mce to turn the screen on if requested
-            const bool notificationIsCritical = notification->urgency() >= 2;
+            const bool notificationIsCritical = notification->urgency() >= LipstickNotification::Critical;
             const bool displayOnRequested = notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool()
                     && !m_notificationFeedbackPlayer->doNotDisturbMode();
             const bool notificationCanUnblank
