@@ -13,13 +13,15 @@
 ****************************************************************************/
 
 #include "pulseaudiocontrol.h"
+#include "dbus-gmain/dbus-gmain.h"
+
 #include <QDBusMessage>
 #include <QDBusConnection>
 #include <QDBusArgument>
 #include <QDBusServiceWatcher>
-#include <dbus/dbus-glib-lowlevel.h>
 #include <QTimer>
 #include <QDebug>
+
 
 #define DBUS_ERR_CHECK(err) \
     if (dbus_error_is_set(&err)) \
@@ -111,7 +113,7 @@ void PulseAudioControl::openConnection()
     }
 
     if (m_dbusConnection != NULL) {
-        dbus_connection_setup_with_g_main(m_dbusConnection, NULL);
+        dbus_gmain_set_up_connection(m_dbusConnection, NULL);
         dbus_connection_add_filter(m_dbusConnection, PulseAudioControl::signalHandler, (void *)this, NULL);
 
         addSignalMatch();

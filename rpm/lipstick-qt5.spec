@@ -33,7 +33,6 @@ BuildRequires:  pkgconfig(dsme_dbus_if) >= 0.63.2
 BuildRequires:  pkgconfig(thermalmanager_dbus_if)
 BuildRequires:  pkgconfig(usb_moded)
 BuildRequires:  pkgconfig(dbus-1)
-BuildRequires:  pkgconfig(dbus-glib-1)
 BuildRequires:  pkgconfig(libresourceqt5)
 BuildRequires:  pkgconfig(ngf-qt5)
 BuildRequires:  pkgconfig(systemd)
