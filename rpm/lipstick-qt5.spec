@@ -8,7 +8,7 @@ Summary:    QML toolkit for homescreen creation
 Version:    0.34.7
 Release:    1
 Group:      System/Libraries
-License:    LGPLv2.1
+License:    LGPLv2
 URL:        http://github.com/nemomobile/lipstick
 Source0:    %{name}-%{version}.tar.bz2
 Source1:    %{name}.privileges
@@ -56,7 +56,6 @@ A QML toolkit for homescreen creation
 
 %package devel
 Summary:    Development files for lipstick
-License:    LGPLv2.1
 Requires:   %{name} = %{version}-%{release}
 
 %description devel
@@ -64,7 +63,6 @@ Files useful for building homescreens.
 
 %package tests
 Summary:    Tests for lipstick
-License:    LGPLv2.1
 Requires:   %{name} = %{version}-%{release}
 
 %description tests
@@ -72,7 +70,6 @@ Unit tests for the lipstick package.
 
 %package tools
 Summary:    Tools for lipstick
-License:    LGPLv2.1
 Requires:   %{name} = %{version}-%{release}
 
 %description tools
@@ -80,7 +77,6 @@ Tools for the lipstick package (warning: these tools installed by default).
 
 %package simplecompositor
 Summary:    Lipstick Simple Compositor
-License:    LGPLv2.1
 Requires:   %{name} = %{version}-%{release}
 
 %description simplecompositor
@@ -89,7 +85,6 @@ homescreen and all the other app logic lipstick has.
 
 %package doc
 Summary:    Documentation for lipstick
-License:    LGPLv2.1
 Group:      Documentation
 BuildArch:  noarch
 
@@ -98,7 +93,6 @@ Documentation for the lipstick package.
 
 %package notification-doc
 Summary:    Documentation for lipstick notification services
-License:    LGPLv2.1
 Group:      Documentation
 BuildArch:  noarch
 
@@ -107,7 +101,6 @@ Documentation for the lipstick notification services.
 
 %package ts-devel
 Summary:    Translation files for lipstick
-License:    LGPLv2.1
 Group:      Documentation
 BuildArch:  noarch
 
@@ -147,6 +140,7 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 %files devel
 %defattr(-,root,root,-)
+%license LICENSE.LGPL
 %{_includedir}/%{name}
 %{_libdir}/lib%{name}.so
 %{_libdir}/lib%{name}.prl
