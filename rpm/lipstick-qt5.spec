@@ -7,7 +7,6 @@ Name:       lipstick-qt5
 Summary:    QML toolkit for homescreen creation
 Version:    0.34.7
 Release:    1
-Group:      System/Libraries
 License:    LGPLv2
 URL:        http://github.com/nemomobile/lipstick
 Source0:    %{name}-%{version}.tar.bz2
@@ -84,7 +83,6 @@ homescreen and all the other app logic lipstick has.
 
 %package doc
 Summary:    Documentation for lipstick
-Group:      Documentation
 BuildArch:  noarch
 
 %description doc
@@ -92,7 +90,6 @@ Documentation for the lipstick package.
 
 %package notification-doc
 Summary:    Documentation for lipstick notification services
-Group:      Documentation
 BuildArch:  noarch
 
 %description notification-doc
@@ -100,7 +97,6 @@ Documentation for the lipstick notification services.
 
 %package ts-devel
 Summary:    Translation files for lipstick
-Group:      Documentation
 BuildArch:  noarch
 
 %description ts-devel
