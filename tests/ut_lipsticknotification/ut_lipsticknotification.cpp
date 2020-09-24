@@ -21,6 +21,7 @@
 void Ut_Notification::testGettersAndSetters()
 {
     QString appName = "appName1";
+    QString explicitAppName = "explicitAppName1";
     QString disambiguatedAppName = "appName1-2-3";
     uint id = 1;
     QString appIcon = "appIcon1";
@@ -46,8 +47,9 @@ void Ut_Notification::testGettersAndSetters()
     int expireTimeout = 1;
 
     // Ensure that the constructor puts things in place
-    LipstickNotification notification(appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints, expireTimeout);
+    LipstickNotification notification(appName, explicitAppName, disambiguatedAppName, id, appIcon, summary, body, actions, hints, expireTimeout);
     QCOMPARE(notification.appName(), appName);
+    QCOMPARE(notification.explicitAppName(), explicitAppName);
     QCOMPARE(notification.disambiguatedAppName(), disambiguatedAppName);
     QCOMPARE(notification.id(), id);
     QCOMPARE(notification.appIcon(), appIcon);
@@ -144,18 +146,18 @@ void Ut_Notification::testIcon()
         hints.insert(LipstickNotification::HINT_IMAGE_PATH, imagePath);
     }
 
-    LipstickNotification notification1(QString(), QString(), 0, appIcon, QString(), QString(), QStringList(), hints, 0);
+    LipstickNotification notification1(QString(), QString(), QString(), 0, appIcon, QString(), QString(), QStringList(), hints, 0);
     QCOMPARE(notification1.appIcon(), appIcon);
     QCOMPARE(notification1.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
     QCOMPARE(notification1.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
 
-    LipstickNotification notification2(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), QVariantHash(), 0);
+    LipstickNotification notification2(QString(), QString(), QString(), 0, QString(), QString(), QString(), QStringList(), QVariantHash(), 0);
     notification2.setHints(hints);
     QCOMPARE(notification2.appIcon(), appIcon);
     QCOMPARE(notification2.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
     QCOMPARE(notification2.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
 
-    LipstickNotification notification3(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
+    LipstickNotification notification3(QString(), QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
     QCOMPARE(notification3.appIcon(), appIcon);
     QCOMPARE(notification3.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
     QCOMPARE(notification3.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
@@ -164,7 +166,7 @@ void Ut_Notification::testIcon()
 void Ut_Notification::testSignals()
 {
     QVariantHash hints;
-    LipstickNotification notification(QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
+    LipstickNotification notification(QString(), QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
     QSignalSpy summarySpy(&notification, SIGNAL(summaryChanged()));
     QSignalSpy bodySpy(&notification, SIGNAL(bodyChanged()));
     QSignalSpy appIconSpy(&notification, SIGNAL(appIconChanged()));
@@ -223,7 +225,7 @@ void Ut_Notification::testSerialization()
     hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
     int expireTimeout = 1;
 
-    LipstickNotification n1(appName, appName, id, appIcon, summary, body, actions, hints, expireTimeout);
+    LipstickNotification n1(appName, appName, appName, id, appIcon, summary, body, actions, hints, expireTimeout);
     LipstickNotification n2;
 
     // Transfer a Notification from n1 to n2 by serializing it to a QDBusArgument and unserializing it
