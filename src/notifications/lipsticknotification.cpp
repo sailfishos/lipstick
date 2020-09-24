@@ -279,7 +279,7 @@ QString LipstickNotification::subText() const
 
 int LipstickNotification::urgency() const
 {
-    return m_hints.value(LipstickNotification::HINT_URGENCY).toInt();
+    return m_hints.value(LipstickNotification::HINT_URGENCY, LipstickNotification::Normal).toInt();
 }
 
 int LipstickNotification::itemCount() const
