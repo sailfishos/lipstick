@@ -31,6 +31,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString appName READ appName CONSTANT)
+    Q_PROPERTY(QString explicitAppName READ explicitAppName CONSTANT)
     Q_PROPERTY(QString disambiguatedAppName READ disambiguatedAppName CONSTANT)
     Q_PROPERTY(uint id READ id CONSTANT)
     Q_PROPERTY(QString appIcon READ appIcon NOTIFY appIconChanged)
@@ -143,6 +144,7 @@ public:
      * Creates an object for storing information about a single notification.
      *
      * \param appName name of the application sending the notification
+     * \param explicitAppName name explicitly set on the received notification
      * \param disambiguatedAppName name of the application, decorated to disambiguate names from android and native applications
      * \param id the ID of the notification
      * \param appIcon icon ID of the application sending the notification
@@ -153,8 +155,9 @@ public:
      * \param expireTimeout expiration timeout for the notification
      * \param parent the parent QObject
      */
-    LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id, const QString &appIcon,
-                         const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints,
+    LipstickNotification(const QString &appName, const QString &explicitAppName, const QString &disambiguatedAppName,
+                         uint id, const QString &appIcon, const QString &summary, const QString &body,
+                         const QStringList &actions, const QVariantHash &hints,
                          int expireTimeout, QObject *parent = 0);
 
     /*!
@@ -166,10 +169,12 @@ public:
 
     //! Returns the name of the application sending the notification
     QString appName() const;
+    QString explicitAppName() const;
     QString disambiguatedAppName() const;
 
     //! Sets the name of the application sending the notification
     void setAppName(const QString &appName);
+    void setExplicitAppName(const QString &appName);
     void setDisambiguatedAppName(const QString &disambiguatedAppName);
 
     //! Returns the ID of the notification
@@ -334,6 +339,7 @@ private:
 
     //! Name of the application sending the notification
     QString m_appName;
+    QString m_explicitAppName;
     QString m_disambiguatedAppName;
 
     //! The ID of the notification

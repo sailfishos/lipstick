@@ -89,7 +89,7 @@ LipstickNotification *createNotification(uint id, int urgency = 0, QVariant prio
     if (priority.isValid()) {
         hints.insert(LipstickNotification::HINT_PRIORITY, priority);
     }
-    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", "", id, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", "", "", id, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(id, notification);
     return notification;
 }

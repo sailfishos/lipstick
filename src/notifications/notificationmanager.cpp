@@ -307,7 +307,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     }
 
     LipstickNotification notificationData(
-                appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints_, expireTimeout);
+                appName, appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints_, expireTimeout);
     applyCategoryDefinition(&notificationData);
     hints_ = notificationData.hints();
 
@@ -331,6 +331,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
         }
 
         notification->setAppName(notificationData.appName());
+        notification->setExplicitAppName(notificationData.explicitAppName());
         notification->setDisambiguatedAppName(notificationData.disambiguatedAppName());
         notification->setSummary(notificationData.summary());
         notification->setBody(notificationData.body());
@@ -664,9 +665,10 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
     }
 
     // Add the notification, its actions and its hints to the database
-    execSQL("INSERT INTO notifications VALUES (?, ?, ?, ?, ?, ?, ?)",
+    execSQL("INSERT INTO notifications VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             QVariantList() << id << notification->appName() << notification->appIcon() << notification->summary()
-            << notification->body() << notification->expireTimeout() << notification->disambiguatedAppName());
+            << notification->body() << notification->expireTimeout() << notification->disambiguatedAppName()
+            << notification->explicitAppName());
 
     // every other is identifier and every other the localized name for it
     bool everySecond = false;
@@ -777,55 +779,39 @@ bool NotificationManager::checkTableValidity()
 
     const int databaseVersion(schemaVersion());
 
-    if (databaseVersion == 0) {
-        // Unmodified database - remove any existing notifications, which might cause problems
+    if (databaseVersion < 3) {
+        // All databases this old should have been migrated already.
         qWarning() << "Removing obsolete notifications";
         recreateNotificationsTable = true;
         recreateActionsTable = true;
         recreateHintsTable = true;
         recreateExpirationTable = true;
-    } else if (databaseVersion == 1) {
-        // Check that the table schemas are as expected
-        recreateNotificationsTable = !verifyTableColumns("notifications",
-                                                         QStringList() << "id" << "app_name" << "app_icon" << "summary"
-                                                         << "body" << "expire_timeout");
-        recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action" << "display_name");
-        recreateHintsTable = !verifyTableColumns("hints", QStringList() << "id" << "hint" << "value");
-        recreateExpirationTable = !verifyTableColumns("expiration", QStringList() << "id" << "expire_at");
-
-        // Extend the notifications table with the disambiguated_app_name column
-        QSqlQuery query(*m_database);
-        if (query.exec("ALTER TABLE notifications ADD COLUMN disambiguated_app_name TEXT") &&
-            query.exec("UPDATE notifications SET disambiguated_app_name = app_name")) {
-            qWarning() << "Extended notifications table";
-        } else {
-            qWarning() << "Failed to extend notifications table!";
-            recreateNotificationsTable = true;
-        }
     } else {
-        if (databaseVersion == 2) {
+        if (databaseVersion == 3) {
             QSqlQuery query(*m_database);
-            if (query.exec("ALTER TABLE actions ADD COLUMN display_name TEXT")) {
-                qWarning() << "Extended actions table";
+            if (query.exec("ALTER TABLE notifications ADD COLUMN explicit_app_name TEXT")) {
+                qWarning() << "Extended notifications table";
             } else {
-                qWarning() << "Failed to extend actions table!";
-                recreateActionsTable = true;
+                qWarning() << "Failed to extend notifications table!";
+                recreateNotificationsTable = true;
             }
 
         } else {
+            recreateNotificationsTable = !verifyTableColumns("notifications",
+                                                             QStringList() << "id" << "app_name" << "app_icon" << "summary"
+                                                             << "body" << "expire_timeout" << "disambiguated_app_name" << "explicit_app_name");
             recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action" << "display_name");
         }
 
-        recreateNotificationsTable = !verifyTableColumns("notifications",
-                                                         QStringList() << "id" << "app_name" << "app_icon" << "summary"
-                                                         << "body" << "expire_timeout" << "disambiguated_app_name");
         recreateHintsTable = !verifyTableColumns("hints", QStringList() << "id" << "hint" << "value");
         recreateExpirationTable = !verifyTableColumns("expiration", QStringList() << "id" << "expire_at");
     }
 
     if (recreateNotificationsTable) {
         qWarning() << "Recreating notifications table";
-        result &= recreateTable("notifications", "id INTEGER PRIMARY KEY, app_name TEXT, app_icon TEXT, summary TEXT, body TEXT, expire_timeout INTEGER, disambiguated_app_name TEXT");
+        result &= recreateTable("notifications", "id INTEGER PRIMARY KEY, app_name TEXT, app_icon TEXT, summary TEXT, "
+                                                 "body TEXT, expire_timeout INTEGER, disambiguated_app_name TEXT, "
+                                                 "explicit_app_name TEXT");
     }
     if (recreateActionsTable) {
         qWarning() << "Recreating actions table";
@@ -840,8 +826,8 @@ bool NotificationManager::checkTableValidity()
         result &= recreateTable("expiration", "id INTEGER PRIMARY KEY, expire_at INTEGER");
     }
 
-    if (result && databaseVersion != 3) {
-        if (!setSchemaVersion(3)) {
+    if (result && databaseVersion != 4) {
+        if (!setSchemaVersion(4)) {
             qWarning() << "Unable to set database schema version!";
         }
     }
@@ -968,6 +954,7 @@ void NotificationManager::fetchData(bool update)
     QSqlRecord notificationsRecord = notificationsQuery.record();
     int notificationsTableIdFieldIndex = notificationsRecord.indexOf("id");
     int notificationsTableAppNameFieldIndex = notificationsRecord.indexOf("app_name");
+    int notificationsTableExplicitAppNameFieldIndex = notificationsRecord.indexOf("explicit_app_name");
     int notificationsTableDisambiguatedAppNameFieldIndex = notificationsRecord.indexOf("disambiguated_app_name");
     int notificationsTableAppIconFieldIndex = notificationsRecord.indexOf("app_icon");
     int notificationsTableSummaryFieldIndex = notificationsRecord.indexOf("summary");
@@ -976,6 +963,7 @@ void NotificationManager::fetchData(bool update)
     while (notificationsQuery.next()) {
         const uint id = notificationsQuery.value(notificationsTableIdFieldIndex).toUInt();
         QString appName = notificationsQuery.value(notificationsTableAppNameFieldIndex).toString();
+        QString explicitAppName = notificationsQuery.value(notificationsTableExplicitAppNameFieldIndex).toString();
         QString disambiguatedAppName = notificationsQuery.value(notificationsTableDisambiguatedAppNameFieldIndex).toString();
         QString appIcon = notificationsQuery.value(notificationsTableAppIconFieldIndex).toString();
         QString summary = notificationsQuery.value(notificationsTableSummaryFieldIndex).toString();
@@ -1007,9 +995,9 @@ void NotificationManager::fetchData(bool update)
             }
         }
 
-        LipstickNotification *notification = new LipstickNotification(appName, disambiguatedAppName, id, appIcon,
-                                                                      summary, body, notificationActions, notificationHints,
-                                                                      expireTimeout, this);
+        LipstickNotification *notification = new LipstickNotification(appName, explicitAppName, disambiguatedAppName,
+                                                                      id, appIcon, summary, body, notificationActions,
+                                                                      notificationHints, expireTimeout, this);
         m_notifications.insert(id, notification);
 
         if (id > m_previousNotificationID) {

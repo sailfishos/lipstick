@@ -55,22 +55,24 @@ const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
 const char *LipstickNotification::HINT_VIBRA = "x-nemo-vibrate";
 const char *LipstickNotification::HINT_VISIBILITY = "x-nemo-visibility";
 
-LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
+LipstickNotification::LipstickNotification(const QString &appName, const QString &explicitAppName,
+                                           const QString &disambiguatedAppName, uint id,
                                            const QString &appIcon, const QString &summary, const QString &body,
                                            const QStringList &actions, const QVariantHash &hints, int expireTimeout,
-                                           QObject *parent) :
-    QObject(parent),
-    m_appName(appName),
-    m_disambiguatedAppName(disambiguatedAppName),
-    m_id(id),
-    m_summary(summary),
-    m_body(body),
-    m_actions(actions),
-    m_hints(hints),
-    m_expireTimeout(expireTimeout),
-    m_priority(hints.value(LipstickNotification::HINT_PRIORITY).toInt()),
-    m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch()),
-    m_activeProgressTimer(0)
+                                           QObject *parent)
+    : QObject(parent),
+      m_appName(appName),
+      m_explicitAppName(explicitAppName),
+      m_disambiguatedAppName(disambiguatedAppName),
+      m_id(id),
+      m_summary(summary),
+      m_body(body),
+      m_actions(actions),
+      m_hints(hints),
+      m_expireTimeout(expireTimeout),
+      m_priority(hints.value(LipstickNotification::HINT_PRIORITY).toInt()),
+      m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch()),
+      m_activeProgressTimer(0)
 {
     if (!appIcon.isEmpty()) {
         m_hints.insert(LipstickNotification::HINT_APP_ICON, appIcon);
@@ -78,36 +80,42 @@ LipstickNotification::LipstickNotification(const QString &appName, const QString
     updateHintValues();
 }
 
-LipstickNotification::LipstickNotification(QObject *parent) :
-    QObject(parent),
-    m_id(0),
-    m_expireTimeout(-1),
-    m_priority(0),
-    m_timestamp(0),
-    m_activeProgressTimer(0)
+LipstickNotification::LipstickNotification(QObject *parent)
+    : QObject(parent),
+      m_id(0),
+      m_expireTimeout(-1),
+      m_priority(0),
+      m_timestamp(0),
+      m_activeProgressTimer(0)
 {
 }
 
-LipstickNotification::LipstickNotification(const LipstickNotification &notification) :
-    QObject(notification.parent()),
-    m_appName(notification.m_appName),
-    m_disambiguatedAppName(notification.m_disambiguatedAppName),
-    m_id(notification.m_id),
-    m_summary(notification.m_summary),
-    m_body(notification.m_body),
-    m_actions(notification.m_actions),
-    m_hints(notification.m_hints),
-    m_hintValues(notification.m_hintValues),
-    m_expireTimeout(notification.m_expireTimeout),
-    m_priority(notification.m_priority),
-    m_timestamp(notification.m_timestamp),
-    m_activeProgressTimer(0) // not caring for d-bus serialization
+LipstickNotification::LipstickNotification(const LipstickNotification &notification)
+    : QObject(notification.parent()),
+      m_appName(notification.m_appName),
+      m_explicitAppName(notification.m_explicitAppName),
+      m_disambiguatedAppName(notification.m_disambiguatedAppName),
+      m_id(notification.m_id),
+      m_summary(notification.m_summary),
+      m_body(notification.m_body),
+      m_actions(notification.m_actions),
+      m_hints(notification.m_hints),
+      m_hintValues(notification.m_hintValues),
+      m_expireTimeout(notification.m_expireTimeout),
+      m_priority(notification.m_priority),
+      m_timestamp(notification.m_timestamp),
+      m_activeProgressTimer(0) // not caring for d-bus serialization
 {
 }
 
 QString LipstickNotification::appName() const
 {
     return m_appName;
+}
+
+QString LipstickNotification::explicitAppName() const
+{
+    return m_explicitAppName;
 }
 
 QString LipstickNotification::disambiguatedAppName() const
@@ -118,6 +126,11 @@ QString LipstickNotification::disambiguatedAppName() const
 void LipstickNotification::setAppName(const QString &appName)
 {
     m_appName = appName;
+}
+
+void LipstickNotification::setExplicitAppName(const QString &appName)
+{
+    m_explicitAppName = appName;
 }
 
 void LipstickNotification::setDisambiguatedAppName(const QString &disambiguatedAppName)
