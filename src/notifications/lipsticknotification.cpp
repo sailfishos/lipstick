@@ -194,6 +194,7 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     QString oldCategory = category();
     qreal oldProgress = progress();
     bool oldHasProgress = hasProgress();
+    bool oldIsTransient = isTransient();
 
     m_hints = hints;
     updateHintValues();
@@ -242,6 +243,10 @@ void LipstickNotification::setHints(const QVariantHash &hints)
 
     if (oldProgress != progress()) {
         emit progressChanged();
+    }
+
+    if (oldIsTransient != isTransient()) {
+        emit isTransientChanged();
     }
 
     emit hintsChanged();

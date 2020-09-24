@@ -52,6 +52,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(QString owner READ owner CONSTANT)
     Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
+    Q_PROPERTY(bool isTransient READ isTransient NOTIFY isTransientChanged)
 
 public:
     enum Urgency { Low = 0, Normal = 1, Critical = 2 };
@@ -325,6 +326,8 @@ signals:
 
     void hasProgressChanged();
     void progressChanged();
+
+    void isTransientChanged();
 
 private:
     void updateHintValues();
