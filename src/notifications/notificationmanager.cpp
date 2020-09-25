@@ -199,7 +199,6 @@ QStringList NotificationManager::GetCapabilities()
                          << "actions"
                          << "persistence"
                          << "sound"
-                         << LipstickNotification::HINT_APP_ICON
                          << LipstickNotification::HINT_ITEM_COUNT
                          << LipstickNotification::HINT_TIMESTAMP
                          << LipstickNotification::HINT_PREVIEW_BODY
@@ -391,7 +390,7 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
             notification->setAppName(pidProperties.first);
         }
         if (notification->appIcon().isEmpty() && !pidProperties.second.isEmpty()) {
-            hints_.insert(LipstickNotification::HINT_APP_ICON, pidProperties.second);
+            notification->setAppIcon(pidProperties.second, LipstickNotification::InferredValue);
         }
 
         // Use the summary and body as fallback values for previewSummary and previewBody.
@@ -626,7 +625,7 @@ void NotificationManager::applyCategoryDefinition(LipstickNotification *notifica
             }
         } else if (key == QString("app_icon")) {
             if (notification->appIcon().isEmpty()) {
-                hints.insert(LipstickNotification::HINT_APP_ICON, value);
+                notification->setAppIcon(value, LipstickNotification::CategoryValue);
             }
         } else if (key == QString("summary")) {
             if (notification->summary().isEmpty()) {
@@ -665,10 +664,10 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
     }
 
     // Add the notification, its actions and its hints to the database
-    execSQL("INSERT INTO notifications VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    execSQL("INSERT INTO notifications VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             QVariantList() << id << notification->appName() << notification->appIcon() << notification->summary()
             << notification->body() << notification->expireTimeout() << notification->disambiguatedAppName()
-            << notification->explicitAppName());
+            << notification->explicitAppName() << notification->appIconOrigin());
 
     // every other is identifier and every other the localized name for it
     bool everySecond = false;
@@ -789,17 +788,19 @@ bool NotificationManager::checkTableValidity()
     } else {
         if (databaseVersion == 3) {
             QSqlQuery query(*m_database);
-            if (query.exec("ALTER TABLE notifications ADD COLUMN explicit_app_name TEXT")) {
+            if (query.exec("ALTER TABLE notifications ADD COLUMN explicit_app_name TEXT")
+                    && query.exec("ALTER TABLE notifications ADD COLUMN app_icon_origin INTEGER")) {
                 qWarning() << "Extended notifications table";
             } else {
-                qWarning() << "Failed to extend notifications table!";
+                qWarning() << "Failed to extend notifications table!" << query.lastError();
                 recreateNotificationsTable = true;
             }
 
         } else {
             recreateNotificationsTable = !verifyTableColumns("notifications",
                                                              QStringList() << "id" << "app_name" << "app_icon" << "summary"
-                                                             << "body" << "expire_timeout" << "disambiguated_app_name" << "explicit_app_name");
+                                                             << "body" << "expire_timeout" << "disambiguated_app_name" << "explicit_app_name"
+                                                             << "app_icon_origin");
             recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action" << "display_name");
         }
 
@@ -811,7 +812,7 @@ bool NotificationManager::checkTableValidity()
         qWarning() << "Recreating notifications table";
         result &= recreateTable("notifications", "id INTEGER PRIMARY KEY, app_name TEXT, app_icon TEXT, summary TEXT, "
                                                  "body TEXT, expire_timeout INTEGER, disambiguated_app_name TEXT, "
-                                                 "explicit_app_name TEXT");
+                                                 "explicit_app_name TEXT, app_icon_origin INTEGER");
     }
     if (recreateActionsTable) {
         qWarning() << "Recreating actions table";
@@ -957,15 +958,18 @@ void NotificationManager::fetchData(bool update)
     int notificationsTableExplicitAppNameFieldIndex = notificationsRecord.indexOf("explicit_app_name");
     int notificationsTableDisambiguatedAppNameFieldIndex = notificationsRecord.indexOf("disambiguated_app_name");
     int notificationsTableAppIconFieldIndex = notificationsRecord.indexOf("app_icon");
+    int notificationsTableAppIconOriginFieldIndex = notificationsRecord.indexOf("app_icon_origin");
     int notificationsTableSummaryFieldIndex = notificationsRecord.indexOf("summary");
     int notificationsTableBodyFieldIndex = notificationsRecord.indexOf("body");
     int notificationsTableExpireTimeoutFieldIndex = notificationsRecord.indexOf("expire_timeout");
+
     while (notificationsQuery.next()) {
         const uint id = notificationsQuery.value(notificationsTableIdFieldIndex).toUInt();
         QString appName = notificationsQuery.value(notificationsTableAppNameFieldIndex).toString();
         QString explicitAppName = notificationsQuery.value(notificationsTableExplicitAppNameFieldIndex).toString();
         QString disambiguatedAppName = notificationsQuery.value(notificationsTableDisambiguatedAppNameFieldIndex).toString();
         QString appIcon = notificationsQuery.value(notificationsTableAppIconFieldIndex).toString();
+        int appIconOrigin = notificationsQuery.value(notificationsTableAppIconOriginFieldIndex).toInt();
         QString summary = notificationsQuery.value(notificationsTableSummaryFieldIndex).toString();
         QString body = notificationsQuery.value(notificationsTableBodyFieldIndex).toString();
         int expireTimeout = notificationsQuery.value(notificationsTableExpireTimeoutFieldIndex).toInt();
@@ -996,8 +1000,9 @@ void NotificationManager::fetchData(bool update)
         }
 
         LipstickNotification *notification = new LipstickNotification(appName, explicitAppName, disambiguatedAppName,
-                                                                      id, appIcon, summary, body, notificationActions,
+                                                                      id, QString(), summary, body, notificationActions,
                                                                       notificationHints, expireTimeout, this);
+        notification->setAppIcon(appIcon, appIconOrigin);
         m_notifications.insert(id, notification);
 
         if (id > m_previousNotificationID) {

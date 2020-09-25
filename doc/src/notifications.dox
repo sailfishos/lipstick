@@ -110,7 +110,6 @@
  *   - \c hints should contain the following:
  *       - \c category should be "im.received" to categorize the notification to be related to an instant message
  *       - \c urgency should be 1 (normal) since chat messages are not specifically low or high priority
- *       - \c app_icon should be "icon-lock-chat" to define that the icon with that ID is to be shown on the notification area
  *       - \c x-nemo-preview-summary should match the summary text ("John Doe") in order to show it also on the preview banner
  *       - \c x-nemo-preview-body should match the body text ("Hi!") in order to show it also on the preview banner
  *       - \c x-nemo-timestamp should be set to the time when the chat message was sent (or received, depending on the intended application logic)
@@ -133,7 +132,6 @@
  *   - \c hints should contain the following:
  *       - \c category should be "im.received" to categorize the notification to be related to an instant message
  *       - \c urgency should be 1 (normal) since chat messages are not specifically low or high priority
- *       - \c app_icon should be "icon-lock-chat" to define that the icon with that ID is to be shown on the notification area
  *       - \c x-nemo-item-count should be 2 to make the notification represent two chat messages
  *       - \c x-nemo-preview-summary should contain a brief description about the notification to be shown on the preview banner, like "John Doe"
  *       - \c x-nemo-preview-body should contain informative text about the notification to be shown on the preview banner, like "Are you there?"
@@ -165,7 +163,7 @@
  * When calling Notify() to a display a transient notification, the parameters should be set as follows:
  *   - \c app_name should be a string identifying the sender application, such as the name of its binary, for example. "batterynotifier"
  *   - \c replaces_id should be 0 since the notification is a new one and not related to any existing notification
- *   - \c app_icon should be left empty; it will not be used in this scenario
+ *   - \c app_icon should be "icon-battery-low" to define that the icon with that ID is to be shown on the preview banner
  *   - \c summary should be left empty for nothing to be shown in the events view
  *   - \c body should be left empty for nothing to be shown in the events view
  *   - \c actions should be left empty
@@ -173,7 +171,6 @@
  *       - \c category should be "device" to categorize the notification to be related to the device
  *       - \c urgency should be 2 (critical) to show the notification over the lock screen
  *       - \c transient should be true to automatically close the notification after display
- *       - \c app_icon should be "icon-battery-low" to define that the icon with that ID is to be shown on the preview banner
  *       - \c x-nemo-preview-body should be "Battery low" in order to show it on the preview banner
  *   - \c expire_timeout should be -1 to let the notification manager choose an appropriate expiration time
  *
