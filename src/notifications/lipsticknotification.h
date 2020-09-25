@@ -30,11 +30,13 @@ class QDBusArgument;
 class LIPSTICK_EXPORT LipstickNotification : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(InformationOrigin)
     Q_PROPERTY(QString appName READ appName CONSTANT)
     Q_PROPERTY(QString explicitAppName READ explicitAppName CONSTANT)
     Q_PROPERTY(QString disambiguatedAppName READ disambiguatedAppName CONSTANT)
     Q_PROPERTY(uint id READ id CONSTANT)
     Q_PROPERTY(QString appIcon READ appIcon NOTIFY appIconChanged)
+    Q_PROPERTY(int appIconOrigin READ appIconOrigin NOTIFY appIconOriginChanged)
     Q_PROPERTY(QString summary READ summary NOTIFY summaryChanged)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged)
     Q_PROPERTY(QStringList actions READ actions CONSTANT)
@@ -57,6 +59,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
 
 public:
     enum Urgency { Low = 0, Normal = 1, Critical = 2 };
+    enum InformationOrigin { ExplicitValue, CategoryValue, InferredValue };
 
     //! Standard hint: The urgency level.
     static const char *HINT_URGENCY;
@@ -81,9 +84,6 @@ public:
 
     //! Standard hint: If set, override possible audible feedback sound.
     static const char *HINT_SOUND_FILE;
-
-    //! Standard hint: Icon ID of the application sending the notification.
-    static const char *HINT_APP_ICON;
 
     //! Nemo hint: Item count represented by the notification.
     static const char *HINT_ITEM_COUNT;
@@ -182,6 +182,9 @@ public:
 
     //! Returns the icon ID of the application sending the notification
     QString appIcon() const;
+    void setAppIcon(const QString &appIcon, int source = ExplicitValue);
+
+    int appIconOrigin() const;
 
     //! Returns the summary text for the notification
     QString summary() const;
@@ -301,6 +304,7 @@ signals:
 
     //! Sent when the app icon has been modified
     void appIconChanged();
+    void appIconOriginChanged();
 
     //! Sent when the timestamp has changed
     void timestampChanged();
@@ -344,6 +348,9 @@ private:
 
     //! The ID of the notification
     uint m_id;
+
+    QString m_appIcon;
+    int m_appIconOrigin = ExplicitValue;
 
     //! Summary text for the notification
     QString m_summary;

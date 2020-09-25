@@ -133,13 +133,12 @@ void ShutdownScreen::setUser(uint uid)
 void ShutdownScreen::publishNotification(const QString &icon, const QString &feedback, const QString &body)
 {
     QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_APP_ICON, icon);
     hints.insert(LipstickNotification::HINT_URGENCY, LipstickNotification::Critical);
     hints.insert(LipstickNotification::HINT_TRANSIENT, true);
     hints.insert(LipstickNotification::HINT_FEEDBACK, feedback);
 
     NotificationManager *manager = NotificationManager::instance();
-    manager->Notify(manager->systemApplicationName(), 0, QString(), QString(), body, QStringList(), hints, -1);
+    manager->Notify(manager->systemApplicationName(), 0, icon, QString(), body, QStringList(), hints, -1);
 }
 
 void ShutdownScreen::setShutdownMode(const QString &mode)

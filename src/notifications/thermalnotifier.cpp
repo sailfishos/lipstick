@@ -66,14 +66,13 @@ void ThermalNotifier::publishTemperatureNotification(const QString &body)
     NotificationManager *manager = NotificationManager::instance();
 
     QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_APP_ICON, "icon-system-warning");
     hints.insert(LipstickNotification::HINT_URGENCY, LipstickNotification::Critical);
     hints.insert(LipstickNotification::HINT_TRANSIENT, true);
     hints.insert(LipstickNotification::HINT_FEEDBACK, "general_warning");
 
     manager->Notify(manager->systemApplicationName(),
                     0,
-                    QString(),
+                    QLatin1String("icon-system-warning"),
                     QString(),
                     body,
                     QStringList(),

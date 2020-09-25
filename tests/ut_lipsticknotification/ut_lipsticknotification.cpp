@@ -82,7 +82,6 @@ void Ut_Notification::testGettersAndSetters()
     category = "category2";
     actions = QStringList() << "action2a" << "action2b" << "action2c";
     timestamp = QDateTime::currentDateTime();
-    hints.insert(LipstickNotification::HINT_APP_ICON, appIcon);
     hints.insert(LipstickNotification::HINT_TIMESTAMP, timestamp);
     hints.insert(LipstickNotification::HINT_ITEM_COUNT, itemCount);
     hints.insert(LipstickNotification::HINT_PRIORITY, priority);
@@ -139,27 +138,19 @@ void Ut_Notification::testIcon()
     QFETCH(QString, imagePath);
 
     QVariantHash hints;
-    if (!appIcon.isEmpty()) {
-        hints.insert(LipstickNotification::HINT_APP_ICON, appIcon);
-    }
     if (!imagePath.isEmpty()) {
         hints.insert(LipstickNotification::HINT_IMAGE_PATH, imagePath);
     }
 
     LipstickNotification notification1(QString(), QString(), QString(), 0, appIcon, QString(), QString(), QStringList(), hints, 0);
     QCOMPARE(notification1.appIcon(), appIcon);
-    QCOMPARE(notification1.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
     QCOMPARE(notification1.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
 
     LipstickNotification notification2(QString(), QString(), QString(), 0, QString(), QString(), QString(), QStringList(), QVariantHash(), 0);
     notification2.setHints(hints);
-    QCOMPARE(notification2.appIcon(), appIcon);
-    QCOMPARE(notification2.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
     QCOMPARE(notification2.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
 
     LipstickNotification notification3(QString(), QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
-    QCOMPARE(notification3.appIcon(), appIcon);
-    QCOMPARE(notification3.hints().value(LipstickNotification::HINT_APP_ICON).toString(), appIcon);
     QCOMPARE(notification3.hints().value(LipstickNotification::HINT_IMAGE_PATH).toString(), imagePath);
 }
 
@@ -184,10 +175,6 @@ void Ut_Notification::testSignals()
     QCOMPARE(bodySpy.count(), 1);
     notification.setBody("body");
     QCOMPARE(bodySpy.count(), 1);
-
-    hints.insert(LipstickNotification::HINT_APP_ICON, "app_icon");
-    notification.setHints(hints);
-    QCOMPARE(appIconSpy.count(), 1);
 
     hints.insert(LipstickNotification::HINT_TIMESTAMP, "2012-10-01 18:04:19");
     notification.setHints(hints);
