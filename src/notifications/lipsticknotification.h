@@ -118,9 +118,6 @@ public:
     //! Nemo hint: Whether to turn the screen on when displaying preview
     static const char *HINT_DISPLAY_ON;
 
-    //! Nemo hint: Even if priority suggests it, do not turn display on
-    static const char *HINT_SUPPRESS_DISPLAY_ON;
-
     //! Nemo hint: Indicates the Android package name from which this notification originates
     static const char *HINT_ORIGIN_PACKAGE;
 
