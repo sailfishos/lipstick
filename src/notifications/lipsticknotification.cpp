@@ -35,7 +35,6 @@ const char *LipstickNotification::HINT_IMAGE_PATH = "image-path";
 const char *LipstickNotification::HINT_IMAGE_DATA = "image-data";
 const char *LipstickNotification::HINT_SUPPRESS_SOUND = "suppress-sound";
 const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
-const char *LipstickNotification::HINT_APP_ICON = "app_icon";
 const char *LipstickNotification::HINT_ITEM_COUNT = "x-nemo-item-count";
 const char *LipstickNotification::HINT_PRIORITY = "x-nemo-priority";
 const char *LipstickNotification::HINT_TIMESTAMP = "x-nemo-timestamp";
@@ -55,59 +54,67 @@ const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
 const char *LipstickNotification::HINT_VIBRA = "x-nemo-vibrate";
 const char *LipstickNotification::HINT_VISIBILITY = "x-nemo-visibility";
 
-LipstickNotification::LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id,
+LipstickNotification::LipstickNotification(const QString &appName, const QString &explicitAppName,
+                                           const QString &disambiguatedAppName, uint id,
                                            const QString &appIcon, const QString &summary, const QString &body,
                                            const QStringList &actions, const QVariantHash &hints, int expireTimeout,
-                                           QObject *parent) :
-    QObject(parent),
-    m_appName(appName),
-    m_disambiguatedAppName(disambiguatedAppName),
-    m_id(id),
-    m_summary(summary),
-    m_body(body),
-    m_actions(actions),
-    m_hints(hints),
-    m_expireTimeout(expireTimeout),
-    m_priority(hints.value(LipstickNotification::HINT_PRIORITY).toInt()),
-    m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch()),
-    m_activeProgressTimer(0)
+                                           QObject *parent)
+    : QObject(parent),
+      m_appName(appName),
+      m_explicitAppName(explicitAppName),
+      m_disambiguatedAppName(disambiguatedAppName),
+      m_id(id),
+      m_appIcon(appIcon),
+      m_summary(summary),
+      m_body(body),
+      m_actions(actions),
+      m_hints(hints),
+      m_expireTimeout(expireTimeout),
+      m_priority(hints.value(LipstickNotification::HINT_PRIORITY).toInt()),
+      m_timestamp(hints.value(LipstickNotification::HINT_TIMESTAMP).toDateTime().toMSecsSinceEpoch()),
+      m_activeProgressTimer(0)
 {
-    if (!appIcon.isEmpty()) {
-        m_hints.insert(LipstickNotification::HINT_APP_ICON, appIcon);
-    }
     updateHintValues();
 }
 
-LipstickNotification::LipstickNotification(QObject *parent) :
-    QObject(parent),
-    m_id(0),
-    m_expireTimeout(-1),
-    m_priority(0),
-    m_timestamp(0),
-    m_activeProgressTimer(0)
+LipstickNotification::LipstickNotification(QObject *parent)
+    : QObject(parent),
+      m_id(0),
+      m_expireTimeout(-1),
+      m_priority(0),
+      m_timestamp(0),
+      m_activeProgressTimer(0)
 {
 }
 
-LipstickNotification::LipstickNotification(const LipstickNotification &notification) :
-    QObject(notification.parent()),
-    m_appName(notification.m_appName),
-    m_disambiguatedAppName(notification.m_disambiguatedAppName),
-    m_id(notification.m_id),
-    m_summary(notification.m_summary),
-    m_body(notification.m_body),
-    m_actions(notification.m_actions),
-    m_hints(notification.m_hints),
-    m_hintValues(notification.m_hintValues),
-    m_expireTimeout(notification.m_expireTimeout),
-    m_priority(notification.m_priority),
-    m_timestamp(notification.m_timestamp),
-    m_activeProgressTimer(0) // not caring for d-bus serialization
+LipstickNotification::LipstickNotification(const LipstickNotification &notification)
+    : QObject(notification.parent()),
+      m_appName(notification.m_appName),
+      m_explicitAppName(notification.m_explicitAppName),
+      m_disambiguatedAppName(notification.m_disambiguatedAppName),
+      m_id(notification.m_id),
+      m_appIcon(notification.m_appIcon),
+      m_appIconOrigin(notification.m_appIconOrigin),
+      m_summary(notification.m_summary),
+      m_body(notification.m_body),
+      m_actions(notification.m_actions),
+      m_hints(notification.m_hints),
+      m_hintValues(notification.m_hintValues),
+      m_expireTimeout(notification.m_expireTimeout),
+      m_priority(notification.m_priority),
+      m_timestamp(notification.m_timestamp),
+      m_activeProgressTimer(0) // not caring for d-bus serialization
 {
 }
 
 QString LipstickNotification::appName() const
 {
     return m_appName;
+}
+
+QString LipstickNotification::explicitAppName() const
+{
+    return m_explicitAppName;
 }
 
 QString LipstickNotification::disambiguatedAppName() const
@@ -118,6 +125,11 @@ QString LipstickNotification::disambiguatedAppName() const
 void LipstickNotification::setAppName(const QString &appName)
 {
     m_appName = appName;
+}
+
+void LipstickNotification::setExplicitAppName(const QString &appName)
+{
+    m_explicitAppName = appName;
 }
 
 void LipstickNotification::setDisambiguatedAppName(const QString &disambiguatedAppName)
@@ -132,7 +144,33 @@ uint LipstickNotification::id() const
 
 QString LipstickNotification::appIcon() const
 {
-    return m_hints.value(LipstickNotification::HINT_APP_ICON).toString();
+    return m_appIcon;
+}
+
+void LipstickNotification::setAppIcon(const QString &appIcon, int source)
+{
+    bool iconChanged = false;
+    bool sourceChanged = false;
+
+    if (appIcon != m_appIcon) {
+        m_appIcon = appIcon;
+    }
+
+    if (source != m_appIconOrigin) {
+        m_appIconOrigin = source;
+    }
+
+    if (iconChanged) {
+        emit appIconChanged();
+    }
+    if (sourceChanged) {
+        emit appIconOriginChanged();
+    }
+}
+
+int LipstickNotification::appIconOrigin() const
+{
+    return m_appIconOrigin;
 }
 
 QString LipstickNotification::summary() const
@@ -194,6 +232,7 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     QString oldCategory = category();
     qreal oldProgress = progress();
     bool oldHasProgress = hasProgress();
+    bool oldIsTransient = isTransient();
 
     m_hints = hints;
     updateHintValues();
@@ -242,6 +281,10 @@ void LipstickNotification::setHints(const QVariantHash &hints)
 
     if (oldProgress != progress()) {
         emit progressChanged();
+    }
+
+    if (oldIsTransient != isTransient()) {
+        emit isTransientChanged();
     }
 
     emit hintsChanged();
@@ -432,16 +475,15 @@ void LipstickNotification::updateHintValues()
 
         if (hint == HINT_ICON) {
             qWarning() << "Notification sets deprecated hint" << HINT_ICON
-                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "or"
+                       << "to" << it.value() << ", use app_icon parameter or"
                        << LipstickNotification::HINT_IMAGE_PATH << "instead";
         } else if (hint == HINT_PREVIEW_ICON) {
             qWarning() << "Notification sets deprecated hint" << HINT_PREVIEW_ICON
-                       << "to" << it.value() << ", use" << LipstickNotification::HINT_APP_ICON << "or"
+                       << "to" << it.value() << ", use app_icon parameter or"
                        << LipstickNotification::HINT_IMAGE_PATH << "instead";
         }
 
-        if (hint.compare(LipstickNotification::HINT_APP_ICON, Qt::CaseInsensitive) != 0 &&
-            hint.compare(LipstickNotification::HINT_TIMESTAMP, Qt::CaseInsensitive) != 0 &&
+        if (hint.compare(LipstickNotification::HINT_TIMESTAMP, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_SUMMARY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PREVIEW_BODY, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_SUB_TEXT, Qt::CaseInsensitive) != 0 &&
@@ -464,6 +506,7 @@ QDBusArgument &operator<<(QDBusArgument &argument, const LipstickNotification &n
     argument.beginStructure();
     argument << notification.m_appName;
     argument << notification.m_id;
+    argument << notification.m_appIcon;
     argument << notification.m_summary;
     argument << notification.m_body;
     argument << notification.m_actions;
@@ -478,6 +521,7 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, LipstickNotificat
     argument.beginStructure();
     argument >> notification.m_appName;
     argument >> notification.m_id;
+    argument >> notification.m_appIcon;
     argument >> notification.m_summary;
     argument >> notification.m_body;
     argument >> notification.m_actions;

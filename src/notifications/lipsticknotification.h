@@ -30,10 +30,13 @@ class QDBusArgument;
 class LIPSTICK_EXPORT LipstickNotification : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(InformationOrigin)
     Q_PROPERTY(QString appName READ appName CONSTANT)
+    Q_PROPERTY(QString explicitAppName READ explicitAppName CONSTANT)
     Q_PROPERTY(QString disambiguatedAppName READ disambiguatedAppName CONSTANT)
     Q_PROPERTY(uint id READ id CONSTANT)
     Q_PROPERTY(QString appIcon READ appIcon NOTIFY appIconChanged)
+    Q_PROPERTY(int appIconOrigin READ appIconOrigin NOTIFY appIconOriginChanged)
     Q_PROPERTY(QString summary READ summary NOTIFY summaryChanged)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged)
     Q_PROPERTY(QStringList actions READ actions CONSTANT)
@@ -52,9 +55,11 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(QString owner READ owner CONSTANT)
     Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
+    Q_PROPERTY(bool isTransient READ isTransient NOTIFY isTransientChanged)
 
 public:
     enum Urgency { Low = 0, Normal = 1, Critical = 2 };
+    enum InformationOrigin { ExplicitValue, CategoryValue, InferredValue };
 
     //! Standard hint: The urgency level.
     static const char *HINT_URGENCY;
@@ -79,9 +84,6 @@ public:
 
     //! Standard hint: If set, override possible audible feedback sound.
     static const char *HINT_SOUND_FILE;
-
-    //! Standard hint: Icon ID of the application sending the notification.
-    static const char *HINT_APP_ICON;
 
     //! Nemo hint: Item count represented by the notification.
     static const char *HINT_ITEM_COUNT;
@@ -142,6 +144,7 @@ public:
      * Creates an object for storing information about a single notification.
      *
      * \param appName name of the application sending the notification
+     * \param explicitAppName name explicitly set on the received notification
      * \param disambiguatedAppName name of the application, decorated to disambiguate names from android and native applications
      * \param id the ID of the notification
      * \param appIcon icon ID of the application sending the notification
@@ -152,8 +155,9 @@ public:
      * \param expireTimeout expiration timeout for the notification
      * \param parent the parent QObject
      */
-    LipstickNotification(const QString &appName, const QString &disambiguatedAppName, uint id, const QString &appIcon,
-                         const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints,
+    LipstickNotification(const QString &appName, const QString &explicitAppName, const QString &disambiguatedAppName,
+                         uint id, const QString &appIcon, const QString &summary, const QString &body,
+                         const QStringList &actions, const QVariantHash &hints,
                          int expireTimeout, QObject *parent = 0);
 
     /*!
@@ -165,10 +169,12 @@ public:
 
     //! Returns the name of the application sending the notification
     QString appName() const;
+    QString explicitAppName() const;
     QString disambiguatedAppName() const;
 
     //! Sets the name of the application sending the notification
     void setAppName(const QString &appName);
+    void setExplicitAppName(const QString &appName);
     void setDisambiguatedAppName(const QString &disambiguatedAppName);
 
     //! Returns the ID of the notification
@@ -176,6 +182,9 @@ public:
 
     //! Returns the icon ID of the application sending the notification
     QString appIcon() const;
+    void setAppIcon(const QString &appIcon, int source = ExplicitValue);
+
+    int appIconOrigin() const;
 
     //! Returns the summary text for the notification
     QString summary() const;
@@ -295,6 +304,7 @@ signals:
 
     //! Sent when the app icon has been modified
     void appIconChanged();
+    void appIconOriginChanged();
 
     //! Sent when the timestamp has changed
     void timestampChanged();
@@ -326,15 +336,21 @@ signals:
     void hasProgressChanged();
     void progressChanged();
 
+    void isTransientChanged();
+
 private:
     void updateHintValues();
 
     //! Name of the application sending the notification
     QString m_appName;
+    QString m_explicitAppName;
     QString m_disambiguatedAppName;
 
     //! The ID of the notification
     uint m_id;
+
+    QString m_appIcon;
+    int m_appIconOrigin = ExplicitValue;
 
     //! Summary text for the notification
     QString m_summary;
