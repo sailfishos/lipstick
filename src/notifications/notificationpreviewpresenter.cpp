@@ -247,10 +247,8 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
             const bool notificationIsCritical = notification->urgency() >= LipstickNotification::Critical;
             const bool displayOnRequested = notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool()
                     && !m_notificationFeedbackPlayer->doNotDisturbMode();
-            const bool notificationCanUnblank
-                    = !notification->hints().value(LipstickNotification::HINT_SUPPRESS_DISPLAY_ON).toBool();
 
-            if ((notificationIsCritical || displayOnRequested) && notificationCanUnblank) {
+            if ((notificationIsCritical || displayOnRequested)) {
                 QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->id());
                 QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,
                                                                   MCE_NOTIFICATION_BEGIN);
