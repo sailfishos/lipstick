@@ -64,9 +64,18 @@ void NotificationFeedbackPlayer::addNotification(uint id)
 
         // Play the feedback related to the notification if any
         const QString feedback = notification->hints().value(LipstickNotification::HINT_FEEDBACK).toString();
-        const QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
+        QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
 
-        if (isEnabled(notification, m_minimumPriority) && !feedbackItems.isEmpty()) {
+        int minimumPriority = m_minimumPriority;
+
+        if (feedbackItems.isEmpty() && isEnabled(notification, 0)) {
+            // Add generic feedback type
+            feedbackItems << "default";
+            // Play default feedback regardless of priorities
+            minimumPriority = 0;
+        }
+
+        if (isEnabled(notification, minimumPriority) && !feedbackItems.isEmpty()) {
             QMap<QString, QVariant> properties;
             if (notification->body().isEmpty() && notification->summary().isEmpty()) {
                 properties.insert("media.leds", false);
