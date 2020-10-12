@@ -232,6 +232,7 @@ void LipstickNotification::setHints(const QVariantHash &hints)
     qreal oldProgress = progress();
     bool oldHasProgress = hasProgress();
     bool oldIsTransient = isTransient();
+    QString oldColor = color();
 
     m_hints = hints;
     updateHintValues();
@@ -284,6 +285,10 @@ void LipstickNotification::setHints(const QVariantHash &hints)
 
     if (oldIsTransient != isTransient()) {
         emit isTransientChanged();
+    }
+
+    if (oldColor != color()) {
+        emit colorChanged();
     }
 
     emit hintsChanged();
@@ -342,6 +347,11 @@ QString LipstickNotification::category() const
 bool LipstickNotification::isTransient() const
 {
     return m_hints.value(LipstickNotification::HINT_TRANSIENT).toBool();
+}
+
+QString LipstickNotification::color() const
+{
+    return m_hints.value(QLatin1String("x-nemo-color")).toString();
 }
 
 bool LipstickNotification::isUserRemovable() const
