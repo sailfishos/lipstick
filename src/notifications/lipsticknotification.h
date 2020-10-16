@@ -56,6 +56,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
     Q_PROPERTY(bool isTransient READ isTransient NOTIFY isTransientChanged)
+    Q_PROPERTY(QString color READ color NOTIFY colorChanged)
 
 public:
     enum Urgency { Low = 0, Normal = 1, Critical = 2 };
@@ -241,6 +242,9 @@ public:
     //! Returns whether the notification is transient
     bool isTransient() const;
 
+    //! Returns the color set for notification, commonly just for Android compatibility
+    QString color() const;
+
     //! Returns the user removability of the notification
     bool isUserRemovable() const;
 
@@ -334,6 +338,7 @@ signals:
     void progressChanged();
 
     void isTransientChanged();
+    void colorChanged();
 
 private:
     void updateHintValues();
