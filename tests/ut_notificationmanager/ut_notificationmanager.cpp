@@ -63,17 +63,13 @@ void Ut_NotificationManager::testCapabilities()
     QCOMPARE((bool)capabilities.contains("actions"), true);
     QCOMPARE((bool)capabilities.contains("persistence"), true);
     QCOMPARE((bool)capabilities.contains("sound"), true);
-    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ICON), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ITEM_COUNT), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_TIMESTAMP), true);
-    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_PREVIEW_ICON), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_PREVIEW_BODY), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_PREVIEW_SUMMARY), true);
     QCOMPARE((bool)capabilities.contains("x-nemo-remote-actions"), true);
     QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_USER_REMOVABLE), true);
     QCOMPARE((bool)capabilities.contains("x-nemo-get-notifications"), true);
-    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_ORIGIN), true);
-    QCOMPARE((bool)capabilities.contains(LipstickNotification::HINT_MAX_CONTENT_LINES), true);
 }
 
 void Ut_NotificationManager::testRemovingInexistingNotification()

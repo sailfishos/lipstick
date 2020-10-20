@@ -23,6 +23,7 @@
 #include "utilities/closeeventeater.h"
 #include "notifications/notificationmanager.h"
 #include "notifications/lipsticknotification.h"
+#include "notifications/thermalnotifier.h"
 #include "homeapplication.h"
 #include "shutdownscreen.h"
 #include "lipstickqmlpath.h"
@@ -82,17 +83,17 @@ void ShutdownScreen::applySystemState(DeviceState::DeviceState::StateIndication 
 
         case DeviceState::DeviceState::ThermalStateFatal:
             //% "Temperature too high. Device shutting down."
-            createAndPublishNotification("x-nemo.battery.temperature", qtTrId("qtn_shut_high_temp"));
+            ThermalNotifier::publishTemperatureNotification(qtTrId("qtn_shut_high_temp"));
             break;
 
         case DeviceState::DeviceState::ShutdownDeniedUSB:
             //% "USB cable plugged in. Unplug the USB cable to shutdown."
-            createAndPublishNotification("device.added", qtTrId("qtn_shut_unplug_usb"));
+            publishNotification("icon-system-usb", "accessory_connected", qtTrId("qtn_shut_unplug_usb"));
             break;
 
         case DeviceState::DeviceState::BatteryStateEmpty:
             //% "Battery empty. Device shutting down."
-            createAndPublishNotification("x-nemo.battery.shutdown", qtTrId("qtn_shut_batt_empty"));
+            publishNotification("icon-system-battery", "battery_empty", qtTrId("qtn_shut_batt_empty"));
             break;
 
         case DeviceState::DeviceState::Reboot:
@@ -129,13 +130,15 @@ void ShutdownScreen::setUser(uint uid)
     m_user = uid;
 }
 
-void ShutdownScreen::createAndPublishNotification(const QString &category, const QString &body)
+void ShutdownScreen::publishNotification(const QString &icon, const QString &feedback, const QString &body)
 {
-    NotificationManager *manager = NotificationManager::instance();
     QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_CATEGORY, category);
-    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
-    manager->Notify(manager->systemApplicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
+    hints.insert(LipstickNotification::HINT_URGENCY, LipstickNotification::Critical);
+    hints.insert(LipstickNotification::HINT_TRANSIENT, true);
+    hints.insert(LipstickNotification::HINT_FEEDBACK, feedback);
+
+    NotificationManager *manager = NotificationManager::instance();
+    manager->Notify(manager->systemApplicationName(), 0, icon, QString(), body, QStringList(), hints, -1);
 }
 
 void ShutdownScreen::setShutdownMode(const QString &mode)

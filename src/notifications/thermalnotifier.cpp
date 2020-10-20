@@ -32,15 +32,15 @@ void ThermalNotifier::applyThermalState(DeviceState::Thermal::ThermalState state
     switch (state) {
     case DeviceState::Thermal::Warning:
         //% "Device is getting hot. Close all apps."
-        createAndPublishNotification("x-nemo.battery.temperature", qtTrId("qtn_shut_high_temp_warning"));
+        publishTemperatureNotification(qtTrId("qtn_shut_high_temp_warning"));
         break;
     case DeviceState::Thermal::Alert:
         //% "Device is overheating. turn it off."
-        createAndPublishNotification("x-nemo.battery.temperature", qtTrId("qtn_shut_high_temp_alert"));
+        publishTemperatureNotification(qtTrId("qtn_shut_high_temp_alert"));
         break;
     case DeviceState::Thermal::LowTemperatureWarning:
         //% "Low temperature warning"
-        createAndPublishNotification("x-nemo.battery.temperature", qtTrId("qtn_shut_low_temp_warning"));
+        publishTemperatureNotification(qtTrId("qtn_shut_low_temp_warning"));
         break;
     default:
         break;
@@ -61,11 +61,21 @@ void ThermalNotifier::applyDisplayState(DeviceState::DisplayStateMonitor::Displa
     }
 }
 
-void ThermalNotifier::createAndPublishNotification(const QString &category, const QString &body)
+void ThermalNotifier::publishTemperatureNotification(const QString &body)
 {
     NotificationManager *manager = NotificationManager::instance();
+
     QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_CATEGORY, category);
-    hints.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
-    manager->Notify(manager->systemApplicationName(), 0, QString(), QString(), QString(), QStringList(), hints, -1);
+    hints.insert(LipstickNotification::HINT_URGENCY, LipstickNotification::Critical);
+    hints.insert(LipstickNotification::HINT_TRANSIENT, true);
+    hints.insert(LipstickNotification::HINT_FEEDBACK, "general_warning");
+
+    manager->Notify(manager->systemApplicationName(),
+                    0,
+                    QLatin1String("icon-system-warning"),
+                    QString(),
+                    body,
+                    QStringList(),
+                    hints,
+                    -1);
 }

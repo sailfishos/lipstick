@@ -35,7 +35,6 @@ private slots:
     void testAddAndRemoveNotification();
     void testWithoutFeedbackId();
     void testMultipleFeedbackIds();
-    void testHiddenNotification();
     void testNotificationSoundSuppressed();
     void testUpdateNotification();
     void testUpdateNotificationAfterRestart();
@@ -43,8 +42,6 @@ private slots:
     void testNotificationPreviewsDisabled();
     void testNotificationPriority_data();
     void testNotificationPriority();
-    void testLEDDisabledWhenNoSummaryAndBody_data();
-    void testLEDDisabledWhenNoSummaryAndBody();
 
 private:
     NotificationFeedbackPlayer *player;

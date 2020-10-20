@@ -89,7 +89,7 @@ LipstickNotification *createNotification(uint id, int urgency = 0, QVariant prio
     if (priority.isValid()) {
         hints.insert(LipstickNotification::HINT_PRIORITY, priority);
     }
-    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", "", id, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", "", "", id, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(id, notification);
     return notification;
 }
@@ -198,19 +198,6 @@ void Ut_NotificationFeedbackPlayer::testMultipleFeedbackIds()
     eventIds.insert(gClientStub->stubCallsTo("stop").at(2)->parameter<quint32>(0));
     eventIds.insert(gClientStub->stubCallsTo("stop").at(3)->parameter<quint32>(0));
     QCOMPARE(eventIds, QSet<quint32>() << 1 << 2);
-}
-
-void Ut_NotificationFeedbackPlayer::testHiddenNotification()
-{
-    // Create a notification
-    LipstickNotification *notification = createNotification(1);
-    QVariantHash hints(notification->hints());
-    hints.insert(LipstickNotification::HINT_HIDDEN, true);
-    notification->setHints(hints);
-    player->addNotification(1);
-
-    // Check that NGFAdapter::play() was not called for the feedback
-    QCOMPARE(gClientStub->stubCallCount("play"), 0);
 }
 
 void Ut_NotificationFeedbackPlayer::testNotificationSoundSuppressed()
@@ -376,52 +363,6 @@ void Ut_NotificationFeedbackPlayer::testNotificationPriority()
     player->addNotification(1);
 
     QCOMPARE(gClientStub->stubCallCount("play"), playCount);
-}
-
-void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody_data()
-{
-    QTest::addColumn<QVariant>("disableHint");
-    QTest::addColumn<bool>("mediaParametersDefined");
-
-    QTest::newRow("LED disabled without body and summary not defined") << QVariant() << true;
-    QTest::newRow("LED disabled without body and summary false") << QVariant(false) << false;
-    QTest::newRow("LED disabled without body and summary true") << QVariant(true) << true;
-}
-
-void Ut_NotificationFeedbackPlayer::testLEDDisabledWhenNoSummaryAndBody()
-{
-    QFETCH(QVariant, disableHint);
-    QFETCH(bool, mediaParametersDefined);
-
-    QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_FEEDBACK, "feedback");
-    if (disableHint.isValid()) {
-        hints.insert(LipstickNotification::HINT_LED_DISABLED_WITHOUT_BODY_AND_SUMMARY, disableHint);
-    }
-    LipstickNotification *notification1 = new LipstickNotification("ut_notificationfeedbackplayer", "", 1, "", "", "", QStringList(), hints, -1);
-    LipstickNotification *notification2 = new LipstickNotification("ut_notificationfeedbackplayer", "", 2, "", "summary", "", QStringList(), hints, -1);
-    LipstickNotification *notification3 = new LipstickNotification("ut_notificationfeedbackplayer", "", 3, "", "", "body", QStringList(), hints, -1);
-    notificationManagerNotification.insert(1, notification1);
-    notificationManagerNotification.insert(2, notification2);
-    notificationManagerNotification.insert(3, notification3);
-
-    player->addNotification(1);
-    QCOMPARE(gClientStub->stubCallCount("play"), 1);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).contains("media.leds"), mediaParametersDefined);
-    if (mediaParametersDefined) {
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.leds").toBool(), false);
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.audio").toBool(), true);
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.vibra").toBool(), true);
-        QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).value("media.backlight").toBool(), true);
-    }
-
-    player->addNotification(2);
-    QCOMPARE(gClientStub->stubCallCount("play"), 2);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).isEmpty(), true);
-
-    player->addNotification(3);
-    QCOMPARE(gClientStub->stubCallCount("play"), 3);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QVariantMap>(1).isEmpty(), true);
 }
 
 QTEST_MAIN(Ut_NotificationFeedbackPlayer)

@@ -48,7 +48,7 @@ void Ut_NotificationListModel::testSignalConnections()
 
 void Ut_NotificationListModel::testModelPopulatesOnConstruction()
 {
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
@@ -59,7 +59,7 @@ void Ut_NotificationListModel::testModelPopulatesOnConstruction()
 
 void Ut_NotificationListModel::testNotificationIsOnlyAddedIfNotAlreadyAdded()
 {
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
@@ -84,27 +84,16 @@ void Ut_NotificationListModel::testNotificationIsNotAddedIfNoSummaryOrBody()
     QFETCH(QString, body);
     QFETCH(int, addItemCount);
 
-    LipstickNotification notification("appName", "appName", 1, "appIcon", summary, body, QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", summary, body, QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
     QCOMPARE(model.itemCount(), addItemCount);
 }
 
-void Ut_NotificationListModel::testNotificationIsNotAddedIfHidden()
-{
-    QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_HIDDEN, true);
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", hints, 1);
-    gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
-    gNotificationManagerStub->stubSetReturnValue("notification", &notification);
-    NotificationListModel model;
-    QCOMPARE(model.itemCount(), 0);
-}
-
 void Ut_NotificationListModel::testAlreadyAddedNotificationIsRemovedIfNoLongerAddable()
 {
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "", "", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "", "", QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
@@ -113,7 +102,7 @@ void Ut_NotificationListModel::testAlreadyAddedNotificationIsRemovedIfNoLongerAd
 
 void Ut_NotificationListModel::testNotificationRemoval()
 {
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
     model.removeNotification(1);
@@ -130,9 +119,9 @@ void Ut_NotificationListModel::testNotificationOrdering()
     hints1.insert(LipstickNotification::HINT_TIMESTAMP, QDateTime(QDate(2013, 1, 1), QTime(12, 34, 56)));
     hints2.insert(LipstickNotification::HINT_TIMESTAMP, QDateTime(QDate(2013, 1, 3), QTime(12, 34, 56)));
     hints3.insert(LipstickNotification::HINT_TIMESTAMP, QDateTime(QDate(2013, 1, 5), QTime(12, 34, 56)));
-    LipstickNotification notification1("appName1", "appName1", 1, "appIcon1", "summary1", "body1", QStringList() << "action1", hints1, 1);
-    LipstickNotification notification2("appName2", "appName2", 2, "appIcon2", "summary2", "body2", QStringList() << "action2", hints2, 1);
-    LipstickNotification notification3("appName3", "appName3", 3, "appIcon3", "summary3", "body3", QStringList() << "action3", hints3, 1);
+    LipstickNotification notification1("appName1", "appName1", "appName1", 1, "appIcon1", "summary1", "body1", QStringList() << "action1", hints1, 1);
+    LipstickNotification notification2("appName2", "appName2", "appName2", 2, "appIcon2", "summary2", "body2", QStringList() << "action2", hints2, 1);
+    LipstickNotification notification3("appName3", "appName3", "appName3", 3, "appIcon3", "summary3", "body3", QStringList() << "action3", hints3, 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification1);
     model.updateNotification(1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification3);
@@ -163,7 +152,7 @@ void Ut_NotificationListModel::testNotificationOrdering()
 
 void Ut_NotificationListModel::testNotificationUpdate()
 {
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
 
@@ -203,7 +192,7 @@ void Ut_NotificationListModel::testRemoteActions()
     hints.insert(LipstickNotification::HINT_REMOTE_ACTION_PREFIX + QStringLiteral("default"), "dbus-call-default-action");
     hints.insert(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX + QStringLiteral("default"), "icon-s-default");
     hints.insert(LipstickNotification::HINT_REMOTE_ACTION_PREFIX + QStringLiteral("alternate"), "dbus-call-alternate-action");
-    LipstickNotification notification("appName", "appName", 1, "appIcon", "summary", "body", actions, hints, 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", actions, hints, 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
 
