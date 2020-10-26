@@ -168,7 +168,10 @@ QStringList LipstickNotification::actions() const
 
 void LipstickNotification::setActions(const QStringList &actions)
 {
-    m_actions = actions;
+    if (m_actions != actions) {
+        m_actions = actions;
+        emit remoteActionsChanged();
+    }
 }
 
 QVariantHash LipstickNotification::hints() const
