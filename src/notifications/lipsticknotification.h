@@ -51,7 +51,7 @@ class LIPSTICK_EXPORT LipstickNotification : public QObject
     Q_PROPERTY(int priority READ priority NOTIFY priorityChanged)
     Q_PROPERTY(QString category READ category NOTIFY categoryChanged)
     Q_PROPERTY(bool userRemovable READ isUserRemovable NOTIFY userRemovableChanged)
-    Q_PROPERTY(QVariantList remoteActions READ remoteActions CONSTANT)
+    Q_PROPERTY(QVariantList remoteActions READ remoteActions NOTIFY remoteActionsChanged)
     Q_PROPERTY(QString owner READ owner CONSTANT)
     Q_PROPERTY(qreal progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(bool hasProgress READ hasProgress NOTIFY hasProgressChanged)
@@ -333,6 +333,9 @@ signals:
 
     //! Sent when the user removability has been modified
     void userRemovableChanged();
+
+    //! Sent when the remote actions have been modified
+    void remoteActionsChanged();
 
     void hasProgressChanged();
     void progressChanged();
