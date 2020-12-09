@@ -25,7 +25,7 @@
 extern "C"
 {
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib-lowlevel.h>
+#include "dbus-gmain/dbus-gmain.h"
 }
 
 #include <policy/resource-set.h>
