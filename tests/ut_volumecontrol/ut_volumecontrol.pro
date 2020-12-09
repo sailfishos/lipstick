@@ -2,7 +2,7 @@ include(../common.pri)
 TARGET = ut_volumecontrol
 INCLUDEPATH += $$VOLUMESRCDIR $$UTILITYSRCDIR $$3RDPARTYSRCDIR
 CONFIG += link_pkgconfig
-PKGCONFIG += dbus-1 dbus-glib-1 libresourceqt5
+PKGCONFIG += dbus-1 libresourceqt5 glib-2.0
 QT += dbus qml quick
 QMAKE_CXXFLAGS += `pkg-config --cflags-only-I mlite5`
 

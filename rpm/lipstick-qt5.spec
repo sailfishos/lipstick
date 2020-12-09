@@ -40,6 +40,7 @@ BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.8
 BuildRequires:  pkgconfig(systemsettings) >= 0.5.28
 BuildRequires:  pkgconfig(nemodevicelock)
 BuildRequires:  pkgconfig(sailfishusermanager)
+BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  qt5-qtgui-devel >= 5.2.1+git24
 BuildRequires:  qt5-qtwayland-wayland_egl-devel >= 5.4.0+git26

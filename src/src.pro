@@ -142,6 +142,7 @@ CONFIG -= link_prl
 PKGCONFIG += \
     dbus-1 \
     dsme_dbus_if \
+    glib-2.0 \
     keepalive \
     libresourceqt5 \
     libsystemd \
