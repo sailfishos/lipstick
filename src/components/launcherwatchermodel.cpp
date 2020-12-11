@@ -50,7 +50,9 @@ void LauncherWatcherModel::setFilePaths(const QStringList &paths)
             m_fileSystemWatcher.removePath(directory);
     }
 
-    m_fileSystemWatcher.addPaths(directories);
+    if (directories.length() > 0) {
+        m_fileSystemWatcher.addPaths(directories);
+    }
 
     emit filePathsChanged();
 }
