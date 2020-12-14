@@ -44,7 +44,8 @@ public:
      * \param categoryDefinitionsPath The path where the different category definitions are defined
      * \param maxStoredCategoryDefinitions The maximum number of category definitions to keep in memory
      */
-    explicit CategoryDefinitionStore(const QString &categoryDefinitionsPath, uint maxStoredCategoryDefinitions = 100, QObject *parent = 0);
+    explicit CategoryDefinitionStore(const QString &categoryDefinitionsPath, uint maxStoredCategoryDefinitions = 100,
+                                     QObject *parent = 0);
 
     /*!
      * Tests if the \a category definition exists in the system.
