@@ -184,6 +184,11 @@ bool LauncherItem::shouldDisplay() const
     }
 }
 
+bool LauncherItem::isSandboxed() const
+{
+    return !m_desktopEntry.isNull() ? m_desktopEntry->isSandboxed() : false;
+}
+
 bool LauncherItem::isValid() const
 {
     return !m_desktopEntry.isNull() ? m_desktopEntry->isValid() : m_isTemporary;
