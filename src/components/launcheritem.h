@@ -54,6 +54,7 @@ class LIPSTICK_EXPORT LauncherItem : public QObject
     Q_PROPERTY(QStringList mimeType READ mimeType NOTIFY itemChanged)
     Q_PROPERTY(QString titleUnlocalized READ titleUnlocalized NOTIFY itemChanged)
     Q_PROPERTY(bool shouldDisplay READ shouldDisplay NOTIFY itemChanged)
+    Q_PROPERTY(bool isSandboxed READ isSandboxed NOTIFY itemChanged)
     Q_PROPERTY(bool isValid READ isValid NOTIFY itemChanged)
     Q_PROPERTY(bool isLaunching READ isLaunching WRITE setIsLaunching NOTIFY isLaunchingChanged)
     Q_PROPERTY(bool isUpdating READ isUpdating WRITE setIsUpdating NOTIFY isUpdatingChanged)
@@ -85,6 +86,7 @@ public:
     QStringList mimeType() const;
     QString titleUnlocalized() const;
     bool shouldDisplay() const;
+    bool isSandboxed() const;
     bool isValid() const;
     bool isLaunching() const;
     bool isStillValid();
