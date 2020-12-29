@@ -29,11 +29,9 @@ public:
     virtual void setVolume(int volume);
     virtual void pulseRegistered(const QString &service);
     virtual void pulseUnregistered(const QString &service);
-    virtual void openConnection();
     virtual void setSteps(quint32 currentStep, quint32 stepCount);
-    virtual void addSignalMatch();
-    virtual DBusHandlerResult stepsUpdatedSignalHandler(DBusConnection *conn, DBusMessage *message, void *control);
-    DBusConnection *dbusConnection ;
+    virtual void setHighestSafeVolume(quint32 highestSafeVolume);
+    virtual void setListeningTime(quint32 listeningTime);
 };
 
 // 2. IMPLEMENT STUB
@@ -70,11 +68,6 @@ void PulseAudioControlStub::pulseUnregistered(const QString &service)
     stubMethodEntered("pulseUnregistered");
 }
 
-void PulseAudioControlStub::openConnection()
-{
-    stubMethodEntered("openConnection");
-}
-
 void PulseAudioControlStub::setSteps(quint32 currentStep, quint32 stepCount)
 {
     QList<ParameterBase *> params;
@@ -83,19 +76,18 @@ void PulseAudioControlStub::setSteps(quint32 currentStep, quint32 stepCount)
     stubMethodEntered("setSteps", params);
 }
 
-void PulseAudioControlStub::addSignalMatch()
-{
-    stubMethodEntered("addSignalMatch");
-}
-
-DBusHandlerResult PulseAudioControlStub::stepsUpdatedSignalHandler(DBusConnection *conn, DBusMessage *message, void *control)
+void PulseAudioControlStub::setHighestSafeVolume(quint32 highestSafeVolume)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<DBusConnection * >(conn));
-    params.append( new Parameter<DBusMessage * >(message));
-    params.append( new Parameter<void * >(control));
-    stubMethodEntered("stepsUpdatedSignalHandler", params);
-    return stubReturnValue<DBusHandlerResult>("stepsUpdatedSignalHandler");
+    params.append( new Parameter<quint32 >(highestSafeVolume));
+    stubMethodEntered("setHighestsafevolume", params);
+}
+
+void PulseAudioControlStub::setListeningTime(quint32 listeningTime)
+{
+    QList<ParameterBase *> params;
+    params.append( new Parameter<quint32 >(listeningTime));
+    stubMethodEntered("setListeningtime", params);
 }
 
 
@@ -135,24 +127,19 @@ void PulseAudioControl::pulseUnregistered(const QString &service)
     gPulseAudioControlStub->pulseUnregistered(service);
 }
 
-void PulseAudioControl::openConnection()
-{
-    gPulseAudioControlStub->openConnection();
-}
-
 void PulseAudioControl::setSteps(quint32 currentStep, quint32 stepCount)
 {
     gPulseAudioControlStub->setSteps(currentStep, stepCount);
 }
 
-void PulseAudioControl::addSignalMatch()
+void PulseAudioControl::setHighestSafeVolume(quint32 highestSafeVolume)
 {
-    gPulseAudioControlStub->addSignalMatch();
+    gPulseAudioControlStub->setHighestSafeVolume(highestSafeVolume);
 }
 
-DBusHandlerResult PulseAudioControl::signalHandler(DBusConnection *conn, DBusMessage *message, void *control)
+void PulseAudioControl::setListeningTime(quint32 listeningTime)
 {
-    return gPulseAudioControlStub->stepsUpdatedSignalHandler(conn, message, control);
+    gPulseAudioControlStub->setListeningTime(listeningTime);
 }
 
 

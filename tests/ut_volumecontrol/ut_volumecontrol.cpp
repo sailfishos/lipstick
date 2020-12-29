@@ -22,12 +22,6 @@
 #include "mgconfitem_stub.h"
 #include "lipstickqmlpath_stub.h"
 
-extern "C"
-{
-#include <dbus/dbus.h>
-#include "dbus-gmain/dbus-gmain.h"
-}
-
 #include <policy/resource-set.h>
 /*********************************************************************************
  * Stub for ResourcePolicy

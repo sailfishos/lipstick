@@ -13,7 +13,6 @@
 ****************************************************************************/
 
 #include "pulseaudiocontrol.h"
-#include "dbus-gmain/dbus-gmain.h"
 
 #include <QDBusMessage>
 #include <QDBusConnection>
@@ -22,23 +21,16 @@
 #include <QTimer>
 #include <QDebug>
 
+static const QString VOLUME_SERVICE = "com.Meego.MainVolume2";
+static const QString VOLUME_PATH = "/com/meego/mainvolume2";
+static const QString VOLUME_INTERFACE = "com.Meego.MainVolume2";
 
-#define DBUS_ERR_CHECK(err) \
-    if (dbus_error_is_set(&err)) \
-    { \
-        qWarning() << err.message; \
-        dbus_error_free(&err); \
-    }
+static const QString PA_BUS_NAME= "pulse_bus";
 
-static const char *VOLUME_SERVICE = "com.Meego.MainVolume2";
-static const char *VOLUME_PATH = "/com/meego/mainvolume2";
-static const char *VOLUME_INTERFACE = "com.Meego.MainVolume2";
-
-#define PA_RECONNECT_TIMEOUT_MS (2000)
+static const quint32 PA_RECONNECT_TIMEOUT_MS (2000);
 
 PulseAudioControl::PulseAudioControl(QObject *parent) :
     QObject(parent),
-    m_dbusConnection(NULL),
     m_reconnectTimeout(PA_RECONNECT_TIMEOUT_MS),
     m_serviceWatcher(0)
 {
@@ -46,10 +38,7 @@ PulseAudioControl::PulseAudioControl(QObject *parent) :
 
 PulseAudioControl::~PulseAudioControl()
 {
-    if (m_dbusConnection != NULL) {
-        dbus_connection_remove_filter(m_dbusConnection, PulseAudioControl::signalHandler, (void *)this);
-        dbus_connection_unref(m_dbusConnection);
-    }
+    delete m_dbusConnection;
 }
 
 void PulseAudioControl::pulseRegistered(const QString &service)
@@ -61,8 +50,8 @@ void PulseAudioControl::pulseRegistered(const QString &service)
 void PulseAudioControl::pulseUnregistered(const QString &service)
 {
     Q_UNUSED(service);
-    dbus_connection_unref(m_dbusConnection);
-    m_dbusConnection = NULL;
+    delete m_dbusConnection;
+    m_dbusConnection = nullptr;
     m_reconnectTimeout = PA_RECONNECT_TIMEOUT_MS;
 }
 
@@ -74,8 +63,8 @@ void PulseAudioControl::openConnection()
     if (!m_serviceWatcher) {
         m_serviceWatcher = new QDBusServiceWatcher(QStringLiteral("org.pulseaudio.Server"),
                                                    QDBusConnection::sessionBus(),
-                                                   QDBusServiceWatcher::WatchForRegistration |
-                                                     QDBusServiceWatcher::WatchForUnregistration,
+                                                   QDBusServiceWatcher::WatchForRegistration
+                                                   | QDBusServiceWatcher::WatchForUnregistration,
                                                    this);
 
         connect(m_serviceWatcher, SIGNAL(serviceRegistered(const QString&)),
@@ -84,43 +73,31 @@ void PulseAudioControl::openConnection()
                 this, SLOT(pulseUnregistered(const QString&)));
     }
 
-    //! If the connection already exists, do nothing
-    if ((m_dbusConnection != NULL) && (dbus_connection_get_is_connected(m_dbusConnection))) {
+    // If the connection already exists, do nothing
+    if (m_dbusConnection) {
         return;
     }
 
     // Establish a connection to the server
-    char *pa_bus_address = getenv("PULSE_DBUS_SERVER");
+    QByteArray paBusAddress = qgetenv("PULSE_DBUS_SERVER");
     QByteArray addressArray;
-    if (pa_bus_address == NULL) {
-        QDBusMessage message = QDBusMessage::createMethodCall("org.pulseaudio.Server", "/org/pulseaudio/server_lookup1",
+    if (paBusAddress.isEmpty()) {
+        QDBusMessage message = QDBusMessage::createMethodCall("org.pulseaudio.Server",
+                                                              "/org/pulseaudio/server_lookup1",
                                                               "org.freedesktop.DBus.Properties", "Get");
         message.setArguments(QVariantList() << "org.PulseAudio.ServerLookup1" << "Address");
         QDBusMessage reply = QDBusConnection::sessionBus().call(message);
         if (reply.type() == QDBusMessage::ReplyMessage && reply.arguments().count() > 0) {
             addressArray = reply.arguments().first().value<QDBusVariant>().variant().toString().toLatin1();
-            pa_bus_address = addressArray.data();
+            paBusAddress = addressArray.data();
         }
     }
 
-    if (pa_bus_address != NULL) {
-        DBusError dbus_err;
-        dbus_error_init(&dbus_err);
+    m_dbusConnection = new QDBusConnection(QDBusConnection::connectToPeer(paBusAddress, PA_BUS_NAME));
+    addSignalMatch();
 
-        m_dbusConnection = dbus_connection_open(pa_bus_address, &dbus_err);
-
-        DBUS_ERR_CHECK(dbus_err);
-    }
-
-    if (m_dbusConnection != NULL) {
-        dbus_gmain_set_up_connection(m_dbusConnection, NULL);
-        dbus_connection_add_filter(m_dbusConnection, PulseAudioControl::signalHandler, (void *)this, NULL);
-
-        addSignalMatch();
-    }
-
-    if (!m_dbusConnection) {
-        QTimer::singleShot(m_reconnectTimeout, this, SLOT(update()));
+    if (!m_dbusConnection->isConnected()) {
+        QTimer::singleShot(m_reconnectTimeout, this, &PulseAudioControl::update);
         m_reconnectTimeout += PA_RECONNECT_TIMEOUT_MS; // next reconnect waits for reconnect timeout longer
     }
 }
@@ -129,80 +106,46 @@ void PulseAudioControl::update()
 {
     openConnection();
 
-    if (m_dbusConnection == NULL) {
+    if (!m_dbusConnection || !m_dbusConnection->isConnected()) {
         return;
     }
-
-    DBusError error;
-    dbus_error_init(&error);
-
-    DBusMessage *reply = NULL;
-    DBusMessage *msg = dbus_message_new_method_call(VOLUME_SERVICE, VOLUME_PATH, "org.freedesktop.DBus.Properties", "GetAll");
-    if (msg != NULL) {
-        dbus_message_append_args(msg, DBUS_TYPE_STRING, &VOLUME_INTERFACE, DBUS_TYPE_INVALID);
-
-        reply = dbus_connection_send_with_reply_and_block(m_dbusConnection, msg, -1, &error);
-
-        DBUS_ERR_CHECK (error);
-
-        dbus_message_unref(msg);
-    }
+    QDBusMessage message = QDBusMessage::createMethodCall(VOLUME_SERVICE,
+                                                          VOLUME_PATH,
+                                                          "org.freedesktop.DBus.Properties",
+                                                          "GetAll");
+    message.setArguments(QList<QVariant>{VOLUME_INTERFACE});
+    QDBusMessage reply = m_dbusConnection->call(message, QDBus::Block);
 
     int currentStep = -1, stepCount = -1, highVolumeStep = -1;
     QString mediaState;
 
-    if (reply != NULL) {
-        if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
-            DBusMessageIter iter;
-            dbus_message_iter_init(reply, &iter);
-            // Recurse into the array [array of dicts]
-            while (dbus_message_iter_get_arg_type(&iter) != DBUS_TYPE_INVALID) {
-                DBusMessageIter dict_entry;
-                dbus_message_iter_recurse(&iter, &dict_entry);
+    if (reply.type() == QDBusMessage::ErrorMessage) {
+        qWarning() << "Error fetching pulseaudio state" << reply.errorMessage();
+    } else if (reply.type() == QDBusMessage::ReplyMessage && reply.arguments().length() > 0) {
+        const QDBusArgument &dbusArg = reply.arguments().at(0).value<QDBusArgument>();
+        dbusArg.beginMap();
 
-                // Recurse into the dict [ dict_entry (string, variant) ]
-                while (dbus_message_iter_get_arg_type(&dict_entry) != DBUS_TYPE_INVALID) {
-                    DBusMessageIter in_dict;
-                    // Recurse into the dict_entry [ string, variant ]
-                    dbus_message_iter_recurse(&dict_entry, &in_dict);
-                    {
-                        const char *prop_name = NULL;
-                        // Get the string value, "property name"
-                        dbus_message_iter_get_basic(&in_dict, &prop_name);
+        // Recurse into the array [array of dicts]
+        while (!dbusArg.atEnd()) {
+            dbusArg.beginMapEntry();
+            QString key;
+            QVariant value;
+            dbusArg >> key;
+            dbusArg >> value;
 
-                        dbus_message_iter_next(&in_dict);
-
-                        DBusMessageIter variant;
-                        // Recurse into the variant [ variant ]
-                        dbus_message_iter_recurse(&in_dict, &variant);
-
-                        if (prop_name == NULL) {
-                        } else if (dbus_message_iter_get_arg_type(&variant) == DBUS_TYPE_UINT32) {
-                            quint32 value;
-                            dbus_message_iter_get_basic(&variant, &value);
-
-                            if (strcmp(prop_name, "StepCount") == 0) {
-                                stepCount = value;
-                            } else if (strcmp(prop_name, "CurrentStep") == 0) {
-                                currentStep = value;
-                            } else if (strcmp(prop_name, "HighVolumeStep") == 0) {
-                                highVolumeStep = value;
-                            }
-                        } else if (dbus_message_iter_get_arg_type(&variant) == DBUS_TYPE_STRING) {
-                            const char *value = NULL;
-                            dbus_message_iter_get_basic(&variant, &value);
-                            if (strcmp(prop_name, "MediaState") == 0) {
-                                mediaState = QString(value);
-                            }
-                        }
-                    }
-
-                    dbus_message_iter_next(&dict_entry);
-                }
-                dbus_message_iter_next(&iter);
+            if (key == "StepCount") {
+                stepCount = value.toInt();
+            } else if (key == "CurrentStep") {
+                currentStep = value.toInt();
+            } else if (key == "HighVolumeStep") {
+                highVolumeStep = value.toInt();
+            } else if (key == "MediaState") {
+                mediaState = value.toString();
             }
+
+            dbusArg.endMapEntry();
         }
-        dbus_message_unref(reply);
+        dbusArg.endMap();
     }
 
     if (currentStep != -1 && stepCount != -1) {
@@ -220,64 +163,59 @@ void PulseAudioControl::update()
 
 void PulseAudioControl::addSignalMatch()
 {
-    static const char *signalNames []  = {"com.Meego.MainVolume2.StepsUpdated", "com.Meego.MainVolume2.NotifyHighVolume",
-                                          "com.Meego.MainVolume2.NotifyListeningTime", "com.Meego.MainVolume2.CallStateChanged",
-                                          "com.Meego.MainVolume2.MediaStateChanged"};
-    for (int index = 0; index < 5; ++index) {
-        DBusMessage *message = dbus_message_new_method_call(NULL, "/org/pulseaudio/core1", NULL, "ListenForSignal");
-        if (message != NULL) {
-            const char *signalPtr = signalNames[index];
-            char **emptyarray = { NULL };
-            dbus_message_append_args(message, DBUS_TYPE_STRING, &signalPtr, DBUS_TYPE_ARRAY, DBUS_TYPE_OBJECT_PATH,
-                                     &emptyarray, 0, DBUS_TYPE_INVALID);
-            dbus_connection_send(m_dbusConnection, message, NULL);
-            dbus_message_unref(message);
-        }
-    }
-}
-
-DBusHandlerResult PulseAudioControl::signalHandler(DBusConnection *, DBusMessage *message, void *control)
-{
-    if (!message)
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-
-    DBusError error;
-    dbus_error_init(&error);
-
-    if (dbus_message_has_member(message, "StepsUpdated")) {
-        quint32 currentStep = 0;
-        quint32 stepCount = 0;
-
-        if (dbus_message_get_args(message, &error, DBUS_TYPE_UINT32, &stepCount, DBUS_TYPE_UINT32, &currentStep, DBUS_TYPE_INVALID)) {
-            static_cast<PulseAudioControl*>(control)->setSteps(currentStep, stepCount);
-        }
-    } else if (dbus_message_has_member(message, "NotifyHighVolume")) {
-        quint32 highestSafeVolume = 0;
-
-        if (dbus_message_get_args(message, &error, DBUS_TYPE_UINT32, &highestSafeVolume, DBUS_TYPE_INVALID)) {
-            static_cast<PulseAudioControl*>(control)->highVolume(highestSafeVolume);
-        }
-    } else if (dbus_message_has_member(message, "NotifyListeningTime")) {
-        quint32 listeningTime = 0;
-
-        if (dbus_message_get_args(message, &error, DBUS_TYPE_UINT32, &listeningTime, DBUS_TYPE_INVALID)) {
-            static_cast<PulseAudioControl*>(control)->longListeningTime(listeningTime);
-        }
-    } else if (dbus_message_has_member(message, "CallStateChanged")) {
-        const char *state;
-
-        if (dbus_message_get_args(message, &error, DBUS_TYPE_STRING, &state, DBUS_TYPE_INVALID)) {
-            emit static_cast<PulseAudioControl*>(control)->callActiveChanged(strcmp(state, "active") == 0);
-        }
-    } else if (dbus_message_has_member(message, "MediaStateChanged")) {
-        const char *state;
-        if (dbus_message_get_args(message, &error, DBUS_TYPE_STRING, &state, DBUS_TYPE_INVALID)) {
-            emit static_cast<PulseAudioControl*>(control)->mediaStateChanged(QString(state));
-        }
+    if (!m_dbusConnection) {
+        return;
     }
 
-    DBUS_ERR_CHECK (error);
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    QVector<QString> signalNames = {"com.Meego.MainVolume2.StepsUpdated", "com.Meego.MainVolume2.NotifyHighVolume",
+                                    "com.Meego.MainVolume2.NotifyListeningTime", "com.Meego.MainVolume2.CallStateChanged",
+                                    "com.Meego.MainVolume2.MediaStateChanged"};
+    for (QString signalName : signalNames) {
+        QDBusMessage message = QDBusMessage::createMethodCall(QString(),
+                                                              "/org/pulseaudio/core1",
+                                                              QString(),
+                                                              "ListenForSignal");
+
+        message << signalName;
+        message << QVariant::fromValue(QList<QDBusObjectPath>());
+        m_dbusConnection->call(message, QDBus::NoBlock);
+    }
+
+    m_dbusConnection->connect(
+        QString(),
+        QString("/org/pulseaudio/core1"),
+        QString("com.Meego.MainVolume2"),
+        QString("StepsUpdated"),
+        this,
+        SLOT(setSteps(quint32,quint32)));
+    m_dbusConnection->connect(
+        QString(),
+        QString("/org/pulseaudio/core1"),
+        QString("com.Meego.MainVolume2"),
+        QString("NotifyHighVolume"),
+        this,
+        SLOT(setHighestSafeVolume(quint32)));
+    m_dbusConnection->connect(
+        QString(),
+        QString("/org/pulseaudio/core1"),
+        QString("com.Meego.MainVolume2"),
+        QString("NotifyListeningTime"),
+        this,
+        SLOT(setListeningTime(quint32)));
+    m_dbusConnection->connect(
+        QString(),
+        QString("/org/pulseaudio/core1"),
+        QString("com.Meego.MainVolume2"),
+        QString("CallStateChanged"),
+        this,
+        SIGNAL(callActiveChanged(bool)));
+    m_dbusConnection->connect(
+        QString(),
+        QString("/org/pulseaudio/core1"),
+        QString("com.Meego.MainVolume2"),
+        QString("MediaStateChanged"),
+        this,
+        SIGNAL(mediaStateChanged(QString)));
 }
 
 void PulseAudioControl::setSteps(quint32 currentStep, quint32 stepCount)
@@ -289,33 +227,29 @@ void PulseAudioControl::setSteps(quint32 currentStep, quint32 stepCount)
 void PulseAudioControl::setVolume(int volume)
 {
     // Check the connection, maybe PulseAudio restarted meanwhile
-    openConnection();
+    this->openConnection();
 
     // Don't try to set the volume via D-bus when it isn't available
-    if (m_dbusConnection == NULL) {
+    if (!m_dbusConnection || !m_dbusConnection->isConnected()) {
         return;
     }
 
-    DBusMessage *message = dbus_message_new_method_call(VOLUME_SERVICE, VOLUME_PATH, "org.freedesktop.DBus.Properties", "Set");
-    if (message != NULL) {
-        static const char *method = "CurrentStep";
-        if (dbus_message_append_args(message, DBUS_TYPE_STRING, &VOLUME_INTERFACE, DBUS_TYPE_STRING, &method, DBUS_TYPE_INVALID)) {
-            DBusMessageIter append;
-            DBusMessageIter sub;
+    QDBusMessage message = QDBusMessage::createMethodCall(VOLUME_SERVICE,
+                                                          VOLUME_PATH,
+                                                          "org.freedesktop.DBus.Properties",
+                                                          "Set");
+    message << VOLUME_INTERFACE
+            << "CurrentStep"
+            << volume;
+    m_dbusConnection->call(message, QDBus::NoBlock);
+}
 
-            // Create and append the variant argument ...
-            dbus_message_iter_init_append(message, &append);
+void PulseAudioControl::setHighestSafeVolume(quint32 highestSafeVolume)
+{
+    this->highVolume(highestSafeVolume);
+}
 
-            dbus_message_iter_open_container(&append, DBUS_TYPE_VARIANT, DBUS_TYPE_UINT32_AS_STRING, &sub);
-            // Set the variant argument value:
-            dbus_message_iter_append_basic(&sub, DBUS_TYPE_UINT32, &volume);
-            // Close the append iterator
-            dbus_message_iter_close_container(&append, &sub);
-
-            // Send/flush the message immediately:
-            dbus_connection_send(m_dbusConnection, message, NULL);
-        }
-
-        dbus_message_unref(message);
-    }
+void PulseAudioControl::setListeningTime(quint32 listeningTime)
+{
+    this->longListeningTime(listeningTime);
 }

@@ -17,7 +17,7 @@
 
 #include <QObject>
 #include <QDBusServiceWatcher>
-#include <dbus/dbus.h>
+#include <QDBusConnection>
 
 /*!
  * \class PulseAudioControl
@@ -30,7 +30,7 @@ class PulseAudioControl : public QObject
 
 public:
     //! Construct a PulseAudioControl instance
-    PulseAudioControl(QObject *parent = NULL);
+    PulseAudioControl(QObject *parent = nullptr);
 
     //! Destroys the PulseAudioControl instance
     virtual ~PulseAudioControl();
@@ -85,35 +85,20 @@ private slots:
     //! Follow PulseAudio visibility in sessionbus
     void pulseRegistered(const QString &service);
     void pulseUnregistered(const QString &service);
+    void setSteps(quint32 currentStep, quint32 stepCount);
+    void setHighestSafeVolume(quint32 highestSafeVolume);
+    void setListeningTime(quint32 listeningTime);
 
 private:
     //! Opens connection to PulseAudio daemon.
     void openConnection();
 
-    /*!
-     * Stores the current volume and the maximum volume.
-     *
-     * \param currentStep The current volume step
-     * \param stepCount Number of volume steps
-     */
-    void setSteps(quint32 currentStep, quint32 stepCount);
-
-    //! Registers a signal handler to listen to the PulseAudio MainVolume1 StepsUpdated signal
+    //! Registers a signal handlers to listen to the PulseAudio MainVolume1 StepsUpdated signal
     void addSignalMatch();
 
-    /*!
-     * The signal handler for PulseAudio's MainVolume1 signal
-     *
-     * \param conn D-Bus connection structure
-     * \param message signal message
-     * \param control PulseAudioControl instance handling this signal
-     */
-    static DBusHandlerResult signalHandler(DBusConnection *conn, DBusMessage *message, void *control);
-
-    //! D-Bus connection structure
-    DBusConnection *m_dbusConnection;
     int m_reconnectTimeout;
 
+    QDBusConnection *m_dbusConnection = nullptr;
     QDBusServiceWatcher *m_serviceWatcher;
 
     Q_DISABLE_COPY(PulseAudioControl)

@@ -23,6 +23,16 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QtGui/qpa/qplatformnativeinterface.h>
+#include <QtGui/qpa/qplatformintegration.h>
+#include <private/qguiapplication_p.h>
+#include <qpa/qwindowsysteminterface.h>
+
+#include <qmcenameowner.h>
+#include <sys/types.h>
+#include <systemd/sd-bus.h>
+#include <systemd/sd-login.h>
+#include <unistd.h>
+
 #include "homeapplication.h"
 #include "touchscreen/touchscreen.h"
 #include "windowmodel.h"
@@ -32,18 +42,9 @@
 #include "lipstickkeymap.h"
 #include "lipsticksettings.h"
 #include "lipstickrecorder.h"
-#include <qpa/qwindowsysteminterface.h>
 #include "alienmanager/alienmanager.h"
 #include "hwcrenderstage.h"
 #include "logging.h"
-#include <private/qguiapplication_p.h>
-#include <QtGui/qpa/qplatformintegration.h>
-#include <qmcenameowner.h>
-#include <dbus/dbus-protocol.h>
-#include <sys/types.h>
-#include <systemd/sd-bus.h>
-#include <systemd/sd-login.h>
-#include <unistd.h>
 
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
@@ -904,8 +905,9 @@ void LipstickCompositor::processQueuedSetUpdatesEnabledCalls()
             QueuedSetUpdatesEnabledCall queued(m_queuedSetUpdatesEnabledCalls.takeFirst());
             if (queued.m_message.service() != m_mceNameOwner->nameOwner()) {
                 if (queued.m_message.isReplyRequired()) {
-                    QDBusMessage reply(queued.m_message.createErrorReply(DBUS_ERROR_ACCESS_DENIED,
-                                                                         "Only mce is allowed to call this method"));
+                    QDBusMessage reply(
+                                queued.m_message.createErrorReply(QStringLiteral("org.freedesktop.DBus.Error.AccessDenied"),
+                                                                  QStringLiteral("Only mce is allowed to call this method")));
                     queued.m_connection.send(reply);
                 }
             } else {
