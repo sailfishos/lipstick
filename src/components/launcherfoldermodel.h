@@ -133,6 +133,7 @@ signals:
     void categoriesChanged();
     void blacklistedApplicationsChanged();
     void notifyLaunching(LauncherItem *item);
+    void canceledNotifyLaunching(LauncherItem *item);
     void applicationRemoved(LauncherItem *item);
 
 protected:

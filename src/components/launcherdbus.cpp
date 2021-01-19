@@ -83,3 +83,10 @@ void LauncherDBus::notifyLaunching(const QString &desktopFile)
         model->notifyLaunching(desktopFile);
     }
 }
+
+void LauncherDBus::cancelNotifyLaunching(const QString &desktopFile)
+{
+    foreach (LauncherModel *model, m_models) {
+        model->cancelNotifyLaunching(desktopFile);
+    }
+}

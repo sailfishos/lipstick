@@ -414,6 +414,8 @@ void LauncherFolderModel::initialize()
             this, SLOT(appAdded(QObject*)));
     connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::notifyLaunching,
             this, &LauncherFolderModel::notifyLaunching);
+    connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::canceledNotifyLaunching,
+            this, &LauncherFolderModel::canceledNotifyLaunching);
     connect(&m_saveTimer, SIGNAL(timeout()), this, SLOT(save()));
 
     QDir config;
