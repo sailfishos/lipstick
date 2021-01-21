@@ -613,6 +613,17 @@ void LauncherModel::notifyLaunching(const QString &desktopFile)
     }
 }
 
+void LauncherModel::cancelNotifyLaunching(const QString &desktopFile)
+{
+    LauncherItem *item = itemInModel(desktopFile);
+    if (item) {
+        item->setIsLaunching(false);
+        emit canceledNotifyLaunching(item);
+    } else {
+        qWarning("No launcher item found for \"%s\".", qPrintable(desktopFile));
+    }
+}
+
 void LauncherModel::updateWatchedDBusServices()
 {
     QStringList requiredServices = m_packageNameToDBusService.values();
