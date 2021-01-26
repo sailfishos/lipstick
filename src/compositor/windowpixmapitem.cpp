@@ -14,8 +14,12 @@
 
 #include <QtCore/qmath.h>
 #include <QSGGeometryNode>
-#include <QSGSimpleMaterial>
+#include <QSGMaterial>
+#include <QSGMaterialShader>
+#include <QSGTexture>
+#include <QSGTextureProvider>
 #include <QOpenGLFramebufferObject>
+#include <QOpenGLShaderProgram>
 #include <QWaylandSurfaceItem>
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositor.h"
@@ -23,41 +27,124 @@
 
 namespace {
 
-class SurfaceTextureState {
-public:
-    SurfaceTextureState() : m_texture(0), m_xScale(1), m_yScale(1) {}
-    void setTexture(QSGTexture *texture) { m_texture = texture; }
-    QSGTexture *texture() const { return m_texture; }
-    void setXOffset(float xOffset) { m_xOffset = xOffset; }
-    float xOffset() const { return m_xOffset; }
-    void setYOffset(float yOffset) { m_yOffset = yOffset; }
-    float yOffset() const { return m_yOffset; }
-    void setXScale(float xScale) { m_xScale = xScale; }
-    float xScale() const { return m_xScale; }
-    void setYScale(float yScale) { m_yScale = yScale; }
-    float yScale() const { return m_yScale; }
+class OpaqueSurfaceTextureMaterial;
 
-private:
-    QSGTexture *m_texture;
-    float m_xOffset;
-    float m_yOffset;
-    float m_xScale;
-    float m_yScale;
+struct CornerVertex
+{
+    float m_x;
+    float m_y;
+    float m_tx;
+    float m_ty;
+    float m_cx;
+    float m_cy;
+
+    void set(float x, float y, float tx, float ty, float cx, float cy)
+    {
+        m_x = x; m_y = y; m_tx = tx; m_ty = ty; m_cx = cx; m_cy = cy;
+    }
 };
 
-class SurfaceTextureMaterial : public QSGSimpleMaterialShader<SurfaceTextureState>
+const QSGGeometry::AttributeSet &cornerAttributes()
 {
-    QSG_DECLARE_SIMPLE_SHADER(SurfaceTextureMaterial, SurfaceTextureState)
+    static QSGGeometry::Attribute data[] = {
+        QSGGeometry::Attribute::create(0, 2, GL_FLOAT, true),
+        QSGGeometry::Attribute::create(1, 2, GL_FLOAT),
+        QSGGeometry::Attribute::create(2, 2, GL_FLOAT)
+    };
+    static QSGGeometry::AttributeSet attributes = { 3, sizeof(CornerVertex), data };
+    return attributes;
+}
+
+class OpaqueSurfaceTextureShader : public QSGMaterialShader
+{
 public:
-    QList<QByteArray> attributes() const;
-    void updateState(const SurfaceTextureState *newState, const SurfaceTextureState *oldState);
-protected:
-    void initialize();
-    const char *vertexShader() const;
-    const char *fragmentShader() const;
+    const char *vertexShader() const override;
+    const char *fragmentShader() const override;
+    char const *const *attributeNames() const override;
+    void updateState(
+            const RenderState &state, QSGMaterial *newMaterial, QSGMaterial *oldMaterial) override;
+    void initialize() override;
+
 private:
-    int m_id_texOffset;
-    int m_id_texScale;
+    int m_id_qt_Matrix = -1;
+    int m_qt_Texture = -1;
+};
+
+class SurfaceTextureShader : public OpaqueSurfaceTextureShader
+{
+public:
+    const char *fragmentShader() const override;
+    void updateState(
+            const RenderState &state, QSGMaterial *newMaterial, QSGMaterial *oldMaterial) override;
+    void initialize() override;
+
+private:
+    int m_id_qt_Opacity = -1;
+};
+
+class CornerSurfaceTextureShader : public SurfaceTextureShader
+{
+public:
+    const char *vertexShader() const override;
+    const char *fragmentShader() const override;
+    char const *const *attributeNames() const override;
+    void updateState(
+            const RenderState &state, QSGMaterial *newMaterial, QSGMaterial *oldMaterial) override;
+    void initialize() override;
+
+private:
+    int m_id_radius;
+};
+
+class OpaqueSurfaceTextureMaterial : public QSGMaterial
+{
+public:
+    void setTexture(QSGTexture *texture) { m_texture = texture; }
+    QSGTexture *texture() const { return m_texture; }
+
+    QSGMaterialType *type() const override;
+    QSGMaterialShader *createShader() const override;
+
+    int compare(const QSGMaterial *other) const override;
+
+private:
+    QSGTexture *m_texture = nullptr;
+};
+
+class SurfaceTextureMaterial : public QSGMaterial
+{
+public:
+    SurfaceTextureMaterial(OpaqueSurfaceTextureMaterial &opaqueMaterial)
+        : opaqueMaterial(opaqueMaterial)
+    {
+    }
+
+    QSGMaterialType *type() const override;
+    QSGMaterialShader *createShader() const override;
+
+    int compare(const QSGMaterial *other) const override;
+
+    OpaqueSurfaceTextureMaterial &opaqueMaterial;
+};
+
+class CornerSurfaceTextureMaterial : public SurfaceTextureMaterial
+{
+public:
+    CornerSurfaceTextureMaterial(OpaqueSurfaceTextureMaterial &opaqueMaterial)
+        : SurfaceTextureMaterial(opaqueMaterial)
+    {
+    }
+
+    float radius() const { return m_radius; }
+    void setRadius(float radius) { m_radius = radius; }
+
+    QSGMaterialType *type() const override;
+    QSGMaterialShader *createShader() const override;
+
+    int compare(const QSGMaterial *other) const override;
+
+private:
+    qreal m_radius = 0;
 };
 
 class SurfaceNode : public QObject, public QSGGeometryNode
@@ -74,7 +161,8 @@ public:
     void setYOffset(qreal yOffset);
     void setXScale(qreal xScale);
     void setYScale(qreal yScale);
-    void setUpdateTexture(bool upd);
+
+    void updateGeometry();
 
 private slots:
     void providerDestroyed();
@@ -82,59 +170,82 @@ private slots:
 
 private:
     void setTexture(QSGTexture *texture);
-    void updateGeometry();
+    OpaqueSurfaceTextureMaterial m_opaqueMaterial;
+    SurfaceTextureMaterial m_material { m_opaqueMaterial };
+    CornerSurfaceTextureMaterial m_cornerMaterial { m_opaqueMaterial };
+    QSGGeometry m_geometry { QSGGeometry::defaultAttributes_TexturedPoint2D(), 0 };
+    QSGGeometry m_cornerGeometry { cornerAttributes(), 0 };
+    QSGGeometryNode m_cornerNode;
 
-    QSGSimpleMaterial<SurfaceTextureState> *m_material;
     QRectF m_rect;
-    qreal m_radius;
-
-    QSGTextureProvider *m_provider;
-    QSGTexture *m_texture;
-    QSGGeometry m_geometry;
     QRectF m_textureRect;
-    bool m_providerOwned;
+    qreal m_radius = 0;
+    qreal m_xOffset = 0;
+    qreal m_yOffset = 0;
+    qreal m_xScale = 1;
+    qreal m_yScale = 1;
+
+    QSGTextureProvider *m_provider = nullptr;
+    QSGTexture *m_texture = nullptr;
+    bool m_providerOwned = false;
+    bool m_geometryChanged = true;
 };
 
-QList<QByteArray> SurfaceTextureMaterial::attributes() const
-{
-    QList<QByteArray> attributeList;
-    attributeList << "qt_VertexPosition";
-    attributeList << "qt_VertexTexCoord";
-    return attributeList;
-}
-
-void SurfaceTextureMaterial::updateState(const SurfaceTextureState *newState,
-                                         const SurfaceTextureState *)
-{
-    Q_ASSERT(newState->texture());
-    if (QSGTexture *tex = newState->texture())
-        tex->bind();
-    program()->setUniformValue(m_id_texOffset, newState->xOffset(), newState->yOffset());
-    program()->setUniformValue(m_id_texScale, newState->xScale(), newState->yScale());
-}
-
-void SurfaceTextureMaterial::initialize()
-{
-    QSGSimpleMaterialShader::initialize();
-    m_id_texOffset = program()->uniformLocation("texOffset");
-    m_id_texScale = program()->uniformLocation("texScale");
-}
-
-const char *SurfaceTextureMaterial::vertexShader() const
+const char *OpaqueSurfaceTextureShader::vertexShader() const
 {
     return "uniform highp mat4 qt_Matrix;                      \n"
            "attribute highp vec4 qt_VertexPosition;            \n"
            "attribute highp vec2 qt_VertexTexCoord;            \n"
            "varying highp vec2 qt_TexCoord;                    \n"
-           "uniform highp vec2 texOffset;                      \n"
-           "uniform highp vec2 texScale;                       \n"
            "void main() {                                      \n"
-           "    qt_TexCoord = qt_VertexTexCoord * texScale + texOffset;\n"
+           "    qt_TexCoord = qt_VertexTexCoord;\n"
            "    gl_Position = qt_Matrix * qt_VertexPosition;   \n"
            "}";
 }
 
-const char *SurfaceTextureMaterial::fragmentShader() const
+const char *OpaqueSurfaceTextureShader::fragmentShader() const
+{
+    return "varying highp vec2 qt_TexCoord;                    \n"
+           "uniform sampler2D qt_Texture;                      \n"
+           "void main() {                                      \n"
+           "    gl_FragColor = texture2D(qt_Texture, qt_TexCoord); \n"
+           "}";
+}
+
+char const *const *OpaqueSurfaceTextureShader::attributeNames() const
+{
+    static const char *attributes[] = {
+        "qt_VertexPosition",
+        "qt_VertexTexCoord",
+        nullptr
+    };
+    return attributes;
+}
+
+void OpaqueSurfaceTextureShader::updateState(
+        const RenderState &state, QSGMaterial *newMaterial, QSGMaterial *)
+{
+    QOpenGLShaderProgram * const program = QSGMaterialShader::program();
+    OpaqueSurfaceTextureMaterial *newSurface = static_cast<OpaqueSurfaceTextureMaterial *>(newMaterial);
+
+    if (QSGTexture *texture = newSurface->texture()) {
+        texture->bind();
+    }
+
+    if (state.isMatrixDirty()) {
+        program->setUniformValue(m_id_qt_Matrix, state.combinedMatrix());
+    }
+}
+
+void OpaqueSurfaceTextureShader::initialize()
+{
+    QOpenGLShaderProgram * const program = QSGMaterialShader::program();
+
+    m_id_qt_Matrix = program->uniformLocation("qt_Matrix");
+    m_qt_Texture = program->uniformLocation("qt_Texture");
+}
+
+const char *SurfaceTextureShader::fragmentShader() const
 {
     return "varying highp vec2 qt_TexCoord;                    \n"
            "uniform sampler2D qt_Texture;                      \n"
@@ -144,13 +255,173 @@ const char *SurfaceTextureMaterial::fragmentShader() const
            "}";
 }
 
+void SurfaceTextureShader::updateState(
+        const RenderState &state, QSGMaterial *newMaterial, QSGMaterial *oldMaterial)
+{
+    QOpenGLShaderProgram * const program = QSGMaterialShader::program();
+    SurfaceTextureMaterial *newSurface = static_cast<SurfaceTextureMaterial *>(newMaterial);
+    SurfaceTextureMaterial *oldSurface = static_cast<SurfaceTextureMaterial *>(oldMaterial);
+
+    OpaqueSurfaceTextureShader::updateState(
+                state,
+                &newSurface->opaqueMaterial,
+                oldSurface ? &oldSurface->opaqueMaterial : nullptr);
+
+    if (state.isOpacityDirty()) {
+        program->setUniformValue(m_id_qt_Opacity, state.opacity());
+    }
+}
+
+void SurfaceTextureShader::initialize()
+{
+    OpaqueSurfaceTextureShader::initialize();
+
+    QOpenGLShaderProgram * const program = QSGMaterialShader::program();
+
+    m_id_qt_Opacity = program->uniformLocation("qt_Opacity");
+}
+
+const char *CornerSurfaceTextureShader::vertexShader() const
+{
+    return "uniform highp mat4 qt_Matrix;                      \n"
+           "attribute highp vec4 qt_VertexPosition;            \n"
+           "attribute highp vec2 qt_VertexTexCoord;            \n"
+           "attribute highp vec2 vertexCorner;                 \n"
+           "varying highp vec2 qt_TexCoord;                    \n"
+           "varying highp vec2 corner;                         \n"
+           "void main() {                                      \n"
+           "    qt_TexCoord = qt_VertexTexCoord;               \n"
+           "    gl_Position = qt_Matrix * qt_VertexPosition;   \n"
+           "    corner = vertexCorner;                         \n"
+           "}";
+}
+
+const char *CornerSurfaceTextureShader::fragmentShader() const
+{
+    return "varying highp vec2 qt_TexCoord;                    \n"
+           "varying highp vec2 corner;                         \n"
+           "uniform sampler2D qt_Texture;                      \n"
+           "uniform lowp float qt_Opacity;                     \n"
+           "uniform lowp vec2 radius;                          \n"
+           "void main() {                                      \n"
+           "    gl_FragColor = texture2D(qt_Texture, qt_TexCoord)\n"
+           "                 * smoothstep(radius.x, radius.y, dot(corner, corner))\n"
+           "                 * qt_Opacity;                     \n"
+           "}";
+}
+
+char const *const *CornerSurfaceTextureShader::attributeNames() const
+{
+    static const char *attributes[] = {
+        "qt_VertexPosition",
+        "qt_VertexTexCoord",
+        "vertexCorner",
+        nullptr
+    };
+    return attributes;
+}
+
+void CornerSurfaceTextureShader::updateState(
+        const RenderState &state, QSGMaterial *newMaterial, QSGMaterial *oldMaterial)
+{
+    SurfaceTextureShader::updateState(state, newMaterial, oldMaterial);
+
+    QOpenGLShaderProgram * const program = QSGMaterialShader::program();
+    CornerSurfaceTextureMaterial *newSurface = static_cast<CornerSurfaceTextureMaterial *>(newMaterial);
+
+    const float radius = newSurface->radius();
+
+    program->setUniformValue(m_id_radius, (radius + 0.5f) * (radius + 0.5f), (radius - 0.5f) * (radius - 0.5f));
+}
+
+void CornerSurfaceTextureShader::initialize()
+{
+    SurfaceTextureShader::initialize();
+
+    QOpenGLShaderProgram * const program = QSGMaterialShader::program();
+
+    m_id_radius = program->uniformLocation("radius");
+}
+
+QSGMaterialType *OpaqueSurfaceTextureMaterial::type() const
+{
+    static QSGMaterialType type;
+
+    return &type;
+}
+
+QSGMaterialShader *OpaqueSurfaceTextureMaterial::createShader() const
+{
+    return new OpaqueSurfaceTextureShader;
+}
+
+int OpaqueSurfaceTextureMaterial::compare(const QSGMaterial *other) const
+{
+    const OpaqueSurfaceTextureMaterial * const surface = static_cast<const OpaqueSurfaceTextureMaterial *>(other);
+
+    return (m_texture ? m_texture->textureId() : 0)
+            - (surface->m_texture ? surface->m_texture->textureId() : 0);
+}
+
+QSGMaterialType *SurfaceTextureMaterial::type() const
+{
+    static QSGMaterialType type;
+
+    return &type;
+}
+
+QSGMaterialShader *SurfaceTextureMaterial::createShader() const
+{
+    return new SurfaceTextureShader;
+}
+
+int SurfaceTextureMaterial::compare(const QSGMaterial *other) const
+{
+    return opaqueMaterial.compare(&static_cast<const SurfaceTextureMaterial *>(other)->opaqueMaterial);
+}
+
+
+QSGMaterialType *CornerSurfaceTextureMaterial::type() const
+{
+    static QSGMaterialType type;
+
+    return &type;
+}
+
+QSGMaterialShader *CornerSurfaceTextureMaterial::createShader() const
+{
+    return new CornerSurfaceTextureShader;
+}
+
+int CornerSurfaceTextureMaterial::compare(const QSGMaterial *other) const
+{
+    const CornerSurfaceTextureMaterial * const surface = static_cast<const CornerSurfaceTextureMaterial *>(other);
+
+    const int result = SurfaceTextureMaterial::compare(other);
+    if (result != 0) {
+        return result;
+    } else if (m_radius < surface->m_radius) {
+        return -1;
+    } else if (m_radius > surface->m_radius) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 SurfaceNode::SurfaceNode()
-: m_material(0), m_radius(0), m_provider(0), m_texture(0),
-  m_geometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 0)
 {
     setGeometry(&m_geometry);
-    m_material = SurfaceTextureMaterial::createMaterial();
-    setMaterial(m_material);
+    setMaterial(&m_material);
+    setOpaqueMaterial(&m_opaqueMaterial);
+
+    m_cornerNode.setGeometry(&m_cornerGeometry);
+    m_cornerNode.setMaterial(&m_cornerMaterial);
+
+    m_material.setFlag(QSGMaterial::Blending, true);
+    m_cornerMaterial.setFlag(QSGMaterial::Blending, true);
+
+    m_cornerGeometry.setDrawingMode(GL_TRIANGLES);
 }
 
 SurfaceNode::~SurfaceNode()
@@ -161,12 +432,9 @@ SurfaceNode::~SurfaceNode()
 
 void SurfaceNode::setRect(const QRectF &r)
 {
-    if (m_rect == r)
-        return;
+    m_geometryChanged |= m_rect != r;
 
     m_rect = r;
-
-    updateGeometry();
 }
 
 void SurfaceNode::setTextureProvider(QSGTextureProvider *p, bool owned)
@@ -193,59 +461,81 @@ void SurfaceNode::setTextureProvider(QSGTextureProvider *p, bool owned)
 
 void SurfaceNode::updateGeometry()
 {
-    if (m_texture) {
-        QSize ts = m_texture->textureSize();
-        QRectF sourceRect(0, 0, ts.width(), ts.height());
-        QRectF textureRect = m_texture->convertToNormalizedSourceRect(sourceRect);
+    if (m_geometryChanged && m_texture) {
+        m_geometryChanged = false;
+
+        const QSize ts = m_texture->textureSize();
+        const QRectF textureRect = m_texture->convertToNormalizedSourceRect(QRectF(
+                    ts.width() * m_xOffset,
+                    ts.height() * m_yOffset,
+                    ts.width() * m_xScale,
+                    ts.height() * m_yScale));
 
         if (m_radius) {
-            float radius = qMin(float(qMin(m_rect.width(), m_rect.height()) * 0.5f), float(m_radius));
-            int segments = qBound(5, qCeil(radius * (M_PI / 6)), 18);
-            float angle = 0.5f * float(M_PI) / segments;
+            qreal radius = std::min({ m_rect.width() / 2, m_rect.height() / 2, m_radius });
 
-            m_geometry.allocate((segments + 1) * 2 * 2);
+            m_geometry.allocate(8);
+            m_cornerGeometry.allocate(12);
 
-            QSGGeometry::TexturedPoint2D *v = m_geometry.vertexDataAsTexturedPoint2D();
-            QSGGeometry::TexturedPoint2D *vlast = v + (segments + 1) * 2 * 2 - 2;
+            const float outerL = m_rect.left();
+            const float innerL = m_rect.left() + radius;
+            const float innerR = m_rect.right() - radius;
+            const float outerR = m_rect.right();
+
+            const float outerT = m_rect.top();
+            const float innerT = m_rect.top() + radius;
+            const float innerB = m_rect.bottom() - radius;
+            const float outerB = m_rect.bottom();
 
             float textureXRadius = radius * textureRect.width() / m_rect.width();
             float textureYRadius = radius * textureRect.height() / m_rect.height();
 
-            float c = 1; float cosStep = qFastCos(angle);
-            float s = 0; float sinStep = qFastSin(angle);
+            const float outerTL = textureRect.left();
+            const float innerTL = textureRect.left() + textureXRadius;
+            const float innerTR = textureRect.right() - textureXRadius;
+            const float outerTR = textureRect.right();
 
-            for (int ii = 0; ii <= segments; ++ii) {
-                float px = m_rect.left() + radius - radius * c;
-                float tx = textureRect.left() + textureXRadius - textureXRadius * c;
+            const float outerTT = textureRect.top();
+            const float innerTT = textureRect.top() + textureYRadius;
+            const float innerTB = textureRect.bottom() - textureYRadius;
+            const float outerTB = textureRect.bottom();
 
-                float px2 = m_rect.right() - radius + radius * c;
-                float tx2 = textureRect.right() - textureXRadius + textureXRadius * c;
+            // Item rectangle with the corners clipped
+            QSGGeometry::TexturedPoint2D *vertices = m_geometry.vertexDataAsTexturedPoint2D();
 
-                float py = m_rect.top() + radius - radius * s;
-                float ty = textureRect.top() + textureYRadius - textureYRadius * s;
+            vertices[0].set(outerL, innerB, outerTL, innerTB); // Outer left, inner bottom
+            vertices[1].set(outerL, innerT, outerTL, innerTT); // Outer left, inner top
+            vertices[2].set(innerL, outerB, innerTL, outerTB); // Inner left, outer bottom
+            vertices[3].set(innerL, outerT, innerTL, outerTT); // Inner left, outer top
+            vertices[4].set(innerR, outerB, innerTR, outerTB); // Inner right, outer botton
+            vertices[5].set(innerR, outerT, innerTR, outerTT); // Inner right, outer top
+            vertices[6].set(outerR, innerB, outerTR, innerTB); // Outer right, inner bottom
+            vertices[7].set(outerR, innerT, outerTR, innerTT); // Outer right, inner top
 
-                float py2 = m_rect.bottom() - radius + radius * s;
-                float ty2 = textureRect.bottom() - textureYRadius + textureYRadius * s;
+            // Corners
+            CornerVertex *corners = static_cast<CornerVertex *>(m_cornerGeometry.vertexData());
 
-                v[0].x = px; v[0].y = py;
-                v[0].tx = tx; v[0].ty = ty;
+            // Bottom left
+            corners[0].set(outerL, outerB, outerTL, outerTB, radius, radius);
+            corners[1].set(outerL, innerB, outerTL, innerTB, radius, 0);
+            corners[2].set(innerL, outerB, innerTL, outerTB, 0, radius);
 
-                v[1].x = px; v[1].y = py2;
-                v[1].tx = tx; v[1].ty = ty2;
+            // Top left
+            corners[3].set(outerL, outerT, outerTL, outerTT, radius, radius);
+            corners[4].set(outerL, innerT, outerTL, innerTT, radius, 0);
+            corners[5].set(innerL, outerT, innerTL, outerTT, 0, radius);
 
-                vlast[0].x = px2; vlast[0].y = py;
-                vlast[0].tx = tx2; vlast[0].ty = ty;
+            // Bottom right
+            corners[6].set(outerR, outerB, outerTR, outerTB, radius, radius);
+            corners[7].set(outerR, innerB, outerTR, innerTB, radius, 0);
+            corners[8].set(innerR, outerB, innerTR, outerTB, 0, radius);
 
-                vlast[1].x = px2; vlast[1].y = py2;
-                vlast[1].tx = tx2; vlast[1].ty = ty2;
+            // Top right
+            corners[9].set(outerR, outerT, outerTR, outerTT, radius, radius);
+            corners[10].set(outerR, innerT, outerTR, innerTT, radius, 0);
+            corners[11].set(innerR, outerT, innerTR, outerTT, 0, radius);
 
-                v += 2;
-                vlast -= 2;
-
-                float t = c;
-                c = c * cosStep - s * sinStep;
-                s = s * cosStep + t * sinStep;
-            }
+            m_cornerNode.markDirty(DirtyGeometry);
         } else {
             m_geometry.allocate(4);
             QSGGeometry::updateTexturedRectGeometry(&m_geometry, m_rect, textureRect);
@@ -257,7 +547,7 @@ void SurfaceNode::updateGeometry()
 
 void SurfaceNode::setBlending(bool b)
 {
-    m_material->setFlag(QSGMaterial::Blending, b);
+    m_opaqueMaterial.setFlag(QSGMaterial::Blending, b);
 }
 
 void SurfaceNode::setRadius(qreal radius)
@@ -265,59 +555,71 @@ void SurfaceNode::setRadius(qreal radius)
     if (m_radius == radius)
         return;
 
-    m_radius = radius;
+    if (m_radius == 0 && radius != 0) {
+        appendChildNode(&m_cornerNode);
+    } else if (m_radius != 0 && radius == 0) {
+        removeChildNode(&m_cornerNode);
+    }
 
-    updateGeometry();
+    m_radius = radius;
+    m_geometryChanged = true;
+    m_cornerMaterial.setRadius(m_radius);
+
+    m_cornerNode.markDirty(DirtyMaterial);
 }
 
 void SurfaceNode::setTexture(QSGTexture *texture)
 {
-    m_material->state()->setTexture(texture);
+    m_opaqueMaterial.setTexture(texture);
 
     QRectF tr;
     if (texture) tr = texture->convertToNormalizedSourceRect(QRect(QPoint(0,0), texture->textureSize()));
 
-    bool ug = !m_texture || tr != m_textureRect;
+    m_geometryChanged |= !m_texture || tr != m_textureRect;
 
     m_texture = texture;
     m_textureRect = tr;
 
-    if (ug) updateGeometry();
+    m_texture = texture;
 
     markDirty(DirtyMaterial);
+    if (m_radius > 0) {
+        m_cornerNode.markDirty(DirtyMaterial);
+    }
 }
 
 void SurfaceNode::setXOffset(qreal offset)
 {
-    m_material->state()->setXOffset(offset);
+    m_geometryChanged |= m_xOffset != offset;
 
-    markDirty(DirtyMaterial);
+    m_xOffset = offset;
 }
 
 void SurfaceNode::setYOffset(qreal offset)
 {
-    m_material->state()->setYOffset(offset);
+    m_geometryChanged |= m_yOffset != offset;
 
-    markDirty(DirtyMaterial);
+    m_yOffset = offset;
 }
 
 void SurfaceNode::setXScale(qreal xScale)
 {
-    m_material->state()->setXScale(xScale);
+    m_geometryChanged |= m_xScale != xScale;
 
-    markDirty(DirtyMaterial);
+    m_xScale = xScale;
 }
 
 void SurfaceNode::setYScale(qreal yScale)
 {
-    m_material->state()->setYScale(yScale);
+    m_geometryChanged |= m_yScale != yScale;
 
-    markDirty(DirtyMaterial);
+    m_yScale = yScale;
 }
 
 void SurfaceNode::textureChanged()
 {
     setTexture(m_provider->texture());
+    updateGeometry();
 }
 
 void SurfaceNode::providerDestroyed()
@@ -679,6 +981,7 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     node->setYOffset(m_yOffset);
     node->setXScale(m_xScale);
     node->setYScale(m_yScale);
+    node->updateGeometry();
 
     return node;
 }
