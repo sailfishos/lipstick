@@ -37,7 +37,7 @@ BuildRequires:  pkgconfig(ngf-qt5)
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.8
-BuildRequires:  pkgconfig(systemsettings) >= 0.5.28
+BuildRequires:  pkgconfig(systemsettings) >= 0.5.73
 BuildRequires:  pkgconfig(nemodevicelock)
 BuildRequires:  pkgconfig(sailfishusermanager)
 BuildRequires:  pkgconfig(glib-2.0)
@@ -46,7 +46,7 @@ BuildRequires:  qt5-qtgui-devel >= 5.2.1+git24
 BuildRequires:  qt5-qtwayland-wayland_egl-devel >= 5.4.0+git26
 BuildRequires:  doxygen
 BuildRequires:  qt5-qttools-qthelp-devel
-BuildRequires:  nemo-qml-plugin-systemsettings >= 0.5.27
+BuildRequires:  nemo-qml-plugin-systemsettings >= 0.5.73
 Obsoletes:   libnotificationsystem0
 Obsoletes:   %{name}-screenshot
 
