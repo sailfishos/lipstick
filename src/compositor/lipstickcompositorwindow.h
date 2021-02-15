@@ -90,6 +90,7 @@ signals:
     void committed();
     void focusOnTouchChanged();
     void resized();
+    void closed();
 
 private slots:
     void handleTouchCancel();

@@ -47,6 +47,8 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
 
     if (surface) {
         m_isAlien = surface->property("alienSurface").toBool();
+
+        connect(surface, &QWaylandSurface::clientDestroyedSurface, this, &LipstickCompositorWindow::closed);
     }
 
     connectSurfaceSignals();
