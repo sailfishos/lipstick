@@ -205,6 +205,13 @@
             </description>
         </request>
 
+        <request name="terminated">
+          <description summary="notifies that the application terminated abnormally">
+                This notifies that the application associated with the surface has
+                terminated abnormally.
+          </description>
+        </request>
+
         <event name="close">
             <description summary="request to close this surface">
                 This event requests the client to destroy this surface. The client is

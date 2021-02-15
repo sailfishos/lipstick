@@ -21,6 +21,7 @@
 #endif
 
 #include "lipstickcompositor.h"
+#include "lipstickcompositorwindow.h"
 #include "aliensurface.h"
 #include "alienmanager.h"
 #include "lipsticksurfaceinterface.h"
@@ -132,6 +133,13 @@ void AlienSurface::alien_surface_set_minimized(Resource *resource)
 {
     Q_UNUSED(resource)
     emit surface()->lowerRequested();
+}
+
+void AlienSurface::alien_surface_terminated(Resource *resource)
+{
+    Q_UNUSED(resource);
+
+    disconnect(surface(), &QWaylandSurface::clientDestroyedSurface, nullptr, nullptr);
 }
 
 void AlienSurface::configure(bool hasBuffer)
