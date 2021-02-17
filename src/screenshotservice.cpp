@@ -11,7 +11,6 @@
 ** of this file.
 **
 ****************************************************************************/
-#include "hwcrenderstage.h"
 #include "lipstickcompositor.h"
 #include "screenshotservice.h"
 
@@ -175,16 +174,7 @@ ScreenshotResult *ScreenshotService::saveScreenshot(const QString &path)
         return result;
     }
 
-    QQuickWindowPrivate *wd = QQuickWindowPrivate::get(compositor);
-    HwcRenderStage *renderStage = (HwcRenderStage *) wd->customRenderStage;
-    if (renderStage)
-        renderStage->setBypassHwc(true);
-
     QImage grab(compositor->grabWindow());
-
-    if (renderStage) {
-        renderStage->setBypassHwc(false);
-    }
 
     const int rotation(QGuiApplication::primaryScreen()->angleBetween(
                 Qt::PrimaryOrientation, compositor->topmostWindowOrientation()));

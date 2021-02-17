@@ -68,8 +68,9 @@ QVariant WindowModel::data(const QModelIndex &index, int role) const
     if (role == Qt::UserRole + 1) {
         return m_items.at(idx);
     } else if (role == Qt::UserRole + 2) {
-        QWaylandSurface *s = c->surfaceForId(m_items.at(idx));
-        return s ? s->processId() : 0;
+        LipstickCompositorWindow *w = static_cast<LipstickCompositorWindow *>(c->windowForId(m_items.at(idx)));
+
+        return w ? w->processId() : 0;
     } else if (role == Qt::UserRole + 3) {
         LipstickCompositorWindow *w = static_cast<LipstickCompositorWindow *>(c->windowForId(m_items.at(idx)));
         return w->title();

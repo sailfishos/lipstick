@@ -102,7 +102,7 @@ QVariant WindowProperty::value()
         connectRef();
 
         if (id) {
-            int win = LipstickCompositor::instance()->windowIdForLink(m_surface, id);
+            int win = LipstickCompositor::instance()->windowIdForLink(m_windowId, id);
             return QVariant(win);
         } else {
             return QVariant(0);

@@ -22,18 +22,29 @@ Compositor
 
     property bool doAsync: false
 
-    HwcImage {
+    Image {
         id: image1
         asynchronous: root.doAsync
-        textureSize: Qt.size(540, 960);
+        width: 540
+        height: 960
+        fillMode: Image.PreserveAspectCrop
+        horizontalAlignment: Image.AlignHCenter
+        verticalAlignment: Image.AlignVCenter
+        clip: true
     }
 
-    HwcImage {
+    Image {
         id: image2
+
         asynchronous: root.doAsync
         x: 100
         y: 100
-        textureSize: Qt.size(540, 960);
+        width: 540
+        height: 960
+        fillMode: Image.PreserveAspectCrop
+        horizontalAlignment: Image.AlignHCenter
+        verticalAlignment: Image.AlignVCenter
+        clip: true
     }
 
     Timer {

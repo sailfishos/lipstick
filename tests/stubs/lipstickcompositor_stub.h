@@ -70,7 +70,6 @@ public:
     virtual void onVisibleChanged(bool visible);
     virtual void keymapChanged();
     virtual QWaylandSurfaceView *createView(QWaylandSurface *surf);
-    virtual void onSurfaceDying();
     virtual void readContent();
     virtual void initialize();
     virtual bool completed();
@@ -295,11 +294,6 @@ void LipstickCompositorStub::surfaceLowered()
     stubMethodEntered("surfaceLowered");
 }
 
-void LipstickCompositorStub::onSurfaceDying()
-{
-    stubMethodEntered("onSurfaceDying");
-}
-
 void LipstickCompositorStub::readContent()
 {
     stubMethodEntered("readContent");
@@ -391,6 +385,9 @@ LipstickCompositorStub *gLipstickCompositorStub = &gDefaultLipstickCompositorStu
 
 // 4. CREATE A PROXY WHICH CALLS THE STUB
 LipstickCompositor::LipstickCompositor()
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    : m_output(this, this, QString(), QString())
+#endif
 {
     gLipstickCompositorStub->LipstickCompositorConstructor();
 }
@@ -453,11 +450,6 @@ bool LipstickCompositor::homeActive() const
 void LipstickCompositor::setHomeActive(bool homeActive)
 {
     gLipstickCompositorStub->setHomeActive(homeActive);
-}
-
-void LipstickCompositor::setFullscreenSurface(QWaylandSurface *surface)
-{
-    gLipstickCompositorStub->setFullscreenSurface(surface);
 }
 
 void LipstickCompositor::setTopmostWindowId(int id)
@@ -614,11 +606,6 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surf)
     return gLipstickCompositorStub->createView(surf);
 }
 
-void LipstickCompositor::onSurfaceDying()
-{
-    gLipstickCompositorStub->onSurfaceDying();
-}
-
 void LipstickCompositor::readContent()
 {
     gLipstickCompositorStub->readContent();
@@ -639,6 +626,20 @@ void LipstickCompositor::timerEvent(QTimerEvent *e)
     gLipstickCompositorStub->timerEvent(e);
 }
 
+void LipstickCompositor::processQueuedSetUpdatesEnabledCalls()
+{
+}
+
+#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+QWaylandQuickCompositor::QWaylandQuickCompositor(const char *, ExtensionFlags)
+{
+}
+
+QWaylandOutput::QWaylandOutput(QWaylandCompositor *, QWindow *, const QString &, const QString &)
+    : d_ptr(nullptr)
+{
+}
+#else
 QWaylandCompositor::QWaylandCompositor(QWindow *, const char *, QWaylandCompositor::ExtensionFlags)
 {
 }
@@ -646,9 +647,6 @@ QWaylandCompositor::QWaylandCompositor(QWindow *, const char *, QWaylandComposit
 QWaylandQuickCompositor::QWaylandQuickCompositor(QQuickWindow *, const char *, QWaylandCompositor::ExtensionFlags)
 {
 }
-
-void LipstickCompositor::processQueuedSetUpdatesEnabledCalls()
-{
-}
+#endif
 
 #endif
