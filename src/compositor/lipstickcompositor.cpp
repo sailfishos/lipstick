@@ -220,7 +220,7 @@ bool LipstickCompositor::openUrl(const QUrl &url)
                     defaultAction,
                     isFile
                         ? ContentAction::Action::actionsForFile(url)
-                        : ContentAction::Action::actionsForScheme(url.toString()));
+                        : ContentAction::Action::actionsForUrl(url.toString()));
         return true;
     } else if (defaultAction.isValid()) {
         defaultAction.trigger();
