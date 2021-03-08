@@ -3,6 +3,9 @@ TARGET = ut_notificationpreviewpresenter
 INCLUDEPATH += $$SRCDIR $$NOTIFICATIONSRCDIR $$UTILITYSRCDIR $$TOUCHSCREENSRCDIR $$SRCDIR/compositor $$DEVICESTATE $$SCREENLOCKSRCDIR
 QT += qml quick dbus compositor
 
+DEFINES += \
+    LIPSTICK_UNIT_TEST_STUB
+
 # unit test and unit
 SOURCES += \
     ut_notificationpreviewpresenter.cpp \

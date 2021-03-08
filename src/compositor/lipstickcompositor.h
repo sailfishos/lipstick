@@ -16,12 +16,11 @@
 #ifndef LIPSTICKCOMPOSITOR_H
 #define LIPSTICKCOMPOSITOR_H
 
-#include <QtCompositorVersion>
-
 #include <QQuickWindow>
 #include "lipstickglobal.h"
 #include "homeapplication.h"
 #include <QQmlParserStatus>
+#include <QtCompositorVersion>
 #if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QWaylandQuickOutput>
 #endif
@@ -33,6 +32,11 @@
 #include <QDBusConnection>
 #include <QDBusContext>
 #include <QDBusMessage>
+
+#ifdef LIPSTICK_UNIT_TEST_STUB
+#undef Q_DECL_OVERRIDE
+#define Q_DECL_OVERRIDE
+#endif
 
 class WindowModel;
 class LipstickCompositorWindow;
@@ -67,7 +71,9 @@ typedef QWaylandClient WaylandClient;
 
 class LIPSTICK_EXPORT LipstickCompositor
     : public QQuickWindow
+#ifndef LIPSTICK_UNIT_TEST_STUB
     , public QWaylandQuickCompositor
+#endif
     , public QQmlParserStatus
     , public QDBusContext
 {
@@ -231,8 +237,10 @@ private:
 
     static LipstickCompositor *m_instance;
 
+#ifndef LIPSTICK_UNIT_TEST_STUB
 #if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     QWaylandQuickOutput m_output;
+#endif
 #endif
 
     int m_totalWindowCount;

@@ -20,6 +20,8 @@
 #include "ngfclient_stub.h"
 #include "ut_notificationfeedbackplayer.h"
 
+#include <QWaylandSurface>
+
 NotificationManager::NotificationManager(QObject *parent, bool owner) : QObject(parent)
 {
     Q_UNUSED(owner)
@@ -163,8 +165,9 @@ void Ut_NotificationFeedbackPlayer::testWithoutFeedbackId()
     notification->setHints(QVariantHash());
     player->addNotification(1);
 
-    // Check that NGFAdapter::play() was not called for the feedback
-    QCOMPARE(gClientStub->stubCallCount("play"), 0);
+    // Check that NGFAdapter::play() was called with the default feedback
+    QCOMPARE(gClientStub->stubCallCount("play"), 1);
+    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QString>(0), QString("default"));
 }
 
 void Ut_NotificationFeedbackPlayer::testMultipleFeedbackIds()
@@ -265,12 +268,12 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotification()
     notification->setHints(hints);
     player->addNotification(1);
 
-    // Check that NGFAdapter::stop() was called again
-    QCOMPARE(gClientStub->stubCallCount("stop"), 6);
-    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<quint32>(0), 1u);
+    QCOMPARE(gClientStub->stubCallCount("play"), 4);
+    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QString>(0), QString("default"));
 
-    // Check that NGFAdapter::play() was not called again
-    QCOMPARE(gClientStub->stubCallCount("play"), 3);
+    // Check that NGFAdapter::stop() was called again    
+    QCOMPARE(gClientStub->stubCallCount("stop"), 7);
+    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<QString>(0), QString("default"));
 }
 
 void Ut_NotificationFeedbackPlayer::testUpdateNotificationAfterRestart()

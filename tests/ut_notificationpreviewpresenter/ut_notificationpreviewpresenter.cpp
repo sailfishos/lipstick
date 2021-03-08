@@ -35,6 +35,8 @@ Q_DECLARE_METATYPE(LipstickNotification*)
 
 #include "homewindow.h"
 
+#include <QWaylandSurface>
+
 HomeWindow::HomeWindow()
 {
 }

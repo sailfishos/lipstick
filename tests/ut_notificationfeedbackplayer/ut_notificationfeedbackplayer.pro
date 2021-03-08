@@ -2,8 +2,10 @@ include(../common.pri)
 TARGET = ut_notificationfeedbackplayer
 INCLUDEPATH += $$NOTIFICATIONSRCDIR $$COMPOSITORSRCDIR $$TOUCHSCREENSRCDIR /usr/include/ngf-qt5 $$DEVICESTATE
 CONFIG += link_pkgconfig
-QT += dbus compositor quick
-DEFINES += QT_COMPOSITOR_QUICK
+QT += dbus quick compositor
+
+DEFINES += \
+    LIPSTICK_UNIT_TEST_STUB
 
 HEADERS += \
     ut_notificationfeedbackplayer.h \

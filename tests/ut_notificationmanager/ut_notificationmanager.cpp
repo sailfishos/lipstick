@@ -58,7 +58,7 @@ void Ut_NotificationManager::testCapabilities()
 {
     // Check the supported capabilities includes all the Nemo hints
     QStringList capabilities = NotificationManager::instance()->GetCapabilities();
-    QCOMPARE(capabilities.count(), 14);
+    QCOMPARE(capabilities.count(), 11);
     QCOMPARE((bool)capabilities.contains("body"), true);
     QCOMPARE((bool)capabilities.contains("actions"), true);
     QCOMPARE((bool)capabilities.contains("persistence"), true);
@@ -135,6 +135,8 @@ void Ut_NotificationManager::testModifyingCategoryDefinitionUpdatesNotifications
     // The updated notifications should be marked as restored until modified
     QCOMPARE(manager->notification(id1)->restored(), false);
     QCOMPARE(manager->notification(id2)->restored(), true);
+
+    manager->closeNotifications(manager->notificationIds());
 }
 
 void Ut_NotificationManager::testUninstallingCategoryDefinitionRemovesNotifications()
@@ -160,6 +162,8 @@ void Ut_NotificationManager::testUninstallingCategoryDefinitionRemovesNotificati
     QCOMPARE(removedSpy.last().at(0).toUInt(), id2);
     QVERIFY(manager->notification(id1) != 0);
     QCOMPARE(manager->notification(id2), (LipstickNotification *)0);
+
+    manager->closeNotifications(manager->notificationIds());
 }
 
 void Ut_NotificationManager::testActionIsInvokedIfDefined()
@@ -302,6 +306,8 @@ void Ut_NotificationManager::testListingNotifications()
     QCOMPARE(notifications.at(0).category(), QVariant("category3"));
     QCOMPARE(notifications.at(0).expireTimeout(), 3);
 #endif
+
+    manager->closeNotifications(manager->notificationIds());
 }
 
 void Ut_NotificationManager::testRemoveUserRemovableNotifications()
