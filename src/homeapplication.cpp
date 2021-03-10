@@ -280,7 +280,7 @@ void HomeApplication::sendStartupNotifications()
 bool HomeApplication::homeActive() const
 {
     LipstickCompositor *c = LipstickCompositor::instance();
-    return c?c->homeActive():(QGuiApplication::focusWindow() != 0);
+    return c ? c->homeActive() : (QGuiApplication::focusWindow() != 0);
 }
 
 TouchScreen *HomeApplication::touchScreen() const

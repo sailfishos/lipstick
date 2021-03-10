@@ -300,7 +300,7 @@ void LipstickCompositor::closeClientForWindowId(int id)
 QWaylandSurface *LipstickCompositor::surfaceForId(int id) const
 {
     LipstickCompositorWindow *window = m_windows.value(id, 0);
-    return window?window->surface():0;
+    return window ? window->surface() : 0;
 }
 
 bool LipstickCompositor::completed()
