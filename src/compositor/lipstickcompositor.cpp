@@ -23,6 +23,17 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QtGui/qpa/qplatformnativeinterface.h>
+#include <qpa/qwindowsysteminterface.h>
+#include <private/qguiapplication_p.h>
+#include <QtGui/qpa/qplatformintegration.h>
+
+#include <qmcenameowner.h>
+#include <dbus/dbus-protocol.h>
+#include <sys/types.h>
+#include <systemd/sd-bus.h>
+#include <systemd/sd-login.h>
+#include <unistd.h>
+
 #include "homeapplication.h"
 #include "touchscreen/touchscreen.h"
 #include "windowmodel.h"
@@ -32,18 +43,8 @@
 #include "lipstickkeymap.h"
 #include "lipsticksettings.h"
 #include "lipstickrecorder.h"
-#include <qpa/qwindowsysteminterface.h>
 #include "alienmanager/alienmanager.h"
 #include "logging.h"
-#include <private/qguiapplication_p.h>
-#include <QtGui/qpa/qplatformintegration.h>
-#include <qmcenameowner.h>
-#include <dbus/dbus-protocol.h>
-#include <sys/types.h>
-#include <systemd/sd-bus.h>
-#include <systemd/sd-login.h>
-#include <unistd.h>
-
 
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
