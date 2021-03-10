@@ -40,6 +40,7 @@
 #include "lipstickcompositorprocwindow.h"
 #include "lipstickcompositor.h"
 #include "lipstickcompositoradaptor.h"
+#include "fileserviceadaptor.h"
 #include "lipstickkeymap.h"
 #include "lipsticksettings.h"
 #include "lipstickrecorder.h"
@@ -482,6 +483,11 @@ void LipstickCompositor::initialize()
         qWarning("Unable to register D-Bus service org.nemomobile.compositor: %s",
                  "Did not get primary name ownership");
     }
+
+    new FileServiceAdaptor(this);
+    QDBusConnection sessionBus = QDBusConnection::sessionBus();
+    sessionBus.registerObject(QLatin1String("/"), this);
+    sessionBus.registerService(QLatin1String("org.sailfishos.fileservice"));
 }
 
 void LipstickCompositor::windowDestroyed(LipstickCompositorWindow *item)

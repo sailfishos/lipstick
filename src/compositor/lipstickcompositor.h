@@ -135,6 +135,10 @@ public:
     Q_INVOKABLE void setDisplayOff();
     Q_INVOKABLE QVariant settingsValue(const QString &key, const QVariant &defaultValue = QVariant()) const
         { return (key == "orientationLock") ? m_orientationLock->value(defaultValue) : MGConfItem("/lipstick/" + key).value(defaultValue); }
+    Q_INVOKABLE void openUrl(const QString &url)
+    {
+        openUrl(QUrl(url));
+    }
 
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &);
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &, QQuickItem *rootItem);
