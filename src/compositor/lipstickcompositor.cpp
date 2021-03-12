@@ -23,20 +23,10 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QtGui/qpa/qplatformnativeinterface.h>
-#include "homeapplication.h"
-#include "touchscreen/touchscreen.h"
-#include "windowmodel.h"
-#include "lipstickcompositorprocwindow.h"
-#include "lipstickcompositor.h"
-#include "lipstickcompositoradaptor.h"
-#include "lipstickkeymap.h"
-#include "lipsticksettings.h"
-#include "lipstickrecorder.h"
 #include <qpa/qwindowsysteminterface.h>
-#include "alienmanager/alienmanager.h"
-#include "logging.h"
 #include <private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformintegration.h>
+
 #include <qmcenameowner.h>
 #include <dbus/dbus-protocol.h>
 #include <sys/types.h>
@@ -44,6 +34,18 @@
 #include <systemd/sd-login.h>
 #include <unistd.h>
 
+#include "homeapplication.h"
+#include "touchscreen/touchscreen.h"
+#include "windowmodel.h"
+#include "lipstickcompositorprocwindow.h"
+#include "lipstickcompositor.h"
+#include "lipstickcompositoradaptor.h"
+#include "fileserviceadaptor.h"
+#include "lipstickkeymap.h"
+#include "lipsticksettings.h"
+#include "lipstickrecorder.h"
+#include "alienmanager/alienmanager.h"
+#include "logging.h"
 
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
@@ -300,7 +302,7 @@ void LipstickCompositor::closeClientForWindowId(int id)
 QWaylandSurface *LipstickCompositor::surfaceForId(int id) const
 {
     LipstickCompositorWindow *window = m_windows.value(id, 0);
-    return window?window->surface():0;
+    return window ? window->surface() : 0;
 }
 
 bool LipstickCompositor::completed()
@@ -481,6 +483,11 @@ void LipstickCompositor::initialize()
         qWarning("Unable to register D-Bus service org.nemomobile.compositor: %s",
                  "Did not get primary name ownership");
     }
+
+    new FileServiceAdaptor(this);
+    QDBusConnection sessionBus = QDBusConnection::sessionBus();
+    sessionBus.registerObject(QLatin1String("/"), this);
+    sessionBus.registerService(QLatin1String("org.sailfishos.fileservice"));
 }
 
 void LipstickCompositor::windowDestroyed(LipstickCompositorWindow *item)
