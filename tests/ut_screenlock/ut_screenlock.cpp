@@ -127,11 +127,10 @@ void Ut_ScreenLock::testToggleEventEater()
 
     // Make sure the screen locking signals are sent and the eater UI is shown/hidden
     screenLock->setEventEaterEnabled(true);
-    TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
-    QCOMPARE(touchScreen->eventFilter(0, &event), true);
+    QCOMPARE(gTouchScreen->eventFilter(0, &event), true);
 
     screenLock->setEventEaterEnabled(false);
-    QCOMPARE(touchScreen->eventFilter(0, &event), false);
+    QCOMPARE(gTouchScreen->eventFilter(0, &event), false);
 }
 
 void Ut_ScreenLock::testUnlockScreenWhenLocked()

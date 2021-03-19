@@ -21,7 +21,6 @@
 #include <QStringList>
 #include "lipstickglobal.h"
 
-class HomeWindow;
 class QUsbModed;
 
 namespace NemoDeviceLock {
@@ -54,6 +53,7 @@ public:
         Host,
         Locked
     };
+    Q_ENUM(Notification)
 
     explicit USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject *parent = 0);
 
@@ -128,7 +128,7 @@ signals:
     void preparingModeChanged(const QString &preparing);
 
     //! Sent to request a mode notification be shown to the user.
-    void showNotification(Notification type);
+    void showNotification(USBModeSelector::Notification type);
 
     //! Sent to request an error be displayed to the user.
     void showError(const QString &errorCode);

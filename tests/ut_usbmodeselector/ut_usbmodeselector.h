@@ -41,7 +41,6 @@ private slots:
     void cleanupTestCase();
 
     // Test cases
-    void testConnections();
     void testShowDialog_data();
     void testShowDialog();
     void testHideDialog_data();
@@ -50,7 +49,6 @@ private slots:
     void testUSBNotifications();
     void testConnectingUSBWhenDeviceIsLockedEmitsDialogShown_data();
     void testConnectingUSBWhenDeviceIsLockedEmitsDialogShown();
-    void testShowError();
     void testSetUSBMode();
 
 private:

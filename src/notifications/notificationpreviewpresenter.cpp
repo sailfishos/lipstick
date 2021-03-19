@@ -34,6 +34,7 @@
 #include <QDBusPendingCall>
 #include <QGuiApplication>
 #include <QQmlContext>
+#include <QWaylandSurface>
 
 namespace {
 

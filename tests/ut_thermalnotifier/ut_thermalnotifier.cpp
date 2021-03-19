@@ -72,17 +72,17 @@ void Ut_ThermalNotifier::testThermalState()
     thermalNotifier->applyThermalState(DeviceState::Thermal::Warning);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 1);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(4), qtTrId("qtn_shut_high_temp_warning"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString("icon-system-warning"));
 
     thermalNotifier->applyThermalState(DeviceState::Thermal::Alert);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 2);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(4), qtTrId("qtn_shut_high_temp_alert"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString("icon-system-warning"));
 
     thermalNotifier->applyThermalState(DeviceState::Thermal::LowTemperatureWarning);
     QCOMPARE(gNotificationManagerStub->stubCallCount("Notify"), 3);
     QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(4), qtTrId("qtn_shut_low_temp_warning"));
-    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString());
+    QCOMPARE(gNotificationManagerStub->stubLastCallTo("Notify").parameter<QString>(2), QString("icon-system-warning"));
 }
 
 void Ut_ThermalNotifier::testDisplayStateOffDoesNothing()

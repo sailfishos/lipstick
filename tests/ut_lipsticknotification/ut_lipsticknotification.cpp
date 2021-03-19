@@ -92,6 +92,7 @@ void Ut_Notification::testGettersAndSetters()
     expireTimeout = 2;
     notification.setAppName(appName);
     notification.setDisambiguatedAppName(disambiguatedAppName);
+    notification.setAppIcon(appIcon);
     notification.setSummary(summary);
     notification.setBody(body);
     notification.setActions(actions);
@@ -160,7 +161,6 @@ void Ut_Notification::testSignals()
     LipstickNotification notification(QString(), QString(), QString(), 0, QString(), QString(), QString(), QStringList(), hints, 0);
     QSignalSpy summarySpy(&notification, SIGNAL(summaryChanged()));
     QSignalSpy bodySpy(&notification, SIGNAL(bodyChanged()));
-    QSignalSpy appIconSpy(&notification, SIGNAL(appIconChanged()));
     QSignalSpy timestampSpy(&notification, SIGNAL(timestampChanged()));
     QSignalSpy previewSummarySpy(&notification, SIGNAL(previewSummaryChanged()));
     QSignalSpy previewBodySpy(&notification, SIGNAL(previewBodyChanged()));
@@ -178,7 +178,6 @@ void Ut_Notification::testSignals()
 
     hints.insert(LipstickNotification::HINT_TIMESTAMP, "2012-10-01 18:04:19");
     notification.setHints(hints);
-    QCOMPARE(appIconSpy.count(), 1);
     QCOMPARE(timestampSpy.count(), 1);
 
     notification.setHints(hints);
