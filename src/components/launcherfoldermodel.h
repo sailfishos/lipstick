@@ -97,9 +97,11 @@ class LIPSTICK_EXPORT LauncherFolderModel : public LauncherFolderItem
     Q_PROPERTY(QStringList iconDirectories READ iconDirectories WRITE setIconDirectories NOTIFY iconDirectoriesChanged)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories NOTIFY categoriesChanged)
     Q_PROPERTY(QStringList blacklistedApplications READ blacklistedApplications WRITE setBlacklistedApplications NOTIFY blacklistedApplicationsChanged)
-
+    Q_PROPERTY(LauncherModel *allItems READ allItems CONSTANT)
 public:
     LauncherFolderModel(QObject *parent = 0);
+
+    LauncherModel *allItems() const;
 
     QString scope() const;
     void setScope(const QString &scope);

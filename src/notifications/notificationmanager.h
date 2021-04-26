@@ -200,6 +200,8 @@ signals:
      */
     void notificationsRemoved(const QList<uint> &ids);
 
+    void remoteActionActivated(const QString &remoteAction);
+
 public slots:
     /*!
      * Removes all notifications which are user removable.

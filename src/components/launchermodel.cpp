@@ -166,6 +166,8 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
                 LAUNCHER_DEBUG("Removing launcher item:" << filename);
                 unsetTemporary(item);
                 removeItem(item);
+            } else {
+                item = takeHiddenItem(filename);
             }
             delete item;
         }
@@ -232,6 +234,8 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
                 } else {
                     updateItemsWithIcon(item->getOriginalIconId(), QString());
                 }
+            } else if ((item = takeHiddenItem(filename))) {
+                addItemIfValid(item);
             } else {
                 // No item yet (maybe it had Hidden=true before), try to see if
                 // we should show the item now
@@ -705,8 +709,16 @@ int LauncherModel::findItem(const QString &path, LauncherItem **item)
         }
     }
 
-    if (item)
-        *item = 0;
+    if (item) {
+        for (LauncherItem *hiddenItem : m_hiddenLaunchers) {
+            if (hiddenItem->filePath() == path || hiddenItem->filename() == path) {
+                *item = hiddenItem;
+                return -1;
+            }
+        }
+
+        *item = nullptr;
+    }
 
     return -1;
 }
@@ -718,9 +730,65 @@ LauncherItem *LauncherModel::itemInModel(const QString &path)
     return result;
 }
 
+LauncherItem *LauncherModel::takeHiddenItem(const QString &path)
+{
+    for (int i = 0; i < m_hiddenLaunchers.count(); ++i) {
+        LauncherItem *item = m_hiddenLaunchers.at(i);
+
+        if (item->filePath() == path || item->filename() == path) {
+            m_hiddenLaunchers.removeAt(i);
+            return item;
+        }
+    }
+    return nullptr;
+}
+
 int LauncherModel::indexInModel(const QString &path)
 {
     return findItem(path, 0);
+}
+
+QList<LauncherItem *> LauncherModel::itemsForMimeType(const QString &mimeType)
+{
+    QList<LauncherItem *> items;
+
+    for (QObject *object : *getList()) {
+         LauncherItem *item = static_cast<LauncherItem *>(object);
+         if (item->canOpenMimeType(mimeType)) {
+             items.append(item);
+         }
+    }
+    for (LauncherItem *item : m_hiddenLaunchers) {
+        if (item->canOpenMimeType(mimeType)) {
+            items.append(item);
+        }
+    }
+    return items;
+}
+
+static bool matchDBusName(const QString &name, const QString launcherName)
+{
+    return name == launcherName || name.startsWith(launcherName + QLatin1Char('.'));
+}
+
+LauncherItem *LauncherModel::itemForService(const QString &name)
+{
+    if (name.isEmpty()) {
+        return nullptr;
+    }
+
+    for (QObject *object : *getList()) {
+         LauncherItem *item = static_cast<LauncherItem *>(object);
+         if (matchDBusName(name, item->dBusServiceName())) {
+             return item;
+         }
+    }
+    for (LauncherItem *item : m_hiddenLaunchers) {
+        if (matchDBusName(name, item->dBusServiceName())) {
+            return item;
+        }
+    }
+    return nullptr;
 }
 
 LauncherItem *LauncherModel::packageInModel(const QString &packageName)
@@ -755,8 +823,12 @@ QVariant LauncherModel::launcherPos(const QString &path)
 LauncherItem *LauncherModel::addItemIfValid(const QString &path)
 {
     LAUNCHER_DEBUG("Creating LauncherItem for desktop entry" << path);
-    LauncherItem *item = new LauncherItem(path, this);
 
+    return addItemIfValid(new LauncherItem(path, this));
+}
+
+LauncherItem *LauncherModel::addItemIfValid(LauncherItem *item)
+{
     bool isValid = item->isValid();
     bool shouldDisplay = item->shouldDisplay() && displayCategory(item);
 
@@ -764,6 +836,9 @@ LauncherItem *LauncherModel::addItemIfValid(const QString &path)
 
     if (isValid && shouldDisplay) {
         addItem(item);
+    } else if (isValid) {
+        m_hiddenLaunchers.append(item);
+        item = NULL;
     } else {
         LAUNCHER_DEBUG("Item" << path << (!isValid ? "is not valid" : "should not be displayed"));
         delete item;

@@ -1145,8 +1145,7 @@ void NotificationManager::invokeAction(const QString &action)
             if (!remoteAction.isEmpty()) {
                 NOTIFICATIONS_DEBUG("INVOKE REMOTE ACTION:" << action << id);
 
-                // If a remote action has been defined for the given action, trigger it
-                MRemoteAction(remoteAction).trigger();
+                emit remoteActionActivated(remoteAction);
             }
 
             for (int actionIndex = 0; actionIndex < notification->actions().count() / 2; actionIndex++) {

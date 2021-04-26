@@ -426,6 +426,11 @@ void LauncherFolderModel::initialize()
     connect(this, SIGNAL(saveNeeded()), this, SLOT(scheduleSave()));
 }
 
+LauncherModel *LauncherFolderModel::allItems() const
+{
+    return m_launcherModel;
+}
+
 QString LauncherFolderModel::scope() const
 {
     return m_launcherModel->scope();
