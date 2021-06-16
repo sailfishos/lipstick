@@ -17,19 +17,30 @@
 
 #include <QProcess>
 #include <QFile>
+#include <QDesktopServices>
 #include <QDir>
 #include <QSettings>
 #include <QTimerEvent>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
-#include <mdesktopentry.h>
+#include <QUrl>
 
-#ifdef HAVE_CONTENTACTION
-#include <contentaction.h>
-#endif
+#include <mdesktopentry.h>
+#include <mremoteaction.h>
 
 #include "launcheritem.h"
 #include "launchermodel.h"
+
+#ifdef HAVE_CONTENTACTION
+#include <contentaction.h>
+#else
+#undef signals
+#include <gio/gdesktopappinfo.h>
+#include <gio/gio.h>
+#include <glib.h>
+#endif
+
+#include <QDebug>
 
 LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
     : QObject(parent)
@@ -63,6 +74,7 @@ LauncherItem::LauncherItem(const QString &packageName, const QString &label,
     , m_customIconFilename(iconPath)
     , m_serial(0)
     , m_isBlacklisted(false)
+    , m_mimeTypesPopulated(false)
 {
     if (!desktopFile.isEmpty()) {
         setFilePath(desktopFile);
@@ -80,9 +92,24 @@ LauncherModel::ItemType LauncherItem::type() const
 
 void LauncherItem::setFilePath(const QString &filePath)
 {
-    if (!filePath.isEmpty() && QFile(filePath).exists()) {
+    if (!filePath.isEmpty() && QFile::exists(filePath)) {
         m_desktopEntry = QSharedPointer<MDesktopEntry>(new MDesktopEntry(filePath));
+
+        const QString organisation = m_desktopEntry->value(QStringLiteral("X-Sailjail"), QStringLiteral("OrganizationName"));
+        const QString application = m_desktopEntry->value(QStringLiteral("X-Sailjail"), QStringLiteral("ApplicationName"));
+
+        if (!organisation.isEmpty() && !application.isEmpty()) {
+            m_serviceName = organisation + QLatin1Char('.') + application;
+        } else {
+            const int slash = filePath.lastIndexOf(QLatin1Char('/')) + 1;
+            const int period = filePath.indexOf(QLatin1Char('.'), slash);
+
+            m_serviceName = period > 0 && period < filePath.count() - 8 // strlen(".desktop")
+                    ? filePath.mid(slash, filePath.count() - slash - 8)
+                    : QString();
+        }
     } else {
+        m_serviceName = QString();
         m_desktopEntry.clear();
     }
 
@@ -130,7 +157,45 @@ QString LauncherItem::exec() const
 
 bool LauncherItem::dBusActivated() const
 {
-    return (!m_desktopEntry.isNull() && !m_desktopEntry->xMaemoService().isEmpty());
+    return !m_desktopEntry.isNull() && (!m_desktopEntry->xMaemoService().isEmpty()
+            || m_desktopEntry->value(QStringLiteral("Desktop Entry/DBusActivatable")) == QLatin1String("true"));
+}
+
+MRemoteAction LauncherItem::remoteAction(const QStringList &arguments) const
+{
+    if (m_desktopEntry) {
+        const QString service = m_desktopEntry->xMaemoService();
+        const QString path = m_desktopEntry->value(QStringLiteral("Desktop Entry/X-Maemo-Object-Path"));
+        const QString method = m_desktopEntry->value(QStringLiteral("Desktop Entry/X-Maemo-Method"));
+
+        const int period = method.lastIndexOf(QLatin1Char('.'));
+
+        if (!service.isEmpty() && !path.isEmpty() && period != -1) {
+            return MRemoteAction(
+                        service,
+                        path.isEmpty() ? QStringLiteral("/") : path,
+                        method.left(period),
+                        method.mid(period + 1),
+                        { QVariant::fromValue(arguments) });
+        } else if (!m_serviceName.isEmpty()
+                && m_desktopEntry->value(QStringLiteral("Desktop Entry/DBusActivatable")) == QLatin1String("true")) {
+            const QString path = QLatin1Char('/') + QString(m_serviceName).replace(QLatin1Char('.'), QLatin1Char('/'));
+            const QString interface = QStringLiteral("org.freedesktop.Application");
+
+            if (arguments.isEmpty()) {
+                return MRemoteAction(m_serviceName, path, interface, QStringLiteral("Activate"));
+            } else {
+                return MRemoteAction(
+                            m_serviceName,
+                            path,
+                            interface,
+                            QStringLiteral("Open"),
+                            { QVariant::fromValue(arguments) });
+            }
+        }
+    }
+
+    return MRemoteAction();
 }
 
 QString LauncherItem::title() const
@@ -229,7 +294,30 @@ void LauncherItem::setIsTemporary(bool isTemporary)
     }
 }
 
+
+QString LauncherItem::dBusServiceName() const
+{
+    return m_serviceName;
+}
+
 void LauncherItem::launchApplication()
+{
+    launchWithArguments(QStringList());
+}
+
+#if !defined(HAVE_CONTENTACTION)
+static void setupProcessIds(gpointer)
+{
+    const gid_t gid = getgid();
+    const uid_t uid = getuid();
+
+    if (setregid(gid, gid) < 0 || setreuid(uid, uid) < 0) {
+        ::_exit(EXIT_FAILURE);
+    }
+}
+#endif
+
+void LauncherItem::launchWithArguments(const QStringList &arguments)
 {
     if (m_isUpdating) {
         LauncherModel *model = static_cast<LauncherModel *>(parent());
@@ -240,30 +328,50 @@ void LauncherItem::launchApplication()
     if (m_desktopEntry.isNull())
         return;
 
+    if (m_desktopEntry->type() == QLatin1String("Link")) {
+        QString url = m_desktopEntry->url();
+
+        if (!url.isEmpty()) {
+            QDesktopServices::openUrl(QUrl(QStringLiteral("file:///")).resolved(url));
+        }
+        return;
+    }
+
 #if defined(HAVE_CONTENTACTION)
     LAUNCHER_DEBUG("launching content action for" << m_desktopEntry->name());
-    ContentAction::Action action = ContentAction::Action::launcherAction(m_desktopEntry, QStringList());
+    ContentAction::Action action = ContentAction::Action::launcherAction(m_desktopEntry, arguments);
     action.trigger();
 #else
     LAUNCHER_DEBUG("launching exec line for" << m_desktopEntry->name());
 
-    // Get the command text from the desktop entry
-    QString commandText = m_desktopEntry->exec();
+    if (GDesktopAppInfo *appInfo = g_desktop_app_info_new_from_filename(
+                m_desktopEntry->fileName().toUtf8().constData())) {
+        GError *error = 0;
+        GList *uris = NULL;
 
-    // Take care of the freedesktop standards things
+        for (const QString &argument : arguments) {
+            uris = g_list_append(uris, g_strdup(argument.toUtf8().constData()));
+        }
 
-    commandText.replace(QRegExp("%k"), filePath());
-    commandText.replace(QRegExp("%c"), m_desktopEntry->name());
-    commandText.remove(QRegExp("%[fFuU]"));
+        g_desktop_app_info_launch_uris_as_manager(
+                    appInfo,
+                    uris,
+                    NULL,
+                    G_SPAWN_SEARCH_PATH,
+                    setupProcessIds,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &error);
+        if (error != NULL) {
+            qWarning() << "Failed to execute" << filename() << error->message;
+            g_error_free(error);
+        }
+        g_list_foreach(uris, (GFunc)g_free, NULL);
+        g_list_free(uris);
 
-    if (!m_desktopEntry->icon().isEmpty())
-        commandText.replace(QRegExp("%i"), QString("--icon ") + m_desktopEntry->icon());
-
-    // DETAILS: http://standards.freedesktop.org/desktop-entry-spec/latest/index.html
-    // DETAILS: http://standards.freedesktop.org/desktop-entry-spec/latest/ar01s06.html
-
-    // Launch the application
-    QProcess::startDetached(commandText);
+        g_object_unref(appInfo);
+    }
 #endif
 
     setIsLaunching(true);
@@ -342,6 +450,26 @@ QString LauncherItem::readValue(const QString &key) const
 
     return m_desktopEntry->value("Desktop Entry", key);
 }
+
+bool LauncherItem::canOpenMimeType(const QString &mimeType)
+{
+    if (!m_mimeTypesPopulated && m_desktopEntry) {
+        m_mimeTypesPopulated = true;
+
+        for (const QString &mimeType : m_desktopEntry->mimeType()) {
+            m_mimeTypes.append(QRegExp(mimeType, Qt::CaseInsensitive, QRegExp::Wildcard));
+        }
+    }
+
+    for (const QRegExp &candidate : m_mimeTypes) {
+        if (candidate.exactMatch(mimeType)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 void LauncherItem::timerEvent(QTimerEvent *event)
 {

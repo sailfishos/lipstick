@@ -46,10 +46,6 @@ class LipstickRecorderManager;
 class LipstickKeymap;
 class QMceNameOwner;
 
-namespace ContentAction {
-class Action;
-}
-
 struct QueuedSetUpdatesEnabledCall
 {
     QueuedSetUpdatesEnabledCall(const QDBusConnection &connection, const QDBusMessage &message, bool enable)
@@ -145,6 +141,7 @@ public:
     {
         openUrl(QUrl(url));
     }
+    Q_INVOKABLE bool openUrl(const QUrl &);
 
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &);
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &, QQuickItem *rootItem);
@@ -192,10 +189,7 @@ signals:
 
     void showUnlockScreen();
 
-    void openUrlRequested(
-            const QUrl &url,
-            const ContentAction::Action &defaultAction,
-            const QList<ContentAction::Action> &candidateActions);
+    void openUrlRequested(const QUrl &url);
 
 private slots:
     void surfaceMapped();
@@ -208,7 +202,6 @@ private slots:
     void windowSwapped();
     void windowDestroyed();
     void windowPropertyChanged(const QString &);
-    bool openUrl(const QUrl &);
     void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
     void homeApplicationAboutToDestroy();
     void setScreenOrientationFromSensor();

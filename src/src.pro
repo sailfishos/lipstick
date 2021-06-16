@@ -163,6 +163,9 @@ packagesExist(contentaction5) {
     PKGCONFIG += contentaction5
     DEFINES += HAVE_CONTENTACTION
 } else {
+    PKGCONFIG += \
+        gio-2.0 \
+        gio-unix-2.0
     warning("contentaction doesn't exist; falling back to exec - this may not work so great")
 }
 

@@ -9,6 +9,14 @@ QMAKE_CXXFLAGS += `pkg-config --cflags-only-I mlite5`
 
 QT += dbus qml
 
+packagesExist(contentaction5) {
+    PKGCONFIG += contentaction5
+    DEFINES += HAVE_CONTENTACTION
+} else {
+    PKGCONFIG += \
+        gio-2.0
+}
+
 SOURCES += \
     ut_launchermodel.cpp \
     $$COMPONENTSSRCDIR/launchermodel.cpp \

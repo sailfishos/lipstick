@@ -22,6 +22,7 @@
 #include <QStringList>
 #include <QSharedPointer>
 #include <QBasicTimer>
+#include <QRegExp>
 
 // Define DEBUG_LAUNCHER if you'd like to see debug messages from the launcher
 // #define DEBUG_LAUNCHER
@@ -37,6 +38,7 @@
 #include "lipstickglobal.h"
 
 class MDesktopEntry;
+class MRemoteAction;
 
 class LIPSTICK_EXPORT LauncherItem : public QObject
 {
@@ -60,6 +62,7 @@ class LIPSTICK_EXPORT LauncherItem : public QObject
     Q_PROPERTY(bool isUpdating READ isUpdating WRITE setIsUpdating NOTIFY isUpdatingChanged)
     Q_PROPERTY(bool isTemporary READ isTemporary WRITE setIsTemporary NOTIFY isTemporaryChanged)
     Q_PROPERTY(bool dBusActivated READ dBusActivated NOTIFY itemChanged)
+    Q_PROPERTY(QString dBusServiceName READ dBusServiceName NOTIFY itemChanged)
     Q_PROPERTY(QString packageName READ packageName WRITE setPackageName NOTIFY packageNameChanged)
     Q_PROPERTY(int updatingProgress READ updatingProgress WRITE setUpdatingProgress NOTIFY updatingProgressChanged)
     Q_PROPERTY(bool isBlacklisted READ isBlacklisted WRITE setIsBlacklisted NOTIFY isBlacklistedChanged)
@@ -91,12 +94,16 @@ public:
     bool isLaunching() const;
     bool isStillValid();
     bool dBusActivated() const;
+    MRemoteAction remoteAction(const QStringList &arguments = QStringList()) const;
 
     QString getOriginalIconId() const;
     void setIconFilename(const QString &path);
     QString iconFilename() const;
 
+    QString dBusServiceName() const;
+
     Q_INVOKABLE void launchApplication();
+    Q_INVOKABLE void launchWithArguments(const QStringList &arguments);
 
     bool isUpdating() const { return m_isUpdating; }
     void setIsUpdating(bool isUpdating);
@@ -117,6 +124,8 @@ public:
 
     Q_INVOKABLE QString readValue(const QString &key) const;
 
+    Q_INVOKABLE bool canOpenMimeType(const QString &mimeType);
+
 signals:
     void itemChanged();
     void isLaunchingChanged();
@@ -132,6 +141,7 @@ protected:
 private:
     QSharedPointer<MDesktopEntry> m_desktopEntry;
     QBasicTimer m_launchingTimeout;
+    QVector<QRegExp> m_mimeTypes;
     bool m_isLaunching;
     bool m_isUpdating;
     bool m_isTemporary;
@@ -139,8 +149,10 @@ private:
     int m_updatingProgress;
     QString m_customTitle;
     QString m_customIconFilename;
+    QString m_serviceName;
     int m_serial;
     bool m_isBlacklisted;
+    bool m_mimeTypesPopulated;
 };
 
 #endif // LAUNCHERITEM_H
