@@ -5,7 +5,7 @@ Name:       lipstick-qt5
 %define icondirectory %{_datadir}/icons/hicolor/86x86/apps
 
 Summary:    QML toolkit for homescreen creation
-Version:    0.34.47
+Version:    0.35.0
 Release:    1
 License:    LGPLv2
 URL:        http://github.com/nemomobile/lipstick
