@@ -39,6 +39,7 @@
 
 class MDesktopEntry;
 class MRemoteAction;
+class QDBusPendingCallWatcher;
 
 class LIPSTICK_EXPORT LauncherItem : public QObject
 {
@@ -138,7 +139,14 @@ signals:
 protected:
     void timerEvent(QTimerEvent *event);
 
+private slots:
+    void sandboxingInfoChanged(const QString &appname);
+
 private:
+    void initializeSandboxingInfo();
+    void fetchSandboxingInfo();
+    QString sandboxingName() const;
+
     QSharedPointer<MDesktopEntry> m_desktopEntry;
     QBasicTimer m_launchingTimeout;
     QVector<QRegExp> m_mimeTypes;
@@ -153,6 +161,8 @@ private:
     int m_serial;
     bool m_isBlacklisted;
     bool m_mimeTypesPopulated;
+    bool m_sandboxingInfoFetched;
+    bool m_sandboxed;
 };
 
 #endif // LAUNCHERITEM_H
