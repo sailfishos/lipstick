@@ -34,6 +34,7 @@
 
 #include "launcheritem.h"
 #include "launchermodel.h"
+#include "logging.h"
 
 #ifdef HAVE_CONTENTACTION
 #include <contentaction.h>
@@ -162,12 +163,12 @@ void LauncherItem::fetchSandboxingInfo()
         if (reply.isError()) {
             auto error = reply.error();
             if (error.type() == QDBusError::InvalidArgs && error.message().startsWith(SailjailInvalidName))
-                qDebug() << "No sandboxing info for" << sandboxingName();
+                qCDebug(lcLipstickAppLaunchLog) << "No sandboxing info for" << sandboxingName();
             else
-                qWarning() << "Error fetching sandboxing info for" << sandboxingName()
-                           << error.name() << error.message();
+                qCWarning(lcLipstickAppLaunchLog) << "Error fetching sandboxing info for"
+                                                  << sandboxingName() << error.name() << error.message();
         } else {
-            qDebug() << "Received sandboxing info for" << sandboxingName();
+            qCDebug(lcLipstickAppLaunchLog) << "Received sandboxing info for" << sandboxingName();
             const auto map = reply.argumentAt<0>();
             m_sandboxed = map[SailjailInfoKeyMode].variant().toString() != SailjailModeNone;
             m_sandboxingInfoFetched = true;
@@ -440,7 +441,7 @@ void LauncherItem::launchWithArguments(const QStringList &arguments)
                     NULL,
                     &error);
         if (error != NULL) {
-            qWarning() << "Failed to execute" << filename() << error->message;
+            qCWarning(lcLipstickAppLaunchLog) << "Failed to execute" << filename() << error->message;
             g_error_free(error);
         }
         g_list_foreach(uris, (GFunc)g_free, NULL);
