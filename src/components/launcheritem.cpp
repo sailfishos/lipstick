@@ -170,7 +170,7 @@ MRemoteAction LauncherItem::remoteAction(const QStringList &arguments) const
 
         const int period = method.lastIndexOf(QLatin1Char('.'));
 
-        if (!service.isEmpty() && !path.isEmpty() && period != -1) {
+        if (!service.isEmpty() && !method.isEmpty() && period != -1) {
             return MRemoteAction(
                         service,
                         path.isEmpty() ? QStringLiteral("/") : path,
