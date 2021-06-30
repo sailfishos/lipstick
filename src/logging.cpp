@@ -16,3 +16,4 @@
 
 Q_LOGGING_CATEGORY(lcLipstickCoreLog, "org.sailfishos.lipstick", QtWarningMsg)
 Q_LOGGING_CATEGORY(lcLipstickHwcLog, "org.sailfishos.lipstick.hwc", QtWarningMsg)
+Q_LOGGING_CATEGORY(lcLipstickAppLaunchLog, "org.sailfishos.lipstick.applaunch", QtWarningMsg)

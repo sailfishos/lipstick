@@ -25,6 +25,7 @@ SOURCES += \
     $$COMPONENTSSRCDIR/launcherdbus.cpp \
     $$STUBSDIR/stubbase.cpp \
     $$UTILITYSRCDIR/qobjectlistmodel.cpp \
+    $$SRCDIR/logging.cpp \
 
 HEADERS += \
     ut_launchermodel.h \
@@ -34,5 +35,6 @@ HEADERS += \
     $$COMPONENTSSRCDIR/launcherdbus.h \
     $$UTILITYSRCDIR/qobjectlistmodel.h \
     $$3RDPARTYSRCDIR/synchronizelists.h \
+    $$SRCDIR/logging.h \
     /usr/include/mlite5/mdesktopentry.h \
 

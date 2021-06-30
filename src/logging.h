@@ -20,5 +20,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(lcLipstickCoreLog)
 Q_DECLARE_LOGGING_CATEGORY(lcLipstickHwcLog)
+Q_DECLARE_LOGGING_CATEGORY(lcLipstickAppLaunchLog)
 
 #endif

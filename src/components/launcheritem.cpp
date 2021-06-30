@@ -24,12 +24,17 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QUrl>
+#include <QDBusConnection>
+#include <QDBusPendingCall>
+#include <QDBusPendingReply>
+#include <QDBusMetaType>
 
 #include <mdesktopentry.h>
 #include <mremoteaction.h>
 
 #include "launcheritem.h"
 #include "launchermodel.h"
+#include "logging.h"
 
 #ifdef HAVE_CONTENTACTION
 #include <contentaction.h>
@@ -42,6 +47,17 @@
 
 #include <QDebug>
 
+// TODO: These values should be in some header coming from sailjail
+const auto SailjailService = QStringLiteral("org.sailfishos.sailjaild1");
+const auto SailjailPath = QStringLiteral("/org/sailfishos/sailjaild1");
+const auto SailjailInterface = QStringLiteral("org.sailfishos.sailjaild1");
+const auto SailjailGetAppInfo = QStringLiteral("GetAppInfo");
+const auto SailjailInvalidName = QStringLiteral("Invalid application name: ");
+const auto SailjailInfoKeyMode = QStringLiteral("Mode");
+const auto SailjailModeNone = QStringLiteral("None");
+
+typedef QMap<QString, QDBusVariant> PropertyMap;
+
 LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
     : QObject(parent)
     , m_isLaunching(false)
@@ -53,9 +69,13 @@ LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
     , m_customIconFilename("")
     , m_serial(0)
     , m_isBlacklisted(false)
+    , m_mimeTypesPopulated(false)
+    , m_sandboxingInfoFetched(false)
+    , m_sandboxed(false)
 {
     if (!filePath.isEmpty()) {
         setFilePath(filePath);
+        initializeSandboxingInfo();
     }
 
     // TODO: match the PID of the window thumbnails with the launcher processes
@@ -75,9 +95,12 @@ LauncherItem::LauncherItem(const QString &packageName, const QString &label,
     , m_serial(0)
     , m_isBlacklisted(false)
     , m_mimeTypesPopulated(false)
+    , m_sandboxingInfoFetched(false)
+    , m_sandboxed(false)
 {
     if (!desktopFile.isEmpty()) {
         setFilePath(desktopFile);
+        initializeSandboxingInfo();
     }
 }
 
@@ -114,6 +137,56 @@ void LauncherItem::setFilePath(const QString &filePath)
     }
 
     emit this->itemChanged();
+}
+
+void LauncherItem::initializeSandboxingInfo()
+{
+    qDBusRegisterMetaType<PropertyMap>();
+    auto bus = QDBusConnection::systemBus();
+    bus.connect(SailjailService, SailjailPath, SailjailInterface, "ApplicationAdded",
+                this, SLOT(sandboxingInfoChanged(QString)));
+    bus.connect(SailjailService, SailjailPath, SailjailInterface, "ApplicationChanged",
+                this, SLOT(sandboxingInfoChanged(QString)));
+    fetchSandboxingInfo();
+}
+
+void LauncherItem::fetchSandboxingInfo()
+{
+    auto message = QDBusMessage::createMethodCall(SailjailService, SailjailPath, SailjailInterface,
+                                                  SailjailGetAppInfo);
+    message.setArguments({ sandboxingName() });
+    QDBusPendingCall async = QDBusConnection::systemBus().asyncCall(message);
+    QDBusPendingCallWatcher *call = new QDBusPendingCallWatcher(async, this);
+    connect(call, &QDBusPendingCallWatcher::finished,
+            this, [this](QDBusPendingCallWatcher *call) {
+        QDBusPendingReply<PropertyMap> reply = *call;
+        if (reply.isError()) {
+            auto error = reply.error();
+            if (error.type() == QDBusError::InvalidArgs && error.message().startsWith(SailjailInvalidName))
+                qCDebug(lcLipstickAppLaunchLog) << "No sandboxing info for" << sandboxingName();
+            else
+                qCWarning(lcLipstickAppLaunchLog) << "Error fetching sandboxing info for"
+                                                  << sandboxingName() << error.name() << error.message();
+        } else {
+            qCDebug(lcLipstickAppLaunchLog) << "Received sandboxing info for" << sandboxingName();
+            const auto map = reply.argumentAt<0>();
+            m_sandboxed = map[SailjailInfoKeyMode].variant().toString() != SailjailModeNone;
+            m_sandboxingInfoFetched = true;
+            emit itemChanged();
+        }
+        call->deleteLater();
+    });
+}
+
+void LauncherItem::sandboxingInfoChanged(const QString &appname)
+{
+    if (appname == sandboxingName())
+        fetchSandboxingInfo();
+}
+
+QString LauncherItem::sandboxingName() const
+{
+    return QFileInfo(filePath()).completeBaseName();
 }
 
 QString LauncherItem::filePath() const
@@ -251,7 +324,11 @@ bool LauncherItem::shouldDisplay() const
 
 bool LauncherItem::isSandboxed() const
 {
-    return !m_desktopEntry.isNull() ? m_desktopEntry->isSandboxed() : false;
+    if (m_sandboxingInfoFetched) {
+        return m_sandboxed;
+    } else {
+        return !m_desktopEntry.isNull() ? m_desktopEntry->isSandboxed() : false;
+    }
 }
 
 bool LauncherItem::isValid() const
@@ -364,7 +441,7 @@ void LauncherItem::launchWithArguments(const QStringList &arguments)
                     NULL,
                     &error);
         if (error != NULL) {
-            qWarning() << "Failed to execute" << filename() << error->message;
+            qCWarning(lcLipstickAppLaunchLog) << "Failed to execute" << filename() << error->message;
             g_error_free(error);
         }
         g_list_foreach(uris, (GFunc)g_free, NULL);
