@@ -710,13 +710,6 @@ int LauncherModel::findItem(const QString &path, LauncherItem **item)
     }
 
     if (item) {
-        for (LauncherItem *hiddenItem : m_hiddenLaunchers) {
-            if (hiddenItem->filePath() == path || hiddenItem->filename() == path) {
-                *item = hiddenItem;
-                return -1;
-            }
-        }
-
         *item = nullptr;
     }
 
