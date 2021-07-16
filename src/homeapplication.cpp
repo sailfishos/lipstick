@@ -131,13 +131,13 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
         if (state != m_online) {
             m_online = state;
             QDBusConnection sessionBus = QDBusConnection::sessionBus();
-            QDBusInterface systemd(QStringLiteral("org.freedesktop.systemd1"),
-                                   QStringLiteral("/org/freedesktop/systemd1"),
-                                   QStringLiteral("org.freedesktop.systemd1.Manager"),
-                                   sessionBus);
-            systemd.call(QDBus::NoBlock, (m_online ? QStringLiteral("StartUnit") : QStringLiteral("StopUnit")),
-                         QStringLiteral("vpn-updown.service"),
-                         QStringLiteral("replace"));
+            QDBusMessage method = QDBusMessage::createMethodCall(
+                        QStringLiteral("org.freedesktop.systemd1"),
+                        QStringLiteral("/org/freedesktop/systemd1"),
+                        QStringLiteral("org.freedesktop.systemd1.Manager"),
+                        m_online ? QStringLiteral("StartUnit") : QStringLiteral("StopUnit"));
+            method.setArguments({ QStringLiteral("vpn-updown.service"), QStringLiteral("replace") });
+            sessionBus.call(method, QDBus::NoBlock);
         }
     };
 

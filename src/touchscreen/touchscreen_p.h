@@ -21,8 +21,6 @@
 #include "touchscreen.h"
 #include "homeapplication.h"
 
-class QDBusInterface;
-
 class TouchScreenPrivate {
 public:
     explicit TouchScreenPrivate(TouchScreen *q);
@@ -39,7 +37,6 @@ public:
     bool touchBlockedState;
     int touchUnblockingDelayTimer;
     DeviceState::DisplayStateMonitor *displayState;
-    QDBusInterface *mceRequest;
 
     TouchScreen *q_ptr;
 

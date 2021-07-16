@@ -25,7 +25,6 @@ class VolumeKeyListener;
 class MGConfItem;
 
 class QDBusPendingCallWatcher;
-class QDBusInterface;
 
 namespace ResourcePolicy {
     class ResourceSet;
@@ -243,7 +242,6 @@ private:
     bool m_upPressed;
     bool m_downPressed;
 
-    QDBusInterface *m_mceRequest;
     int m_mediaState;
 
 #ifdef UNIT_TEST

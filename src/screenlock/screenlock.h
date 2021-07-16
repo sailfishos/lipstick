@@ -19,7 +19,8 @@
 #include <QObject>
 #include "touchscreen/touchscreen.h"
 
-class QDBusInterface;
+#include <QDBusMessage>
+
 class QTimer;
 
 /*!
@@ -199,13 +200,10 @@ private:
         TkLockClosed
     };
 
-    //! MCE callback D-Bus interface
-    QDBusInterface *m_callbackInterface;
-
     TouchScreen *m_touchScreen;
 
-    //! Name of the MCE callback method
-    QString m_callbackMethod;
+    //! The MCE callback method
+    QDBusMessage m_callbackMethod;
 
     //! Whether the system is shutting down or not
     bool m_shuttingDown;

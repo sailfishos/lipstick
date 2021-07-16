@@ -18,7 +18,6 @@
 
 #include <QTimerEvent>
 #include <QDBusConnection>
-#include <QDBusInterface>
 #include <QDBusPendingReply>
 #include <QDBusPendingCallWatcher>
 #include <QDebug>
@@ -51,7 +50,6 @@ TouchScreenPrivate::TouchScreenPrivate(TouchScreen *q)
     , touchBlockedState(false)
     , touchUnblockingDelayTimer(0)
     , displayState(new DeviceState::DisplayStateMonitor(q))
-    , mceRequest(0)
     , q_ptr(q)
 {
 }
@@ -129,12 +127,8 @@ TouchScreen::TouchScreen(QObject *parent)
                       MCE_TOUCH_INPUT_POLICY_SIG,
                       this, SLOT(inputPolicyChanged(QString)));
 
-    d->mceRequest = new QDBusInterface(MCE_SERVICE,
-                                       MCE_REQUEST_PATH,
-                                       MCE_REQUEST_IF,
-                                       systemBus);
-
-    QDBusPendingReply<QString> query = d->mceRequest->asyncCall(MCE_TOUCH_INPUT_POLICY_GET);
+    QDBusPendingReply<QString> query = systemBus.asyncCall(QDBusMessage::createMethodCall(
+                MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_TOUCH_INPUT_POLICY_GET));
     QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(query, this);
     connect(watcher, &QDBusPendingCallWatcher::finished,
             this, &TouchScreen::inputPolicyReply);
@@ -147,9 +141,6 @@ TouchScreen::~TouchScreen()
     Q_D(TouchScreen);
     delete d->displayState;
     d->displayState = 0;
-
-    delete d->mceRequest;
-    d->mceRequest = 0;
 
     delete d;
     d_ptr = 0;

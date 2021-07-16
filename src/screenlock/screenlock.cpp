@@ -14,7 +14,7 @@
 ****************************************************************************/
 
 #include <QTimer>
-#include <QDBusInterface>
+#include <QDBusConnection>
 #include <QDBusPendingCall>
 #include <QTextStream>
 #include <QCursor>
@@ -30,7 +30,6 @@
 
 ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent) :
     QObject(parent),
-    m_callbackInterface(NULL),
     m_touchScreen(touch),
     m_shuttingDown(false),
     m_lockscreenVisible(false),
@@ -77,14 +76,8 @@ int ScreenLock::tklock_open(const QString &service, const QString &path, const Q
         return TkLockReplyOk;
     }
 
-    // Create a D-Bus interface if one doesn't exist or the D-Bus callback details have changed
-    if (m_callbackInterface == NULL || m_callbackInterface->service() != service || m_callbackInterface->path() != path || m_callbackInterface->interface() != interface) {
-        delete m_callbackInterface;
-        m_callbackInterface = new QDBusInterface(service, path, interface, QDBusConnection::systemBus(), this);
-    }
-
     // Store the callback method name
-    m_callbackMethod = method;
+    m_callbackMethod = QDBusMessage::createMethodCall(service, path, interface, method);
 
     // MCE needs a response ASAP, so the actions are executed with single shot timers
     switch (mode) {
@@ -162,8 +155,9 @@ void ScreenLock::unlockScreen()
 {
     hideScreenLockAndEventEater();
 
-    if (m_callbackInterface != NULL && !m_callbackMethod.isEmpty()) {
-        m_callbackInterface->call(QDBus::NoBlock, m_callbackMethod, TkLockUnlock);
+    if (m_callbackMethod.type() == QDBusMessage::MethodCallMessage) {
+        m_callbackMethod.setArguments({ TkLockUnlock });
+        QDBusConnection::systemBus().call(m_callbackMethod, QDBus::NoBlock);
     }
 }
 

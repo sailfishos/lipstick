@@ -400,19 +400,16 @@ void LipstickCompositor::activateLogindSession()
         return;
     }
 
-    QDBusInterface logind(QStringLiteral("org.freedesktop.login1"),
-                          QStringLiteral("/org/freedesktop/login1"),
-                          QStringLiteral("org.freedesktop.login1.Manager"),
-                          QDBusConnection::systemBus());
-
-    if (!logind.isValid()) {
-        qCWarning(lcLipstickCoreLog) << "Logind manager is not a valid interface, could not activate session";
-        return;
-    }
-
     qCDebug(lcLipstickCoreLog) << "Activating session on seat0";
 
-    QDBusPendingCall call = logind.asyncCall("ActivateSession", m_logindSession);
+    QDBusMessage method = QDBusMessage::createMethodCall(
+                QStringLiteral("org.freedesktop.login1"),
+                QStringLiteral("/org/freedesktop/login1"),
+                QStringLiteral("org.freedesktop.login1.Manager"),
+                QStringLiteral("ActivateSession"));
+    method.setArguments({ m_logindSession });
+
+    QDBusPendingCall call = QDBusConnection::systemBus().asyncCall(method);
     QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
         QDBusPendingReply<void> reply = *call;
