@@ -25,7 +25,7 @@
 #include "pulseaudiocontrol.h"
 #include "volumecontrol.h"
 #include "lipstickqmlpath.h"
-#include <QDBusInterface>
+#include <QDBusConnection>
 #include <QDBusPendingReply>
 #include <QDBusPendingCallWatcher>
 #include <mce/dbus-names.h>
@@ -46,7 +46,6 @@ VolumeControl::VolumeControl(QObject *parent) :
     m_callActive(false),
     m_upPressed(false),
     m_downPressed(false),
-    m_mceRequest(0),
     m_mediaState(MediaStateUnknown)
 {
     m_hwKeyResource->setAlwaysReply();
@@ -76,12 +75,8 @@ VolumeControl::VolumeControl(QObject *parent) :
                       MCE_VOLKEY_INPUT_POLICY_SIG,
                       this, SLOT(inputPolicyChanged(QString)));
 
-    m_mceRequest = new QDBusInterface(MCE_SERVICE,
-                                      MCE_REQUEST_PATH,
-                                      MCE_REQUEST_IF,
-                                      systemBus);
-
-    QDBusPendingReply<QString> inputPolicy = m_mceRequest->asyncCall(MCE_VOLKEY_INPUT_POLICY_GET);
+    QDBusPendingReply<QString> inputPolicy = systemBus.asyncCall(QDBusMessage::createMethodCall(
+                MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_VOLKEY_INPUT_POLICY_GET));
     QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(inputPolicy, this);
     connect(watcher, &QDBusPendingCallWatcher::finished,
             this, &VolumeControl::inputPolicyReply);
@@ -91,9 +86,6 @@ VolumeControl::VolumeControl(QObject *parent) :
 
 VolumeControl::~VolumeControl()
 {
-    delete m_mceRequest;
-    m_mceRequest = 0;
-
     m_hwKeyResource->deleteResource(ResourcePolicy::ScaleButtonType);
     delete m_window;
 }
