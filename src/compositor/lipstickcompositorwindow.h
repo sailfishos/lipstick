@@ -49,6 +49,7 @@ public:
 
     int windowId() const;
     qint64 processId() const;
+    QString policyApplicationId() const;
 
     bool delayRemove() const;
     void setDelayRemove(bool);
@@ -105,7 +106,10 @@ private:
     void refreshGrabbedKeys();
     void handleTouchEvent(QTouchEvent *e);
 
+    void updatePolicyApplicationId();
+
     qint64 m_processId;
+    QString m_policyApplicationId;
     int m_windowId;
     bool m_isAlien;
     QString m_category;

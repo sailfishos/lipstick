@@ -59,6 +59,8 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
         connect(surface, &QWaylandSurface::titleChanged, this, &LipstickCompositorWindow::titleChanged);
         connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
     }
+
+    updatePolicyApplicationId();
 }
 
 LipstickCompositorWindow::~LipstickCompositorWindow()
@@ -66,6 +68,42 @@ LipstickCompositorWindow::~LipstickCompositorWindow()
     // We don't want tryRemove() posting an event anymore, we're dying anyway
     m_removePosted = true;
     LipstickCompositor::instance()->windowDestroyed(this);
+}
+
+void LipstickCompositorWindow::updatePolicyApplicationId()
+{
+    if (m_processId <= 0) {
+        return;
+    }
+
+    QString statFile = QString::fromLatin1("/proc/%1/stat").arg(m_processId);
+    QFile f(statFile);
+    if (!f.open(QIODevice::ReadOnly)) {
+        qWarning() << Q_FUNC_INFO << "Cannot open proc stat for" << statFile;
+        return;
+    }
+
+    // stat line values are split by ' ' in /proc/*/stat
+    QByteArray data = f.readAll();
+    QList<QByteArray> statFields = data.split(' ');
+
+    // starttime is field 22, format %lld in stat, see man page for details.
+    if (statFields.count() < 22) {
+        qWarning() << Q_FUNC_INFO << "fields count < 22";
+        return;
+    }
+
+    QString starttime = QString::fromUtf8(statFields.at(21));
+    bool ok;
+    qint64 value = starttime.toLongLong(&ok, 10);
+
+    if (!ok) {
+        qWarning() << Q_FUNC_INFO << "toLongLong not ok:" << starttime;
+        return;
+    }
+
+    // format value as hex
+    m_policyApplicationId = QString("%1").arg(value, 0, 16);
 }
 
 QVariant LipstickCompositorWindow::userData() const
@@ -95,6 +133,11 @@ bool LipstickCompositorWindow::isAlien() const
 qint64 LipstickCompositorWindow::processId() const
 {
     return m_processId;
+}
+
+QString LipstickCompositorWindow::policyApplicationId() const
+{
+    return m_policyApplicationId;
 }
 
 bool LipstickCompositorWindow::delayRemove() const
