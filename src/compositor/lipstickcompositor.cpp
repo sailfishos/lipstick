@@ -340,6 +340,14 @@ void LipstickCompositor::setTopmostWindowId(int id)
             m_topmostWindowProcessId = pid;
             emit privateTopmostWindowProcessIdChanged(m_topmostWindowProcessId);
         }
+
+        QString applicationId = window && !window->policyApplicationId().isEmpty()
+                                ? window->policyApplicationId() : "none";
+
+        if (m_topmostWindowPolicyApplicationId != applicationId) {
+            m_topmostWindowPolicyApplicationId = applicationId;
+            emit privateTopmostWindowPolicyApplicationIdChanged(m_topmostWindowPolicyApplicationId);
+        }
     }
 }
 

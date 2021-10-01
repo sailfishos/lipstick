@@ -10,5 +10,11 @@
     <signal name="privateTopmostWindowProcessIdChanged">
       <arg name="pid" type="i"/>
     </signal>
+    <method name="privateTopmostWindowPolicyApplicationId">
+      <arg name="id" type="s" direction="out"/>
+    </method>
+    <signal name="privateTopmostWindowPolicyApplicationIdChanged">
+      <arg name="id" type="s"/>
+    </signal>
   </interface>
 </node>
