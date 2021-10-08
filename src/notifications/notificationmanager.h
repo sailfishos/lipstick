@@ -164,6 +164,7 @@ signals:
      * \param actionKey The key of the action invoked. These match the keys sent over in the list of actions.
      */
     void ActionInvoked(uint id, const QString &actionKey);
+    void InputTextSet(uint id, const QString &inputText);
 
     /*!
      * Emitted when a notification is added.

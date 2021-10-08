@@ -1153,7 +1153,11 @@ void NotificationManager::invokeAction(const QString &action)
                 // the identifier for the action. Each odd element in the list is the localized string that will be displayed to the user.
                 if (notification->actions().at(actionIndex * 2) == action) {
                     NOTIFICATIONS_DEBUG("INVOKE ACTION:" << action << id);
-
+                    QVariantMap input = notification->remoteActions().value(actionIndex).toMap().value("input").toMap();
+                    if (input.contains("editable") && input.value("editable").toBool()) {
+                        NOTIFICATIONS_DEBUG("ACTION HAS EDITABLE INPUT. SETTING TEST VALUE");
+                        emit InputTextSet(id, "TestReply");
+                    }
                     emit ActionInvoked(id, action);
                 }
             }
