@@ -203,11 +203,16 @@ bool TouchScreen::eventFilter(QObject *, QEvent *event)
         }
 
         if (d->waitForTouchBegin) {
-            if (event->type() != QEvent::TouchBegin) {
+            switch (event->type()) {
+            case QEvent::TouchBegin:
+            case QEvent::MouseButtonPress:
+            case QEvent::MouseMove:
+                d->waitForTouchBegin = false;
+                break;
+            default:
                 event->accept();
                 return true;
             }
-            d->waitForTouchBegin = false;
         }
     }
 
