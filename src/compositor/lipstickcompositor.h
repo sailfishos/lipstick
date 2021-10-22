@@ -160,6 +160,10 @@ protected:
     bool event(QEvent *e) Q_DECL_OVERRIDE;
     void sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode);
 
+private:
+    QPoint mapPositionToOrientation(QPoint pos);
+    QMouseEvent *rotateMouseEvent(QMouseEvent *event);
+
 signals:
     void windowAdded(QObject *window);
     void windowRemoved(QObject *window);
@@ -274,6 +278,9 @@ private:
 
     QString m_logindSession;
     uint m_sessionActivationTries;
+    QPoint m_transformedMousePosition;
+    QPoint m_previousMousePosition;
+    bool m_blockMouseRecursion;
 };
 
 #endif // LIPSTICKCOMPOSITOR_H

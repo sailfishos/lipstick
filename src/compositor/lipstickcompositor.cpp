@@ -70,6 +70,7 @@ LipstickCompositor::LipstickCompositor()
     , m_queuedSetUpdatesEnabledCalls()
     , m_mceNameOwner(new QMceNameOwner(this))
     , m_sessionActivationTries(0)
+    , m_blockMouseRecursion(false)
 {
     setColor(Qt::black);
     setRetainedSelectionEnabled(true);
@@ -897,7 +898,23 @@ bool LipstickCompositor::event(QEvent *event)
             return true;
         }
     }
+    switch (event->type()) {
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseMove:
+    case QEvent::MouseButtonRelease:
+
+        if (m_blockMouseRecursion) {
+            m_blockMouseRecursion = false;
+        } else {
+            m_blockMouseRecursion = true;
+            QCoreApplication::sendEvent(this, rotateMouseEvent(static_cast<QMouseEvent *>(event)));
+            return true;
+        }
+    default:
+        break;
+    }
     return QQuickWindow::event(event);
+
 }
 
 void LipstickCompositor::sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode)
@@ -912,3 +929,31 @@ void LipstickCompositor::sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 na
         defaultInputDevice()->sendFullKeyEvent(event);
     }
 }
+
+QPoint LipstickCompositor::mapPositionToOrientation(QPoint pos)
+{
+    switch (QGuiApplication::primaryScreen()->angleBetween(m_topmostWindowOrientation, Qt::PortraitOrientation)) {
+    case 90:
+        return QPoint(-pos.y(), pos.x());
+    case 180:
+        return QPoint(-pos.x(), -pos.y());
+    case 270:
+        return QPoint(pos.y(), -pos.x());
+    default:
+        return pos;
+    }
+}
+
+QMouseEvent * LipstickCompositor::rotateMouseEvent(QMouseEvent *event)
+{
+    QPoint diff = event->pos() - m_previousMousePosition;
+    m_previousMousePosition = event->pos();
+    m_transformedMousePosition = m_transformedMousePosition + mapPositionToOrientation(diff);
+    if (m_transformedMousePosition.x() < 0) m_transformedMousePosition.setX(0);
+    if (m_transformedMousePosition.y() < 0) m_transformedMousePosition.setY(0);
+    if (m_transformedMousePosition.x() > width()) m_transformedMousePosition.setX(width());
+    if (m_transformedMousePosition.y() > height()) m_transformedMousePosition.setY(height());
+
+    return new QMouseEvent(event->type(), m_transformedMousePosition, event->button(), event->buttons(), event->modifiers() | Qt::MetaModifier);
+}
+
