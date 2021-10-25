@@ -1,6 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012 - 2021 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -61,6 +62,31 @@ void NotificationManager::expire()
 
 void NotificationManager::reportModifications()
 {
+}
+
+void NotificationManager::identifiedGetNotifications()
+{
+}
+
+void NotificationManager::identifiedGetNotificationsByCategory()
+{
+}
+
+void NotificationManager::identifiedCloseNotification()
+{
+}
+
+void NotificationManager::identifiedNotify()
+{
+}
+
+void ClientIdentifier::getPidReply(QDBusPendingCallWatcher *getPidWatcher)
+{
+    Q_UNUSED(getPidWatcher);
+}
+
+void ClientIdentifier::identifyReply(QDBusPendingCallWatcher *identifyWatcher) {
+    Q_UNUSED(identifyWatcher);
 }
 
 NotificationManager *notificationManagerInstance = 0;
