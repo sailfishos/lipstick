@@ -1,6 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012 - 2021 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -21,10 +22,48 @@
 #include <QTimer>
 #include <QSet>
 #include <QDBusContext>
+#include <QDBusConnection>
+#include <QDBusMessage>
 
 class AndroidPriorityStore;
 class CategoryDefinitionStore;
 class QSqlDatabase;
+class QDBusPendingCallWatcher;
+
+/*!
+ * \class ClientIdentifier
+ *
+ * \brief Asynchronous D-Bus client identification
+ *
+ * First makes standard GetConnectionUnixProcessID() query to D-Bus daemon.
+ * Then, if the resulting pid looks like xdg-dbus-proxy process, makes
+ * Sailfish OS specific Identify() query to the proxy in order to get
+ * details of actual client behind the proxy.
+ *
+ * Emits finished() signal when done, at which state clientPid() will return
+ * pid of the client process or -1 if client could not be identified.
+ */
+class ClientIdentifier : public QObject
+{
+    Q_OBJECT
+public:
+    ClientIdentifier(QObject *parent, const QDBusConnection &connection, const QDBusMessage &message);
+    QDBusConnection &connection() { return m_connection; }
+    QDBusMessage &message() { return m_message; }
+    QString member() { return message().member(); }
+    QString clientName() { return message().service(); }
+    int clientPid() { return m_clientPid; }
+Q_SIGNALS:
+    void finished();
+private Q_SLOTS:
+    void getPidReply(QDBusPendingCallWatcher *watcher);
+    void identifyReply(QDBusPendingCallWatcher *watcher);
+private:
+    void finish();
+    QDBusConnection m_connection;
+    QDBusMessage m_message;
+    int m_clientPid;
+};
 
 /*!
  * \class NotificationManager
@@ -210,6 +249,26 @@ public slots:
 
 private slots:
     /*!
+     * D-Bus client that made Notify() call has been identified
+     */
+    void identifiedNotify();
+
+    /*!
+     * D-Bus client that made CloseNotification() call has been identified
+     */
+    void identifiedCloseNotification();
+
+    /*!
+     * D-Bus client that made GetNotifications() call has been identified
+     */
+    void identifiedGetNotifications();
+
+    /*!
+     * D-Bus client that made GetNotificationsByCategory() call has been identified
+     */
+    void identifiedGetNotificationsByCategory();
+
+    /*!
      * Removes all notifications with the specified category.
      *
      * \param category the category of the notifications to remove
@@ -256,6 +315,29 @@ private slots:
     void reportModifications();
 
 private:
+    bool isInternalOperation() const;
+    /*!
+     * Actual Notify() work. In case of D-Bus ipc, called after client identification.
+     */
+    uint handleNotify(int clientPid, const QString &appName, uint replacesId, const QString &appIcon,
+                      const QString &summary, const QString &body, const QStringList &actions,
+                      const QVariantHash &hints, int expireTimeout);
+
+    /*!
+     * Actual CloseNotification() work. In case of D-Bus ipc, called after client identification.
+     */
+    void handleCloseNotification(int clientPid, uint id, NotificationClosedReason closeReason);
+
+    /*!
+     * Actual GetNotifications() work. In case of D-Bus ipc, called after client identification.
+     */
+    NotificationList handleGetNotifications(int clientPid, const QString &owner);
+
+    /*!
+     * Actual GetNotificationsByCategory() work. In case of D-Bus ipc, called after client identification.
+     */
+    NotificationList handleGetNotificationsByCategory(int clientPid, const QString &category);
+
     /*!
      * Creates a new notification manager.
      *
@@ -382,9 +464,6 @@ private:
      * \param args list of values to be bound to the positional placeholders ('?' -character) in the command.
      */
     void execSQL(const QString &command, const QVariantList &args = QVariantList());
-
-    uint callerProcessId() const;
-    bool isPrivileged() const;
 
     //! The singleton notification manager instance
     static NotificationManager *s_instance;

@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 - 2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2012 - 2021 Jolla Ltd.
+** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
 **
@@ -17,7 +17,6 @@
 
 #include "notificationmanager.h"
 #include <stubbase.h>
-
 
 // 1. DECLARE STUB
 // FIXME - stubgen is not yet finished
@@ -45,6 +44,10 @@ public:
     virtual void reportModifications();
     virtual void NotificationManagerConstructor(QObject *parent, bool owner);
     virtual void NotificationManagerDestructor();
+    virtual void identifiedGetNotifications();
+    virtual void identifiedGetNotificationsByCategory();
+    virtual void identifiedCloseNotification();
+    virtual void identifiedNotify();
 };
 
 // 2. IMPLEMENT STUB
@@ -190,7 +193,21 @@ void NotificationManagerStub::NotificationManagerDestructor()
 
 }
 
+void NotificationManagerStub::identifiedGetNotifications()
+{
+}
 
+void NotificationManagerStub::identifiedGetNotificationsByCategory()
+{
+}
+
+void NotificationManagerStub::identifiedCloseNotification()
+{
+}
+
+void NotificationManagerStub::identifiedNotify()
+{
+}
 
 // 3. CREATE A STUB INSTANCE
 NotificationManagerStub gDefaultNotificationManagerStub;
@@ -305,6 +322,35 @@ NotificationManager::~NotificationManager()
 QString NotificationManager::systemApplicationName() const
 {
     return QString();
+}
+
+void NotificationManager::identifiedGetNotifications()
+{
+    gNotificationManagerStub->identifiedGetNotifications();
+}
+
+void NotificationManager::identifiedGetNotificationsByCategory()
+{
+    gNotificationManagerStub->identifiedGetNotificationsByCategory();
+}
+
+void NotificationManager::identifiedCloseNotification()
+{
+    gNotificationManagerStub->identifiedCloseNotification();
+}
+
+void NotificationManager::identifiedNotify()
+{
+    gNotificationManagerStub->identifiedNotify();
+}
+
+void ClientIdentifier::getPidReply(QDBusPendingCallWatcher *getPidWatcher)
+{
+    Q_UNUSED(getPidWatcher);
+}
+
+void ClientIdentifier::identifyReply(QDBusPendingCallWatcher *identifyWatcher) {
+    Q_UNUSED(identifyWatcher);
 }
 
 #endif
