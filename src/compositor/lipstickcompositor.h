@@ -157,6 +157,8 @@ public:
 
 protected:
     void timerEvent(QTimerEvent *e) Q_DECL_OVERRIDE;
+    bool event(QEvent *e) Q_DECL_OVERRIDE;
+    void sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode);
 
 signals:
     void windowAdded(QObject *window);

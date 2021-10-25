@@ -74,6 +74,8 @@ public:
     virtual void initialize();
     virtual bool completed();
     virtual void timerEvent(QTimerEvent *e);
+    virtual bool event(QEvent *e);
+    virtual void sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode);
 };
 
 // 2. IMPLEMENT STUB
@@ -315,6 +317,23 @@ void LipstickCompositorStub::timerEvent(QTimerEvent *e)
     QList<ParameterBase *> params;
     params.append( new Parameter<QTimerEvent *>(e));
     stubMethodEntered("timerEvent", params);
+}
+
+bool LipstickCompositorStub::event(QEvent *e)
+{
+    QList<ParameterBase *> params;
+    params.append( new Parameter<QEvent *>(e));
+    stubMethodEntered("event", params);
+    return true;
+}
+
+void LipstickCompositorStub::sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode)
+{
+  QList<ParameterBase*> params;
+  params.append( new Parameter<QEvent::Type>(type));
+  params.append( new Parameter<Qt::Key>(key));
+  params.append( new Parameter<quint32>(nativeScanCode));
+  stubMethodEntered("sendKeyEvent", params);
 }
 
 void LipstickCompositorStub::surfaceDamaged(const QRegion &rect)
@@ -621,6 +640,16 @@ bool LipstickCompositor::completed()
 void LipstickCompositor::timerEvent(QTimerEvent *e)
 {
     gLipstickCompositorStub->timerEvent(e);
+}
+
+bool LipstickCompositor::event(QEvent *e)
+{
+    return gLipstickCompositorStub->event(e);
+}
+
+void LipstickCompositor::sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode)
+{
+  gLipstickCompositorStub->sendKeyEvent(type, key, nativeScanCode);
 }
 
 void LipstickCompositor::processQueuedSetUpdatesEnabledCalls()
