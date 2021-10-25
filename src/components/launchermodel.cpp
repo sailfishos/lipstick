@@ -235,7 +235,8 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
                     updateItemsWithIcon(item->getOriginalIconId(), QString());
                 }
             } else if ((item = takeHiddenItem(filename))) {
-                addItemIfValid(item);
+                delete item;
+                addItemIfValid(filename);
             } else {
                 // No item yet (maybe it had Hidden=true before), try to see if
                 // we should show the item now
@@ -816,12 +817,8 @@ QVariant LauncherModel::launcherPos(const QString &path)
 LauncherItem *LauncherModel::addItemIfValid(const QString &path)
 {
     LAUNCHER_DEBUG("Creating LauncherItem for desktop entry" << path);
+    LauncherItem *item = new LauncherItem(path, this);
 
-    return addItemIfValid(new LauncherItem(path, this));
-}
-
-LauncherItem *LauncherModel::addItemIfValid(LauncherItem *item)
-{
     bool isValid = item->isValid();
     bool shouldDisplay = item->shouldDisplay() && displayCategory(item);
 
