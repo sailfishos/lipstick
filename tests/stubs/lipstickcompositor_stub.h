@@ -106,15 +106,15 @@ void LipstickCompositorStub::componentComplete()
 void LipstickCompositorStub::surfaceCreated(QWaylandSurface *surface)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<QWaylandSurface * >(surface));
+    params.append(new Parameter<QWaylandSurface * >(surface));
     stubMethodEntered("surfaceCreated", params);
 }
 
 bool LipstickCompositorStub::openUrl(WaylandClient *client, const QUrl &url)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<WaylandClient * >(client));
-    params.append( new Parameter<const QUrl &>(url));
+    params.append(new Parameter<WaylandClient * >(client));
+    params.append(new Parameter<const QUrl &>(url));
     stubMethodEntered("openUrl", params);
     return stubReturnValue<bool>("openUrl");
 }
@@ -122,7 +122,7 @@ bool LipstickCompositorStub::openUrl(WaylandClient *client, const QUrl &url)
 bool LipstickCompositorStub::openUrl(const QUrl &url)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<const QUrl &>(url));
+    params.append(new Parameter<const QUrl &>(url));
     stubMethodEntered("openUrl", params);
     return stubReturnValue<bool>("openUrl");
 }
@@ -155,35 +155,35 @@ bool LipstickCompositorStub::homeActive() const
 void LipstickCompositorStub::setHomeActive(bool homeActive)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<bool >(homeActive));
+    params.append(new Parameter<bool >(homeActive));
     stubMethodEntered("setHomeActive", params);
 }
 
 void LipstickCompositorStub::setFullscreenSurface(QWaylandSurface *surface)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<QWaylandSurface * >(surface));
+    params.append(new Parameter<QWaylandSurface * >(surface));
     stubMethodEntered("setFullscreenSurface", params);
 }
 
 void LipstickCompositorStub::setTopmostWindowId(int id)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<int >(id));
+    params.append(new Parameter<int >(id));
     stubMethodEntered("setTopmostWindowId", params);
 }
 
 void LipstickCompositorStub::setTopmostWindowOrientation(Qt::ScreenOrientation topmostWindowOrientation)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<Qt::ScreenOrientation >(topmostWindowOrientation));
+    params.append(new Parameter<Qt::ScreenOrientation >(topmostWindowOrientation));
     stubMethodEntered("setTopmostWindowOrientation", params);
 }
 
 void LipstickCompositorStub::setScreenOrientation(Qt::ScreenOrientation screenOrientation)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<Qt::ScreenOrientation >(screenOrientation));
+    params.append(new Parameter<Qt::ScreenOrientation >(screenOrientation));
     stubMethodEntered("setScreenOrientation", params);
 }
 
@@ -202,7 +202,7 @@ LipstickKeymap *LipstickCompositorStub::keymap() const
 void LipstickCompositorStub::setKeymap(LipstickKeymap *keymap)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<LipstickKeymap *>(keymap));
+    params.append(new Parameter<LipstickKeymap *>(keymap));
     stubMethodEntered("setKeymap", params);
 }
 
@@ -226,7 +226,7 @@ bool LipstickCompositorStub::debug() const
 QObject *LipstickCompositorStub::windowForId(int id) const
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<int >(id));
+    params.append(new Parameter<int >(id));
     stubMethodEntered("windowForId", params);
     return stubReturnValue<QObject *>("windowForId");
 }
@@ -234,7 +234,7 @@ QObject *LipstickCompositorStub::windowForId(int id) const
 void LipstickCompositorStub::closeClientForWindowId(int id)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<int >(id));
+    params.append(new Parameter<int >(id));
     stubMethodEntered("closeClientForWindowId", params);
 }
 
@@ -251,9 +251,9 @@ void LipstickCompositorStub::setDisplayOff()
 LipstickCompositorProcWindow *LipstickCompositorStub::mapProcWindow(const QString &title, const QString &category, const QRect &rect)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<const QString & >(title));
-    params.append( new Parameter<const QString & >(category));
-    params.append( new Parameter<const QRect & >(rect));
+    params.append(new Parameter<const QString & >(title));
+    params.append(new Parameter<const QString & >(category));
+    params.append(new Parameter<const QRect & >(rect));
     stubMethodEntered("mapProcWindow", params);
     return stubReturnValue<LipstickCompositorProcWindow *>("mapProcWindow");
 }
@@ -261,7 +261,7 @@ LipstickCompositorProcWindow *LipstickCompositorStub::mapProcWindow(const QStrin
 QWaylandSurface *LipstickCompositorStub::surfaceForId(int id) const
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<int >(id));
+    params.append(new Parameter<int >(id));
     stubMethodEntered("surfaceForId", params);
     return stubReturnValue<QWaylandSurface *>("surfaceForId");
 }
@@ -315,14 +315,14 @@ bool LipstickCompositorStub::completed()
 void LipstickCompositorStub::timerEvent(QTimerEvent *e)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<QTimerEvent *>(e));
+    params.append(new Parameter<QTimerEvent *>(e));
     stubMethodEntered("timerEvent", params);
 }
 
 bool LipstickCompositorStub::event(QEvent *e)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<QEvent *>(e));
+    params.append(new Parameter<QEvent *>(e));
     stubMethodEntered("event", params);
     return true;
 }
@@ -330,16 +330,16 @@ bool LipstickCompositorStub::event(QEvent *e)
 void LipstickCompositorStub::sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode)
 {
   QList<ParameterBase*> params;
-  params.append( new Parameter<QEvent::Type>(type));
-  params.append( new Parameter<Qt::Key>(key));
-  params.append( new Parameter<quint32>(nativeScanCode));
+  params.append(new Parameter<QEvent::Type>(type));
+  params.append(new Parameter<Qt::Key>(key));
+  params.append(new Parameter<quint32>(nativeScanCode));
   stubMethodEntered("sendKeyEvent", params);
 }
 
 void LipstickCompositorStub::surfaceDamaged(const QRegion &rect)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<QRegion>(rect));
+    params.append(new Parameter<QRegion>(rect));
     stubMethodEntered("surfaceDamaged", params);
 }
 
@@ -356,7 +356,7 @@ void LipstickCompositorStub::windowDestroyed()
 void LipstickCompositorStub::windowPropertyChanged(const QString &property)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<const QString & >(property));
+    params.append(new Parameter<const QString & >(property));
     stubMethodEntered("windowPropertyChanged", params);
 }
 
@@ -381,7 +381,7 @@ void LipstickCompositorStub::clipboardDataChanged()
 void LipstickCompositorStub::onVisibleChanged(bool v)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<bool>(v));
+    params.append(new Parameter<bool>(v));
     stubMethodEntered("onVisibleChanged", params);
 }
 
@@ -393,7 +393,7 @@ void LipstickCompositorStub::keymapChanged()
 QWaylandSurfaceView *LipstickCompositorStub::createView(QWaylandSurface *surf)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<QWaylandSurface *>(surf));
+    params.append(new Parameter<QWaylandSurface *>(surf));
     stubMethodEntered("createView", params);
     return stubReturnValue<QWaylandSurfaceView *>("createView");
 }
