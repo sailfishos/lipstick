@@ -33,15 +33,14 @@ static const QString CONFIG_FOLDER_SUBDIRECTORY("/lipstick/");
 static const QString CONFIG_MENU_FILENAME("applications.menu");
 static const QString DEFAULT_ICON_ID("icon-launcher-folder-01");
 
-static QString configDir()
-{
-    return QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + CONFIG_FOLDER_SUBDIRECTORY;
-}
-
 static QString absoluteConfigPath(const QString &fileName)
 {
-    return configDir() + fileName;
+    return LauncherFolderModel::configDir() + fileName;
 }
+
+
+QString LauncherFolderModel::s_configDir = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
+        + CONFIG_FOLDER_SUBDIRECTORY;
 
 static QString buildBlacklistValue(const QString &directoryId, int i)
 {
@@ -672,10 +671,20 @@ QString LauncherFolderModel::configFile()
     return configDir() + CONFIG_MENU_FILENAME;
 }
 
+void LauncherFolderModel::setConfigDir(const QString &dirPath)
+{
+    s_configDir = dirPath;
+}
+
+QString LauncherFolderModel::configDir()
+{
+    return s_configDir;
+}
+
 static QString configurationFileForScope(const QString &scope)
 {
     return !scope.isEmpty()
-            ? configDir() + scope + QStringLiteral(".menu")
+            ? LauncherFolderModel::configDir() + scope + QStringLiteral(".menu")
             : LauncherFolderModel::configFile();
 }
 

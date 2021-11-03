@@ -123,6 +123,8 @@ public:
     void import();
 
     static QString configFile();
+    static void setConfigDir(const QString &dirPath);
+    static QString configDir();
 
 public slots:
     void load();
@@ -166,6 +168,8 @@ private:
     bool m_loading;
     bool m_initialized;
     QMap<QString, QString> m_blacklistedApplications;
+
+    static QString s_configDir;
 };
 
 #endif
