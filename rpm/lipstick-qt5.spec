@@ -8,7 +8,7 @@ Summary:    QML toolkit for homescreen creation
 Version:    0.36.0
 Release:    1
 License:    LGPLv2
-URL:        http://github.com/nemomobile/lipstick
+URL:        https://github.com/sailfishos/lipstick/
 Source0:    %{name}-%{version}.tar.bz2
 Source1:    %{name}.privileges
 Requires:   mce >= 1.87.0
@@ -48,8 +48,6 @@ BuildRequires:  qt5-qtwayland-wayland_egl-devel >= 5.4.0+git26
 BuildRequires:  doxygen
 BuildRequires:  qt5-qttools-qthelp-devel
 BuildRequires:  nemo-qml-plugin-systemsettings >= 0.5.73
-Obsoletes:   libnotificationsystem0
-Obsoletes:   %{name}-screenshot
 
 %description
 A QML toolkit for homescreen creation
@@ -127,6 +125,7 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE.LGPL
 %config %{_sysconfdir}/dbus-1/system.d/lipstick.conf
 %{_libdir}/lib%{name}.so.*
 %{_libdir}/qt5/qml/org/nemomobile/lipstick
@@ -137,7 +136,6 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 %files devel
 %defattr(-,root,root,-)
-%license LICENSE.LGPL
 %{_includedir}/%{name}
 %{_libdir}/lib%{name}.so
 %{_libdir}/lib%{name}.prl
