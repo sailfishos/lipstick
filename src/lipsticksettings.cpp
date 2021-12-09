@@ -41,6 +41,7 @@ void LipstickSettings::setScreenLock(ScreenLock *screenLock)
 
     m_screenLock = screenLock;
     connect(screenLock, SIGNAL(screenLockedChanged(bool)), this, SIGNAL(lockscreenVisibleChanged()));
+    connect(screenLock, SIGNAL(deviceIsLockedChanged(bool)), this, SIGNAL(deviceIsLockedChanged()));
     connect(screenLock, SIGNAL(lowPowerModeChanged()), this, SIGNAL(lowPowerModeChanged()));
     connect(screenLock, SIGNAL(blankingPolicyChanged(QString)), this, SIGNAL(blankingPolicyChanged()));
 }
@@ -48,6 +49,19 @@ void LipstickSettings::setScreenLock(ScreenLock *screenLock)
 bool LipstickSettings::lockscreenVisible() const
 {
     return m_screenLock != 0 ? m_screenLock->isScreenLocked() : false;
+}
+
+
+bool LipstickSettings::isDeviceLocked() const
+{
+    return m_screenLock != 0 ? m_screenLock->isDeviceLocked() : false;
+}
+
+void LipstickSettings::setDeviceIsLocked(bool locked)
+{
+    if (m_screenLock != 0 && locked != m_screenLock->isDeviceLocked()) {
+        m_screenLock->setDeviceIsLocked(locked);
+    }
 }
 
 void LipstickSettings::setLockscreenVisible(bool lockscreenVisible)

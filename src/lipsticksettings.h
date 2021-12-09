@@ -28,6 +28,7 @@ class LIPSTICK_EXPORT LipstickSettings : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool lockscreenVisible READ lockscreenVisible WRITE setLockscreenVisible NOTIFY lockscreenVisibleChanged)
+    Q_PROPERTY(bool deviceIsLocked READ isDeviceLocked WRITE setDeviceIsLocked NOTIFY deviceIsLockedChanged)
     Q_PROPERTY(bool lowPowerMode READ lowPowerMode NOTIFY lowPowerModeChanged)
     Q_PROPERTY(QSize screenSize READ screenSize NOTIFY screenSizeChanged)
     Q_PROPERTY(QString blankingPolicy READ blankingPolicy NOTIFY blankingPolicyChanged)
@@ -39,6 +40,9 @@ public:
     void setScreenLock(ScreenLock *screenLock);
     bool lockscreenVisible() const;
     void setLockscreenVisible(bool lockscreenVisible);
+
+    bool isDeviceLocked() const;
+    void setDeviceIsLocked(bool lockscreenVisible);
 
     bool lowPowerMode() const;
 
@@ -52,6 +56,7 @@ public:
 
 signals:
     void lockscreenVisibleChanged();
+    void deviceIsLockedChanged();
     void lowPowerModeChanged();
     void screenSizeChanged();
     void blankingPolicyChanged();

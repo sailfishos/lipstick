@@ -50,6 +50,8 @@ public:
     virtual bool isLowPowerMode() const;
     virtual QString blankingPolicy() const;
     virtual bool touchBlocked() const;
+    virtual bool isDeviceLocked();
+    virtual void setDeviceIsLocked(bool locked);
 };
 
 // 2. IMPLEMENT STUB
@@ -97,6 +99,13 @@ void ScreenLockStub::setScreenLocked(bool value)
     QList<ParameterBase *> params;
     params.append( new Parameter<bool >(value));
     stubMethodEntered("setScreenLocked", params);
+}
+
+void ScreenLockStub::setDeviceIsLocked(bool value)
+{
+    QList<ParameterBase *> params;
+    params.append( new Parameter<bool >(value));
+    stubMethodEntered("setDeviceIsLocked", params);
 }
 
 void ScreenLockStub::setEventEaterEnabled(bool value)
@@ -185,6 +194,12 @@ bool ScreenLockStub::isScreenLocked()
     return stubReturnValue<bool>("isScreenLocked");
 }
 
+bool ScreenLockStub::isDeviceLocked()
+{
+    stubMethodEntered("isDeviceLocked");
+    return stubReturnValue<bool>("isDeviceLocked");
+}
+
 bool ScreenLockStub::eventFilter(QObject *object, QEvent *event)
 {
     QList<ParameterBase *> params;
@@ -248,6 +263,11 @@ int ScreenLock::tklock_close(bool silent)
 void ScreenLock::setScreenLocked(bool value)
 {
     gScreenLockStub->setScreenLocked(value);
+}
+
+void ScreenLock::setDeviceIsLocked(bool value)
+{
+    gScreenLockStub->setDeviceIsLocked(value);
 }
 
 void ScreenLock::setEventEaterEnabled(bool value)
@@ -324,6 +344,11 @@ void ScreenLock::handleBlankingPolicyChange(const QString &policy)
 bool ScreenLock::isScreenLocked() const
 {
     return gScreenLockStub->isScreenLocked();
+}
+
+bool ScreenLock::isDeviceLocked() const
+{
+    return gScreenLockStub->isDeviceLocked();
 }
 
 bool ScreenLock::isLowPowerMode() const

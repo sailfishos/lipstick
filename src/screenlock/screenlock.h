@@ -73,6 +73,14 @@ public:
     bool isScreenLocked() const;
 
     /*!
+     * Retuns the device locking state.
+     *
+     * \return \c true if the device is locked, \c false otherwise
+     */
+    bool isDeviceLocked() const;
+    void setDeviceIsLocked(bool locked);
+
+    /*!
      * Returns the low power mode state.
      *
      * \return \c true if the low power mode is on, \c false otherwise
@@ -160,6 +168,9 @@ signals:
     //! Emitted when the screen lock state changes
     void screenLockedChanged(bool locked);
 
+    //! Emitted when the device is locked or unlocked
+    void deviceIsLockedChanged(bool locked);
+
     //! Emitted when the low power mode state changes
     void lowPowerModeChanged();
 
@@ -210,6 +221,12 @@ private:
 
     //! Whether the lockscreen is visible or not
     bool m_lockscreenVisible;
+
+    //! Whether device is locked
+    bool m_deviceIsLocked;
+
+    //! Whether lock screen can be skipped if device is not locked
+    bool m_allowSkippingLockScreen;
 
     //! Whether the lockscreen should be shown as low power mode
     bool m_lowPowerMode;

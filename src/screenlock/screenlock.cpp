@@ -20,6 +20,7 @@
 #include <QCursor>
 #include <QDebug>
 #include <QTouchEvent>
+#include <MGConfItem>
 
 #include <mce/mode-names.h>
 
@@ -33,6 +34,8 @@ ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent) :
     m_touchScreen(touch),
     m_shuttingDown(false),
     m_lockscreenVisible(false),
+    m_deviceIsLocked(false),
+    m_allowSkippingLockScreen(false),
     m_lowPowerMode(false),
     m_mceBlankingPolicy("default"),
     m_interactionExpectedTimer(0),
@@ -62,6 +65,8 @@ ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent) :
             "display_blanking_policy_ind",
             this,
             SLOT(handleBlankingPolicyChange(QString)));
+
+    m_allowSkippingLockScreen = MGConfItem("/lipstick/skip_lock_screen").value(false).toBool();
 }
 
 ScreenLock::~ScreenLock()
@@ -204,8 +209,33 @@ void ScreenLock::setScreenLocked(bool value)
 {
     // TODO Make the view a lock screen view (title? stacking layer?)
     if (m_lockscreenVisible != value) {
+        if (m_allowSkippingLockScreen) {
+            // Allow disabling lock screen, but only if the device is not locked
+            if (value && !m_deviceIsLocked) {
+                return;
+            }
+        }
         m_lockscreenVisible = value;
         emit screenLockedChanged(value);
+    }
+}
+
+bool ScreenLock::isDeviceLocked() const
+{
+    return m_deviceIsLocked;
+}
+
+void ScreenLock::setDeviceIsLocked(bool locked)
+{
+    if (m_deviceIsLocked != locked) {
+        m_deviceIsLocked = locked;
+        emit deviceIsLockedChanged(locked);
+
+        if (m_allowSkippingLockScreen) {
+            if (locked && displayState() == TouchScreen::DisplayOff) {
+                lockScreen();
+            }
+        }
     }
 }
 
