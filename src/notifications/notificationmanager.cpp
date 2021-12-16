@@ -1,7 +1,7 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 - 2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2012 - 2021 Jolla Ltd.
+** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 **
 **
 ** This file is part of lipstick.
@@ -32,6 +32,7 @@
 #include <mremoteaction.h>
 #include <mdesktopentry.h>
 #include <sys/statfs.h>
+#include <unistd.h>
 #include <limits>
 #include "androidprioritystore.h"
 #include "categorydefinitionstore.h"
@@ -70,28 +71,98 @@ const int DefaultNotificationPriority = 50;
 const int CommitDelay = 10 * 1000;
 const int PublicationDelay = 1000;
 
-QString getProcessName(uint pid)
+bool processIsPrivileged(int pid)
 {
-    if (pid > 1) {
-        const QString procFilename(QString::fromLatin1("/proc/%1/cmdline").arg(QString::number(pid)));
-        QFile procFile(procFilename);
-        if (procFile.open(QIODevice::ReadOnly)) {
-            const QByteArray cmdLine = procFile.readAll();
-            QString processNameWithPath = QFile::decodeName(cmdLine.left(cmdLine.indexOf('\0')));
-            return QFileInfo(processNameWithPath).fileName();
-        }
+    bool isPrivileged = false;
+    if (pid == getpid()) {
+        // Internal operations are considered privileged
+        isPrivileged = true;
+    } else if (pid > 0) {
+        QFileInfo info(QString("/proc/%1").arg(pid));
+        isPrivileged = info.group() == QLatin1String("privileged") || info.owner() == QLatin1String("root");
     }
-    return QString();
+    NOTIFICATIONS_DEBUG("pid" << pid << "-> isPrivileged" << isPrivileged);
+    return isPrivileged;
 }
 
-QPair<QString, QString> processProperties(uint pid)
+QString getProcessCmdline(int pid)
+{
+    QString cmdline;
+    if (pid > 0) {
+        const QString path(QString::fromLatin1("/proc/%1/cmdline").arg(QString::number(pid)));
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly)) {
+            const QByteArray data = file.readAll();
+            cmdline = QString::fromUtf8(data.left(data.indexOf('\0')));
+        }
+    }
+    NOTIFICATIONS_DEBUG("pid" << pid << "-> cmdline" << cmdline);
+    return cmdline;
+}
+
+QString getProcessComm(int pid)
+{
+    QString comm;
+    if (pid > 0) {
+        const QString path(QString::fromLatin1("/proc/%1/comm").arg(QString::number(pid)));
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly)) {
+            const QByteArray data = file.readAll();
+            comm = QFile::decodeName(data.left(data.indexOf('\n')));
+        }
+    }
+    NOTIFICATIONS_DEBUG("pid" << pid << "-> comm" << comm);
+    return comm;
+}
+
+QString getProcessExe(int pid)
+{
+    QString exe;
+    if (pid > 0) {
+        const QString path(QString::fromLatin1("/proc/%1/exe").arg(QString::number(pid)));
+        exe = QFile::symLinkTarget(path);
+    }
+    NOTIFICATIONS_DEBUG("pid" << pid << "-> exe" << exe);
+    return exe;
+}
+
+bool processIsDBusProxy(int pid)
+{
+    bool isDBusProxy = false;
+    if (pid > 0) {
+        /* Note: Applications can choose what shows up in /proc/pid/comm
+         *       and/or cmdline. The exe symlink is under kernel control,
+         *       but it might not be accessible by unprivileged processes.
+         *       As figuring out originator of a notification is not security
+         *       sensitive: prefer using exe info. But if it not accessible,
+         *       falling back to using comm / cmdline is acceptable. */
+        static const char proxyPath[] = "/usr/bin/xdg-dbus-proxy";
+        static const char proxyName[] = "xdg-dbus-proxy";
+        const QString exe(getProcessExe(pid));
+        if (!exe.isEmpty())
+            isDBusProxy = exe == proxyPath;
+        else
+            isDBusProxy = getProcessComm(pid) == proxyName || getProcessCmdline(pid) == proxyPath;
+    }
+    NOTIFICATIONS_DEBUG("pid" << pid << "-> isDBusProxy" << isDBusProxy);
+    return isDBusProxy;
+}
+
+QString getProcessName(int pid)
+{
+    QString processName = QFileInfo(getProcessCmdline(pid)).fileName();
+    NOTIFICATIONS_DEBUG("pid" << pid << "-> processName" << processName);
+    return processName;
+}
+
+QPair<QString, QString> processProperties(int pid)
 {
     // Cache resolution of process name to properties:
     static QHash<QString, QPair<QString, QString> > nameProperties;
 
     QPair<QString, QString> rv;
 
-    if (pid == QCoreApplication::applicationPid()) {
+    if (pid == getpid()) {
         // This notification comes from our process
         rv.first = QCoreApplication::applicationName();
     } else {
@@ -127,6 +198,69 @@ bool notificationReverseOrder(const LipstickNotification *lhs, const LipstickNot
     return *rhs < *lhs;
 }
 
+}
+
+ClientIdentifier::ClientIdentifier(QObject *parent, const QDBusConnection &connection, const QDBusMessage &message)
+    : QObject(parent)
+    , m_connection(connection)
+    , m_message(message)
+    , m_clientPid(-1)
+{
+    QDBusMessage request = QDBusMessage::createMethodCall("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "GetConnectionUnixProcessID");
+    request << clientName();
+    NOTIFICATIONS_DEBUG("identify" << member() << "from" << clientName() << "...");
+    QDBusPendingReply<quint32> call = this->connection().asyncCall(request);
+    QDBusPendingCallWatcher *getPidWatcher = new QDBusPendingCallWatcher(call, this);
+    connect(getPidWatcher, &QDBusPendingCallWatcher::finished, this, &ClientIdentifier::getPidReply);
+}
+
+void ClientIdentifier::getPidReply(QDBusPendingCallWatcher *getPidWatcher)
+{
+    bool waiting = false;
+    QDBusPendingReply<quint32> reply = *getPidWatcher;
+    if (reply.isError()) {
+        qWarning() << "identify" << member() << "from" << clientName() << "- GetConnectionUnixProcessID:" << reply.error().name() << reply.error().message();
+    } else {
+        quint32 pid = reply.value();
+        if (pid > 0) {
+            m_clientPid = pid;
+            if (processIsDBusProxy(pid)) {
+                QDBusMessage request = QDBusMessage::createMethodCall(clientName(), "/", "org.sailfishos.sailjailed", "Identify");
+                QDBusPendingReply<QVariantMap> call = connection().asyncCall(request);
+                QDBusPendingCallWatcher *identifyWatcher = new QDBusPendingCallWatcher(call, this);
+                connect(identifyWatcher, &QDBusPendingCallWatcher::finished, this, &ClientIdentifier::identifyReply);
+                waiting = true;
+            }
+        }
+    }
+    if (!waiting)
+        finish();
+    getPidWatcher->deleteLater();
+}
+
+void ClientIdentifier::identifyReply(QDBusPendingCallWatcher *identifyWatcher)
+{
+    QDBusPendingReply<QVariantMap> reply = *identifyWatcher;
+    if (reply.isError()) {
+        qWarning() << "identify" << member() << "from" << clientName() << " - Identify:" << reply.error().name() << reply.error().message();
+    } else {
+        QVariantMap map(reply.value());
+        if (map.contains("pid")) {
+            bool ack = false;
+            int pid = map["pid"].toInt(&ack);
+            if (ack && pid > 0) {
+                m_clientPid = pid;
+            }
+        }
+    }
+    finish();
+    identifyWatcher->deleteLater();
+}
+
+void ClientIdentifier::finish()
+{
+    NOTIFICATIONS_DEBUG("identify" << member() << "from" << clientName() << "-> using pid" << clientPid());
+    Q_EMIT finished();
 }
 
 NotificationManager *NotificationManager::s_instance = 0;
@@ -208,11 +342,73 @@ QStringList NotificationManager::GetCapabilities()
                          << "x-nemo-get-notifications";
 }
 
+bool NotificationManager::isInternalOperation() const
+{
+    if (!calledFromDBus())
+        return true;
+
+    /* D-Bus method calls from self special case: we know that caller
+     * is this process, and additionally the message might have been
+     * dispatched internally without involving D-Bus daemon - in which
+     * case we must provide an immediate synchronous reply, or an
+     * autogenerated error reply is returned to the caller. */
+    if (message().service() == connection().baseService())
+        return true;
+
+    return false;
+}
+
 uint NotificationManager::Notify(const QString &appName, uint replacesId, const QString &appIcon,
                                  const QString &summary, const QString &body, const QStringList &actions,
                                  const QVariantHash &hints, int expireTimeout)
 {
-    NOTIFICATIONS_DEBUG("NOTIFY:" << appName << replacesId << appIcon << summary << body << actions << hints << expireTimeout);
+    uint id = 0;
+    if (isInternalOperation()) {
+        id = handleNotify(getpid(), appName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
+    } else {
+        setDelayedReply(true);
+        ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
+        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedNotify, Qt::QueuedConnection);
+    }
+    return id;
+}
+
+void NotificationManager::identifiedNotify()
+{
+    ClientIdentifier *identifier = qobject_cast<ClientIdentifier *>(sender());
+    QVariantList arguments(identifier->message().arguments());
+    QString appName = arguments.at(0).toString();
+    uint replacesId = arguments.at(1).toUInt();
+    QString appIcon = arguments.at(2).toString();
+    QString summary = arguments.at(3).toString();
+    QString body = arguments.at(4).toString();
+    QStringList actions = arguments.at(5).toStringList();
+    const QDBusArgument hintsArg(arguments.at(6).value<QDBusArgument>());
+    QVariantHash hints;
+    hintsArg >> hints;
+    int expireTimeout = arguments.at(7).toInt();
+    uint id = handleNotify(identifier->clientPid(), appName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
+    if (identifier->message().isReplyRequired()) {
+        QDBusMessage reply;
+        if (id == 0) {
+            QString errorString = QString("PID %1 is not in privileged group").arg(identifier->clientPid());
+            reply = identifier->message().createErrorReply(QDBusError::AccessDenied, errorString);
+        } else {
+            reply = identifier->message().createReply();
+            reply << id;
+        }
+        identifier->connection().send(reply);
+    }
+    identifier->deleteLater();
+}
+
+uint NotificationManager::handleNotify(int clientPid, const QString &appName, uint replacesId, const QString &appIcon,
+                                       const QString &summary, const QString &body, const QStringList &actions,
+                                       const QVariantHash &hints, int expireTimeout)
+{
+    NOTIFICATIONS_DEBUG("clientPid:" << clientPid << "appName:" << appName << "replacesId:" << replacesId << "appIcon:" << appIcon
+                        << "summary:" << summary << "body:" << body << "actions:" << actions << "hints:" << hints << "expireTimeout:" << expireTimeout);
+
     if (replacesId != 0 && !m_notifications.contains(replacesId)) {
         replacesId = 0;
     }
@@ -287,16 +483,12 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
 
     QPair<QString, QString> pidProperties;
     bool androidOrigin(false);
-    if (calledFromDBus()) {
+    if (clientPid > 0) {
         // Look up the properties of the originating process
-        const QString callerService(message().service());
-        const QDBusReply<uint> pidReply(connection().interface()->servicePid(callerService));
-        if (pidReply.isValid()) {
-            pidProperties = processProperties(pidReply.value());
-            // A4 and A8.
-            androidOrigin = (pidProperties.first == QLatin1String("alien_bridge_server") ||
-                             pidProperties.first == QLatin1String("apkd-bridge"));
-        }
+        pidProperties = processProperties(clientPid);
+        // A4 and A8.
+        androidOrigin = (pidProperties.first == QLatin1String("alien_bridge_server") ||
+                         pidProperties.first == QLatin1String("apkd-bridge"));
     }
 
     // Allow notifications originating from android to be differentiated from native app notifications
@@ -310,11 +502,13 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     applyCategoryDefinition(&notificationData);
     hints_ = notificationData.hints();
 
-    if (!notificationData.isUserRemovableByHint() && !isPrivileged()) {
+    bool clientIsPrivileged = processIsPrivileged(clientPid);
+
+    if (!notificationData.isUserRemovableByHint() && !clientIsPrivileged) {
         qWarning() << "Persistent notification from"
                    << qPrintable(pidProperties.first)
                    << "dropped because of insufficent permissions";
-        return 0;
+        return 0; // AccessDenied error reply will be sent if called from D-Bus
     }
 
     LipstickNotification *notification = replacesId != 0
@@ -322,11 +516,11 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
             : nullptr;
 
     if (notification) {
-        if (!notification->isUserRemovableByHint() && !isPrivileged()) {
+        if (!notification->isUserRemovableByHint() && !clientIsPrivileged) {
             qWarning() << "An alteration to a persistent notification by"
                        << qPrintable(pidProperties.first)
                        << "was ignored because of insufficent permissions";
-            return 0;
+            return 0; // AccessDenied error reply will be sent if called from D-Bus
         }
 
         notification->setAppName(notificationData.appName());
@@ -427,8 +621,36 @@ void NotificationManager::deleteNotification(uint id)
 
 void NotificationManager::CloseNotification(uint id, NotificationClosedReason closeReason)
 {
+    if (isInternalOperation()) {
+        handleCloseNotification(getpid(), id, closeReason);
+    } else {
+        setDelayedReply(true);
+        ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
+        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedCloseNotification, Qt::QueuedConnection);
+    }
+}
+
+void NotificationManager::identifiedCloseNotification()
+{
+    ClientIdentifier *identifier = qobject_cast<ClientIdentifier *>(sender());
+    QVariantList arguments(identifier->message().arguments());
+    uint id = arguments.at(0).toUInt();
+    // Note: apply closeReason that is/was implicitly provided to CloseNotification()
+    //       C++ method but is not present in D-Bus method call message arguments
+    NotificationClosedReason closeReason = CloseNotificationCalled;
+    handleCloseNotification(identifier->clientPid(), id, closeReason);
+    if (identifier->message().isReplyRequired()) {
+        QDBusMessage reply = identifier->message().createReply();
+        identifier->connection().send(reply);
+    }
+    identifier->deleteLater();
+}
+
+void NotificationManager::handleCloseNotification(int clientPid, uint id, NotificationClosedReason closeReason)
+{
+    NOTIFICATIONS_DEBUG("clientPid:" << clientPid << "id:" << id << "closeReason:" << closeReason);
     if (LipstickNotification *notification = m_notifications.value(id)) {
-        if (!notification->isUserRemovableByHint() && !isPrivileged()) {
+        if (!notification->isUserRemovableByHint() && !processIsPrivileged(clientPid)) {
             qWarning() << "An application was not allowed to close a notification due to insufficient permissions";
             return;
         }
@@ -512,8 +734,35 @@ QString NotificationManager::GetServerInformation(QString &vendor, QString &vers
 
 NotificationList NotificationManager::GetNotifications(const QString &owner)
 {
-    uint pid = callerProcessId();
-    QString callerProcessName = getProcessName(pid);
+    NotificationList notificationList;
+    if (isInternalOperation()) {
+        notificationList = handleGetNotifications(getpid(), owner);
+    } else {
+        setDelayedReply(true);
+        ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
+        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedGetNotifications, Qt::QueuedConnection);
+    }
+    return notificationList;
+}
+
+void NotificationManager::identifiedGetNotifications()
+{
+    ClientIdentifier *identifier = qobject_cast<ClientIdentifier *>(sender());
+    QVariantList arguments(identifier->message().arguments());
+    const QString owner = arguments.at(0).toString();
+    NotificationList notificationList = handleGetNotifications(identifier->clientPid(), owner);
+    if (identifier->message().isReplyRequired()) {
+        QDBusMessage reply = identifier->message().createReply();
+        reply << QVariant::fromValue(notificationList);
+        identifier->connection().send(reply);
+    }
+    identifier->deleteLater();
+}
+
+NotificationList NotificationManager::handleGetNotifications(int clientPid, const QString &owner)
+{
+    NOTIFICATIONS_DEBUG("clientPid:" << clientPid << "owner:" << owner);
+    QString callerProcessName = getProcessName(clientPid);
     QList<LipstickNotification *> notificationList;
     QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
     for ( ; it != end; ++it) {
@@ -528,8 +777,36 @@ NotificationList NotificationManager::GetNotifications(const QString &owner)
 
 NotificationList NotificationManager::GetNotificationsByCategory(const QString &category)
 {
+    NotificationList notificationList;
+    if (isInternalOperation()) {
+        notificationList = handleGetNotificationsByCategory(getpid(), category);
+    } else {
+        setDelayedReply(true);
+        ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
+        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedGetNotificationsByCategory, Qt::QueuedConnection);
+    }
+    return notificationList;
+}
+
+void NotificationManager::identifiedGetNotificationsByCategory()
+{
+    ClientIdentifier *identifier = qobject_cast<ClientIdentifier *>(sender());
+    QVariantList arguments(identifier->message().arguments());
+    const QString category = arguments.at(0).toString();
+    NotificationList notificationList = handleGetNotificationsByCategory(identifier->clientPid(), category);
+    if (identifier->message().isReplyRequired()) {
+        QDBusMessage reply = identifier->message().createReply();
+        reply << QVariant::fromValue(notificationList);
+        identifier->connection().send(reply);
+    }
+    identifier->deleteLater();
+}
+
+NotificationList NotificationManager::handleGetNotificationsByCategory(int clientPid, const QString &category)
+{
+    NOTIFICATIONS_DEBUG("clientPid:" << clientPid << "category:" << category);
     QList<LipstickNotification *> notificationList;
-    if (isPrivileged()) {
+    if (processIsPrivileged(clientPid)) {
         QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
         for ( ; it != end; ++it) {
             LipstickNotification *notification = it.value();
@@ -1108,31 +1385,6 @@ void NotificationManager::execSQL(const QString &command, const QVariantList &ar
     }
 
     m_databaseCommitTimer.start();
-}
-
-uint NotificationManager::callerProcessId() const
-{
-    if (calledFromDBus()) {
-        return connection().interface()->servicePid(message().service()).value();
-    } else {
-        return QCoreApplication::applicationPid();
-    }
-}
-
-bool NotificationManager::isPrivileged() const
-{
-    if (!calledFromDBus()) {
-        return true;
-    }
-
-    uint pid = callerProcessId();
-    QFileInfo info(QString("/proc/%1").arg(pid));
-    if (info.group() != QLatin1String("privileged") && info.owner() != QLatin1String("root")) {
-        QString errorString = QString("PID %1 is not in privileged group").arg(pid);
-        sendErrorReply(QDBusError::AccessDenied, errorString);
-        return false;
-    }
-    return true;
 }
 
 void NotificationManager::invokeAction(const QString &action)
