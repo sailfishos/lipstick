@@ -18,11 +18,6 @@
 #include "aboutsettings.h"
 #include <stubbase.h>
 
-static const auto TotalDiskSpace = QStringLiteral("totalDiskSpace");
-static const auto AvailableDiskSpace = QStringLiteral("availableDiskSpace");
-static const auto DiskUsageModel = QStringLiteral("diskUsageModel");
-static const auto RefreshStorageModels = QStringLiteral("refreshStorageModels");
-
 static const auto WlanMacAddress = QStringLiteral("wlanMacAddress");
 static const auto Imei = QStringLiteral("imei");
 static const auto Serial = QStringLiteral("serial");
@@ -43,11 +38,6 @@ public:
     virtual void AboutSettingsDestructor();
     virtual QString operatingSystemName() const;
     virtual QString localizedSoftwareVersion() const;
-
-    virtual qlonglong totalDiskSpace() const;
-    virtual qlonglong availableDiskSpace() const;
-    virtual QVariant diskUsageModel() const;
-    virtual void refreshStorageModels();
 
     virtual QString wlanMacAddress() const;
     virtual QString imei() const;
@@ -83,29 +73,6 @@ QString AboutSettingsStub::localizedSoftwareVersion() const
 {
     stubMethodEntered(LocalizedSoftwareVersion);
     return stubReturnValue<QString>(LocalizedSoftwareVersion);
-}
-
-qlonglong AboutSettingsStub::totalDiskSpace() const
-{
-    stubMethodEntered(TotalDiskSpace);
-    return stubReturnValue<qlonglong>(TotalDiskSpace);
-}
-
-qlonglong AboutSettingsStub::availableDiskSpace() const
-{
-    stubMethodEntered(AvailableDiskSpace);
-    return stubReturnValue<qlonglong>(AvailableDiskSpace);
-}
-
-QVariant AboutSettingsStub::diskUsageModel() const
-{
-    stubMethodEntered(DiskUsageModel);
-    return stubReturnValue<QVariant>(DiskUsageModel);
-}
-
-void AboutSettingsStub::refreshStorageModels()
-{
-    // Do nothing
 }
 
 QString AboutSettingsStub::wlanMacAddress() const
@@ -189,26 +156,6 @@ QString AboutSettings::operatingSystemName() const
 QString AboutSettings::localizedSoftwareVersion() const
 {
     return gAboutSettingsStub->localizedSoftwareVersion();
-}
-
-qlonglong AboutSettings::totalDiskSpace() const
-{
-    return gAboutSettingsStub->totalDiskSpace();
-}
-
-qlonglong AboutSettings::availableDiskSpace() const
-{
-    return gAboutSettingsStub->availableDiskSpace();
-}
-
-QVariant AboutSettings::diskUsageModel() const
-{
-    return gAboutSettingsStub->diskUsageModel();
-}
-
-void AboutSettings::refreshStorageModels()
-{
-    gAboutSettingsStub->refreshStorageModels();
 }
 
 QString AboutSettings::wlanMacAddress() const
