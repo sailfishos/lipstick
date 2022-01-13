@@ -1,4 +1,6 @@
-
+// Copyright (c) 2012 - 2022 Jolla Ltd.
+// Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
+//
 // This file is part of lipstick, a QML desktop library
 //
 // This library is free software; you can redistribute it and/or
@@ -55,6 +57,7 @@ const auto SailjailGetAppInfo = QStringLiteral("GetAppInfo");
 const auto SailjailInvalidName = QStringLiteral("Invalid application name: ");
 const auto SailjailInfoKeyMode = QStringLiteral("Mode");
 const auto SailjailModeNone = QStringLiteral("None");
+const auto DBusActivatableKey = QStringLiteral("Desktop Entry/DBusActivatable");
 
 typedef QMap<QString, QDBusVariant> PropertyMap;
 
@@ -231,7 +234,7 @@ QString LauncherItem::exec() const
 bool LauncherItem::dBusActivated() const
 {
     return !m_desktopEntry.isNull() && (!m_desktopEntry->xMaemoService().isEmpty()
-            || m_desktopEntry->value(QStringLiteral("Desktop Entry/DBusActivatable")) == QLatin1String("true"));
+            || m_desktopEntry->value(DBusActivatableKey) == QLatin1String("true"));
 }
 
 MRemoteAction LauncherItem::remoteAction(const QStringList &arguments) const
@@ -251,20 +254,22 @@ MRemoteAction LauncherItem::remoteAction(const QStringList &arguments) const
                         method.mid(period + 1),
                         { QVariant::fromValue(arguments) });
         } else if (!m_serviceName.isEmpty()
-                && m_desktopEntry->value(QStringLiteral("Desktop Entry/DBusActivatable")) == QLatin1String("true")) {
-            const QString path = QLatin1Char('/') + QString(m_serviceName).replace(QLatin1Char('.'), QLatin1Char('/'));
+                && m_desktopEntry->value(DBusActivatableKey) == QLatin1String("true")) {
+            const QString path = QLatin1Char('/') + QString(m_serviceName).replace(QLatin1Char('.'), QLatin1Char('/')).replace(QLatin1Char('-'), QLatin1Char('_'));
             const QString interface = QStringLiteral("org.freedesktop.Application");
 
-            if (arguments.isEmpty()) {
-                return MRemoteAction(m_serviceName, path, interface, QStringLiteral("Activate"));
-            } else {
-                return MRemoteAction(
-                            m_serviceName,
-                            path,
-                            interface,
-                            QStringLiteral("Open"),
-                            { QVariant::fromValue(arguments) });
-            }
+            QVariantList dBusArguments;
+            if (!arguments.isEmpty())
+                dBusArguments.append(QVariant::fromValue(arguments));
+            // platform-data, currently unpopulated
+            dBusArguments.append(QVariant::fromValue(QVariantMap()));
+
+            return MRemoteAction(
+                        m_serviceName,
+                        path,
+                        interface,
+                        arguments.isEmpty() ? QStringLiteral("Activate") : QStringLiteral("Open"),
+                        dBusArguments);
         }
     }
 
