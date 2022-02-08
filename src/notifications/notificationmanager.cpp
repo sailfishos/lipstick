@@ -488,9 +488,8 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
     if (clientPid > 0) {
         // Look up the properties of the originating process
         pidProperties = processProperties(clientPid);
-        // A4 and A8.
-        androidOrigin = (pidProperties.first == QLatin1String("alien_bridge_server") ||
-                         pidProperties.first == QLatin1String("apkd-bridge"));
+        // Only Alien4 has special notification handling
+        androidOrigin = pidProperties.first == QLatin1String("alien_bridge_server");
     }
 
     // Allow notifications originating from android to be differentiated from native app notifications
