@@ -314,7 +314,9 @@ NotificationManager::NotificationManager(QObject *parent, bool owner) :
 NotificationManager::~NotificationManager()
 {
     m_database->commit();
+    QString connectionName = m_database->connectionName();
     delete m_database;
+    QSqlDatabase::removeDatabase(connectionName);
 }
 
 LipstickNotification *NotificationManager::notification(uint id) const
