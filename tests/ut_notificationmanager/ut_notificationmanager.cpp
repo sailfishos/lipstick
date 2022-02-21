@@ -28,16 +28,8 @@
 #include <mremoteaction.h>
 
 
-// MRemoteAction stubs
-QStringList mRemoteActionTrigger;
-void MRemoteAction::trigger()
-{
-    mRemoteActionTrigger.append(toString());
-}
-
 void Ut_NotificationManager::init()
 {
-    mRemoteActionTrigger.clear();
 }
 
 void Ut_NotificationManager::cleanup()
@@ -212,13 +204,14 @@ void Ut_NotificationManager::testRemoteActionIsInvokedIfDefined()
     hints.insert(QString(LipstickNotification::HINT_REMOTE_ACTION_PREFIX) + "action", "a b c d");
     uint id = manager->Notify("app", 0, QString(), QString(), QString(), QStringList(), hints, 0);
     LipstickNotification *notification = manager->notification(id);
-    connect(this, SIGNAL(actionInvoked(QString)), notification, SIGNAL(actionInvoked(QString)));
+    connect(this, &Ut_NotificationManager::actionInvoked, notification, &LipstickNotification::actionInvoked);
+    // notificationmanager does this internally for notifications it creates
+    connect(notification, &LipstickNotification::actionInvoked, manager, &NotificationManager::invokeAction);
+    // Invoking the notification should emit signal
+    QSignalSpy spy(manager, &NotificationManager::remoteActionActivated);
 
-    // Invoking the notification should trigger the remote action
     emit actionInvoked("action");
-    QCoreApplication::processEvents();
-    QCOMPARE(mRemoteActionTrigger.count(), 1);
-    QCOMPARE(mRemoteActionTrigger.last(), hints.value(QString(LipstickNotification::HINT_REMOTE_ACTION_PREFIX) + "action").toString());
+    QCOMPARE(spy.count(), 1);
 }
 
 void Ut_NotificationManager::testInvokingActionClosesNotificationIfUserRemovable()
