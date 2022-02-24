@@ -19,7 +19,6 @@
 #include <stubbase.h>
 
 static const auto WlanMacAddress = QStringLiteral("wlanMacAddress");
-static const auto Imei = QStringLiteral("imei");
 static const auto Serial = QStringLiteral("serial");
 static const auto LocalizedOperatingSystemName = QStringLiteral("localizedOperatingSystemName");
 static const auto OperatingSystemName = QStringLiteral("operatingSystemName");
@@ -40,7 +39,6 @@ public:
     virtual QString localizedSoftwareVersion() const;
 
     virtual QString wlanMacAddress() const;
-    virtual QString imei() const;
     virtual QString serial() const;
     virtual QString localizedOperatingSystemName() const;
     virtual QString baseOperatingSystemName() const;
@@ -79,12 +77,6 @@ QString AboutSettingsStub::wlanMacAddress() const
 {
     stubMethodEntered(WlanMacAddress);
     return stubReturnValue<QString>(WlanMacAddress);
-}
-
-QString AboutSettingsStub::imei() const
-{
-    stubMethodEntered(Imei);
-    return stubReturnValue<QString>(Imei);
 }
 
 QString AboutSettingsStub::serial() const
@@ -161,11 +153,6 @@ QString AboutSettings::localizedSoftwareVersion() const
 QString AboutSettings::wlanMacAddress() const
 {
     return gAboutSettingsStub->wlanMacAddress();
-}
-
-QString AboutSettings::imei() const
-{
-    return gAboutSettingsStub->imei();
 }
 
 QString AboutSettings::serial() const
