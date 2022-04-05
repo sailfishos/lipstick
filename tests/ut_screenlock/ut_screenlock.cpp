@@ -33,24 +33,6 @@
 
 TouchScreen *gTouchScreen = 0;
 
-QDBus::CallMode qDbusAbstractInterfaceCallMode;
-QVariant qDbusAbstractInterfaceCallArg1;
-QString qDbusAbstractInterfaceCallMethod;
-QString qDbusAbstractInterfaceCallPath;
-QString qDbusAbstractInterfaceCallService;
-QString qDbusAbstractInterfaceCallInterface;
-QDBusMessage QDBusAbstractInterface::call(QDBus::CallMode mode, const QString &method, const QVariant &arg1, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &, const QVariant &)
-{
-    qDbusAbstractInterfaceCallMode = mode;
-    qDbusAbstractInterfaceCallArg1 = arg1;
-    qDbusAbstractInterfaceCallMethod = method;
-    qDbusAbstractInterfaceCallPath = path();
-    qDbusAbstractInterfaceCallService = service();
-    qDbusAbstractInterfaceCallInterface = interface();
-
-    return QDBusMessage();
-}
-
 void QTimer::singleShot(int, const QObject *receiver, const char *member)
 {
     // The "member" string is of form "1member()", so remove the trailing 1 and the ()
@@ -84,11 +66,6 @@ void Ut_ScreenLock::init()
 void Ut_ScreenLock::cleanup()
 {
     delete screenLock;
-    qDbusAbstractInterfaceCallArg1.clear();
-    qDbusAbstractInterfaceCallMethod.clear();
-    qDbusAbstractInterfaceCallPath.clear();
-    qDbusAbstractInterfaceCallService.clear();
-    qDbusAbstractInterfaceCallInterface.clear();
 }
 
 void Ut_ScreenLock::initTestCase()
@@ -140,22 +117,28 @@ void Ut_ScreenLock::testUnlockScreenWhenLocked()
     screenLock->setEventEaterEnabled(true);
     screenLock->unlockScreen();
 
-    QCOMPARE(qDbusAbstractInterfaceCallMethod, TEST_METHOD);
-    QCOMPARE(qDbusAbstractInterfaceCallPath, TEST_PATH);
-    QCOMPARE(qDbusAbstractInterfaceCallService, TEST_SERVICE);
-    QCOMPARE(qDbusAbstractInterfaceCallInterface, TEST_INTERFACE);
-    QCOMPARE(qDbusAbstractInterfaceCallMode, QDBus::NoBlock);
-    QCOMPARE(qDbusAbstractInterfaceCallArg1.toInt(), (int)ScreenLock::TkLockUnlock);
+    QString member(screenLock->m_callbackMethod.member());
+    QString path(screenLock->m_callbackMethod.path());
+    QString service(screenLock->m_callbackMethod.service());
+    QString interface(screenLock->m_callbackMethod.interface());
+    QList<QVariant> arguments(screenLock->m_callbackMethod.arguments());
+    bool modeOk = false;
+    int mode(arguments.value(0).toInt(&modeOk));
+    if (!modeOk) {
+        qWarning("mode arg not present");
+        mode = -1;
+    }
+
+    QCOMPARE(member, TEST_METHOD);
+    QCOMPARE(path, TEST_PATH);
+    QCOMPARE(service, TEST_SERVICE);
+    QCOMPARE(interface, TEST_INTERFACE);
+    QCOMPARE(mode, int(ScreenLock::TkLockUnlock));
 }
 
 void Ut_ScreenLock::testUnlockScreenWhenNotLocked()
 {
     screenLock->unlockScreen();
-
-    QCOMPARE(qDbusAbstractInterfaceCallMethod.isEmpty(), true);
-    QCOMPARE(qDbusAbstractInterfaceCallPath.isEmpty(), true);
-    QCOMPARE(qDbusAbstractInterfaceCallService.isEmpty(), true);
-    QCOMPARE(qDbusAbstractInterfaceCallInterface.isEmpty(), true);
 }
 
 void Ut_ScreenLock::testTkLockOpen_data()
