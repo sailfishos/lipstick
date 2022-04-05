@@ -112,12 +112,6 @@ void Ut_TouchScreen::testTouchBlocking()
     touchBlockingSpy.wait();
     QVERIFY(!touchScreen->touchBlocked());
 
-    event = QMouseEvent(QEvent::MouseButtonPress, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(touchScreen->eventFilter(0, &event), true);
-
-    event = QMouseEvent(QEvent::MouseMove, QPointF(), Qt::NoButton, 0, 0);
-    QCOMPARE(touchScreen->eventFilter(0, &event), true);
-
     event = QMouseEvent(QEvent::MouseButtonRelease, QPointF(), Qt::NoButton, 0, 0);
     QCOMPARE(touchScreen->eventFilter(0, &event), true);
 
@@ -148,6 +142,40 @@ void Ut_TouchScreen::testTouchBlocking()
 
     event = QMouseEvent(QEvent::MouseButtonRelease, QPointF(), Qt::NoButton, 0, 0);
     QCOMPARE(touchScreen->eventFilter(0, &event), false);
+
+    // MouseButtonPress stops event eater
+    touchScreen->inputPolicyChanged(MCE_INPUT_POLICY_DISABLED);
+    touchBlockingSpy.wait();
+    QVERIFY(touchScreen->touchBlocked());
+    touchScreen->inputPolicyChanged(MCE_INPUT_POLICY_ENABLED);
+    touchBlockingSpy.wait();
+    QVERIFY(!touchScreen->touchBlocked());
+
+    touch = QTouchEvent(QEvent::TouchUpdate);
+    QCOMPARE(touchScreen->eventFilter(0, &touch), true);
+
+    event = QMouseEvent(QEvent::MouseButtonPress, QPointF(), Qt::NoButton, 0, 0);
+    QCOMPARE(touchScreen->eventFilter(0, &event), false);
+
+    touch = QTouchEvent(QEvent::TouchUpdate);
+    QCOMPARE(touchScreen->eventFilter(0, &touch), false);
+
+    // MouseMove stops event eater
+    touchScreen->inputPolicyChanged(MCE_INPUT_POLICY_DISABLED);
+    touchBlockingSpy.wait();
+    QVERIFY(touchScreen->touchBlocked());
+    touchScreen->inputPolicyChanged(MCE_INPUT_POLICY_ENABLED);
+    touchBlockingSpy.wait();
+    QVERIFY(!touchScreen->touchBlocked());
+
+    touch = QTouchEvent(QEvent::TouchUpdate);
+    QCOMPARE(touchScreen->eventFilter(0, &touch), true);
+
+    event = QMouseEvent(QEvent::MouseMove, QPointF(), Qt::NoButton, 0, 0);
+    QCOMPARE(touchScreen->eventFilter(0, &event), false);
+
+    touch = QTouchEvent(QEvent::TouchUpdate);
+    QCOMPARE(touchScreen->eventFilter(0, &touch), false);
 }
 
 void Ut_TouchScreen::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState)
