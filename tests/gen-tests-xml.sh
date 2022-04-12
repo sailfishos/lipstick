@@ -27,7 +27,13 @@ TESTSUITE_TEMPLATE="<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <testdefinition version=\"1.0\">
   <suite name=\"lipstick-tests\" domain=\"$DOMAIN\">
     <set name=\"unit-tests\" feature=\"$FEATURE\">
+      <pre_steps>
+        <step>/usr/bin/start-ui-test.sh</step>
+      </pre_steps>
       $UT_TESTCASES
+      <post_steps>
+        <step>/usr/bin/stop-ui-test.sh</step>
+      </post_steps>
     </set>
   </suite>
 </testdefinition>"

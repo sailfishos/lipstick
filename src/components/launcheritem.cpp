@@ -118,9 +118,22 @@ LauncherModel::ItemType LauncherItem::type() const
 
 void LauncherItem::setFilePath(const QString &filePath)
 {
-    if (!filePath.isEmpty() && QFile::exists(filePath)) {
-        m_desktopEntry = QSharedPointer<MDesktopEntry>(new MDesktopEntry(filePath));
+    /* Note that sequences like:
+     * - LauncherModel::updatingStarted()  (register non-existing file)
+     * - LauncherModel::onFilesUpdated()   (re-evaluate now existing file)
+     * - LauncherModel::updatingFinished()
+     * require that this method:
+     * - Must retain given filePath even if the file does not exist
+     * - Must re-evaluate file content even if filePath does not change
+     */
+    m_serviceName.clear();
+    m_desktopEntry.clear();
 
+    if (!filePath.isEmpty()) {
+        m_desktopEntry = QSharedPointer<MDesktopEntry>(new MDesktopEntry(filePath));
+    }
+
+    if (!m_desktopEntry.isNull() && m_desktopEntry->isValid()) {
         const QString organisation = m_desktopEntry->value(QStringLiteral("X-Sailjail"), QStringLiteral("OrganizationName"));
         const QString application = m_desktopEntry->value(QStringLiteral("X-Sailjail"), QStringLiteral("ApplicationName"));
 
@@ -134,9 +147,6 @@ void LauncherItem::setFilePath(const QString &filePath)
                     ? filePath.mid(slash, filePath.count() - slash - 8)
                     : QString();
         }
-    } else {
-        m_serviceName = QString();
-        m_desktopEntry.clear();
     }
 
     emit this->itemChanged();
