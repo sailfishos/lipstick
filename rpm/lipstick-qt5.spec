@@ -14,7 +14,6 @@ Source1:    %{name}.privileges
 Requires:   mce >= 1.87.0
 Requires:   pulseaudio-modules-nemo-mainvolume >= 6.0.19
 Requires:   user-managerd >= 0.3.0
-Requires:   nemo-test-tools
 Requires:   sailjail-daemon
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -63,6 +62,7 @@ Files useful for building homescreens.
 %package tests
 Summary:    Tests for lipstick
 Requires:   %{name} = %{version}-%{release}
+Requires:   nemo-test-tools
 
 %description tests
 Unit tests for the lipstick package.
