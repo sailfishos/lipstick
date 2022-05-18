@@ -94,6 +94,15 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                 properties.insert("media.audio", false);
             } else {
                 QString soundFile = notification->hints().value(LipstickNotification::HINT_SOUND_FILE).toString();
+                QString soundName = notification->hints().value(LipstickNotification::HINT_SOUND_NAME).toString();
+
+                // Named sound overrides if available
+                if (soundName == QLatin1String("message-new-instant")) {
+                    soundFile = m_profileControl.chatToneFile();
+                } else if (soundName == QLatin1String("message-new-email")) {
+                    soundFile = m_profileControl.mailToneFile();
+                }
+
                 if (!soundFile.isEmpty()) {
                     if (soundFile.startsWith(QStringLiteral("file://"))) {
                         soundFile = QUrl(soundFile).toLocalFile();

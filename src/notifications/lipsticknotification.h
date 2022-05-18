@@ -86,6 +86,9 @@ public:
     //! Standard hint: If set, override possible audible feedback sound.
     static const char *HINT_SOUND_FILE;
 
+    //! Standard hint: If set, override possible audible feedback sound.
+    static const char *HINT_SOUND_NAME;
+
     //! Nemo hint: Item count represented by the notification.
     static const char *HINT_ITEM_COUNT;
 
