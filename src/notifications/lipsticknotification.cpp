@@ -35,6 +35,7 @@ const char *LipstickNotification::HINT_IMAGE_PATH = "image-path";
 const char *LipstickNotification::HINT_IMAGE_DATA = "image-data";
 const char *LipstickNotification::HINT_SUPPRESS_SOUND = "suppress-sound";
 const char *LipstickNotification::HINT_SOUND_FILE = "sound-file";
+const char *LipstickNotification::HINT_SOUND_NAME = "sound-name";
 const char *LipstickNotification::HINT_ITEM_COUNT = "x-nemo-item-count";
 const char *LipstickNotification::HINT_PRIORITY = "x-nemo-priority";
 const char *LipstickNotification::HINT_TIMESTAMP = "x-nemo-timestamp";

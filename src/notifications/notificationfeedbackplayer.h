@@ -20,6 +20,7 @@
 #include <QObject>
 #include <QHash>
 #include <MGConfItem>
+#include <profilecontrol.h>
 
 class LipstickNotification;
 namespace Ngf {
@@ -91,6 +92,7 @@ private:
     int m_minimumPriority;
 
     MGConfItem m_doNotDisturbSetting;
+    ProfileControl m_profileControl;
 
     friend class NotificationPreviewPresenter;
 #ifdef UNIT_TEST
