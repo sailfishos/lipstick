@@ -34,6 +34,10 @@
       <arg name="id" type="u"/>
       <arg name="action_key" type="s"/>
     </signal>
+    <signal name="InputTextSet">
+      <arg name="id" type="u"/>
+      <arg name="inputText" type="s"/>
+    </signal>
 
     <!-- Nemo extensions -->
     <method name="GetNotifications">
