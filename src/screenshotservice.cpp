@@ -20,6 +20,8 @@
 #include <QTransform>
 #include <QThreadPool>
 #include <private/qquickwindow_p.h>
+#include <QSharedPointer>
+#include <QQuickItemGrabResult>
 
 #include <unistd.h>
 #include <sys/eventfd.h>
@@ -174,12 +176,15 @@ ScreenshotResult *ScreenshotService::saveScreenshot(const QString &path)
         return result;
     }
 
-    QImage grab(compositor->grabWindow());
+    auto grabResult = compositor->contentItem()->grabToImage();
 
     const int rotation(QGuiApplication::primaryScreen()->angleBetween(
                 Qt::PrimaryOrientation, compositor->topmostWindowOrientation()));
 
-    QThreadPool::globalInstance()->start(new ScreenshotWriter(notifierId, grab, path, rotation));
+    connect(grabResult.data(), &QQuickItemGrabResult::ready, result, [=]() {
+        QImage grab = grabResult->image();
+        QThreadPool::globalInstance()->start(new ScreenshotWriter(notifierId, grab, path, rotation));
+    });
 
     return result;
 }
