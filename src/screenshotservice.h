@@ -55,8 +55,9 @@ private:
     Status m_status = Writing;
 };
 
-class ScreenshotService
+class ScreenshotService : public QObject
 {
+    Q_OBJECT
 public:
     static ScreenshotResult *saveScreenshot(const QString &path);
 };
