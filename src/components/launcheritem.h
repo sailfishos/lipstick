@@ -94,6 +94,7 @@ public:
     bool isValid() const;
     bool isLaunching() const;
     bool isStillValid();
+    bool dBusActivatable() const;
     bool dBusActivated() const;
     MRemoteAction remoteAction(const QStringList &arguments = QStringList()) const;
 

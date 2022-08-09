@@ -57,7 +57,8 @@ const auto SailjailGetAppInfo = QStringLiteral("GetAppInfo");
 const auto SailjailInvalidName = QStringLiteral("Invalid application name: ");
 const auto SailjailInfoKeyMode = QStringLiteral("Mode");
 const auto SailjailModeNone = QStringLiteral("None");
-const auto DBusActivatableKey = QStringLiteral("Desktop Entry/DBusActivatable");
+const auto DesktopEntryGroup = QStringLiteral("Desktop Entry");
+const auto DBusActivatableKey = QStringLiteral("DBusActivatable");
 
 typedef QMap<QString, QDBusVariant> PropertyMap;
 
@@ -241,10 +242,17 @@ QString LauncherItem::exec() const
     return !m_desktopEntry.isNull() ? m_desktopEntry->exec() : QString();
 }
 
+bool LauncherItem::dBusActivatable() const
+{
+    QString activatable = m_desktopEntry->value(DesktopEntryGroup, DBusActivatableKey);
+    if (activatable.isEmpty())
+        activatable = m_desktopEntry->value(DesktopEntryGroup, QStringLiteral("X-") + DBusActivatableKey);
+    return activatable == QLatin1String("true");
+}
+
 bool LauncherItem::dBusActivated() const
 {
-    return !m_desktopEntry.isNull() && (!m_desktopEntry->xMaemoService().isEmpty()
-            || m_desktopEntry->value(DBusActivatableKey) == QLatin1String("true"));
+    return !m_desktopEntry.isNull() && (!m_desktopEntry->xMaemoService().isEmpty() || dBusActivatable());
 }
 
 MRemoteAction LauncherItem::remoteAction(const QStringList &arguments) const
@@ -263,8 +271,7 @@ MRemoteAction LauncherItem::remoteAction(const QStringList &arguments) const
                         method.left(period),
                         method.mid(period + 1),
                         { QVariant::fromValue(arguments) });
-        } else if (!m_serviceName.isEmpty()
-                && m_desktopEntry->value(DBusActivatableKey) == QLatin1String("true")) {
+        } else if (!m_serviceName.isEmpty() && dBusActivatable()) {
             const QString path = QLatin1Char('/') + QString(m_serviceName).replace(QLatin1Char('.'), QLatin1Char('/')).replace(QLatin1Char('-'), QLatin1Char('_'));
             const QString interface = QStringLiteral("org.freedesktop.Application");
 
