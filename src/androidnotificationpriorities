@@ -57,3 +57,6 @@ package:com.microsoft.teams;chat,chat_exists
 
 Messenger Lite;chat,chat_exists
 package:com.facebook.mlite;chat,chat_exists
+
+Discord;chat,chat_exists
+package:com.discord;chat,chat_exists
