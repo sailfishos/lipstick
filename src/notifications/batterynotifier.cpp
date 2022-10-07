@@ -43,6 +43,7 @@ BatteryNotifier::BatteryNotifier(QObject *parent)
     , m_notificationManager(NotificationManager::instance())
     , m_mceChargerType(new QMceChargerType(this))
     , m_mceChargerState(new QMceChargerState(this))
+    , m_mceChargingState(new QMceChargingState(this))
     , m_mceBatteryStatus(new QMceBatteryStatus(this))
     , m_mceBatteryLevel(new QMceBatteryLevel(this))
     , m_mcePowerSaveMode(new QMcePowerSaveMode(this))
@@ -62,6 +63,10 @@ BatteryNotifier::BatteryNotifier(QObject *parent)
             this, &BatteryNotifier::onChargerStateChanged);
     connect(m_mceChargerState, &QMceChargerState::chargingChanged,
             this, &BatteryNotifier::onChargerStateChanged);
+    connect(m_mceChargingState, &QMceChargingState::validChanged,
+            this, &BatteryNotifier::onChargingStateChanged);
+    connect(m_mceChargingState, &QMceChargingState::stateChanged,
+            this, &BatteryNotifier::onChargingStateChanged);
     connect(m_mceBatteryStatus, &QMceBatteryStatus::validChanged,
             this, &BatteryNotifier::onBatteryStatusChanged);
     connect(m_mceBatteryStatus, &QMceBatteryStatus::statusChanged,
@@ -137,6 +142,14 @@ void BatteryNotifier::onChargerStateChanged()
 {
     if (m_mceChargerState->valid()) {
         m_currentState.m_chargerState = m_mceChargerState->charging();
+        scheduleStateEvaluation();
+    }
+}
+
+void BatteryNotifier::onChargingStateChanged()
+{
+    if (m_mceChargingState->valid()) {
+        m_currentState.m_chargingState = m_mceChargingState->state();
         scheduleStateEvaluation();
     }
 }
@@ -238,7 +251,8 @@ void BatteryNotifier::updateDerivedProperties()
 {
     /* Update minimum battery level we expect to see while charging.
      *
-     * While discharging / doing battery full maintenance charging:
+     * While discharging / doing battery full maintenance charging,
+     * or when charging is intentionally disabled by policy:
      * -> track current battery level value
      *
      * While charging:
@@ -248,6 +262,7 @@ void BatteryNotifier::updateDerivedProperties()
      */
     if (m_currentState.m_chargerState == false
         || m_currentState.m_batteryStatus == QMceBatteryStatus::Full
+        || m_currentState.m_chargingState == QMceChargingState::Disabled
         || m_currentState.m_batteryLevel > m_currentState.m_minimumBatteryLevel)
         m_currentState.m_minimumBatteryLevel = m_currentState.m_batteryLevel - 1;
 

@@ -27,7 +27,7 @@ BuildRequires:  pkgconfig(Qt5Sensors)
 BuildRequires:  pkgconfig(contentaction5)
 BuildRequires:  pkgconfig(mlite5) >= 0.2.19
 BuildRequires:  pkgconfig(mce) >= 1.22.0
-BuildRequires:  pkgconfig(mce-qt5) >= 1.4.0
+BuildRequires:  pkgconfig(mce-qt5) >= 1.5.0
 BuildRequires:  pkgconfig(keepalive)
 BuildRequires:  pkgconfig(dsme_dbus_if) >= 0.63.2
 BuildRequires:  pkgconfig(thermalmanager_dbus_if)
