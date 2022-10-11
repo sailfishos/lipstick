@@ -21,6 +21,7 @@
 #include <QTimer>
 #include <qmcechargertype.h>
 #include <qmcechargerstate.h>
+#include <qmcechargingstate.h>
 #include <qmcebatterystatus.h>
 #include <qmcebatterylevel.h>
 #include <qmcepowersavemode.h>
@@ -56,6 +57,7 @@ private slots:
     void onNotificationClosed(uint id, uint reason);
     void onChargerTypeChanged();
     void onChargerStateChanged();
+    void onChargingStateChanged();
     void onBatteryStatusChanged();
     void onBatteryLevelChanged();
     void onPowerSaveModeChanged();
@@ -90,6 +92,7 @@ private:
     struct State {
         QMceChargerType::Type m_chargerType = QMceChargerType::None;
         bool m_chargerState = false;
+        QMceChargingState::State m_chargingState = QMceChargingState::Unknown;
         QMceBatteryStatus::Status m_batteryStatus = QMceBatteryStatus::Ok;
         int m_batteryLevel = -1;
         int m_minimumBatteryLevel = -1;
@@ -140,6 +143,7 @@ private:
     NotificationManager *m_notificationManager;
     QMceChargerType *m_mceChargerType;
     QMceChargerState *m_mceChargerState;
+    QMceChargingState *m_mceChargingState;
     QMceBatteryStatus *m_mceBatteryStatus;;
     QMceBatteryLevel *m_mceBatteryLevel;
     QMcePowerSaveMode *m_mcePowerSaveMode;
