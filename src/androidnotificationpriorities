@@ -46,6 +46,9 @@ package:org.thoughtcrime.securesms;chat,chat_exists
 Threema;chat,chat_exists
 package:ch.threema.app;chat,chat_exists
 
+Threema Libre;chat,chat_exists
+package:ch.threema.app.libre;chat,chat_exists
+
 Conversations;chat,chat_exists
 package:eu.siacs.conversations;chat,chat_exists
 
