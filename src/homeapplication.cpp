@@ -111,7 +111,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     NotificationManager::instance();
     new NotificationPreviewPresenter(m_screenLock, deviceLock, this);
 
-    m_volumeControl = new VolumeControl(this);
+    m_volumeControl = new VolumeControl(true, this);
 
     DeviceInfo deviceInfo;
     if (deviceInfo.hasFeature(DeviceInfo::FeatureBattery)) {

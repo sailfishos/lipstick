@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 Jolla Ltd.
+** Copyright (c) 2012 - 2022 Jolla Ltd.
 **
 ** This file is part of lipstick.
 **
@@ -31,13 +31,20 @@
 #include <mce/dbus-names.h>
 #include <mce/mode-names.h>
 
-VolumeControl::VolumeControl(QObject *parent) :
+static bool s_hwKeysCreated = false;
+
+VolumeControl::VolumeControl(QObject *parent)
+    : VolumeControl(false, parent)
+{
+}
+
+VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent) :
     QObject(parent),
-    m_window(0),
+    m_window(nullptr),
     m_pulseAudioControl(new PulseAudioControl(this)),
-    m_hwKeyResource(new ResourcePolicy::ResourceSet("event")),
+    m_hwKeyResource(nullptr),
     m_hwKeysAcquired(false),
-    m_hwKeysEnabled(true),
+    m_hwKeysEnabled(false),
     m_hwKeysActive(false),
     m_volume(0),
     m_maximumVolume(0),
@@ -48,11 +55,38 @@ VolumeControl::VolumeControl(QObject *parent) :
     m_downPressed(false),
     m_mediaState(MediaStateUnknown)
 {
-    m_hwKeyResource->setAlwaysReply();
-    m_hwKeyResource->addResourceObject(new ResourcePolicy::ScaleButtonResource);
-    connect(m_hwKeyResource, SIGNAL(resourcesGranted(QList<ResourcePolicy::ResourceType>)), this, SLOT(hwKeyResourceAcquired()));
-    connect(m_hwKeyResource, SIGNAL(lostResources()), this, SLOT(hwKeyResourceLost()));
-    m_hwKeyResource->acquire();
+    if (hwKeysCapability) {
+        Q_ASSERT_X(!s_hwKeysCreated, Q_FUNC_INFO, "Hw key capable VolumeControl must be a singleton created from C++");
+
+        m_hwKeyResource = new ResourcePolicy::ResourceSet("event");
+        m_hwKeysEnabled = true;
+        m_hwKeyResource->setAlwaysReply();
+        m_hwKeyResource->addResourceObject(new ResourcePolicy::ScaleButtonResource);
+        connect(m_hwKeyResource, SIGNAL(resourcesGranted(QList<ResourcePolicy::ResourceType>)), this, SLOT(hwKeyResourceAcquired()));
+        connect(m_hwKeyResource, SIGNAL(lostResources()), this, SLOT(hwKeyResourceLost()));
+        m_hwKeyResource->acquire();
+
+        qApp->installEventFilter(this);
+        QTimer::singleShot(0, this, SLOT(createWindow()));
+
+        QDBusConnection systemBus = QDBusConnection::systemBus();
+
+        systemBus.connect(MCE_SERVICE,
+                          MCE_SIGNAL_PATH,
+                          MCE_SIGNAL_IF,
+                          MCE_VOLKEY_INPUT_POLICY_SIG,
+                          this, SLOT(inputPolicyChanged(QString)));
+
+        QDBusPendingReply<QString> inputPolicy = systemBus.asyncCall(QDBusMessage::createMethodCall(
+                    MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_VOLKEY_INPUT_POLICY_GET));
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(inputPolicy, this);
+        connect(watcher, &QDBusPendingCallWatcher::finished,
+                this, &VolumeControl::inputPolicyReply);
+
+        evaluateKeyState();
+
+        s_hwKeysCreated = true;
+    }
 
     setWarningAcknowledged(false);
     connect(m_audioWarning, SIGNAL(valueChanged()), this, SIGNAL(restrictedVolumeChanged()));
@@ -64,29 +98,13 @@ VolumeControl::VolumeControl(QObject *parent) :
     connect(m_pulseAudioControl, SIGNAL(mediaStateChanged(QString)), SLOT(handleMediaStateChanged(QString)));
     m_pulseAudioControl->update();
 
-    qApp->installEventFilter(this);
-    QTimer::singleShot(0, this, SLOT(createWindow()));
-
-    QDBusConnection systemBus = QDBusConnection::systemBus();
-
-    systemBus.connect(MCE_SERVICE,
-                      MCE_SIGNAL_PATH,
-                      MCE_SIGNAL_IF,
-                      MCE_VOLKEY_INPUT_POLICY_SIG,
-                      this, SLOT(inputPolicyChanged(QString)));
-
-    QDBusPendingReply<QString> inputPolicy = systemBus.asyncCall(QDBusMessage::createMethodCall(
-                MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_VOLKEY_INPUT_POLICY_GET));
-    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(inputPolicy, this);
-    connect(watcher, &QDBusPendingCallWatcher::finished,
-            this, &VolumeControl::inputPolicyReply);
-
-    evaluateKeyState();
 }
 
 VolumeControl::~VolumeControl()
 {
-    m_hwKeyResource->deleteResource(ResourcePolicy::ScaleButtonType);
+    if (m_hwKeyResource) {
+        m_hwKeyResource->deleteResource(ResourcePolicy::ScaleButtonType);
+    }
     delete m_window;
 }
 
@@ -199,6 +217,11 @@ void VolumeControl::setVolume(int volume, int maximumVolume)
 
     bool volumeUpdated = false;
     bool maxVolumeUpdated = false;
+
+    if (m_hwKeyResource && !warningAcknowledged() && m_safeVolume != 0 && clampedVolume > m_safeVolume) {
+        emit showAudioWarning(false);
+        clampedVolume = safeVolume();
+    }
 
     if (m_maximumVolume != clampedMaxVolume) {
         m_maximumVolume = clampedMaxVolume;

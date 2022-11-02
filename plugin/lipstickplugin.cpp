@@ -55,10 +55,10 @@ void LipstickPlugin::registerTypes(const char *uri)
     qmlRegisterType<LauncherItem>("org.nemomobile.lipstick", 0, 1, "LauncherItem");
     qmlRegisterType<LauncherFolderModelType>("org.nemomobile.lipstick", 0, 1, "LauncherFolderModel");
     qmlRegisterType<LauncherFolderItem>("org.nemomobile.lipstick", 0, 1, "LauncherFolderItem");
+    qmlRegisterType<VolumeControl>("org.nemomobile.lipstick", 0, 1, "VolumeControl");
 
     qmlRegisterUncreatableType<NotificationPreviewPresenter>("org.nemomobile.lipstick", 0, 1, "NotificationPreviewPresenter", "This type is initialized by HomeApplication");
     qmlRegisterUncreatableType<NotificationFeedbackPlayer>("org.nemomobile.lipstick", 0, 1, "NotificationFeedbackPlayer", "This type is initialized by HomeApplication");
-    qmlRegisterUncreatableType<VolumeControl>("org.nemomobile.lipstick", 0, 1, "VolumeControl", "This type is initialized by HomeApplication");
     qmlRegisterUncreatableType<USBModeSelector>("org.nemomobile.lipstick", 0, 1, "USBModeSelector", "This type is initialized by HomeApplication");
     qmlRegisterUncreatableType<ShutdownScreen>("org.nemomobile.lipstick", 0, 1, "ShutdownScreen", "This type is initialized by HomeApplication");
 
