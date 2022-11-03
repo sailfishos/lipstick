@@ -31,12 +31,13 @@ enum PreviewMode {
     AllNotificationsDisabled
 };
 
+QString DefaultFeedback = QStringLiteral("default");
+QString NgfSoundEnabled = QStringLiteral("sound.enabled");
 }
 
 NotificationFeedbackPlayer::NotificationFeedbackPlayer(QObject *parent) :
     QObject(parent),
     m_ngfClient(new Ngf::Client(this)),
-    m_minimumPriority(0),
     m_doNotDisturbSetting(QLatin1String("/lipstick/do_not_disturb"))
 {
     connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));
@@ -66,17 +67,10 @@ void NotificationFeedbackPlayer::addNotification(uint id)
         const QString feedback = notification->hints().value(LipstickNotification::HINT_FEEDBACK).toString();
         QStringList feedbackItems = feedback.split(QStringLiteral(","), QString::SkipEmptyParts);
 
-        int minimumPriority = m_minimumPriority;
-
-        if (feedbackItems.isEmpty() && isEnabled(notification, 0)) {
-            // Add generic feedback type
-            feedbackItems << "default";
-            // Play default feedback regardless of priorities
-            minimumPriority = 0;
-        }
-
-        if (isEnabled(notification, minimumPriority) && !feedbackItems.isEmpty()) {
+        if (isEnabled(notification)) {
             QMap<QString, QVariant> properties;
+            QMap<QString, QVariant> customSoundProperties;
+
             if (notification->body().isEmpty() && notification->summary().isEmpty()) {
                 properties.insert("media.leds", false);
             }
@@ -108,20 +102,35 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                         soundFile = QUrl(soundFile).toLocalFile();
                     }
 
-                    properties.insert(QStringLiteral("sound.filename"), soundFile);
+                    customSoundProperties.insert(QStringLiteral("sound.filename"), soundFile);
                     // Sound is enabled explicitly if sound-file hint is set.
-                    properties.insert(QStringLiteral("sound.enabled"), true);
+                    customSoundProperties.insert(NgfSoundEnabled, true);
                 }
             }
 
+            // Add generic feedback type if needed
+            if (!customSoundProperties.isEmpty() && !feedbackItems.contains(DefaultFeedback)) {
+                feedbackItems << DefaultFeedback;
+            }
+
             foreach (const QString &item, feedbackItems) {
+                QMap<QString, QVariant> effectiveProperties = properties;
+
+                if (item == DefaultFeedback) {
+                    for (auto key : customSoundProperties.keys()) {
+                        effectiveProperties.insert(key, customSoundProperties.value(key));
+                    }
+                } else if (!customSoundProperties.isEmpty()) {
+                    // custom sound overrides other sounds
+                    effectiveProperties.insert(NgfSoundEnabled, false);
+                }
                 m_ngfClient->stop(item);
-                m_idToEventId.insert(notification, m_ngfClient->play(item, properties));
+                m_idToEventId.insert(notification, m_ngfClient->play(item, effectiveProperties));
             }
         }
 
         // vibra played if it's asked regardless of priorities
-        if (!doNotDisturbMode() && isEnabled(notification, 0)
+        if (!doNotDisturbMode() && isEnabled(notification)
                 && notification->hints().value(LipstickNotification::HINT_VIBRA, false).toBool()) {
             m_ngfClient->stop("vibra");
             m_idToEventId.insert(notification, m_ngfClient->play("vibra", QMap<QString, QVariant>()));
@@ -143,7 +152,7 @@ void NotificationFeedbackPlayer::removeNotification(uint id)
     }
 }
 
-bool NotificationFeedbackPlayer::isEnabled(LipstickNotification *notification, int minimumPriority)
+bool NotificationFeedbackPlayer::isEnabled(LipstickNotification *notification)
 {
     if (notification->restored())
         return false;
@@ -155,25 +164,11 @@ bool NotificationFeedbackPlayer::isEnabled(LipstickNotification *notification, i
     }
 
     int urgency = notification->urgency();
-    int priority = notification->priority();
     int notificationIsCritical = urgency >= 2 || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool();
 
-    return (priority >= minimumPriority || notificationIsCritical)
-            && (mode == AllNotificationsEnabled
-                || (mode == ApplicationNotificationsDisabled && notificationIsCritical)
-                || (mode == SystemNotificationsDisabled && urgency < 2));
-}
-
-int NotificationFeedbackPlayer::minimumPriority() const
-{
-    return m_minimumPriority;
-}
-
-void NotificationFeedbackPlayer::setMinimumPriority(int minimumPriority)
-{
-    m_minimumPriority = minimumPriority;
-
-    emit minimumPriorityChanged();
+    return mode == AllNotificationsEnabled
+            || (mode == ApplicationNotificationsDisabled && notificationIsCritical)
+            || (mode == SystemNotificationsDisabled && urgency < 2);
 }
 
 bool NotificationFeedbackPlayer::doNotDisturbMode() const
