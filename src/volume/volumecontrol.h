@@ -64,7 +64,9 @@ public:
      *
      * \param parent the parent object
      */
-    explicit VolumeControl(QObject *parent = 0);
+    explicit VolumeControl(QObject *parent = nullptr);
+
+    VolumeControl(bool hwKeysCapability, QObject *parent = nullptr);
 
     /*!
      * Destroys the volume controller.
