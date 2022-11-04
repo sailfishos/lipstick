@@ -141,6 +141,7 @@ void VolumeControl::setVolume(int volume)
 {
     int newVolume = qBound(0, volume, maximumVolume());
 
+    // This must always clamp the volume.
     if (!warningAcknowledged() && m_safeVolume != 0 && newVolume > m_safeVolume) {
         emit showAudioWarning(false);
         newVolume = safeVolume();
@@ -218,7 +219,7 @@ void VolumeControl::setVolume(int volume, int maximumVolume)
     bool volumeUpdated = false;
     bool maxVolumeUpdated = false;
 
-    if (m_hwKeyResource && !warningAcknowledged() && m_safeVolume != 0 && clampedVolume > m_safeVolume) {
+    if (m_hwKeyResource && !warningAcknowledged() && m_safeVolume != 0 && clampedVolume+1 > m_safeVolume) {
         emit showAudioWarning(false);
         clampedVolume = safeVolume();
     }
