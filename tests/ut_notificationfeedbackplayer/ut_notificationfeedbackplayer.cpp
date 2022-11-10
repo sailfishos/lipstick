@@ -191,9 +191,8 @@ void Ut_NotificationFeedbackPlayer::testWithoutFeedbackId()
     notification->setHints(QVariantHash());
     player->addNotification(1);
 
-    // Check that NGFAdapter::play() was called with the default feedback
-    QCOMPARE(gClientStub->stubCallCount("play"), 1);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QString>(0), QString("default"));
+    // Check that NGFAdapter::play() was not called
+    QCOMPARE(gClientStub->stubCallCount("play"), 0);
 }
 
 void Ut_NotificationFeedbackPlayer::testMultipleFeedbackIds()
@@ -294,12 +293,10 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotification()
     notification->setHints(hints);
     player->addNotification(1);
 
-    QCOMPARE(gClientStub->stubCallCount("play"), 4);
-    QCOMPARE(gClientStub->stubLastCallTo("play").parameter<QString>(0), QString("default"));
+    QCOMPARE(gClientStub->stubCallCount("play"), 3);
 
-    // Check that NGFAdapter::stop() was called again    
-    QCOMPARE(gClientStub->stubCallCount("stop"), 7);
-    QCOMPARE(gClientStub->stubLastCallTo("stop").parameter<QString>(0), QString("default"));
+    // Check that NGFAdapter::stop() was not called again
+    QCOMPARE(gClientStub->stubCallCount("stop"), 6);
 }
 
 void Ut_NotificationFeedbackPlayer::testUpdateNotificationAfterRestart()
@@ -360,35 +357,6 @@ void Ut_NotificationFeedbackPlayer::testNotificationPreviewsDisabled()
     qWaylandSurfaceWindowProperties = windowProperties;
 
     createNotification(1, urgency);
-    player->addNotification(1);
-
-    QCOMPARE(gClientStub->stubCallCount("play"), playCount);
-}
-
-void Ut_NotificationFeedbackPlayer::testNotificationPriority_data()
-{
-    QTest::addColumn<int>("minimumPriority");
-    QTest::addColumn<int>("urgency");
-    QTest::addColumn<QVariant>("priority");
-    QTest::addColumn<int>("playCount");
-
-    QTest::newRow("Minimum priority 50, urgency 1, priority not defined") << 50 << 1 << QVariant() << 0;
-    QTest::newRow("Minimum priority 50, urgency 1, priority 49") << 50 << 1 << QVariant(49) << 0;
-    QTest::newRow("Minimum priority 50, urgency 1, priority 50") << 50 << 1 << QVariant(50) << 1;
-    QTest::newRow("Minimum priority 50, urgency 2, priority not defined") << 50 << 2 << QVariant() << 1;
-    QTest::newRow("Minimum priority 50, urgency 2, priority 49") << 50 << 2 << QVariant(49) << 1;
-    QTest::newRow("Minimum priority 50, urgency 2, priority 50") << 50 << 2 << QVariant(50) << 1;
-}
-
-void Ut_NotificationFeedbackPlayer::testNotificationPriority()
-{
-    QFETCH(int, minimumPriority);
-    QFETCH(int, urgency);
-    QFETCH(QVariant, priority);
-    QFETCH(int, playCount);
-
-    player->setMinimumPriority(minimumPriority);
-    createNotification(1, urgency, priority);
     player->addNotification(1);
 
     QCOMPARE(gClientStub->stubCallCount("play"), playCount);

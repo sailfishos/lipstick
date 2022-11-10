@@ -24,8 +24,6 @@ class NotificationFeedbackPlayerStub : public StubBase
 {
 public:
     virtual void NotificationFeedbackPlayerConstructor(QObject *parent);
-    virtual int minimumPriority() const;
-    virtual void setMinimumPriority(int minimumPriority);
     virtual void init();
     virtual void addNotification(uint id);
     virtual void removeNotification(uint id);
@@ -36,18 +34,6 @@ void NotificationFeedbackPlayerStub::NotificationFeedbackPlayerConstructor(QObje
 {
     Q_UNUSED(parent);
 
-}
-int NotificationFeedbackPlayerStub::minimumPriority() const
-{
-    stubMethodEntered("minimumPriority");
-    return stubReturnValue<int>("minimumPriority");
-}
-
-void NotificationFeedbackPlayerStub::setMinimumPriority(int minimumPriority)
-{
-    QList<ParameterBase *> params;
-    params.append( new Parameter<int >(minimumPriority));
-    stubMethodEntered("setMinimumPriority", params);
 }
 
 void NotificationFeedbackPlayerStub::init()
@@ -81,16 +67,6 @@ NotificationFeedbackPlayer::NotificationFeedbackPlayer(QObject *parent)
     : m_doNotDisturbSetting("/lipstick/do_not_disturb")
 {
     gNotificationFeedbackPlayerStub->NotificationFeedbackPlayerConstructor(parent);
-}
-
-int NotificationFeedbackPlayer::minimumPriority() const
-{
-    return gNotificationFeedbackPlayerStub->minimumPriority();
-}
-
-void NotificationFeedbackPlayer::setMinimumPriority(int minimumPriority)
-{
-    gNotificationFeedbackPlayerStub->setMinimumPriority(minimumPriority);
 }
 
 void NotificationFeedbackPlayer::init()
