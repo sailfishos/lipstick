@@ -41,6 +41,14 @@ public:
 
     bool doNotDisturbMode() const;
 
+public slots:
+    /*!
+     * Removes the notification with the given ID.
+     *
+     * \param id the ID of the notification to be removed
+     */
+    void removeNotification(uint id);
+
 private slots:
     //! Initializes the feedback player
     void init();
@@ -51,13 +59,6 @@ private slots:
      * \param id the ID of the notification to be added
      */
     void addNotification(uint id);
-
-    /*!
-     * Removes the notification with the given ID.
-     *
-     * \param id the ID of the notification to be removed
-     */
-    void removeNotification(uint id);
 
 private:
     //! Check whether feedbacks should be enabled for the given notification
