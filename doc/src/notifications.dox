@@ -60,8 +60,13 @@
  *     \c x-nemo-remote-action-actionname hint.
  *   - The service implements the \c "sound" capability which allows changing audible
  *     feedback behavior using \c "sound-file" and \c "suppress-sound" hints.
+ *   - The service implements the standard \c "sound-name" hint to use a named sound.
+ *     Currently implemented are "message-new-instant" and "message-new-email".
  *   - The service implements a number of extensions via hints; these are reported
  *     as capabilities, and their use is described in the \c Hints section.
+ *   - The standard categories should be used if there exists one matching the intention.
+ *     Currently the "im.received" is having special handling, but more can be added
+ *     later as needed.
  *
  * \subsection hints Hints
  *
@@ -73,6 +78,8 @@
  *          one per line.
  *        - Each \c hint=value pair in the category definition file is added to
  *          the hints of the notification, unless already defined.
+ *        - Categories should be added only if they are real categories for multiple
+ *          sources of notifications.
  *
  *   - The service supports the following Nemo specific hints:
  *       - \c x-nemo-item-count: the number of items represented by this notification. For example, a single notification can represent four missed calls by setting the count to 4.
