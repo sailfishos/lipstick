@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2013 - 2023 Jolla Ltd.
 ** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
@@ -111,6 +111,23 @@ public:
     int topmostWindowId() const { return m_topmostWindowId; }
     void setTopmostWindowId(int id);
     int privateTopmostWindowProcessId() const { return m_topmostWindowProcessId; }
+    uint privateGetSetupActions() const {
+        /* Lipstick acquires graphics resources already in
+         * QGuiApplication construction phase and there is
+         * no practical way to delay this -> we need to return
+         * no-op from this method call handler and ensure that
+         * android compositor gets started by other means like
+         * by using suitable ExecStartPre=dummy_compositor
+         * command from lipstick.service file.
+         */
+        enum {
+            CompositorActionNone = 0,
+            CompositorActionStopHwc = (1<<0),
+            CompositorActionStartpHwc = (1<<1),
+            CompositorActionRestartpHwc = (1<<2),
+        };
+        return CompositorActionNone;
+    }
     QString privateTopmostWindowPolicyApplicationId() const { return m_topmostWindowPolicyApplicationId; }
 
     Qt::ScreenOrientation topmostWindowOrientation() const { return m_topmostWindowOrientation; }
