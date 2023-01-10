@@ -99,7 +99,7 @@ void Ut_VolumeControl::init()
 {
     gPulseAudioControlStub->stubReset();
 
-    volumeControl = new VolumeControl;
+    volumeControl = new VolumeControl(true);
     volumeControl->setVolume(5, 10);
 }
 
