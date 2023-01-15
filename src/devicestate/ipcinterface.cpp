@@ -58,7 +58,15 @@ QList<QVariant> IPCInterface::get(const QString& method,
                                     const QVariant& arg1,
                                     const QVariant& arg2) {
     QList<QVariant> results;
-    QDBusMessage msg = call(method, arg1, arg2);
+
+    QDBusMessage msg;
+    if (!arg1.isValid()) {
+        msg = call(method);
+    } else if (!arg2.isValid()) {
+        msg = call(method, arg1);
+    } else {
+        msg = call(method, arg1, arg2);
+    }
     if (msg.type() == QDBusMessage::ReplyMessage) {
         results  = msg.arguments();
     }
