@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2013 - 2023 Jolla Ltd.
 ** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
@@ -44,6 +44,19 @@
 #include "alienmanager/alienmanager.h"
 #include "logging.h"
 
+namespace {
+bool debuggingCompositorHandover()
+{
+    static int debugging = -1;
+    if (debugging < 0) {
+        const QByteArray raw(qgetenv("DEBUG_COMPOSITOR_HANDOVER"));
+        const QString env(QString::fromLocal8Bit(raw));
+        debugging = env.startsWith('y');
+    }
+    return debugging > 0;
+}
+}
+
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()    
@@ -71,7 +84,14 @@ LipstickCompositor::LipstickCompositor()
     , m_mceNameOwner(new QMceNameOwner(this))
     , m_sessionActivationTries(0)
 {
-    setColor(Qt::black);
+    QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("DisplayOn");
+    if (debuggingCompositorHandover()) {
+        setColor(Qt::magenta);
+        showFullScreen();
+    } else {
+        setColor(Qt::black);
+    }
+
     setRetainedSelectionEnabled(true);
     addDefaultShell();
 
@@ -111,7 +131,11 @@ LipstickCompositor::LipstickCompositor()
     QObject::connect(m_mceNameOwner, &QMceNameOwner::nameOwnerChanged,
                      this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
 
-    setUpdatesEnabledNow(false);
+    if (debuggingCompositorHandover()) {
+        // Leave window visible and display on
+    } else {
+        setUpdatesEnabledNow(false);
+    }
     QTimer::singleShot(0, this, SLOT(initialize()));
 
     setClientFullScreenHint(true);
