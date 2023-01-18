@@ -50,7 +50,6 @@
 #include "vpnagent.h"
 #include "connmanvpnagent.h"
 #include "connmanvpnproxy.h"
-#include "connectivitymonitor.h"
 
 #include <nemo-devicelock/devicelock.h>
 
@@ -131,40 +130,17 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
         qWarning("Unable to register D-Bus service %s: %s", LIPSTICK_DBUS_SERVICE_NAME, systemBus.lastError().message().toUtf8().constData());
     }
 
-    // Bring automatic VPNs up and down when connectivity state changes
-    auto performUpDown = [this](const QList<QString> &activeTypes) {
-        const bool state(!activeTypes.isEmpty());
-        if (state != m_online) {
-            m_online = state;
-            QDBusConnection sessionBus = QDBusConnection::sessionBus();
-            QDBusMessage method = QDBusMessage::createMethodCall(
-                        QStringLiteral("org.freedesktop.systemd1"),
-                        QStringLiteral("/org/freedesktop/systemd1"),
-                        QStringLiteral("org.freedesktop.systemd1.Manager"),
-                        m_online ? QStringLiteral("StartUnit") : QStringLiteral("StopUnit"));
-            method.setArguments({ QStringLiteral("vpn-updown.service"), QStringLiteral("replace") });
-            sessionBus.call(method, QDBus::NoBlock);
-        }
-    };
-
-    m_connectivityMonitor = new ConnectivityMonitor(this);
-    connect(m_connectivityMonitor, &ConnectivityMonitor::connectivityChanged, this, [performUpDown](const QList<QString> &activeTypes){ performUpDown(activeTypes); });
-
     // Respond to requests for VPN user input
     m_vpnAgent = new VpnAgent(this);
     new ConnmanVpnAgentAdaptor(m_vpnAgent);
 
     registerDBusObject(systemBus, LIPSTICK_DBUS_VPNAGENT_PATH, m_vpnAgent);
 
-    auto registerVpnAgent = [this, performUpDown]() {
+    auto registerVpnAgent = [this]() {
         if (!m_connmanVpn) {
             if (QDBusConnection::systemBus().interface()->isServiceRegistered(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE)) {
                 m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, "/", QDBusConnection::systemBus());
                 m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
-
-                // Connman has restarted - VPNs must be brought up if possible
-                performUpDown(QList<QString>());
-                performUpDown(m_connectivityMonitor->activeConnectionTypes());
             }
         }
     };
@@ -173,7 +149,10 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
         m_connmanVpn = 0;
     };
 
-    QDBusServiceWatcher *connmanVpnWatcher = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus, QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration, this);
+    QDBusServiceWatcher *connmanVpnWatcher
+            = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus,
+                                      QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration,
+                                      this);
     connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceRegistered, this, [registerVpnAgent](const QString &){ registerVpnAgent(); });
     connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [unregisterVpnAgent](const QString &){ unregisterVpnAgent(); });
 
@@ -184,7 +163,6 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     m_qmlEngine->rootContext()->setContextProperty("lipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("LipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("volumeControl", m_volumeControl);
-    m_qmlEngine->rootContext()->setContextProperty("connectivityMonitor", m_connectivityMonitor);
     m_qmlEngine->rootContext()->setContextProperty("usbModeSelector", m_usbModeSelector);
 
     connect(this, SIGNAL(homeReady()), this, SLOT(sendStartupNotifications()));
