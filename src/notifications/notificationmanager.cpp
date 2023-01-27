@@ -1334,7 +1334,8 @@ void NotificationManager::fetchData(bool update)
     }
 
     foreach (LipstickNotification *n, m_notifications) {
-        connect(n, SIGNAL(actionInvoked(QString)), this, SLOT(invokeAction(QString)), Qt::QueuedConnection);
+        connect(n, &LipstickNotification::actionInvoked,
+                this, &NotificationManager::invokeAction, Qt::QueuedConnection);
         connect(n, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
 #ifdef DEBUG_NOTIFICATIONS
         const uint id = n->id();
@@ -1387,17 +1388,25 @@ void NotificationManager::execSQL(const QString &command, const QVariantList &ar
     m_databaseCommitTimer.start();
 }
 
-void NotificationManager::invokeAction(const QString &action)
+void NotificationManager::invokeAction(const QString &action, const QString &actionText)
 {
     LipstickNotification *notification = qobject_cast<LipstickNotification *>(sender());
     if (notification != 0) {
         uint id = m_notifications.key(notification, 0);
         if (id > 0) {
-            QString remoteAction = notification->hints().value(QString(LipstickNotification::HINT_REMOTE_ACTION_PREFIX) + action).toString();
+            QString actionHint = LipstickNotification::HINT_REMOTE_ACTION_PREFIX + action;
+            QString remoteAction = notification->hints().value(actionHint).toString();
+
             if (!remoteAction.isEmpty()) {
                 NOTIFICATIONS_DEBUG("INVOKE REMOTE ACTION:" << action << id);
 
-                emit remoteActionActivated(remoteAction);
+                // If we need to support text actions with empty parameter, we need to fetch the action type from
+                // the notification, but likely this is enough for the action type
+                if (actionText.isEmpty()) {
+                    emit remoteActionActivated(remoteAction);
+                } else {
+                    emit remoteTextActionActivated(remoteAction, actionText);
+                }
             }
 
             for (int actionIndex = 0; actionIndex < notification->actions().count() / 2; actionIndex++) {

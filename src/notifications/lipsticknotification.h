@@ -294,8 +294,9 @@ signals:
      * Sent when an action defined for the notification is invoked.
      *
      * \param action the action that was invoked
+     * \param actionText parameter for the action
      */
-    void actionInvoked(QString action);
+    void actionInvoked(QString action, QString actionText);
 
     //! Sent when the removal of this notification was requested.
     void removeRequested();
