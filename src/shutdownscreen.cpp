@@ -76,8 +76,6 @@ void ShutdownScreen::applySystemState(DeviceState::DeviceState::StateIndication 
 {
     switch (what) {
         case DeviceState::DeviceState::Shutdown:
-            // To avoid early quitting on shutdown
-            HomeApplication::instance()->restoreSignalHandlers();
             setWindowVisible(true);
             break;
 
