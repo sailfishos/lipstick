@@ -88,11 +88,6 @@ public:
     void setCompositorPath(const QString &path);
 
     /*!
-     * Restores any installed signal handlers.
-     */
-    void restoreSignalHandlers();
-
-    /*!
      * Gets the home active flag.
      */
     bool homeActive() const;
@@ -157,10 +152,6 @@ private:
     static int s_quitSignalFd;
     //! Socket notifier for signal handling
     QSocketNotifier *m_quitSignalNotifier;
-    //! The original SIGINT action
-    struct sigaction m_originalSigIntAction;
-    //! The original SIGTERM action
-    struct sigaction m_originalSigTermAction;
 
     HomeWindow *m_mainWindowInstance;
     QString m_qmlPath;

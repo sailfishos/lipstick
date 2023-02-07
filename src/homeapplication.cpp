@@ -210,27 +210,10 @@ void HomeApplication::setUpSignalHandlers()
     action.sa_flags = 0;
     action.sa_flags |= SA_RESTART;
 
-    if (sigaction(SIGINT, &action, &m_originalSigIntAction))
+    if (sigaction(SIGINT, &action, nullptr))
         qFatal("Failed to set up SIGINT handling");
-    if (sigaction(SIGTERM, &action, &m_originalSigTermAction))
+    if (sigaction(SIGTERM, &action, nullptr))
         qFatal("Failed to set up SIGTERM handling");
-}
-
-void HomeApplication::restoreSignalHandlers()
-{
-    if (s_quitSignalFd == -1) {
-        qWarning() << "HomeApplication::restoreSignalHandlers: called multiple times?";
-        return;
-    }
-
-    if (sigaction(SIGINT, &m_originalSigIntAction, nullptr))
-        qFatal("Failed to restore original SIGINT handling");
-    if (sigaction(SIGTERM, &m_originalSigTermAction, nullptr))
-        qFatal("Failed to restore original SIGTERM handling");
-
-    delete m_quitSignalNotifier, m_quitSignalNotifier = nullptr;
-
-    ::close(s_quitSignalFd), s_quitSignalFd = -1;
 }
 
 void HomeApplication::sendHomeReadySignalIfNotAlreadySent()

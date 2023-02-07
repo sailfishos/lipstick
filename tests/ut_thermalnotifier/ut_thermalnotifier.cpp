@@ -31,10 +31,6 @@ HomeApplication *HomeApplication::instance()
     return 0;
 }
 
-void HomeApplication::restoreSignalHandlers()
-{
-}
-
 int argc = 1;
 char *argv[] = { (char *) "./ut_thermalnotifier", NULL };
 

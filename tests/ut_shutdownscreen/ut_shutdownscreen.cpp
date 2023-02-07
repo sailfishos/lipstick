@@ -50,12 +50,6 @@ HomeApplication *HomeApplication::instance()
     return 0;
 }
 
-bool signalHandlersRestored = false;
-void HomeApplication::restoreSignalHandlers()
-{
-    signalHandlersRestored = true;
-}
-
 int argc = 1;
 char *argv[] = { (char *) "./ut_shutdownscreen", NULL };
 
