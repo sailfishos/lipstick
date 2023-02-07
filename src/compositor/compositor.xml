@@ -13,6 +13,9 @@
     <method name="privateTopmostWindowPolicyApplicationId">
       <arg name="id" type="s" direction="out"/>
     </method>
+    <method name="privateGetSetupActions">
+      <arg type="u" name="flags" direction="out"/>
+    </method>
     <signal name="privateTopmostWindowPolicyApplicationIdChanged">
       <arg name="id" type="s"/>
     </signal>
