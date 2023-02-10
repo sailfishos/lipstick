@@ -482,7 +482,6 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
         }
     }
 
-
     QPair<QString, QString> pidProperties;
     bool androidOrigin(false);
     if (clientPid > 0) {

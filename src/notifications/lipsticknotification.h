@@ -113,6 +113,9 @@ public:
     //! Nemo hint: Icon for the remote action of the notification. Prefix only: the action identifier is to be appended.
     static const char *HINT_REMOTE_ACTION_ICON_PREFIX;
 
+    //! Nemo hint: Optional type for the remote action of the notification. Prefix only: the action identifier is to be appended.
+    static const char *HINT_REMOTE_ACTION_TYPE_PREFIX;
+
     //! Nemo hint: User removability of the notification.
     static const char *HINT_USER_REMOVABLE;
 
