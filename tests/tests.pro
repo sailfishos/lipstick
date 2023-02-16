@@ -11,7 +11,6 @@ SUBDIRS = \
           ut_qobjectlistmodel \
           ut_screenlock \
           ut_shutdownscreen \
-          ut_thermalnotifier \
           ut_touchscreen \
           ut_usbmodeselector \
           ut_volumecontrol \
