@@ -30,7 +30,6 @@
 #define DEVICESTATE_P_H
 
 #include "devicestate.h"
-#include "ipcinterface_p.h"
 #include "dsme/dsme_dbus_if.h"
 
 #include <QMutex>

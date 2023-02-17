@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 - 2020 Jolla Ltd.
+** Copyright (c) 2012 - 2023 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
@@ -14,50 +14,45 @@
 ****************************************************************************/
 #include "notifications/notificationmanager.h"
 #include "notifications/lipsticknotification.h"
-#include "homeapplication.h"
 #include "thermalnotifier.h"
 
-ThermalNotifier::ThermalNotifier(QObject *parent) :
-    QObject(parent),
-    m_thermalState(new DeviceState::Thermal(this)),
-    m_displayState(new DeviceState::DisplayStateMonitor(this)),
-    m_thermalStateNotifiedWhileScreenIsOn(DeviceState::Thermal::Normal)
+#include <dsme/thermalmanager_dbus_if.h>
+
+#include <QDBusConnection>
+#include <QDebug>
+
+ThermalNotifier::ThermalNotifier(QObject *parent)
+    : QObject(parent)
 {
-    connect(m_thermalState, SIGNAL(thermalChanged(DeviceState::Thermal::ThermalState)), this, SLOT(applyThermalState(DeviceState::Thermal::ThermalState)));
-    connect(m_displayState, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)), this, SLOT(applyDisplayState(DeviceState::DisplayStateMonitor::DisplayState)));
+    QDBusConnection::systemBus().connect(QString(),
+                                         thermalmanager_path,
+                                         thermalmanager_interface,
+                                         thermalmanager_state_change_ind,
+                                         this,
+                                         SLOT(applyThermalState(const QString&)));
 }
 
-void ThermalNotifier::applyThermalState(DeviceState::Thermal::ThermalState state)
+ThermalNotifier::~ThermalNotifier()
 {
-    switch (state) {
-    case DeviceState::Thermal::Warning:
+    QDBusConnection::systemBus().disconnect(QString(),
+                                            thermalmanager_path,
+                                            thermalmanager_interface,
+                                            thermalmanager_state_change_ind,
+                                            this,
+                                            SLOT(applyThermalState(const QString&)));
+}
+
+void ThermalNotifier::applyThermalState(const QString &state)
+{
+    if (state == thermalmanager_thermal_status_warning) {
         //% "Device is getting hot. Close all apps."
         publishTemperatureNotification(qtTrId("qtn_shut_high_temp_warning"));
-        break;
-    case DeviceState::Thermal::Alert:
+    } else if (state == thermalmanager_thermal_status_alert) {
         //% "Device is overheating. turn it off."
         publishTemperatureNotification(qtTrId("qtn_shut_high_temp_alert"));
-        break;
-    case DeviceState::Thermal::LowTemperatureWarning:
+    } else if (state == thermalmanager_thermal_status_low) {
         //% "Low temperature warning"
         publishTemperatureNotification(qtTrId("qtn_shut_low_temp_warning"));
-        break;
-    default:
-        break;
-    }
-
-    if (m_displayState->get() != DeviceState::DisplayStateMonitor::Off) {
-        m_thermalStateNotifiedWhileScreenIsOn = state;
-    }
-}
-
-void ThermalNotifier::applyDisplayState(DeviceState::DisplayStateMonitor::DisplayState state)
-{
-    if (state == DeviceState::DisplayStateMonitor::On) {
-        DeviceState::Thermal::ThermalState currentThermalState = m_thermalState->get();
-        if (m_thermalStateNotifiedWhileScreenIsOn != currentThermalState) {
-            applyThermalState(currentThermalState);
-        }
     }
 }
 

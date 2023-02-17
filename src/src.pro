@@ -49,7 +49,6 @@ PUBLICHEADERS += \
     shutdownscreen.h \
     devicestate/displaystate.h \
     devicestate/devicestate.h \
-    devicestate/thermal.h \
     vpnagent.h
 
 INSTALLS += publicheaderfiles dbus_policy
@@ -82,8 +81,6 @@ HEADERS += \
     notifications/thermalnotifier.h \
     devicestate/devicestate_p.h \
     devicestate/displaystate_p.h \
-    devicestate/ipcinterface_p.h \
-    devicestate/thermal_p.h \
     logging.h \
 
 SOURCES += \
@@ -125,8 +122,6 @@ SOURCES += \
     notifications/thermalnotifier.cpp \
     devicestate/displaystate.cpp \
     devicestate/devicestate.cpp \
-    devicestate/thermal.cpp \
-    devicestate/ipcinterface.cpp \
     logging.cpp \
 
 CONFIG += link_pkgconfig mobility qt warn_on depend_includepath qmake_cache target_qt

@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-** Copyright (c) 2012 - 2020 Jolla Ltd.
+** Copyright (c) 2012 - 2023 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ** This file is part of lipstick.
@@ -15,14 +15,15 @@
 #ifndef THERMALNOTIFIER_H
 #define THERMALNOTIFIER_H
 
-#include <thermal.h>
-#include <displaystate.h>
+#include <QObject>
+#include <QString>
 
 class ThermalNotifier : public QObject
 {
     Q_OBJECT
 public:
     explicit ThermalNotifier(QObject *parent = 0);
+    ~ThermalNotifier();
 
     /*!
      * Shows a system notification.
@@ -38,26 +39,9 @@ private slots:
      *
      * \param state the new thermal state
      */
-    void applyThermalState(DeviceState::Thermal::ThermalState state);
-
-    /*!
-     * Reacts to display state changes by showing the
-     * related notification if not displayed yet.
-     *
-     * \param state the new display state
-     */
-    void applyDisplayState(DeviceState::DisplayStateMonitor::DisplayState state);
+    void applyThermalState(const QString &state);
 
 private:
-    //! For getting the thermal state
-    DeviceState::Thermal *m_thermalState;
-
-    //! For getting the display state
-    DeviceState::DisplayStateMonitor *m_displayState;
-
-    //! Thermal state for which a notification has been displayed while the screen was on
-    DeviceState::Thermal::ThermalState m_thermalStateNotifiedWhileScreenIsOn;
-
 #ifdef UNIT_TEST
     friend class Ut_ThermalNotifier;
 #endif

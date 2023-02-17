@@ -5,7 +5,7 @@ Name:       lipstick-qt5
 %define icondirectory %{_datadir}/icons/hicolor/86x86/apps
 
 Summary:    QML toolkit for homescreen creation
-Version:    0.36.0
+Version:    0.36.29
 Release:    1
 License:    LGPLv2
 URL:        https://github.com/sailfishos/lipstick/
