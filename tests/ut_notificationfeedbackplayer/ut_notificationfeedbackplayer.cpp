@@ -32,7 +32,7 @@ NotificationManager::~NotificationManager()
 {
 }
 
-void NotificationManager::invokeAction(const QString &)
+void NotificationManager::invokeAction(const QString &, const QString &)
 {
 }
 

@@ -240,6 +240,7 @@ signals:
     void notificationsRemoved(const QList<uint> &ids);
 
     void remoteActionActivated(const QString &remoteAction);
+    void remoteTextActionActivated(const QString &remoteAction, const QString &text);
 
 public slots:
     /*!
@@ -292,10 +293,8 @@ private slots:
     /*!
      * Invokes the given action if it is has been defined. The
      * sender is expected to be a Notification.
-     *
-     * \param action the action to be invoked
      */
-    void invokeAction(const QString &action);
+    void invokeAction(const QString &action, const QString &actionText);
 
     /*!
      * Removes a notification if it is removable by the user.

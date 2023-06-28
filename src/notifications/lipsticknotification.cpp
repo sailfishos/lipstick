@@ -44,6 +44,7 @@ const char *LipstickNotification::HINT_PREVIEW_SUMMARY = "x-nemo-preview-summary
 const char *LipstickNotification::HINT_SUB_TEXT = "x-nemo-sub-text";
 const char *LipstickNotification::HINT_REMOTE_ACTION_PREFIX = "x-nemo-remote-action-";
 const char *LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX = "x-nemo-remote-action-icon-";
+const char *LipstickNotification::HINT_REMOTE_ACTION_TYPE_PREFIX = "x-nemo-remote-action-type-";
 const char *LipstickNotification::HINT_USER_REMOVABLE = "x-nemo-user-removable";
 const char *LipstickNotification::HINT_FEEDBACK = "x-nemo-feedback";
 const char *LipstickNotification::HINT_DISPLAY_ON = "x-nemo-display-on";
@@ -393,14 +394,16 @@ QVariantList LipstickNotification::remoteActions() const
             vm.insert(QStringLiteral("displayName"), displayName);
         }
 
+        const QString icon(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX + name).toString());
+        if (!icon.isEmpty()) {
+            vm.insert(QStringLiteral("icon"), icon);
+        }
+
+        const QString type(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_TYPE_PREFIX + name).toString());
+        vm.insert(QStringLiteral("type"), type);
+
         const QString hint(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_PREFIX + name).toString());
         if (!hint.isEmpty()) {
-            const QString icon(m_hints.value(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX + name).toString());
-
-            if (!icon.isEmpty()) {
-                vm.insert(QStringLiteral("icon"), icon);
-            }
-
             // Extract the element of the DBus call
             QStringList elements(hint.split(' ', QString::SkipEmptyParts));
             if (elements.size() <= 3) {
@@ -510,7 +513,8 @@ void LipstickNotification::updateHintValues()
             hint.compare(LipstickNotification::HINT_OWNER, Qt::CaseInsensitive) != 0 &&
             hint.compare(LipstickNotification::HINT_PROGRESS, Qt::CaseInsensitive) &&
             !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_PREFIX, Qt::CaseInsensitive) &&
-            !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX, Qt::CaseInsensitive)) {
+            !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_ICON_PREFIX, Qt::CaseInsensitive) &&
+            !hint.startsWith(LipstickNotification::HINT_REMOTE_ACTION_TYPE_PREFIX, Qt::CaseInsensitive)) {
             m_hintValues.insert(hint, it.value());
         }
     }

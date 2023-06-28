@@ -39,7 +39,7 @@ private slots:
     void testImmediateExpiration();
 
 signals:
-    void actionInvoked(QString action);
+    void actionInvoked(QString action, QString actionText = QString());
     void removeRequested();
 };
 

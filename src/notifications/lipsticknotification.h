@@ -113,6 +113,9 @@ public:
     //! Nemo hint: Icon for the remote action of the notification. Prefix only: the action identifier is to be appended.
     static const char *HINT_REMOTE_ACTION_ICON_PREFIX;
 
+    //! Nemo hint: Optional type for the remote action of the notification. Prefix only: the action identifier is to be appended.
+    static const char *HINT_REMOTE_ACTION_TYPE_PREFIX;
+
     //! Nemo hint: User removability of the notification.
     static const char *HINT_USER_REMOVABLE;
 
@@ -291,8 +294,9 @@ signals:
      * Sent when an action defined for the notification is invoked.
      *
      * \param action the action that was invoked
+     * \param actionText parameter for the action
      */
-    void actionInvoked(QString action);
+    void actionInvoked(QString action, QString actionText);
 
     //! Sent when the removal of this notification was requested.
     void removeRequested();
