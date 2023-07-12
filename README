@@ -4,7 +4,7 @@ lipstick
 lipstick aims to offers an easy to modify user experiences for varying mobile
 device form factors, e.g. handsets, netbooks, tablets.
 
-User interface components are written in QML.
+The user interface components are written in [QML](https://doc.qt.io/qt-6/qml-tutorial.html), the language for Qt Quick UIs.
 
 acknowledgements
 ================
