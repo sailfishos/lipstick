@@ -1,10 +1,10 @@
 lipstick
 ========
 
-lipstick is a project aimed at offering easy to modify user experiences
-for varying mobile device form factors, e.g. handsets, netbooks, tablets.
+lipstick aims to offers an easy to modify user experiences for varying mobile
+device form factors, e.g. handsets, netbooks, tablets.
 
-User experiences are written in QML.
+User interface components are written in QML.
 
 acknowledgements
 ================
