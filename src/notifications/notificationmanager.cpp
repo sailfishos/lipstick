@@ -531,6 +531,7 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
         notification->setActions(notificationData.actions());
         notification->setHints(notificationData.hints());
         notification->setExpireTimeout(notificationData.expireTimeout());
+        notification->setRestored(false);
     } else {
         notification = new LipstickNotification(notificationData);
         notification->setParent(this);
@@ -868,9 +869,7 @@ void NotificationManager::updateNotificationsWithCategory(const QString &categor
 
     foreach (LipstickNotification *notification, categoryNotifications) {
         // Mark the notification as restored to avoid showing the preview banner again
-        QVariantHash hints = notification->hints();
-        hints.insert(LipstickNotification::HINT_RESTORED, true);
-        notification->setHints(hints);
+        notification->setRestored(true);
 
         // Update the category properties and re-publish
         applyCategoryDefinition(notification);
@@ -1260,9 +1259,6 @@ void NotificationManager::fetchData(bool update)
                                 << notificationHints << expireTimeout << "->" << id);
             transientIds.append(id);
             continue;
-        } else {
-            // Mark this notification as restored
-            notificationHints.insert(LipstickNotification::HINT_RESTORED, true);
         }
 
         bool expired = false;
@@ -1280,6 +1276,7 @@ void NotificationManager::fetchData(bool update)
                                                                       id, QString(), summary, body, notificationActions,
                                                                       notificationHints, expireTimeout, this);
         notification->setAppIcon(appIcon, appIconOrigin);
+        notification->setRestored(true);
         m_notifications.insert(id, notification);
 
         if (id > m_previousNotificationID) {

@@ -428,8 +428,8 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfRestored()
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
-    hints.insert(LipstickNotification::HINT_RESTORED, true);
     LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", "", 1, "", "", "", QStringList(), hints, -1);
+    notification->setRestored(true);
     notificationManagerNotification.insert(1, notification);
     presenter.updateNotification(1);
 

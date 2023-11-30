@@ -131,10 +131,6 @@ public:
     //! Nemo hint: Indicates the identifer of the owner for notification
     static const char *HINT_OWNER;
 
-    //! Nemo hint: Indicates that this notification has been restored from persistent storage since the last update.
-    //! Internal, shouldn't be expected or allowed from d-bus
-    static const char *HINT_RESTORED;
-
     //! Nemo hint: progress percentage between 0 and 1, negative for indeterminate
     static const char *HINT_PROGRESS;
 
@@ -265,6 +261,7 @@ public:
 
     //! Returns true if the notification has been restored since it was last modified
     bool restored() const;
+    void setRestored(bool restored);
 
     qreal progress() const;
 
@@ -376,6 +373,7 @@ private:
     //! Hints for the notification
     QVariantHash m_hints;
     QVariantMap m_hintValues;
+    bool m_restored = false;
 
     //! Expiration timeout for the notification
     int m_expireTimeout;

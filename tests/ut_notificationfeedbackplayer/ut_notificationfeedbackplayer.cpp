@@ -305,9 +305,7 @@ void Ut_NotificationFeedbackPlayer::testUpdateNotificationAfterRestart()
     LipstickNotification *notification = createNotification(1);
 
     // Mark the notification as restored from storage
-    QVariantHash hints;
-    hints.insert(LipstickNotification::HINT_RESTORED, true);
-    notification->setHints(hints);
+    notification->setRestored(true);
 
     // Update the notification
     player->addNotification(1);

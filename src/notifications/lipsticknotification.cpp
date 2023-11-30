@@ -50,7 +50,6 @@ const char *LipstickNotification::HINT_FEEDBACK = "x-nemo-feedback";
 const char *LipstickNotification::HINT_DISPLAY_ON = "x-nemo-display-on";
 const char *LipstickNotification::HINT_ORIGIN_PACKAGE = "x-nemo-origin-package";
 const char *LipstickNotification::HINT_OWNER = "x-nemo-owner";
-const char *LipstickNotification::HINT_RESTORED = "x-nemo-restored";
 const char *LipstickNotification::HINT_PROGRESS = "x-nemo-progress";
 const char *LipstickNotification::HINT_VIBRA = "x-nemo-vibrate";
 const char *LipstickNotification::HINT_VISIBILITY = "x-nemo-visibility";
@@ -442,7 +441,12 @@ QString LipstickNotification::owner() const
 
 bool LipstickNotification::restored() const
 {
-    return m_hints.value(LipstickNotification::HINT_RESTORED).toBool();
+    return m_restored;
+}
+
+void LipstickNotification::setRestored(bool restored)
+{
+    m_restored = restored;
 }
 
 qreal LipstickNotification::progress() const
