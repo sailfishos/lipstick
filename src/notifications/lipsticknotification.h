@@ -405,6 +405,7 @@ public:
     NotificationList();
     NotificationList(const QList<LipstickNotification *> &notificationList);
     NotificationList(const NotificationList &notificationList);
+    NotificationList &operator=(const NotificationList &) = default;
     QList<LipstickNotification *> notifications() const;
     friend QDBusArgument &operator<<(QDBusArgument &, const NotificationList &);
     friend const QDBusArgument &operator>>(const QDBusArgument &, NotificationList &);
