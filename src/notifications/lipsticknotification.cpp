@@ -25,6 +25,8 @@ namespace {
 // deprecated
 const char *HINT_ICON = "x-nemo-icon";
 const char *HINT_PREVIEW_ICON = "x-nemo-preview-icon";
+
+const char *INTERNAL_HINT_PRIVILEGED = "privileged";
 }
 
 const char *LipstickNotification::HINT_URGENCY = "urgency";
@@ -484,6 +486,26 @@ void LipstickNotification::restartProgressTimer()
             emit userRemovableChanged();
         }
     }
+}
+
+QVariantHash LipstickNotification::internalHints() const
+{
+    return m_internalHints;
+}
+
+void LipstickNotification::setInternalHints(const QVariantHash &hints)
+{
+    m_internalHints = hints;
+}
+
+void LipstickNotification::setPrivilegedSource(bool privileged)
+{
+    m_internalHints[INTERNAL_HINT_PRIVILEGED] = privileged;
+}
+
+bool LipstickNotification::privilegedSource() const
+{
+    return m_internalHints.value(INTERNAL_HINT_PRIVILEGED, false).toBool();
 }
 
 void LipstickNotification::updateHintValues()

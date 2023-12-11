@@ -604,6 +604,7 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
     }
 
     notification->setHints(hints_);
+    notification->setPrivilegedSource(clientIsPrivileged);
 
     publish(notification, replacesId);
 
@@ -617,6 +618,7 @@ void NotificationManager::deleteNotification(uint id)
     execSQL(QString("DELETE FROM notifications WHERE id=?"), params);
     execSQL(QString("DELETE FROM actions WHERE id=?"), params);
     execSQL(QString("DELETE FROM hints WHERE id=?"), params);
+    execSQL(QString("DELETE FROM internal_hints WHERE id=?"), params);
     execSQL(QString("DELETE FROM expiration WHERE id=?"), params);
 }
 
@@ -965,6 +967,12 @@ void NotificationManager::publish(const LipstickNotification *notification, uint
         execSQL("INSERT INTO hints VALUES (?, ?, ?)", QVariantList() << id << hit.key() << hit.value());
     }
 
+    const QVariantHash internalHints(notification->internalHints());
+    hit = internalHints.constBegin(), hend = internalHints.constEnd();
+    for ( ; hit != hend; ++hit) {
+        execSQL("INSERT INTO internal_hints VALUES (?, ?, ?)", QVariantList() << id << hit.key() << hit.value());
+    }
+
     NOTIFICATIONS_DEBUG("PUBLISH:" << notification->appName() << notification->appIcon() << notification->summary()
                         << notification->body() << notification->actions() << notification->hints()
                         << notification->expireTimeout() << "->" << id);
@@ -1050,6 +1058,7 @@ bool NotificationManager::checkTableValidity()
     bool recreateNotificationsTable = false;
     bool recreateActionsTable = false;
     bool recreateHintsTable = false;
+    bool recreateInternalHintsTable = false;
     bool recreateExpirationTable = false;
 
     const int databaseVersion(schemaVersion());
@@ -1060,6 +1069,7 @@ bool NotificationManager::checkTableValidity()
         recreateNotificationsTable = true;
         recreateActionsTable = true;
         recreateHintsTable = true;
+        recreateInternalHintsTable = true;
         recreateExpirationTable = true;
     } else {
         if (databaseVersion == 3) {
@@ -1081,6 +1091,7 @@ bool NotificationManager::checkTableValidity()
         }
 
         recreateHintsTable = !verifyTableColumns("hints", QStringList() << "id" << "hint" << "value");
+        recreateInternalHintsTable = !verifyTableColumns("internal_hints", QStringList() << "id" << "hint" << "value");
         recreateExpirationTable = !verifyTableColumns("expiration", QStringList() << "id" << "expire_at");
     }
 
@@ -1097,6 +1108,10 @@ bool NotificationManager::checkTableValidity()
     if (recreateHintsTable) {
         qWarning() << "Recreating hints table";
         result &= recreateTable("hints", "id INTEGER, hint TEXT, value TEXT, PRIMARY KEY(id, hint)");
+    }
+    if (recreateInternalHintsTable) {
+        qWarning() << "Recreating internal hints table";
+        result &= recreateTable("internal_hints", "id INTEGER, hint TEXT, value TEXT, PRIMARY KEY(id, hint)");
     }
     if (recreateExpirationTable) {
         qWarning() << "Recreating expiration table";
@@ -1190,6 +1205,7 @@ void NotificationManager::fetchData(bool update)
     int hintsTableHintFieldIndex = hintsRecord.indexOf("hint");
     int hintsTableValueFieldIndex = hintsRecord.indexOf("value");
     QHash<uint, QVariantHash> hints;
+
     while (hintsQuery.next()) {
         const uint id = hintsQuery.value(hintsTableIdFieldIndex).toUInt();
         const QString hintName(hintsQuery.value(hintsTableHintFieldIndex).toString());
@@ -1206,6 +1222,22 @@ void NotificationManager::fetchData(bool update)
             value = hintValue;
         }
         hints[id].insert(hintName, value);
+    }
+
+    // Gather the internal hints
+    QSqlQuery internalHintsQuery("SELECT * FROM internal_hints", *m_database);
+    QSqlRecord internalHintsRecord = internalHintsQuery.record();
+    int internalHintsTableIdFieldIndex = internalHintsRecord.indexOf("id");
+    int internalHintsTableHintFieldIndex = internalHintsRecord.indexOf("hint");
+    int internalHintsTableValueFieldIndex = internalHintsRecord.indexOf("value");
+    QHash<uint, QVariantHash> internalHints;
+
+    while (internalHintsQuery.next()) {
+        const uint id = internalHintsQuery.value(internalHintsTableIdFieldIndex).toUInt();
+        const QString hintName(internalHintsQuery.value(internalHintsTableHintFieldIndex).toString());
+        const QVariant hintValue(internalHintsQuery.value(internalHintsTableValueFieldIndex));
+
+        internalHints[id].insert(hintName, hintValue);
     }
 
     // Gather expiration times for displayed notifications
@@ -1276,6 +1308,7 @@ void NotificationManager::fetchData(bool update)
                                                                       id, QString(), summary, body, notificationActions,
                                                                       notificationHints, expireTimeout, this);
         notification->setAppIcon(appIcon, appIconOrigin);
+        notification->setInternalHints(internalHints[id]);
         notification->setRestored(true);
         m_notifications.insert(id, notification);
 
@@ -1400,9 +1433,9 @@ void NotificationManager::invokeAction(const QString &action, const QString &act
                 // If we need to support text actions with empty parameter, we need to fetch the action type from
                 // the notification, but likely this is enough for the action type
                 if (actionText.isEmpty()) {
-                    emit remoteActionActivated(remoteAction);
+                    emit remoteActionActivated(remoteAction, notification->privilegedSource());
                 } else {
-                    emit remoteTextActionActivated(remoteAction, actionText);
+                    emit remoteTextActionActivated(remoteAction, actionText, notification->privilegedSource());
                 }
             }
 

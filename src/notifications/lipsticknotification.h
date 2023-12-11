@@ -273,6 +273,14 @@ public:
     //! \internal
     void restartProgressTimer();
 
+    // Properties internal to lipstick, not visible over D-Bus
+    QVariantHash internalHints() const;
+    void setInternalHints(const QVariantHash &hints);
+
+    // Notification came from process with privileged group
+    void setPrivilegedSource(bool privileged);
+    bool privilegedSource() const;
+
     /*!
      * Creates a copy of an existing representation of a notification.
      * This constructor should only be used for populating the notification
@@ -373,6 +381,8 @@ private:
     //! Hints for the notification
     QVariantHash m_hints;
     QVariantMap m_hintValues;
+    QVariantHash m_internalHints;
+
     bool m_restored = false;
 
     //! Expiration timeout for the notification
