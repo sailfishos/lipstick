@@ -239,8 +239,8 @@ signals:
      */
     void notificationsRemoved(const QList<uint> &ids);
 
-    void remoteActionActivated(const QString &remoteAction);
-    void remoteTextActionActivated(const QString &remoteAction, const QString &text);
+    void remoteActionActivated(const QString &remoteAction, bool trusted);
+    void remoteTextActionActivated(const QString &remoteAction, const QString &text, bool trusted);
 
 public slots:
     /*!
