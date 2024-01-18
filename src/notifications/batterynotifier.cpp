@@ -489,7 +489,9 @@ void BatteryNotifier::sendNotification(BatteryNotifier::NotificationType type)
         hints.insert(LipstickNotification::HINT_FEEDBACK, info.feedback);
     }
     hints.insert(LipstickNotification::HINT_VISIBILITY, QLatin1String("public"));
-    hints.insert(LipstickNotification::HINT_URGENCY, LipstickNotification::Critical);
+    hints.insert(LipstickNotification::HINT_URGENCY,
+                 type == NotificationChargingComplete ? LipstickNotification::Normal
+                                                      : LipstickNotification::Critical);
     hints.insert(LipstickNotification::HINT_TRANSIENT, true);
     QueuedNotification queuedNotification;
     queuedNotification.m_type = type;
