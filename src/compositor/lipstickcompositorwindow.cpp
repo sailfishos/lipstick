@@ -56,6 +56,8 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
 
         m_isAlien = surface->property("alienSurface").toBool();
 
+        connect(surface, &QWaylandSurface::clientDestroyedSurface, this, &LipstickCompositorWindow::closed);
+
         connect(surface, &QWaylandSurface::titleChanged, this, &LipstickCompositorWindow::titleChanged);
         connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
     }
