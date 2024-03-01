@@ -33,7 +33,6 @@ OTHER_FILES += \
 QMAKE_CXXFLAGS += \
     -Werror \
     -g \
-    -std=c++0x \
     -fPIC \
     -fvisibility=hidden \
     -fvisibility-inlines-hidden

@@ -23,11 +23,7 @@ PKGCONFIG += mlite5 systemsettings
 
 QMAKE_CXXFLAGS += \
     -Werror \
-    -g \
-    -std=c++0x \
-    -fPIC \
-    -fvisibility=hidden \
-    -fvisibility-inlines-hidden
+    -g
 
 target.path = /opt/tests/lipstick-tests
 INSTALLS += target
