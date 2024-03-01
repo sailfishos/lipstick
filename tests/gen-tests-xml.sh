@@ -14,7 +14,7 @@ do
       </case>
       "
 
-		if [ -n "`echo $TEST | egrep '^u'`" ]
+		if [ -n "`echo $TEST | grep -E '^u'`" ]
 		then
 			UT_TESTCASES="${UT_TESTCASES}${TESTCASE_TEMPLATE}"
 		else

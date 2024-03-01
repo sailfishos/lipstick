@@ -23,7 +23,4 @@ SOURCES += \
 
 QMAKE_CXXFLAGS += \
     -Werror \
-    -g \
-    -std=c++0x \
-    -fvisibility=hidden \
-    -fvisibility-inlines-hidden
+    -g
