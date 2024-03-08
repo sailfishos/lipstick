@@ -137,6 +137,7 @@ PKGCONFIG += \
     mce \
     mce-qt5 \
     nemodevicelock \
+    nemoconnectivity \
     ngf-qt5 \
     systemsettings \
     thermalmanager_dbus_if \
