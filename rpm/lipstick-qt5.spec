@@ -40,6 +40,7 @@ BuildRequires:  pkgconfig(wayland-server)
 BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.8
 BuildRequires:  pkgconfig(systemsettings) >= 0.8.0
 BuildRequires:  pkgconfig(nemodevicelock)
+BuildRequires:  pkgconfig(nemoconnectivity)
 BuildRequires:  pkgconfig(sailfishusermanager)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  qt5-qttools-linguist
