@@ -157,7 +157,7 @@ packagesExist(contentaction5) {
     warning("contentaction doesn't exist; falling back to exec - this may not work so great")
 }
 
-QT += dbus xml qml quick sql gui gui-private sensors
+QT += dbus qml quick sql gui gui-private sensors
 
 QMAKE_CXXFLAGS += \
     -Wfatal-errors \
