@@ -63,7 +63,6 @@ struct FolderItem {
         : folder(folder)
         , item(item)
     {
-
     }
 
     LauncherFolderItem *folder;
@@ -76,9 +75,12 @@ struct FolderItem {
 LauncherFolderItem::LauncherFolderItem(QObject *parent)
     : QObjectListModel(parent), m_iconId(DEFAULT_ICON_ID)
 {
-    connect(this, SIGNAL(itemRemoved(QObject*)), this, SLOT(handleRemoved(QObject*)));
-    connect(this, SIGNAL(itemAdded(QObject*)), this, SLOT(handleAdded(QObject*)));
-    connect(this, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)), this, SIGNAL(saveNeeded()));
+    connect(this, &LauncherFolderItem::itemRemoved,
+            this, &LauncherFolderItem::handleRemoved);
+    connect(this, &LauncherFolderItem::itemAdded,
+            this, &LauncherFolderItem::handleAdded);
+    connect(this, &LauncherFolderItem::rowsMoved,
+            this, &LauncherFolderItem::saveNeeded);
 }
 
 LauncherModel::ItemType LauncherFolderItem::type() const

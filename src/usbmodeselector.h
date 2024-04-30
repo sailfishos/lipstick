@@ -36,7 +36,7 @@ class LIPSTICK_EXPORT USBModeSelector : public QObject
     Q_PROPERTY(QString preparingMode READ preparingMode NOTIFY preparingModeChanged)
 
 public:
-    /*! Notifiation enum used to indicate which notification should be
+    /*! Notification enum used to indicate which notification should be
      * presented to the user.
      */
     enum Notification {

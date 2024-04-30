@@ -67,10 +67,7 @@ LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
     , m_isLaunching(false)
     , m_isUpdating(false)
     , m_isTemporary(false)
-    , m_packageName("")
     , m_updatingProgress(-1)
-    , m_customTitle("")
-    , m_customIconFilename("")
     , m_serial(0)
     , m_isBlacklisted(false)
     , m_mimeTypesPopulated(false)
@@ -349,7 +346,7 @@ bool LauncherItem::isSandboxed() const
     if (m_sandboxingInfoFetched) {
         return m_sandboxed;
     } else {
-        return !m_desktopEntry.isNull() ? m_desktopEntry->isSandboxed() : false;
+        return !m_desktopEntry.isNull() && m_desktopEntry->isSandboxed();
     }
 }
 
