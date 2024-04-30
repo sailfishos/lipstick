@@ -226,6 +226,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
             // Desktop file has been updated - update launcher
             LauncherItem *item = itemInModel(filename);
             if (item != nullptr) {
+                item->invalidateCaches();
                 bool isValid = item->isStillValid() && item->shouldDisplay() && displayCategory(item);
 
                 if (!isValid) {
