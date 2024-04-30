@@ -69,12 +69,12 @@ void LauncherMonitor::initialize()
 {
     m_holdbackTimer.setSingleShot(true);
 
-    QObject::connect(&m_watcher, SIGNAL(directoryChanged(const QString &)),
-            this, SLOT(onDirectoryChanged(const QString &)));
-    QObject::connect(&m_watcher, SIGNAL(fileChanged(const QString &)),
-            this, SLOT(onFileChanged(const QString &)));
-    QObject::connect(&m_holdbackTimer, SIGNAL(timeout()),
-            this, SLOT(onHoldbackTimerTimeout()));
+    QObject::connect(&m_watcher, &QFileSystemWatcher::directoryChanged,
+                     this, &LauncherMonitor::onDirectoryChanged);
+    QObject::connect(&m_watcher, &QFileSystemWatcher::fileChanged,
+                     this, &LauncherMonitor::onFileChanged);
+    QObject::connect(&m_holdbackTimer, &QTimer::timeout,
+                     this, &LauncherMonitor::onHoldbackTimerTimeout);
 }
 
 LauncherMonitor::~LauncherMonitor()

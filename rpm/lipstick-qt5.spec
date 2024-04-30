@@ -109,11 +109,9 @@ Translation files for the lipstick package.
 %build
 
 %qmake5 VERSION=%{version}
-
-make %{?_smp_mflags}
+%make_build
 
 %install
-rm -rf %{buildroot}
 mkdir -p %{buildroot}/%{icondirectory}
 %qmake5_install
 
@@ -125,7 +123,6 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
 %license LICENSE.LGPL
 %config %{_sysconfdir}/dbus-1/system.d/lipstick.conf
 %{_libdir}/lib%{name}.so.*
@@ -136,33 +133,26 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 %dir %{icondirectory}
 
 %files devel
-%defattr(-,root,root,-)
 %{_includedir}/%{name}
 %{_libdir}/lib%{name}.so
 %{_libdir}/lib%{name}.prl
 %{_libdir}/pkgconfig/%{name}.pc
 
 %files tests
-%defattr(-,root,root,-)
 /opt/tests/lipstick-tests
 
 %files tools
-%defattr(-,root,root,-)
 %{_bindir}/notificationtool
 
 %files simplecompositor
-%defattr(-,root,root,-)
 %{_bindir}/simplecompositor
 %{_datadir}/lipstick/simplecompositor
 
 %files doc
-%defattr(-,root,root,-)
 %{_datadir}/doc/lipstick
 
 %files notification-doc
-%defattr(-,root,root,-)
 %{_datadir}/doc/lipstick-notification
 
 %files ts-devel
-%defattr(-,root,root,-)
 %{_datadir}/translations/source/*.ts

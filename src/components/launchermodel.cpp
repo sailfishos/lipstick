@@ -126,25 +126,27 @@ void LauncherModel::initialize()
     m_launcherMonitor.setIconDirectories(iconDirectories);
 
     // Set up the monitor for icon and desktop file changes
-    connect(&m_launcherMonitor, SIGNAL(filesUpdated(const QStringList &, const QStringList &, const QStringList &)),
-            this, SLOT(onFilesUpdated(const QStringList &, const QStringList &, const QStringList &)));
+    connect(&m_launcherMonitor, &LauncherMonitor::filesUpdated,
+            this, &LauncherModel::onFilesUpdated);
 
     // Start monitoring
     m_launcherMonitor.start();
 
     // Save order of icons when model is changed
-    connect(this, SIGNAL(rowsMoved(const QModelIndex&,int,int,const QModelIndex&,int)), this, SLOT(savePositions()));
+    connect(this, &LauncherModel::rowsMoved,
+            this, &LauncherModel::savePositions);
 
     // Watch for changes to the item order settings file
     m_fileSystemWatcher.addPath(m_launcherSettings.fileName());
-    connect(&m_fileSystemWatcher, SIGNAL(fileChanged(QString)), this, SLOT(monitoredFileChanged(QString)));
+    connect(&m_fileSystemWatcher, &QFileSystemWatcher::fileChanged,
+            this, &LauncherModel::monitoredFileChanged);
 
     // Used to watch for owner changes during installation progress
     m_dbusWatcher.setConnection(QDBusConnection::sessionBus());
     m_dbusWatcher.setWatchMode(QDBusServiceWatcher::WatchForUnregistration);
 
-    connect(&m_dbusWatcher, SIGNAL(serviceUnregistered(const QString &)),
-            this, SLOT(onServiceUnregistered(const QString &)));
+    connect(&m_dbusWatcher, &QDBusServiceWatcher::serviceUnregistered,
+            this, &LauncherModel::onServiceUnregistered);
 }
 
 LauncherModel::~LauncherModel()
@@ -162,7 +164,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
         if (isDesktopFile(m_directories, filename)) {
             // Desktop file has been removed - remove launcher
             LauncherItem *item = itemInModel(filename);
-            if (item != NULL) {
+            if (item != nullptr) {
                 LAUNCHER_DEBUG("Removing launcher item:" << filename);
                 unsetTemporary(item);
                 removeItem(item);
@@ -185,8 +187,8 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
             // cases, this is better than having the temporary and non-temporary in
             // place at the same time.
             LauncherItem *tempItem = temporaryItemToReplace();
-            if (item == NULL && tempItem != NULL &&
-                    isVisibleDesktopFile(filename)) {
+            if (item == nullptr && tempItem != nullptr
+                    && isVisibleDesktopFile(filename)) {
                 // Replace the single temporary launcher with the newly-added icon
                 item = tempItem;
 
@@ -196,11 +198,11 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
                 item->setFilePath(filename);
             }
 
-            if (item == NULL) {
+            if (item == nullptr) {
                 LAUNCHER_DEBUG("Trying to add launcher item:" << filename);
                 item = addItemIfValid(filename);
 
-                if (item != NULL) {
+                if (item != nullptr) {
                     updateItemsWithIcon(item->getOriginalIconId(), QString());
                 }
             } else {
@@ -223,7 +225,8 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
         if (isDesktopFile(m_directories, filename)) {
             // Desktop file has been updated - update launcher
             LauncherItem *item = itemInModel(filename);
-            if (item != NULL) {
+            if (item != nullptr) {
+                item->invalidateCaches();
                 bool isValid = item->isStillValid() && item->shouldDisplay() && displayCategory(item);
 
                 if (!isValid) {
@@ -828,11 +831,11 @@ LauncherItem *LauncherModel::addItemIfValid(const QString &path)
         addItem(item);
     } else if (isValid) {
         m_hiddenLaunchers.append(item);
-        item = NULL;
+        item = nullptr;
     } else {
         LAUNCHER_DEBUG("Item" << path << (!isValid ? "is not valid" : "should not be displayed"));
         delete item;
-        item = NULL;
+        item = nullptr;
     }
 
     return item;
@@ -870,7 +873,7 @@ void LauncherModel::unsetTemporary(LauncherItem *item)
 
 LauncherItem *LauncherModel::temporaryItemToReplace()
 {
-    LauncherItem *item = NULL;
+    LauncherItem *item = nullptr;
     if (m_temporaryLaunchers.count() == 1) {
         // Only one item. It must be this.
         item = m_temporaryLaunchers.first();
@@ -882,7 +885,7 @@ LauncherItem *LauncherModel::temporaryItemToReplace()
                     item = tempItem;
                 } else {
                     // Give up if many items have finished.
-                    item = NULL;
+                    item = nullptr;
                     break;
                 }
             }
