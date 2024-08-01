@@ -85,7 +85,7 @@ public:
     QString exec() const;
     QString title() const;
     QString entryType() const;
-    QString iconId() const;
+    virtual QString iconId() const;
     QStringList desktopCategories() const;
     QStringList mimeType() const;
     QString titleUnlocalized() const;
@@ -95,8 +95,8 @@ public:
     bool isLaunching() const;
     bool isStillValid();
     bool dBusActivatable() const;
-    bool dBusActivated() const;
-    MRemoteAction remoteAction(const QStringList &arguments = QStringList()) const;
+    virtual bool dBusActivated() const;
+    virtual MRemoteAction remoteAction(const QStringList &arguments = QStringList()) const;
 
     QString getOriginalIconId() const;
     void setIconFilename(const QString &path);
