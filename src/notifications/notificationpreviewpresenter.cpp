@@ -54,13 +54,13 @@ enum PreviewMode {
 }
 
 NotificationPreviewPresenter::NotificationPreviewPresenter(
-        ScreenLock *screenLock, NemoDeviceLock::DeviceLock *deviceLock, QObject *parent) :
-    QObject(parent),
-    m_window(0),
-    m_currentNotification(0),
-    m_notificationFeedbackPlayer(new NotificationFeedbackPlayer(this)),
-    m_screenLock(screenLock),
-    m_deviceLock(deviceLock)
+        ScreenLock *screenLock, NemoDeviceLock::DeviceLock *deviceLock, QObject *parent)
+    : QObject(parent)
+    , m_window(nullptr)
+    , m_currentNotification(nullptr)
+    , m_notificationFeedbackPlayer(new NotificationFeedbackPlayer(this))
+    , m_screenLock(screenLock)
+    , m_deviceLock(deviceLock)
 {
     connect(NotificationManager::instance(), &NotificationManager::notificationAdded,
             this, &NotificationPreviewPresenter::updateNotification);
@@ -87,21 +87,22 @@ void NotificationPreviewPresenter::showNextNotification()
 
     if (m_notificationQueue.isEmpty()) {
         // No more notifications to show: hide the notification window if it's visible
-        if (m_window != 0 && m_window->isVisible()) {
+        if (m_window != nullptr && m_window->isVisible()) {
             m_window->hide();
         }
 
-        setCurrentNotification(0);
+        setCurrentNotification(nullptr);
     } else {
         LipstickNotification *notification = m_notificationQueue.takeFirst();
         bool show = notificationShouldBeShown(notification);
 
         if (!show) {
-            if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) { // Suppress feedback if locked out.
+            // Suppress feedback if locked out.
+            if (m_deviceLock->state() != NemoDeviceLock::DeviceLock::ManagerLockout) {
                 m_notificationFeedbackPlayer->addNotification(notification->id());
             }
 
-            setCurrentNotification(0);
+            setCurrentNotification(nullptr);
 
             showNextNotification();
         } else {
@@ -126,21 +127,22 @@ void NotificationPreviewPresenter::updateNotification(uint id)
 {
     LipstickNotification *notification = NotificationManager::instance()->notification(id);
 
-    if (notification != 0) {
+    if (notification != nullptr) {
         if (notificationShouldBeShown(notification)) {
             // Add the notification to the queue if not already there or the current notification
             if (m_currentNotification != notification && !m_notificationQueue.contains(notification)) {
                 m_notificationQueue.append(notification);
 
                 // Show the notification if no notification currently being shown
-                if (m_currentNotification == 0) {
+                if (m_currentNotification == nullptr) {
                     showNextNotification();
                 }
             }
         } else {
             m_notificationFeedbackPlayer->addNotification(id);
 
-            // Remove updated notification only from the queue so that a currently visible notification won't suddenly disappear
+            // Remove updated notification only from the queue so that a currently visible
+            // notification won't suddenly disappear
             removeNotification(id, true);
 
             if (m_currentNotification != notification) {
@@ -155,13 +157,13 @@ void NotificationPreviewPresenter::removeNotification(uint id, bool onlyFromQueu
     // Remove the notification from the queue
     LipstickNotification *notification = NotificationManager::instance()->notification(id);
 
-    if (notification != 0) {
+    if (notification != nullptr) {
         m_notificationQueue.removeAll(notification);
 
         // If the notification is currently being shown hide it
         // - the next notification will be shown after the current one has been hidden
         if (!onlyFromQueue && m_currentNotification == notification) {
-            m_currentNotification = 0;
+            m_currentNotification = nullptr;
             emit notificationChanged();
         }
     }
@@ -169,7 +171,7 @@ void NotificationPreviewPresenter::removeNotification(uint id, bool onlyFromQueu
 
 void NotificationPreviewPresenter::createWindowIfNecessary()
 {
-    if (m_window != 0) {
+    if (m_window != nullptr) {
         return;
     }
 
@@ -225,7 +227,7 @@ bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotificatio
 
     uint mode = AllNotificationsEnabled;
     QWaylandSurface *surface = LipstickCompositor::instance()->surfaceForId(LipstickCompositor::instance()->topmostWindowId());
-    if (surface != 0) {
+    if (surface != nullptr) {
         mode = surface->windowProperties().value("NOTIFICATION_PREVIEWS_DISABLED", uint(AllNotificationsEnabled)).toUInt();
     }
 

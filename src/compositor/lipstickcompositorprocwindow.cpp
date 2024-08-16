@@ -50,7 +50,7 @@ LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &t
 }
 
 LipstickCompositorProcWindow::LipstickCompositorProcWindow(int windowId, const QString &c, QQuickItem *parent)
-: LipstickCompositorWindow(windowId, c, 0, parent)
+    : LipstickCompositorWindow(windowId, c, 0, parent)
 {
 }
 

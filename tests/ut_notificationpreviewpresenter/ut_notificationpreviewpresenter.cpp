@@ -211,7 +211,8 @@ LipstickNotification *createNotification(uint id, Urgency urgency = Normal)
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "summary");
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "body");
     hints.insert(LipstickNotification::HINT_URGENCY, static_cast<int>(urgency));
-    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", "", id, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter",
+                                                                  "", "", id, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(id, notification);
     return notification;
 }
@@ -269,9 +270,12 @@ void Ut_NotificationPreviewPresenter::testAddNotificationWhenWindowNotOpen()
 
     // Check window properties
     QCOMPARE(homeWindowTitle[homeWindows.first()], QString("Notification"));
-    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("initialSize").toSize(), QGuiApplication::primaryScreen()->size());
-    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("notificationPreviewPresenter"), QVariant::fromValue(static_cast<QObject *>(&presenter)));
-    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("notificationFeedbackPlayer"), QVariant::fromValue(static_cast<QObject *>(presenter.m_notificationFeedbackPlayer)));
+    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("initialSize").toSize(),
+            QGuiApplication::primaryScreen()->size());
+    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("notificationPreviewPresenter"),
+            QVariant::fromValue(static_cast<QObject *>(&presenter)));
+    QCOMPARE(homeWindowContextProperties[homeWindows.first()].value("notificationFeedbackPlayer"),
+            QVariant::fromValue(static_cast<QObject *>(presenter.m_notificationFeedbackPlayer)));
     QCOMPARE(homeWindowContextProperties[homeWindows.first()].contains("LipstickSettings"), true);
     QCOMPARE(homeWindowCategories[homeWindows.first()], QString("notification"));
 
@@ -403,7 +407,8 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfNoSummaryOrBody(
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, previewSummary);
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, previewBody);
-    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", "", 1, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter",
+                                                                  "", "", 1, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(1, notification);
     QTest::qWait(0);
     presenter.updateNotification(1);
@@ -428,7 +433,8 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfRestored()
     QVariantHash hints;
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
-    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", "", 1, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter",
+                                                                  "", "", 1, "", "", "", QStringList(), hints, -1);
     notification->setRestored(true);
     notificationManagerNotification.insert(1, notification);
     presenter.updateNotification(1);
@@ -451,7 +457,8 @@ void Ut_NotificationPreviewPresenter::testShowingOnlyCriticalNotifications()
     hints.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, "previewSummary");
     hints.insert(LipstickNotification::HINT_PREVIEW_BODY, "previewBody");
     hints.insert(LipstickNotification::HINT_URGENCY, 1);
-    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter", "", "", 1, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationpreviewpresenter",
+                                                                  "", "", 1, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(1, notification);
     QTest::qWait(0);
     QCOMPARE(homeWindowVisible.isEmpty(), true);
@@ -518,14 +525,46 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLoc
     QTest::addColumn<int>("urgency");
     QTest::addColumn<int>("notifications");
     QTest::addColumn<int>("playedFeedbackCount");
-    QTest::newRow("Display on, touch screen not locked") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Normal) << 1 << 1;
-    QTest::newRow("Display on, touch screen locked") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Normal) << 0 << 1;
-    QTest::newRow("Display off, touch screen not locked") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Normal) << 1 << 1;
-    QTest::newRow("Display off, touch screen locked") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Normal) << 0 << 1;
-    QTest::newRow("Display on, touch screen not locked, critical") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Critical) << 1 << 1;
-    QTest::newRow("Display on, touch screen locked, critical") << DeviceState::DisplayStateMonitor::On << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Critical) << 1 << 1;
-    QTest::newRow("Display off, touch screen not locked, critical") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Unlocked << static_cast<int>(Critical) << 1 << 1;
-    QTest::newRow("Display off, touch screen locked, critical") << DeviceState::DisplayStateMonitor::Off << NemoDeviceLock::DeviceLock::Locked << static_cast<int>(Critical) << 1 << 1;
+    QTest::newRow("Display on, touch screen not locked") << DeviceState::DisplayStateMonitor::On
+                                                         << NemoDeviceLock::DeviceLock::Unlocked
+                                                         << static_cast<int>(Normal)
+                                                         << 1
+                                                         << 1;
+    QTest::newRow("Display on, touch screen locked") << DeviceState::DisplayStateMonitor::On
+                                                     << NemoDeviceLock::DeviceLock::Locked
+                                                     << static_cast<int>(Normal)
+                                                     << 0
+                                                     << 1;
+    QTest::newRow("Display off, touch screen not locked") << DeviceState::DisplayStateMonitor::Off
+                                                          << NemoDeviceLock::DeviceLock::Unlocked
+                                                          << static_cast<int>(Normal)
+                                                          << 1
+                                                          << 1;
+    QTest::newRow("Display off, touch screen locked") << DeviceState::DisplayStateMonitor::Off
+                                                      << NemoDeviceLock::DeviceLock::Locked
+                                                      << static_cast<int>(Normal)
+                                                      << 0
+                                                      << 1;
+    QTest::newRow("Display on, touch screen not locked, critical") << DeviceState::DisplayStateMonitor::On
+                                                                   << NemoDeviceLock::DeviceLock::Unlocked
+                                                                   << static_cast<int>(Critical)
+                                                                   << 1
+                                                                   << 1;
+    QTest::newRow("Display on, touch screen locked, critical") << DeviceState::DisplayStateMonitor::On
+                                                               << NemoDeviceLock::DeviceLock::Locked
+                                                               << static_cast<int>(Critical)
+                                                               << 1
+                                                               << 1;
+    QTest::newRow("Display off, touch screen not locked, critical") << DeviceState::DisplayStateMonitor::Off
+                                                                    << NemoDeviceLock::DeviceLock::Unlocked
+                                                                    << static_cast<int>(Critical)
+                                                                    << 1
+                                                                    << 1;
+    QTest::newRow("Display off, touch screen locked, critical") << DeviceState::DisplayStateMonitor::Off
+                                                                << NemoDeviceLock::DeviceLock::Locked
+                                                                << static_cast<int>(Critical)
+                                                                << 1
+                                                                << 1;
 }
 
 void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLockedAndDisplayIsOff()
@@ -595,18 +634,66 @@ void Ut_NotificationPreviewPresenter::testNotificationPreviewsDisabled_data()
     applicationNotificationsDisabled.insert("NOTIFICATION_PREVIEWS_DISABLED", 1);
     systemNotificationsDisabled.insert("NOTIFICATION_PREVIEWS_DISABLED", 2);
     allNotificationsDisabled.insert("NOTIFICATION_PREVIEWS_DISABLED", 3);
-    QTest::newRow("No surface, application notification") << (QWaylandSurface *)0 << QVariantMap() << static_cast<int>(Normal) << 1;
-    QTest::newRow("Surface, no properties, application notification") << surface << QVariantMap() << static_cast<int>(Normal) << 1;
-    QTest::newRow("Surface, all notifications enabled, application notification") << surface << allNotificationsEnabled << static_cast<int>(Normal) << 1;
-    QTest::newRow("Surface, application notifications disabled, application notification") << surface << applicationNotificationsDisabled << static_cast<int>(Normal) << 0;
-    QTest::newRow("Surface, system notifications disabled, application notification") << surface << systemNotificationsDisabled << static_cast<int>(Normal) << 1;
-    QTest::newRow("Surface, all notifications disabled, application notification") << surface << allNotificationsDisabled << static_cast<int>(Normal) << 0;
-    QTest::newRow("No surface, system notification") << (QWaylandSurface *)0 << QVariantMap() << static_cast<int>(Critical) << 1;
-    QTest::newRow("Surface, no properties, system notification") << surface << QVariantMap() << static_cast<int>(Critical) << 1;
-    QTest::newRow("Surface, all notifications enabled, system notification") << surface << allNotificationsEnabled << static_cast<int>(Critical) << 1;
-    QTest::newRow("Surface, application notifications disabled, system notification") << surface << applicationNotificationsDisabled << static_cast<int>(Critical) << 1;
-    QTest::newRow("Surface, system notifications disabled, system notification") << surface << systemNotificationsDisabled << static_cast<int>(Critical) << 0;
-    QTest::newRow("Surface, all notifications disabled, system notification") << surface << allNotificationsDisabled << static_cast<int>(Critical) << 0;
+    QTest::newRow("No surface, application notification")
+            << (QWaylandSurface *)0
+            << QVariantMap()
+            << static_cast<int>(Normal)
+            << 1;
+    QTest::newRow("Surface, no properties, application notification")
+            << surface
+            << QVariantMap()
+            << static_cast<int>(Normal)
+            << 1;
+    QTest::newRow("Surface, all notifications enabled, application notification")
+            << surface
+            << allNotificationsEnabled
+            << static_cast<int>(Normal)
+            << 1;
+    QTest::newRow("Surface, application notifications disabled, application notification")
+            << surface
+            << applicationNotificationsDisabled
+            << static_cast<int>(Normal)
+            << 0;
+    QTest::newRow("Surface, system notifications disabled, application notification")
+            << surface
+            << systemNotificationsDisabled
+            << static_cast<int>(Normal)
+            << 1;
+    QTest::newRow("Surface, all notifications disabled, application notification")
+            << surface
+            << allNotificationsDisabled
+            << static_cast<int>(Normal)
+            << 0;
+    QTest::newRow("No surface, system notification")
+            << (QWaylandSurface *)0
+            << QVariantMap()
+            << static_cast<int>(Critical)
+            << 1;
+    QTest::newRow("Surface, no properties, system notification")
+            << surface
+            << QVariantMap()
+            << static_cast<int>(Critical)
+            << 1;
+    QTest::newRow("Surface, all notifications enabled, system notification")
+            << surface
+            << allNotificationsEnabled
+            << static_cast<int>(Critical)
+            << 1;
+    QTest::newRow("Surface, application notifications disabled, system notification")
+            << surface
+            << applicationNotificationsDisabled
+            << static_cast<int>(Critical)
+            << 1;
+    QTest::newRow("Surface, system notifications disabled, system notification")
+            << surface
+            << systemNotificationsDisabled
+            << static_cast<int>(Critical)
+            << 0;
+    QTest::newRow("Surface, all notifications disabled, system notification")
+            << surface
+            << allNotificationsDisabled
+            << static_cast<int>(Critical)
+            << 0;
 }
 
 void Ut_NotificationPreviewPresenter::testNotificationPreviewsDisabled()

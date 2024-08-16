@@ -273,15 +273,16 @@ NotificationManager *NotificationManager::instance(bool owner)
     return s_instance;
 }
 
-NotificationManager::NotificationManager(QObject *parent, bool owner) :
-    QObject(parent),
-    QDBusContext(),
-    m_previousNotificationID(0),
-    m_categoryDefinitionStore(new CategoryDefinitionStore(CATEGORY_DEFINITION_FILE_DIRECTORY, MAX_CATEGORY_DEFINITION_FILES, this)),
-    m_androidPriorityStore(new AndroidPriorityStore(ANDROID_PRIORITY_DEFINITION_PATH, this)),
-    m_database(new QSqlDatabase),
-    m_committed(true),
-    m_nextExpirationTime(0)
+NotificationManager::NotificationManager(QObject *parent, bool owner)
+    : QObject(parent),
+      QDBusContext(),
+      m_previousNotificationID(0),
+      m_categoryDefinitionStore(new CategoryDefinitionStore(CATEGORY_DEFINITION_FILE_DIRECTORY,
+                                                            MAX_CATEGORY_DEFINITION_FILES, this)),
+      m_androidPriorityStore(new AndroidPriorityStore(ANDROID_PRIORITY_DEFINITION_PATH, this)),
+      m_database(new QSqlDatabase),
+      m_committed(true),
+      m_nextExpirationTime(0)
 {
     if (owner) {
         qDBusRegisterMetaType<QVariantHash>();
@@ -292,10 +293,13 @@ NotificationManager::NotificationManager(QObject *parent, bool owner) :
         QDBusConnection::sessionBus().registerObject("/org/freedesktop/Notifications", this);
         QDBusConnection::sessionBus().registerService("org.freedesktop.Notifications");
 
-        connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)), this, SLOT(removeNotificationsWithCategory(QString)));
-        connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)), this, SLOT(updateNotificationsWithCategory(QString)));
+        connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)),
+                this, SLOT(removeNotificationsWithCategory(QString)));
+        connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)),
+                this, SLOT(updateNotificationsWithCategory(QString)));
 
-        // Commit the modifications to the database 10 seconds after the last modification so that writing to disk doesn't affect user experience
+        // Commit the modifications to the database 10 seconds after the last modification so that writing
+        // to disk doesn't affect user experience
         m_databaseCommitTimer.setInterval(CommitDelay);
         m_databaseCommitTimer.setSingleShot(true);
         connect(&m_databaseCommitTimer, SIGNAL(timeout()), this, SLOT(commit()));
@@ -370,7 +374,8 @@ uint NotificationManager::Notify(const QString &appName, uint replacesId, const 
     } else {
         setDelayedReply(true);
         ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
-        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedNotify, Qt::QueuedConnection);
+        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedNotify,
+                Qt::QueuedConnection);
     }
     return id;
 }
@@ -389,7 +394,8 @@ void NotificationManager::identifiedNotify()
     QVariantHash hints;
     hintsArg >> hints;
     int expireTimeout = arguments.at(7).toInt();
-    uint id = handleNotify(identifier->clientPid(), appName, replacesId, appIcon, summary, body, actions, hints, expireTimeout);
+    uint id = handleNotify(identifier->clientPid(), appName, replacesId, appIcon, summary, body,
+                           actions, hints, expireTimeout);
     if (identifier->message().isReplyRequired()) {
         QDBusMessage reply;
         if (id == 0) {
@@ -408,9 +414,9 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
                                        const QString &summary, const QString &body, const QStringList &actions,
                                        const QVariantHash &hints, int expireTimeout)
 {
-    NOTIFICATIONS_DEBUG("clientPid:" << clientPid << "appName:" << appName << "replacesId:" << replacesId << "appIcon:" << appIcon
-                        << "summary:" << summary << "body:" << body << "actions:" << actions << "hints:" << hints << "expireTimeout:" << expireTimeout);
-
+    NOTIFICATIONS_DEBUG("clientPid:" << clientPid << "appName:" << appName << "replacesId:" << replacesId
+                        << "appIcon:" << appIcon << "summary:" << summary << "body:" << body << "actions:"
+                        << actions << "hints:" << hints << "expireTimeout:" << expireTimeout);
     if (replacesId != 0 && !m_notifications.contains(replacesId)) {
         replacesId = 0;
     }
@@ -629,7 +635,8 @@ void NotificationManager::CloseNotification(uint id, NotificationClosedReason cl
     } else {
         setDelayedReply(true);
         ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
-        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedCloseNotification, Qt::QueuedConnection);
+        connect(identifier, &ClientIdentifier::finished,
+                this, &NotificationManager::identifiedCloseNotification, Qt::QueuedConnection);
     }
 }
 
@@ -711,7 +718,8 @@ void NotificationManager::markNotificationDisplayed(uint id)
                 // Insert the timeout into the expiration table, or leave the existing value if already present
                 const qint64 currentTime(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
                 const qint64 expireAt(currentTime + timeout);
-                execSQL(QString("INSERT OR IGNORE INTO expiration(id, expire_at) VALUES(?, ?)"), QVariantList() << id << expireAt);
+                execSQL(QString("INSERT OR IGNORE INTO expiration(id, expire_at) VALUES(?, ?)"),
+                        QVariantList() << id << expireAt);
 
                 if (m_nextExpirationTime == 0 || (expireAt < m_nextExpirationTime)) {
                     // This will be the next notification to expire - update the timer
@@ -743,7 +751,8 @@ NotificationList NotificationManager::GetNotifications(const QString &owner)
     } else {
         setDelayedReply(true);
         ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
-        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedGetNotifications, Qt::QueuedConnection);
+        connect(identifier, &ClientIdentifier::finished,
+                this, &NotificationManager::identifiedGetNotifications, Qt::QueuedConnection);
     }
     return notificationList;
 }
@@ -770,7 +779,8 @@ NotificationList NotificationManager::handleGetNotifications(int clientPid, cons
     QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
     for ( ; it != end; ++it) {
         LipstickNotification *notification = it.value();
-        if (notification->owner() == owner || (!callerProcessName.isEmpty() && (notification->owner() == callerProcessName))) {
+        if (notification->owner() == owner
+                || (!callerProcessName.isEmpty() && (notification->owner() == callerProcessName))) {
             notificationList.append(notification);
         }
     }
@@ -786,7 +796,8 @@ NotificationList NotificationManager::GetNotificationsByCategory(const QString &
     } else {
         setDelayedReply(true);
         ClientIdentifier *identifier = new ClientIdentifier(this, connection(), message());
-        connect(identifier, &ClientIdentifier::finished, this, &NotificationManager::identifiedGetNotificationsByCategory, Qt::QueuedConnection);
+        connect(identifier, &ClientIdentifier::finished,
+                this, &NotificationManager::identifiedGetNotificationsByCategory, Qt::QueuedConnection);
     }
     return notificationList;
 }
@@ -810,7 +821,8 @@ NotificationList NotificationManager::handleGetNotificationsByCategory(int clien
     NOTIFICATIONS_DEBUG("clientPid:" << clientPid << "category:" << category);
     QList<LipstickNotification *> notificationList;
     if (processIsPrivileged(clientPid)) {
-        QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(), end = m_notifications.constEnd();
+        QHash<uint, LipstickNotification *>::const_iterator it = m_notifications.constBegin(),
+                end = m_notifications.constEnd();
         for ( ; it != end; ++it) {
             LipstickNotification *notification = it.value();
             if (notification->category() == category) {
@@ -1000,7 +1012,8 @@ void NotificationManager::restoreNotifications(bool update)
 
 bool NotificationManager::connectToDatabase()
 {
-    QString databasePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/system/privileged/Notifications");
+    QString databasePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
+            + QStringLiteral("/system/privileged/Notifications");
     if (!QDir::root().exists(databasePath)) {
         QDir::root().mkpath(databasePath);
     }
@@ -1085,8 +1098,8 @@ bool NotificationManager::checkTableValidity()
         } else {
             recreateNotificationsTable = !verifyTableColumns("notifications",
                                                              QStringList() << "id" << "app_name" << "app_icon" << "summary"
-                                                             << "body" << "expire_timeout" << "disambiguated_app_name" << "explicit_app_name"
-                                                             << "app_icon_origin");
+                                                             << "body" << "expire_timeout" << "disambiguated_app_name"
+                                                             << "explicit_app_name" << "app_icon_origin");
             recreateActionsTable = !verifyTableColumns("actions", QStringList() << "id" << "action" << "display_name");
         }
 
@@ -1441,7 +1454,8 @@ void NotificationManager::invokeAction(const QString &action, const QString &act
 
             for (int actionIndex = 0; actionIndex < notification->actions().count() / 2; actionIndex++) {
                 // Actions are sent over as a list of pairs. Each even element in the list (starting at index 0) represents
-                // the identifier for the action. Each odd element in the list is the localized string that will be displayed to the user.
+                // the identifier for the action. Each odd element in the list is the localized string that will
+                // be displayed to the user.
                 if (notification->actions().at(actionIndex * 2) == action) {
                     NOTIFICATIONS_DEBUG("INVOKE ACTION:" << action << id);
 
