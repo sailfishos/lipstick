@@ -51,9 +51,10 @@ void NotificationFeedbackPlayer::init()
     m_ngfClient->connect();
 }
 
-void NotificationFeedbackPlayer::addNotification(uint id)
+bool NotificationFeedbackPlayer::addNotification(uint id)
 {
     LipstickNotification *notification = NotificationManager::instance()->notification(id);
+    bool feedbackPlayed = false;
 
     // feedback on progress update just directly omitted, not expecting practical use for playing feedback on every update
     if (notification != nullptr && !notification->hasProgress()) {
@@ -127,6 +128,7 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                 }
                 m_ngfClient->stop(item);
                 m_idToEventId.insert(notification, m_ngfClient->play(item, effectiveProperties));
+                feedbackPlayed = true;
             }
         }
 
@@ -135,8 +137,11 @@ void NotificationFeedbackPlayer::addNotification(uint id)
                 && notification->hints().value(LipstickNotification::HINT_VIBRA, false).toBool()) {
             m_ngfClient->stop("vibra");
             m_idToEventId.insert(notification, m_ngfClient->play("vibra", QMap<QString, QVariant>()));
+            feedbackPlayed = true;
         }
     }
+
+    return feedbackPlayed;
 }
 
 void NotificationFeedbackPlayer::removeNotification(uint id)

@@ -50,7 +50,6 @@ public slots:
     void removeNotification(uint id);
 
 private slots:
-    //! Initializes the feedback player
     void init();
 
     /*!
@@ -58,7 +57,7 @@ private slots:
      *
      * \param id the ID of the notification to be added
      */
-    void addNotification(uint id);
+    bool addNotification(uint id);
 
 private:
     //! Check whether feedbacks should be enabled for the given notification

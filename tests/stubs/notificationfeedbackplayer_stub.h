@@ -25,7 +25,7 @@ class NotificationFeedbackPlayerStub : public StubBase
 public:
     virtual void NotificationFeedbackPlayerConstructor(QObject *parent);
     virtual void init();
-    virtual void addNotification(uint id);
+    virtual bool addNotification(uint id);
     virtual void removeNotification(uint id);
 };
 
@@ -33,7 +33,6 @@ public:
 void NotificationFeedbackPlayerStub::NotificationFeedbackPlayerConstructor(QObject *parent)
 {
     Q_UNUSED(parent);
-
 }
 
 void NotificationFeedbackPlayerStub::init()
@@ -41,20 +40,20 @@ void NotificationFeedbackPlayerStub::init()
     stubMethodEntered("init");
 }
 
-void NotificationFeedbackPlayerStub::addNotification(uint id)
+bool NotificationFeedbackPlayerStub::addNotification(uint id)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<uint >(id));
+    params.append(new Parameter<uint >(id));
     stubMethodEntered("addNotification", params);
+    return stubReturnValue<bool>("addNotification");
 }
 
 void NotificationFeedbackPlayerStub::removeNotification(uint id)
 {
     QList<ParameterBase *> params;
-    params.append( new Parameter<uint >(id));
+    params.append(new Parameter<uint >(id));
     stubMethodEntered("removeNotification", params);
 }
-
 
 
 // 3. CREATE A STUB INSTANCE
@@ -74,9 +73,9 @@ void NotificationFeedbackPlayer::init()
     gNotificationFeedbackPlayerStub->init();
 }
 
-void NotificationFeedbackPlayer::addNotification(uint id)
+bool NotificationFeedbackPlayer::addNotification(uint id)
 {
-    gNotificationFeedbackPlayerStub->addNotification(id);
+    return gNotificationFeedbackPlayerStub->addNotification(id);
 }
 
 void NotificationFeedbackPlayer::removeNotification(uint id)

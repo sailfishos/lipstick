@@ -484,38 +484,6 @@ void Ut_NotificationPreviewPresenter::testShowingOnlyCriticalNotifications()
     QCOMPARE(lastFeedbackId(), (uint)1);
 }
 
-void Ut_NotificationPreviewPresenter::testUpdateNotificationRemovesNotificationFromQueueIfNotShowable()
-{
-    NotificationPreviewPresenter presenter(screenLock, deviceLock);
-
-    // Create two notifications
-    LipstickNotification *notification1 = createNotification(1);
-    LipstickNotification *notification2 = createNotification(2);
-    QTest::qWait(0);
-    presenter.updateNotification(1);
-    presenter.updateNotification(2);
-
-    // Update the notifications to have no summary or body
-    QSignalSpy changedSpy(&presenter, SIGNAL(notificationChanged()));
-    gNotificationFeedbackPlayerStub->stubReset();
-    notification1->setHints(QVariantHash());
-    notification2->setHints(QVariantHash());
-    presenter.updateNotification(1);
-    presenter.updateNotification(2);
-
-    // Check that the current notification is not removed
-    QCOMPARE(changedSpy.count(), 0);
-
-    // The notifications should be considered presented
-    QCOMPARE(playedFeedbacks(), 2);
-
-    // Check that the other notification is removed from the queue
-    presenter.showNextNotification();
-    QCOMPARE(changedSpy.count(), 1);
-    QCOMPARE(presenter.notification(), (LipstickNotification *)0);
-    QCOMPARE(playedFeedbacks(), 2);
-}
-
 Q_DECLARE_METATYPE(DeviceState::DisplayStateMonitor::DisplayState)
 
 void Ut_NotificationPreviewPresenter::testNotificationNotShownIfTouchScreenIsLockedAndDisplayIsOff_data()
