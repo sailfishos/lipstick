@@ -17,6 +17,7 @@
 
 #include "lipstickglobal.h"
 #include <QObject>
+#include <QTimer>
 
 namespace NemoDeviceLock {
 class DeviceLock;
@@ -78,7 +79,7 @@ private slots:
      *
      * \param id the ID of the notification to be removed
      */
-    void removeNotification(uint id, bool onlyFromQueue = false);
+    void removeNotification(uint id);
 
     //! Creates the notification window if it has not been created yet.
     void createWindowIfNecessary();
@@ -87,7 +88,7 @@ private:
     bool notificationShouldBeShown(LipstickNotification *notification);
 
     //! Sets the given notification as the current notification
-    void setCurrentNotification(LipstickNotification *notification);
+    void setCurrentNotification(LipstickNotification *notification, bool background = false);
 
     //! The notification window
     HomeWindow *m_window;
@@ -105,6 +106,8 @@ private:
     ScreenLock *m_screenLock;
 
     NemoDeviceLock::DeviceLock *m_deviceLock;
+    QTimer m_backgroundNotificationTimer;
+    bool m_currentInBackground;
 
 #ifdef UNIT_TEST
     friend class Ut_NotificationPreviewPresenter;

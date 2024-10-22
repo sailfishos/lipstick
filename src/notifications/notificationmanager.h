@@ -126,15 +126,26 @@ public:
      * Sends a notification to the notification server.
      *
      * \param appName The optional name of the application sending the notification. Can be blank.
-     * \param replacesId The optional notification ID that this notification replaces. The server must atomically (ie with no flicker or other visual cues) replace the given notification with this one. This allows clients to effectively modify the notification while it's active. A value of value of 0 means that this notification won't replace any existing notifications.
+     * \param replacesId The optional notification ID that this notification replaces. The server must atomically
+     *  (ie with no flicker or other visual cues) replace the given notification with this one. This allows clients
+     *   to effectively modify the notification while it's active. A value of value of 0 means that this notification
+     *   won't replace any existing notifications.
      * \param appIcon The optional program icon of the calling application. Can be an empty string, indicating no icon.
      * \param summary The summary text briefly describing the notification.
      * \param body The optional detailed body text. Can be empty.
-     * \param actions Actions are sent over as a list of pairs. Each even element in the list (starting at index 0) represents the identifier for the action. Each odd element in the list is the localized string that will be displayed to the user.
-     * \param hints Optional hints that can be passed to the server from the client program. Although clients and servers should never assume each other supports any specific hints, they can be used to pass along information, such as the process PID or window ID, that the server may be able to make use of. Can be empty.
-     * \param expireTimeout he timeout time in milliseconds since the display of the notification at which the notification should automatically close.  If -1, the notification's expiration time is dependent on the notification server's settings, and may vary for the type of notification. If 0, never expire.
+     * \param actions Actions are sent over as a list of pairs. Each even element in the list (starting at index 0)
+     *  represents the identifier for the action. Each odd element in the list is the localized string that will be
+     *  displayed to the user.
+     * \param hints Optional hints that can be passed to the server from the client program.
+     *  Although clients and servers should never assume each other supports any specific hints, they can be used
+     *  to pass along information, such as the process PID or window ID, that the server may be able to make use of.
+     *  Can be empty.
+     * \param expireTimeout he timeout time in milliseconds since the display of the notification at which
+     * the notification should automatically close.  If -1, the notification's expiration time is dependent on
+     * the notification server's settings, and may vary for the type of notification. If 0, never expire.
      */
-    uint Notify(const QString &appName, uint replacesId, const QString &appIcon, const QString &summary, const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout);
+    uint Notify(const QString &appName, uint replacesId, const QString &appIcon, const QString &summary,
+                const QString &body, const QStringList &actions, const QVariantHash &hints, int expireTimeout);
 
     /*!
      * Causes a notification to be forcefully closed and removed from the user's view.
@@ -190,14 +201,20 @@ signals:
      * A completed notification is one that has timed out, or has been dismissed by the user.
      *
      * \param id The ID of the notification that was closed.
-     * \param reason The reason the notification was closed. 1 - The notification expired. 2 - The notification was dismissed by the user. 3 - The notification was closed by a call to CloseNotification. 4 - Undefined/reserved reasons.
+     * \param reason The reason the notification was closed.
+     * 1 - The notification expired.
+     * 2 - The notification was dismissed by the user.
+     * 3 - The notification was closed by a call to CloseNotification.
+     * 4 - Undefined/reserved reasons.
      */
     void NotificationClosed(uint id, uint reason);
 
     /*!
      * This signal is emitted when one of the following occurs:
-     *   * The user performs some global "invoking" action upon a notification. For instance, clicking somewhere on the notification itself.
-     *   * The user invokes a specific action as specified in the original Notify request. For example, clicking on an action button.
+     *   * The user performs some global "invoking" action upon a notification. For instance, clicking somewhere
+     *   on the notification itself.
+     *   * The user invokes a specific action as specified in the original Notify request. For example,
+     *    clicking on an action button.
      *
      * \param id The ID of the notification emitting the ActionInvoked signal.
      * \param actionKey The key of the action invoked. These match the keys sent over in the list of actions.
@@ -233,7 +250,8 @@ signals:
     void notificationRemoved(uint id);
 
     /*!
-     * Emitted when a group of notifications is collectively removed. notificationRemoved() is still called for each instance too.
+     * Emitted when a group of notifications is collectively removed. notificationRemoved() is still
+     * called for each instance too.
      *
      * \param ids the IDs of the removed notifications
      */
