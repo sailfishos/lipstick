@@ -17,6 +17,7 @@
 
 #include <QGuiApplication>
 #include <QScreen>
+#include <QDebug>
 #include <MGConfItem>
 #include "screenlock/screenlock.h"
 #include "homeapplication.h"
@@ -82,7 +83,7 @@ void LipstickSettings::setInteractionExpected(bool expected)
 
 QSize LipstickSettings::screenSize()
 {
-    return QGuiApplication::primaryScreen()->size();
+    return QGuiApplication::primaryScreen() ? QGuiApplication::primaryScreen()->size() : QSize();
 }
 
 void LipstickSettings::exportScreenProperties()
@@ -90,6 +91,11 @@ void LipstickSettings::exportScreenProperties()
     const int defaultValue = 0;
     MGConfItem widthConf("/lipstick/screen/primary/width");
     QScreen *primaryScreen = QGuiApplication::primaryScreen();
+    if (!primaryScreen) {
+        qWarning() << Q_FUNC_INFO << "No screen found";
+        return;
+    }
+
     QSize primaryScreenSize = primaryScreen->size();
     if (widthConf.value(defaultValue) != primaryScreenSize.width()) {
         widthConf.set(primaryScreenSize.width());

@@ -159,7 +159,10 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     registerVpnAgent();
 
     // Setting up the context and engine things
-    m_qmlEngine->rootContext()->setContextProperty("initialSize", QGuiApplication::primaryScreen()->size());
+    m_qmlEngine->rootContext()->setContextProperty("initialSize",
+                                                   QGuiApplication::primaryScreen()
+                                                   ? QGuiApplication::primaryScreen()->size()
+                                                   : QSize());
     m_qmlEngine->rootContext()->setContextProperty("lipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("LipstickSettings", LipstickSettings::instance());
     m_qmlEngine->rootContext()->setContextProperty("volumeControl", m_volumeControl);
