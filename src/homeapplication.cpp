@@ -127,7 +127,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     registerDBusObject(systemBus, LIPSTICK_DBUS_SCREENLOCK_PATH, m_screenLock);
     registerDBusObject(systemBus, LIPSTICK_DBUS_SHUTDOWN_PATH, m_shutdownScreen);
     if (!systemBus.registerService(LIPSTICK_DBUS_SERVICE_NAME)) {
-        qWarning("Unable to register D-Bus service %s: %s", LIPSTICK_DBUS_SERVICE_NAME, systemBus.lastError().message().toUtf8().constData());
+        qWarning("Unable to register D-Bus service %s: %s", LIPSTICK_DBUS_SERVICE_NAME,
+                 systemBus.lastError().message().toUtf8().constData());
     }
 
     // Respond to requests for VPN user input
@@ -139,7 +140,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     auto registerVpnAgent = [this]() {
         if (!m_connmanVpn) {
             if (QDBusConnection::systemBus().interface()->isServiceRegistered(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE)) {
-                m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, "/", QDBusConnection::systemBus());
+                m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE,
+                                                   "/", QDBusConnection::systemBus());
                 m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
             }
         }
@@ -151,10 +153,13 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     QDBusServiceWatcher *connmanVpnWatcher
             = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus,
-                                      QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration,
+                                      QDBusServiceWatcher::WatchForRegistration
+                                      | QDBusServiceWatcher::WatchForUnregistration,
                                       this);
-    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceRegistered, this, [registerVpnAgent](const QString &){ registerVpnAgent(); });
-    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [unregisterVpnAgent](const QString &){ unregisterVpnAgent(); });
+    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceRegistered,
+            this, [registerVpnAgent](const QString &){ registerVpnAgent(); });
+    connect(connmanVpnWatcher, &QDBusServiceWatcher::serviceUnregistered,
+            this, [unregisterVpnAgent](const QString &){ unregisterVpnAgent(); });
 
     registerVpnAgent();
 
@@ -220,7 +225,8 @@ void HomeApplication::sendHomeReadySignalIfNotAlreadySent()
 {
     if (!m_homeReadySent) {
         m_homeReadySent = true;
-        disconnect(LipstickCompositor::instance(), SIGNAL(frameSwapped()), this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
+        disconnect(LipstickCompositor::instance(), SIGNAL(frameSwapped()),
+                   this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
 
         emit homeReady();
     }
@@ -241,7 +247,9 @@ void HomeApplication::sendStartupNotifications()
     }
 
     /* Let timed know that the UI is up */
-    systemBus.call(QDBusMessage::createSignal("/com/nokia/startup/signal", "com.nokia.startup.signal", "desktop_visible"), QDBus::NoBlock);
+    systemBus.call(QDBusMessage::createSignal("/com/nokia/startup/signal",
+                                              "com.nokia.startup.signal",
+                                              "desktop_visible"), QDBus::NoBlock);
 }
 
 bool HomeApplication::homeActive() const
@@ -324,7 +332,8 @@ void HomeApplication::setCompositorPath(const QString &path)
     if (compositor) {
         compositor->setParent(this);
         if (LipstickCompositor::instance()) {
-            LipstickCompositor::instance()->setGeometry(QRect(QPoint(0, 0), QGuiApplication::primaryScreen()->size()));
+            LipstickCompositor::instance()->setGeometry(QRect(QPoint(0, 0),
+                                                              QGuiApplication::primaryScreen()->size()));
             connect(m_usbModeSelector, SIGNAL(showUnlockScreen()),
                     LipstickCompositor::instance(), SIGNAL(showUnlockScreen()));
         }
@@ -349,8 +358,10 @@ HomeWindow *HomeApplication::mainWindowInstance()
     m_mainWindowInstance = new HomeWindow();
     m_mainWindowInstance->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
     m_mainWindowInstance->setWindowTitle("Home");
-    QObject::connect(m_mainWindowInstance->engine(), SIGNAL(quit()), qApp, SLOT(quit()));
-    QObject::connect(m_mainWindowInstance, SIGNAL(visibleChanged(bool)), this, SLOT(connectFrameSwappedSignal(bool)));
+    QObject::connect(m_mainWindowInstance->engine(), SIGNAL(quit()),
+                     qApp, SLOT(quit()));
+    QObject::connect(m_mainWindowInstance, SIGNAL(visibleChanged(bool)),
+                     this, SLOT(connectFrameSwappedSignal(bool)));
 
     // Setting the source, if present
     if (!m_qmlPath.isEmpty())
@@ -367,7 +378,8 @@ QQmlEngine *HomeApplication::engine() const
 void HomeApplication::connectFrameSwappedSignal(bool mainWindowVisible)
 {
     if (!m_homeReadySent && mainWindowVisible) {
-        connect(LipstickCompositor::instance(), SIGNAL(frameSwapped()), this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
+        connect(LipstickCompositor::instance(), SIGNAL(frameSwapped()),
+                this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
     }
 }
 

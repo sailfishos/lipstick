@@ -21,7 +21,8 @@
 #include "touchscreen.h"
 #include "homeapplication.h"
 
-class TouchScreenPrivate {
+class TouchScreenPrivate
+{
 public:
     explicit TouchScreenPrivate(TouchScreen *q);
 

@@ -95,7 +95,8 @@ LipstickCompositor::LipstickCompositor()
     setRetainedSelectionEnabled(true);
     addDefaultShell();
 
-    if (m_instance) qFatal("LipstickCompositor: Only one compositor instance per process is supported");
+    if (m_instance)
+        qFatal("LipstickCompositor: Only one compositor instance per process is supported");
     m_instance = this;
 
     m_orientationLock = new MGConfItem("/lipstick/orientationLock", this);

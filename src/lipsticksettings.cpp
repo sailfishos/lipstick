@@ -18,6 +18,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <MGConfItem>
+
 #include "screenlock/screenlock.h"
 #include "homeapplication.h"
 #include "lipsticksettings.h"

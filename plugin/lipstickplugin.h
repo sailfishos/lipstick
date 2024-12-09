@@ -29,8 +29,8 @@ class Q_DECL_EXPORT LipstickPlugin : public QQmlExtensionPlugin
 
 public:
     explicit LipstickPlugin(QObject *parent = 0);
+
     void registerTypes(const char *uri);
-    
 };
 
 class LauncherModelType : public LauncherModel, public QQmlParserStatus
