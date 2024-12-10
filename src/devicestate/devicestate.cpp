@@ -46,8 +46,9 @@
 namespace DeviceState {
 
 DeviceState::DeviceState(QObject *parent)
-             : QObject(parent)
-             , d_ptr(new DeviceStatePrivate) {
+    : QObject(parent)
+    , d_ptr(new DeviceStatePrivate)
+{
     Q_D(DeviceState);
 
     connect(d, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
@@ -56,7 +57,8 @@ DeviceState::DeviceState(QObject *parent)
             this, SIGNAL(nextUserChanged(uint)));
 }
 
-DeviceState::~DeviceState() {
+DeviceState::~DeviceState()
+{
     Q_D(DeviceState);
 
     disconnect(d, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
@@ -67,7 +69,8 @@ DeviceState::~DeviceState() {
     delete d_ptr;
 }
 
-void DeviceState::connectNotify(const QMetaMethod &signal) {
+void DeviceState::connectNotify(const QMetaMethod &signal)
+{
     Q_D(DeviceState);
 
     /* QObject::connect() needs to be thread-safe */
@@ -127,7 +130,8 @@ void DeviceState::connectNotify(const QMetaMethod &signal) {
     }
 }
 
-void DeviceState::disconnectNotify(const QMetaMethod &signal) {
+void DeviceState::disconnectNotify(const QMetaMethod &signal)
+{
     Q_D(DeviceState);
 
     /* QObject::disconnect() needs to be thread-safe */

@@ -20,6 +20,7 @@
 #include <QObject>
 #include <QMetaType>
 #include <QSize>
+
 #include "lipstickglobal.h"
 
 class ScreenLock;

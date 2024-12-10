@@ -39,15 +39,17 @@
 namespace DeviceState {
 
 DisplayStateMonitor::DisplayStateMonitor(QObject *parent)
-              : QObject(parent)
-              , d_ptr(new DisplayStateMonitorPrivate) {
+    : QObject(parent)
+    , d_ptr(new DisplayStateMonitorPrivate)
+{
     Q_D(DisplayStateMonitor);
 
     connect(d, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
             this, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)));
 }
 
-DisplayStateMonitor::~DisplayStateMonitor() {
+DisplayStateMonitor::~DisplayStateMonitor()
+{
     Q_D(DisplayStateMonitor);
 
     disconnect(d, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
@@ -56,7 +58,8 @@ DisplayStateMonitor::~DisplayStateMonitor() {
     delete d_ptr;
 }
 
-void DisplayStateMonitor::connectNotify(const QMetaMethod &signal) {
+void DisplayStateMonitor::connectNotify(const QMetaMethod &signal)
+{
     Q_D(DisplayStateMonitor);
 
     /* QObject::connect() needs to be thread-safe */
@@ -81,7 +84,8 @@ void DisplayStateMonitor::connectNotify(const QMetaMethod &signal) {
     }
 }
 
-void DisplayStateMonitor::disconnectNotify(const QMetaMethod &signal) {
+void DisplayStateMonitor::disconnectNotify(const QMetaMethod &signal)
+{
     Q_D(DisplayStateMonitor);
 
     /* QObject::disconnect() needs to be thread-safe */
@@ -101,11 +105,13 @@ void DisplayStateMonitor::disconnectNotify(const QMetaMethod &signal) {
     }
 }
 
-DisplayStateMonitor::DisplayState DisplayStateMonitor::get() const {
+DisplayStateMonitor::DisplayState DisplayStateMonitor::get() const
+{
     DisplayStateMonitor::DisplayState state = Unknown;
-    QDBusReply<QString> displayStateReply = QDBusConnection::systemBus().call(
-                                                QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,
-                                                                               MCE_DISPLAY_STATUS_GET));
+    QDBusReply<QString> displayStateReply
+            = QDBusConnection::systemBus().call(
+                QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,
+                                               MCE_DISPLAY_STATUS_GET));
     if (!displayStateReply.isValid()) {
         return state;
     }
@@ -122,7 +128,8 @@ DisplayStateMonitor::DisplayState DisplayStateMonitor::get() const {
     return state;
 }
 
-bool DisplayStateMonitor::set(DisplayStateMonitor::DisplayState state) {
+bool DisplayStateMonitor::set(DisplayStateMonitor::DisplayState state)
+{
     QString method;
 
     switch (state) {
@@ -139,9 +146,11 @@ bool DisplayStateMonitor::set(DisplayStateMonitor::DisplayState state) {
             return false;
     }
 
-    QDBusMessage displayStateSetCall = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, method);
-    (void)QDBusConnection::systemBus().call(displayStateSetCall, QDBus::NoBlock);
+    QDBusMessage displayStateSetCall
+            = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, method);
+    QDBusConnection::systemBus().call(displayStateSetCall, QDBus::NoBlock);
+
     return true;
 }
 
-} //DeviceState namespace
+}

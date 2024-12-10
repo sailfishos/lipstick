@@ -19,7 +19,7 @@
 #include "notifications/notificationmanager.h"
 
 LipstickApi::LipstickApi(QObject *parent)
-: QObject(parent)
+    : QObject(parent)
 {
     HomeApplication *homeApp = HomeApplication::instance();
     if (homeApp) {

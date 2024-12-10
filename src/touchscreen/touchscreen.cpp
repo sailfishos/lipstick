@@ -25,7 +25,8 @@
 #include <mce/dbus-names.h>
 #include <mce/mode-names.h>
 
-bool userInteracting(const QEvent *event) {
+static bool userInteracting(const QEvent *event)
+{
     switch(event->type()) {
     case QEvent::TouchBegin:
     case QEvent::TouchUpdate:
@@ -110,7 +111,8 @@ TouchScreen::TouchScreen(QObject *parent)
     , d_ptr(new TouchScreenPrivate(this))
 {
     Q_D(TouchScreen);
-    connect(d->displayState, &DeviceState::DisplayStateMonitor::displayStateChanged, this, [=](DeviceState::DisplayStateMonitor::DisplayState state) {
+    connect(d->displayState, &DeviceState::DisplayStateMonitor::displayStateChanged,
+            this, [=](DeviceState::DisplayStateMonitor::DisplayState state) {
         TouchScreen::DisplayState newState = (TouchScreen::DisplayState)state;
         if (d->currentDisplayState != newState) {
             TouchScreen::DisplayState oldState = d->currentDisplayState;
@@ -216,10 +218,10 @@ bool TouchScreen::eventFilter(QObject *, QEvent *event)
         }
     }
 
-    bool eat = d->eatEvents && (event->type() == QEvent::MouseButtonPress ||
-                                event->type() == QEvent::TouchBegin ||
-                                event->type() == QEvent::TouchUpdate ||
-                                event->type() == QEvent::TouchEnd);
+    bool eat = d->eatEvents && (event->type() == QEvent::MouseButtonPress
+                                || event->type() == QEvent::TouchBegin
+                                || event->type() == QEvent::TouchUpdate
+                                || event->type() == QEvent::TouchEnd);
     if (eat) {
         setEnabled(true);
     }
