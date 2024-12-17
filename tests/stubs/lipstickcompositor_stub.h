@@ -73,6 +73,8 @@ public:
     virtual void readContent();
     virtual void initialize();
     virtual bool completed();
+    virtual bool synthesizeBackEvent() const;
+    virtual void setSynthesizeBackEvent(bool enable);
     virtual void timerEvent(QTimerEvent *e);
     virtual bool event(QEvent *e);
     virtual void sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode);
@@ -310,6 +312,18 @@ bool LipstickCompositorStub::completed()
 {
     stubMethodEntered("completed");
     return true;
+}
+
+bool LipstickCompositorStub::synthesizeBackEvent() const
+{
+    stubMethodEntered("synthesizeBackEvent");
+    return true;
+}
+
+void LipstickCompositorStub::setSynthesizeBackEvent(bool enable)
+{
+    Q_UNUSED(enable);
+    stubMethodEntered("setSynthesizeBackEvent");
 }
 
 void LipstickCompositorStub::timerEvent(QTimerEvent *e)
@@ -635,6 +649,16 @@ void LipstickCompositor::initialize()
 bool LipstickCompositor::completed()
 {
     return gLipstickCompositorStub->completed();
+}
+
+bool LipstickCompositor::synthesizeBackEvent() const
+{
+    return gLipstickCompositorStub->synthesizeBackEvent();
+}
+
+void LipstickCompositor::setSynthesizeBackEvent(bool enable)
+{
+    gLipstickCompositorStub->setSynthesizeBackEvent(enable);
 }
 
 void LipstickCompositor::timerEvent(QTimerEvent *e)
