@@ -29,7 +29,12 @@ public:
     HomeWindowPrivate();
     ~HomeWindowPrivate();
 
-    enum Mode { Unknown, Compositor, Window };
+    enum Mode {
+        Unknown,
+        Compositor,
+        Window
+    };
+
     static Mode mode;
     static bool isWindow();
     static bool isCompositor();

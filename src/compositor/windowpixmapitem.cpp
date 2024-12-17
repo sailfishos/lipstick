@@ -658,9 +658,10 @@ public:
 
 
 WindowPixmapItem::WindowPixmapItem()
-: m_item(0), m_id(0), m_opaque(false), m_radius(0), m_xOffset(0), m_yOffset(0)
-, m_xScale(1), m_yScale(1), m_unmapLock(0), m_hasBuffer(false), m_hasPixmap(false), m_surfaceDestroyed(false), m_haveSnapshot(false)
-, m_textureProvider(0)
+    : m_item(0), m_id(0), m_opaque(false), m_radius(0), m_xOffset(0), m_yOffset(0)
+    , m_xScale(1), m_yScale(1), m_unmapLock(0), m_hasBuffer(false), m_hasPixmap(false)
+    , m_surfaceDestroyed(false), m_haveSnapshot(false)
+    , m_textureProvider(0)
 {
     setFlag(ItemHasContents);
 }

@@ -61,10 +61,12 @@ LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()    
 #if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
-    : QWaylandQuickCompositor(nullptr, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+    : QWaylandQuickCompositor(nullptr,
+                              (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
     , m_output(this, this, QString(), QString())
 #else
-    : QWaylandQuickCompositor(this, 0, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+    : QWaylandQuickCompositor(this, 0,
+                              (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
 #endif
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
@@ -382,7 +384,8 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
     QString category = properties.value("CATEGORY").toString();
 
     int id = m_nextWindowId++;
-    LipstickCompositorWindow *item = new LipstickCompositorWindow(id, category, static_cast<QWaylandQuickSurface *>(surface));
+    LipstickCompositorWindow *item = new LipstickCompositorWindow(id, category,
+                                                                  static_cast<QWaylandQuickSurface *>(surface));
     item->setParent(this);
     QObject::connect(item, SIGNAL(destroyed(QObject*)), this, SLOT(windowDestroyed()));
     m_windows.insert(item->windowId(), item);

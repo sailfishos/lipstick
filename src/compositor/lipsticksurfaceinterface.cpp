@@ -15,7 +15,7 @@
 #include "lipsticksurfaceinterface.h"
 
 LipstickOomScoreOp::LipstickOomScoreOp(int score)
-                  : QWaylandSurfaceOp((QWaylandSurfaceOp::Type)Type)
-                  , m_score(score)
+    : QWaylandSurfaceOp((QWaylandSurfaceOp::Type)Type)
+    , m_score(score)
 {
 }
