@@ -85,6 +85,7 @@ class LIPSTICK_EXPORT LipstickCompositor
     Q_PROPERTY(QVariant orientationLock READ orientationLock NOTIFY orientationLockChanged)
     Q_PROPERTY(bool displayDimmed READ displayDimmed NOTIFY displayDimmedChanged)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged)
+    Q_PROPERTY(bool synthesizeBackEvent READ synthesizeBackEvent WRITE setSynthesizeBackEvent NOTIFY synthesizeBackEventChanged)
 
 public:
     LipstickCompositor();
@@ -168,6 +169,9 @@ public:
 
     bool completed();
 
+    bool synthesizeBackEvent() const;
+    void setSynthesizeBackEvent(bool enable);
+
     void setUpdatesEnabledNow(bool enabled);
     void setUpdatesEnabled(bool enabled);
     QWaylandSurfaceView *createView(QWaylandSurface *surf) Q_DECL_OVERRIDE;
@@ -207,6 +211,7 @@ signals:
     void displayAboutToBeOff();
 
     void completedChanged();
+    void synthesizeBackEventChanged();
 
     void showUnlockScreen();
 
@@ -279,6 +284,7 @@ private:
     MGConfItem *m_orientationLock;
     bool m_updatesEnabled;
     bool m_completed;
+    bool m_synthesizeBackEvent;
     int m_onUpdatesDisabledUnfocusedWindowId;
     LipstickRecorderManager *m_recorder;
     LipstickKeymap *m_keymap;
