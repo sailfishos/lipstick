@@ -21,9 +21,7 @@
 #include "homeapplication.h"
 #include <QQmlParserStatus>
 #include <QtCompositorVersion>
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QWaylandQuickOutput>
-#endif
 #include <QWaylandQuickCompositor>
 #include <QWaylandSurfaceItem>
 #include <QPointer>
@@ -61,9 +59,7 @@ struct QueuedSetUpdatesEnabledCall
 };
 
 
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 typedef QWaylandClient WaylandClient;
-#endif
 
 class LIPSTICK_EXPORT LipstickCompositor
     : public QQuickWindow
@@ -260,9 +256,7 @@ private:
     static LipstickCompositor *m_instance;
 
 #ifndef LIPSTICK_UNIT_TEST_STUB
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     QWaylandQuickOutput m_output;
-#endif
 #endif
 
     int m_totalWindowCount;

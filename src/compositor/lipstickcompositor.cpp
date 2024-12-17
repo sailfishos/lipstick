@@ -60,14 +60,9 @@ bool debuggingCompositorHandover()
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()    
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     : QWaylandQuickCompositor(nullptr,
                               (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
     , m_output(this, this, QString(), QString())
-#else
-    : QWaylandQuickCompositor(this, 0,
-                              (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
-#endif
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
     , m_homeActive(true)
@@ -201,14 +196,10 @@ void LipstickCompositor::onVisibleChanged(bool visible)
 
 void LipstickCompositor::componentComplete()
 {
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     QScreen * const screen = QGuiApplication::primaryScreen();
 
     m_output.setGeometry(QRect(QPoint(0, 0), screen->size()));
     m_output.setPhysicalSize(screen->physicalSize().toSize());
-#else
-    QWaylandCompositor::setOutputGeometry(QRect(0, 0, width(), height()));
-#endif
 }
 
 void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)

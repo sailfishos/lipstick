@@ -15,10 +15,7 @@
 #include <QtCompositorVersion>
 
 #include <QtCompositor/QWaylandSurface>
-
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QtCompositor/QWaylandClient>
-#endif
 
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
@@ -30,11 +27,7 @@ AlienSurface::AlienSurface(AlienClient *client, QWaylandSurface *surface, uint32
                            const QString &package)
     : QObject(client)
     , QWaylandSurfaceInterface(surface)
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     , QtWaylandServer::alien_surface(surface->client()->client(), id, version)
-#else
-    , QtWaylandServer::alien_surface(reinterpret_cast<wl_client *>(surface->client()), id, version)
-#endif
     , m_client(client)
     , m_hidden(false)
     , m_coverized(false)

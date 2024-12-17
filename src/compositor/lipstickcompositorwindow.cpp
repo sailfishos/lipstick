@@ -18,9 +18,7 @@
 #include <QCoreApplication>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QWaylandClient>
-#endif
 #include <QTimer>
 #include <sys/types.h>
 #include <signal.h>
@@ -56,11 +54,7 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     });
 
     if (surface) {
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
         m_processId = surface->client()->processId();
-#else
-        m_processId = surface->processId();
-#endif
 
         m_isAlien = surface->property("alienSurface").toBool();
 
