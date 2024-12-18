@@ -51,7 +51,7 @@ public:
 };
 
 LipstickRecorderManager::LipstickRecorderManager()
-                       : QWaylandGlobalInterface()
+    : QWaylandGlobalInterface()
 {
 }
 
@@ -111,12 +111,14 @@ void LipstickRecorderManager::bind(wl_client *client, quint32 version, quint32 i
     wl_client_get_credentials(client, Q_NULLPTR, Q_NULLPTR, &gid);
     group *g = getgrgid(gid);
     if (strcmp(g->gr_name, "privileged") != 0) {
-        wl_resource_post_error(res->handle, WL_DISPLAY_ERROR_INVALID_OBJECT, "Permission to bind lipstick_recorder_manager denied");
+        wl_resource_post_error(res->handle, WL_DISPLAY_ERROR_INVALID_OBJECT,
+                               "Permission to bind lipstick_recorder_manager denied");
         wl_resource_destroy(res->handle);
     }
 }
 
-void LipstickRecorderManager::lipstick_recorder_manager_create_recorder(Resource *resource, uint32_t id, ::wl_resource *output)
+void LipstickRecorderManager::lipstick_recorder_manager_create_recorder(Resource *resource, uint32_t id,
+                                                                        ::wl_resource *output)
 {
     // TODO: we should find out the window associated with this output, but there isn't
     // a way to do that in qtcompositor yet. Just ignore it for now and use the one window we have.
@@ -126,12 +128,13 @@ void LipstickRecorderManager::lipstick_recorder_manager_create_recorder(Resource
 }
 
 
-LipstickRecorder::LipstickRecorder(LipstickRecorderManager *manager, wl_client *client, quint32 id, QQuickWindow *window)
-                : QtWaylandServer::lipstick_recorder(client, id, 1)
-                , m_manager(manager)
-                , m_bufferResource(Q_NULLPTR)
-                , m_client(client)
-                , m_window(window)
+LipstickRecorder::LipstickRecorder(LipstickRecorderManager *manager, wl_client *client, quint32 id,
+                                   QQuickWindow *window)
+    : QtWaylandServer::lipstick_recorder(client, id, 1)
+    , m_manager(manager)
+    , m_bufferResource(Q_NULLPTR)
+    , m_client(client)
+    , m_window(window)
 {
     send_setup(window->width(), window->height(), window->width() * 4, WL_SHM_FORMAT_RGBA8888);
 }

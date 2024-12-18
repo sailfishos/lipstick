@@ -17,7 +17,7 @@
 #include "lipstickcompositor.h"
 
 WindowProperty::WindowProperty()
-: m_windowId(0), m_waitingRefProperty(false)
+    : m_windowId(0), m_waitingRefProperty(false)
 {
     LipstickCompositor *c = LipstickCompositor::instance();
     if (!c)

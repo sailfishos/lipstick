@@ -60,12 +60,9 @@ bool debuggingCompositorHandover()
 LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()    
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
-    : QWaylandQuickCompositor(nullptr, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+    : QWaylandQuickCompositor(nullptr,
+                              (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
     , m_output(this, this, QString(), QString())
-#else
-    : QWaylandQuickCompositor(this, 0, (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
-#endif
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
     , m_homeActive(true)
@@ -77,6 +74,7 @@ LipstickCompositor::LipstickCompositor()
     , m_retainedSelection(0)
     , m_updatesEnabled(true)
     , m_completed(false)
+    , m_synthesizeBackEvent(true)
     , m_onUpdatesDisabledUnfocusedWindowId(0)
     , m_keymap(0)
     , m_fakeRepaintTimerId(0)
@@ -199,14 +197,10 @@ void LipstickCompositor::onVisibleChanged(bool visible)
 
 void LipstickCompositor::componentComplete()
 {
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     QScreen * const screen = QGuiApplication::primaryScreen();
 
     m_output.setGeometry(QRect(QPoint(0, 0), screen->size()));
     m_output.setPhysicalSize(screen->physicalSize().toSize());
-#else
-    QWaylandCompositor::setOutputGeometry(QRect(0, 0, width(), height()));
-#endif
 }
 
 void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)
@@ -310,6 +304,19 @@ bool LipstickCompositor::completed()
     return m_completed;
 }
 
+bool LipstickCompositor::synthesizeBackEvent() const
+{
+    return m_synthesizeBackEvent;
+}
+
+void LipstickCompositor::setSynthesizeBackEvent(bool enable)
+{
+    if (enable != m_synthesizeBackEvent) {
+        m_synthesizeBackEvent = enable;
+        emit synthesizeBackEventChanged();
+    }
+}
+
 int LipstickCompositor::windowIdForLink(int siblingId, uint link) const
 {
     if (LipstickCompositorWindow *sibling = m_windows.value(siblingId)) {
@@ -382,7 +389,8 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
     QString category = properties.value("CATEGORY").toString();
 
     int id = m_nextWindowId++;
-    LipstickCompositorWindow *item = new LipstickCompositorWindow(id, category, static_cast<QWaylandQuickSurface *>(surface));
+    LipstickCompositorWindow *item = new LipstickCompositorWindow(id, category,
+                                                                  static_cast<QWaylandQuickSurface *>(surface));
     item->setParent(this);
     QObject::connect(item, SIGNAL(destroyed(QObject*)), this, SLOT(windowDestroyed()));
     m_windows.insert(item->windowId(), item);
@@ -911,7 +919,7 @@ bool LipstickCompositor::event(QEvent *event)
     if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
 
-        if (mouseEvent->button() == Qt::RightButton) {
+        if (m_synthesizeBackEvent && mouseEvent->button() == Qt::RightButton) {
             // see xkeyboard-config/keycodes/evdev: Map to <I166> = 166; #define KEY_BACK
             int scanCode = 166;
             if (mouseEvent->type() == QEvent::MouseButtonPress) {

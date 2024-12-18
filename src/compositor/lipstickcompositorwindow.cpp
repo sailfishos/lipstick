@@ -18,9 +18,7 @@
 #include <QCoreApplication>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QWaylandClient>
-#endif
 #include <QTimer>
 #include <sys/types.h>
 #include <signal.h>
@@ -30,10 +28,18 @@
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)
-: QWaylandSurfaceItem(surface, parent), m_processId(0), m_windowId(windowId), m_isAlien(false), m_category(category),
-  m_delayRemove(false), m_windowClosed(false), m_removePosted(false), m_mouseRegionValid(false),
-  m_interceptingTouch(false), m_mapped(false),
-  m_focusOnTouch(false)
+    : QWaylandSurfaceItem(surface, parent)
+    , m_processId(0)
+    , m_windowId(windowId)
+    , m_isAlien(false)
+    , m_category(category)
+    , m_delayRemove(false)
+    , m_windowClosed(false)
+    , m_removePosted(false)
+    , m_mouseRegionValid(false)
+    , m_interceptingTouch(false)
+    , m_mapped(false)
+    , m_focusOnTouch(false)
 {
     setFlags(QQuickItem::ItemIsFocusScope | flags());
     refreshMouseRegion();
@@ -48,11 +54,7 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     });
 
     if (surface) {
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
         m_processId = surface->client()->processId();
-#else
-        m_processId = surface->processId();
-#endif
 
         m_isAlien = surface->property("alienSurface").toBool();
 
@@ -274,10 +276,14 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
         }
         return false;
     }
+
     if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         QWaylandSurface *m_surface = surface();
-        if (m_surface && (m_grabbedKeys.contains(ke->key()) || m_pressedGrabbedKeys.keys.contains(ke->key())) && !ke->isAutoRepeat()) {
+
+        if (m_surface
+                && (m_grabbedKeys.contains(ke->key()) || m_pressedGrabbedKeys.keys.contains(ke->key()))
+                && !ke->isAutoRepeat()) {
             QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
             if (event->type() == QEvent::KeyPress) {
                 if (m_pressedGrabbedKeys.keys.isEmpty()) {
@@ -328,9 +334,11 @@ bool LipstickCompositorWindow::event(QEvent *e)
 void LipstickCompositorWindow::mousePressEvent(QMouseEvent *event)
 {
     QWaylandSurface *m_surface = surface();
-    if (m_surface && (!m_mouseRegionValid || m_mouseRegion.contains(event->pos())) &&
-        m_surface->inputRegionContains(event->pos()) && event->source() != Qt::MouseEventSynthesizedByQt) {
+    if (m_surface
+            && (!m_mouseRegionValid || m_mouseRegion.contains(event->pos()))
+            && m_surface->inputRegionContains(event->pos()) && event->source() != Qt::MouseEventSynthesizedByQt) {
         QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
+
         if (inputDevice->mouseFocus() != this) {
             inputDevice->setMouseFocus(this, event->pos(), event->globalPos());
             if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {

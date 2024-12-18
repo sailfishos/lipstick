@@ -15,10 +15,7 @@
 #include <QtCompositorVersion>
 
 #include <QtCompositor/QWaylandSurface>
-
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QtCompositor/QWaylandClient>
-#endif
 
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
@@ -26,20 +23,17 @@
 #include "alienmanager.h"
 #include "lipsticksurfaceinterface.h"
 
-AlienSurface::AlienSurface(AlienClient *client, QWaylandSurface *surface, uint32_t version, uint32_t id, const QString &package)
-            : QObject(client)
-            , QWaylandSurfaceInterface(surface)
-#if QTCOMPOSITOR_VERSION >= QT_VERSION_CHECK(5, 6, 0)
-            , QtWaylandServer::alien_surface(surface->client()->client(), id, version)
-#else
-            , QtWaylandServer::alien_surface(reinterpret_cast<wl_client *>(surface->client()), id, version)
-#endif
-            , m_client(client)
-            , m_hidden(false)
-            , m_coverized(false)
-            , m_lastSize(0, 0)
-            , m_serial(0)
-            , m_lastSerial(0)
+AlienSurface::AlienSurface(AlienClient *client, QWaylandSurface *surface, uint32_t version, uint32_t id,
+                           const QString &package)
+    : QObject(client)
+    , QWaylandSurfaceInterface(surface)
+    , QtWaylandServer::alien_surface(surface->client()->client(), id, version)
+    , m_client(client)
+    , m_hidden(false)
+    , m_coverized(false)
+    , m_lastSize(0, 0)
+    , m_serial(0)
+    , m_lastSerial(0)
 {
     LipstickCompositor *compositor = LipstickCompositor::instance();
     sendConfigure(compositor->width(), compositor->height());

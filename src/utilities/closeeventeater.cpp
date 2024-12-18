@@ -16,7 +16,8 @@
 #include "closeeventeater.h"
 #include <QEvent>
 
-CloseEventEater::CloseEventEater(QObject *parent) : QObject(parent)
+CloseEventEater::CloseEventEater(QObject *parent)
+    : QObject(parent)
 {
 }
 

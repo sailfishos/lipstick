@@ -41,8 +41,10 @@ CategoryDefinitionStore::CategoryDefinitionStore(const QString &categoryDefiniti
 
     // Watch for changes in category definition files
     m_categoryDefinitionPathWatcher.addPath(this->m_categoryDefinitionsPath);
-    connect(&m_categoryDefinitionPathWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(updateCategoryDefinitionFileList()));
-    connect(&m_categoryDefinitionPathWatcher, SIGNAL(fileChanged(QString)), this, SLOT(updateCategoryDefinitionFile(QString)));
+    connect(&m_categoryDefinitionPathWatcher, SIGNAL(directoryChanged(QString)),
+            this, SLOT(updateCategoryDefinitionFileList()));
+    connect(&m_categoryDefinitionPathWatcher, SIGNAL(fileChanged(QString)),
+            this, SLOT(updateCategoryDefinitionFile(QString)));
     updateCategoryDefinitionFileList();
 }
 
