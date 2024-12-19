@@ -378,6 +378,12 @@ void LipstickCompositorWindow::wheelEvent(QWheelEvent *event)
     QWaylandSurface *m_surface = surface();
     if (m_surface) {
         QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
+        if (inputDevice->mouseFocus() != this) {
+            inputDevice->setMouseFocus(this, event->pos(), event->globalPos());
+            if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
+                takeFocus();
+            }
+        }
         inputDevice->sendMouseWheelEvent(event->orientation(), event->delta());
     } else {
         event->ignore();
