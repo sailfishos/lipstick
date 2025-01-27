@@ -21,9 +21,5 @@ CONFIG -= link_prl
 CONFIG += link_pkgconfig
 PKGCONFIG += mlite5 systemsettings
 
-QMAKE_CXXFLAGS += \
-    -Werror \
-    -g
-
 target.path = /opt/tests/lipstick-tests
 INSTALLS += target

@@ -20,7 +20,3 @@ HEADERS += \
 SOURCES += \
      notificationtool.cpp \
      notificationmanagerproxy.cpp
-
-QMAKE_CXXFLAGS += \
-    -Werror \
-    -g
