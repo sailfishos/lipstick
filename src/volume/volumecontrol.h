@@ -22,7 +22,7 @@
 class HomeWindow;
 class PulseAudioControl;
 class VolumeKeyListener;
-class MGConfItem;
+class MDConfItem;
 
 class QDBusPendingCallWatcher;
 
@@ -233,7 +233,7 @@ private:
     int m_maximumVolume;
 
     //! Stores audio warning acknowledgement state
-    MGConfItem *m_audioWarning;
+    MDConfItem *m_audioWarning;
 
     //! The current safe volume
     int m_safeVolume;

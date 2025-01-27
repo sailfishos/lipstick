@@ -26,7 +26,7 @@
 #include <QWaylandSurfaceItem>
 #include <QPointer>
 #include <QTimer>
-#include <MGConfItem>
+#include <MDConfItem>
 #include <QDBusConnection>
 #include <QDBusContext>
 #include <QDBusMessage>
@@ -153,7 +153,7 @@ public:
     Q_INVOKABLE QVariant settingsValue(const QString &key, const QVariant &defaultValue = QVariant()) const
     {
         return (key == "orientationLock") ? m_orientationLock->value(defaultValue)
-                                          : MGConfItem("/lipstick/" + key).value(defaultValue);
+                                          : MDConfItem("/lipstick/" + key).value(defaultValue);
     }
     Q_INVOKABLE void openUrl(const QString &url)
     {
@@ -281,7 +281,7 @@ private:
     Qt::ScreenOrientation m_sensorOrientation;
     QOrientationSensor* m_orientationSensor;
     QPointer<QMimeData> m_retainedSelection;
-    MGConfItem *m_orientationLock;
+    MDConfItem *m_orientationLock;
     bool m_updatesEnabled;
     bool m_completed;
     bool m_synthesizeBackEvent;

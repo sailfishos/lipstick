@@ -19,7 +19,7 @@
 #include "lipstickglobal.h"
 #include <QObject>
 #include <QHash>
-#include <MGConfItem>
+#include <MDConfItem>
 #include <profilecontrol.h>
 
 class LipstickNotification;
@@ -69,7 +69,7 @@ private:
     //! A mapping between notification IDs and NGF play IDs.
     QMultiHash<LipstickNotification *, uint> m_idToEventId;
 
-    MGConfItem m_doNotDisturbSetting;
+    MDConfItem m_doNotDisturbSetting;
     ProfileControl m_profileControl;
 
     friend class NotificationPreviewPresenter;

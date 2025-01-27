@@ -14,7 +14,7 @@ HEADERS += \
     $$UTILITYSRCDIR/closeeventeater.h \
     $$SRCDIR/homewindow.h \
     $$STUBSDIR/nemo-devicelock/devicelock.h \
-    /usr/include/mlite5/mgconfitem.h \
+    /usr/include/mlite5/mdconfitem.h \
 
 SOURCES += \
     ut_volumecontrol.cpp \

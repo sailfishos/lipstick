@@ -19,7 +19,7 @@
 #include "volumecontrol.h"
 #include "pulseaudiocontrol_stub.h"
 #include "closeeventeater_stub.h"
-#include "mgconfitem_stub.h"
+#include "mdconfitem_stub.h"
 #include "lipstickqmlpath_stub.h"
 
 extern "C"
