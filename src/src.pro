@@ -12,7 +12,7 @@ DEFINES += VERSION=\\\"$${VERSION}\\\"
 DEFINES += MESA_EGL_NO_X11_HEADERS
 DEFINES += EGL_NO_X11
 
-CONFIG += qt wayland-scanner c++11
+CONFIG += qt wayland-scanner
 INSTALLS = target ts_install engineering_english_install
 target.path = $$[QT_INSTALL_LIBS]
 
