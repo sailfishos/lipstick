@@ -20,7 +20,7 @@
 #include <QQmlContext>
 #include <QScreen>
 #include <QKeyEvent>
-#include <MGConfItem>
+#include <MDConfItem>
 #include "utilities/closeeventeater.h"
 #include "pulseaudiocontrol.h"
 #include "volumecontrol.h"
@@ -48,7 +48,7 @@ VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent) :
     m_hwKeysActive(false),
     m_volume(0),
     m_maximumVolume(0),
-    m_audioWarning(new MGConfItem("/desktop/nemo/audiowarning", this)),
+    m_audioWarning(new MDConfItem("/desktop/nemo/audiowarning", this)),
     m_safeVolume(0),
     m_callActive(false),
     m_upPressed(false),

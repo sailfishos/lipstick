@@ -97,7 +97,7 @@ LipstickCompositor::LipstickCompositor()
         qFatal("LipstickCompositor: Only one compositor instance per process is supported");
     m_instance = this;
 
-    m_orientationLock = new MGConfItem("/lipstick/orientationLock", this);
+    m_orientationLock = new MDConfItem("/lipstick/orientationLock", this);
     connect(m_orientationLock, SIGNAL(valueChanged()), SIGNAL(orientationLockChanged()));
 
     connect(this, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));

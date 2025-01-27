@@ -18,7 +18,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QDebug>
-#include <MGConfItem>
+#include <MDConfItem>
 
 #include "screenlock/screenlock.h"
 #include "homeapplication.h"
@@ -90,7 +90,7 @@ QSize LipstickSettings::screenSize()
 void LipstickSettings::exportScreenProperties()
 {
     const int defaultValue = 0;
-    MGConfItem widthConf("/lipstick/screen/primary/width");
+    MDConfItem widthConf("/lipstick/screen/primary/width");
     QScreen *primaryScreen = QGuiApplication::primaryScreen();
     if (!primaryScreen) {
         qWarning() << Q_FUNC_INFO << "No screen found";
@@ -102,22 +102,22 @@ void LipstickSettings::exportScreenProperties()
         widthConf.set(primaryScreenSize.width());
         widthConf.sync();
     }
-    MGConfItem heightConf("/lipstick/screen/primary/height");
+    MDConfItem heightConf("/lipstick/screen/primary/height");
     if (heightConf.value(defaultValue) != primaryScreenSize.height()) {
         heightConf.set(primaryScreenSize.height());
         heightConf.sync();
     }
-    MGConfItem physicalDotsPerInchConf("/lipstick/screen/primary/physicalDotsPerInch");
+    MDConfItem physicalDotsPerInchConf("/lipstick/screen/primary/physicalDotsPerInch");
     if (physicalDotsPerInchConf.value(defaultValue) != primaryScreen->physicalDotsPerInch()) {
         physicalDotsPerInchConf.set(primaryScreen->physicalDotsPerInch());
         physicalDotsPerInchConf.sync();
     }
-    MGConfItem physicalDotsPerInchXConf("/lipstick/screen/primary/physicalDotsPerInchX");
+    MDConfItem physicalDotsPerInchXConf("/lipstick/screen/primary/physicalDotsPerInchX");
     if (physicalDotsPerInchXConf.value(defaultValue) != primaryScreen->physicalDotsPerInchX()) {
         physicalDotsPerInchXConf.set(primaryScreen->physicalDotsPerInchX());
         physicalDotsPerInchXConf.sync();
     }
-    MGConfItem physicalDotsPerInchYConf("/lipstick/screen/primary/physicalDotsPerInchY");
+    MDConfItem physicalDotsPerInchYConf("/lipstick/screen/primary/physicalDotsPerInchY");
     if (physicalDotsPerInchYConf.value(defaultValue) != primaryScreen->physicalDotsPerInchY()) {
         physicalDotsPerInchYConf.set(primaryScreen->physicalDotsPerInchY());
         physicalDotsPerInchYConf.sync();
