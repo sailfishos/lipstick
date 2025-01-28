@@ -19,6 +19,7 @@
 #include "launcheritem.h"
 
 #include <QDir>
+#include <QDebug>
 
 /**
  * Timeout (in milliseconds) to hold back sending updates, so that we can
@@ -96,7 +97,7 @@ QStringList LauncherMonitor::directories() const
 
 void LauncherMonitor::setDirectories(const QStringList &dirs)
 {
-    setDirectories(dirs, m_desktopFilesPaths);
+    setDirectories(dirs, &m_desktopFilesPaths);
 }
 
 QStringList LauncherMonitor::iconDirectories() const
@@ -106,27 +107,31 @@ QStringList LauncherMonitor::iconDirectories() const
 
 void LauncherMonitor::setIconDirectories(const QStringList &dirs)
 {
-    setDirectories(dirs, m_iconFilesPaths);
+    setDirectories(dirs, &m_iconFilesPaths);
 }
 
-void LauncherMonitor::setDirectories(const QStringList &newDirs, QStringList &targetDirs)
+void LauncherMonitor::setDirectories(const QStringList &newDirs, QStringList *targetDirs)
 {
     QStringList newPaths;
     QStringList::ConstIterator it = newDirs.begin();
     while (it != newDirs.end()) {
-        if (!targetDirs.contains(*it)) {
-            newPaths << *it;
+        if (!targetDirs->contains(*it)) {
+            if (!QDir(*it).exists()) {
+                qWarning() << "LauncherMonitor skipping non-existing directory" << *it;
+            } else {
+                newPaths << *it;
+            }
         } else {
-            targetDirs.removeAll(*it);
+            targetDirs->removeAll(*it);
         }
         ++it;
     }
 
-    if (!targetDirs.isEmpty()) {
-        m_watcher.removePaths(targetDirs);
+    if (!targetDirs->isEmpty()) {
+        m_watcher.removePaths(*targetDirs);
     }
 
-    targetDirs = newDirs;
+    *targetDirs = newDirs;
     m_watcher.addPaths(newPaths);
     foreach (QString path, newPaths)
         onDirectoryChanged(path);
@@ -134,9 +139,9 @@ void LauncherMonitor::setDirectories(const QStringList &newDirs, QStringList &ta
 
 void LauncherMonitor::reset(const QStringList &dirs)
 {
-    setDirectories(QStringList(), m_desktopFilesPaths);
+    setDirectories(QStringList(), &m_desktopFilesPaths);
     m_knownFiles.clear();
-    setDirectories(dirs, m_desktopFilesPaths);
+    setDirectories(dirs, &m_desktopFilesPaths);
 }
 
 void LauncherMonitor::onDirectoryChanged(const QString &path)
