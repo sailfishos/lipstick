@@ -50,7 +50,7 @@ signals:
 
 private:
     void initialize();
-    void setDirectories(const QStringList &newDirs, QStringList &targetDirs);
+    void setDirectories(const QStringList &newDirs, QStringList *targetDirs);
 
     // fields
     QFileSystemWatcher m_watcher;
