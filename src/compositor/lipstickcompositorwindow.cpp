@@ -420,8 +420,8 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
 
     if (event->touchPointStates() & Qt::TouchPointPressed) {
         foreach (const QTouchEvent::TouchPoint &p, points) {
-            if ((m_mouseRegionValid && !m_mouseRegion.contains(p.pos().toPoint())) ||
-                !m_surface->inputRegionContains(p.pos().toPoint())) {
+            if ((m_mouseRegionValid && !m_mouseRegion.contains(p.pos().toPoint()))
+                    || !m_surface->inputRegionContains(p.pos().toPoint())) {
                 event->ignore();
                 return;
             }
@@ -450,8 +450,8 @@ void LipstickCompositorWindow::handleTouchCancel()
     if (!m_surface)
         return;
     QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
-    if (inputDevice->mouseFocus() == this &&
-            (!isVisible() || !isEnabled() || !touchEventsEnabled())) {
+    if (inputDevice->mouseFocus() == this
+            && (!isVisible() || !isEnabled() || !touchEventsEnabled())) {
         inputDevice->sendTouchCancelEvent();
         inputDevice->setMouseFocus(0, QPointF());
     }

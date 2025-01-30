@@ -274,10 +274,11 @@ void HomeApplication::setDisplayOff()
 bool HomeApplication::event(QEvent *e)
 {
     bool rv = QGuiApplication::event(e);
-    if (LipstickCompositor::instance() == 0 &&
-        (e->type() == QEvent::ApplicationActivate ||
-         e->type() == QEvent::ApplicationDeactivate))
+    if (LipstickCompositor::instance() == 0
+            && (e->type() == QEvent::ApplicationActivate
+                || e->type() == QEvent::ApplicationDeactivate)) {
         emit homeActiveChanged();
+    }
     return rv;
 }
 
