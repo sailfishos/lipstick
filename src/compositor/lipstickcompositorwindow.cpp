@@ -376,7 +376,9 @@ void LipstickCompositorWindow::mouseReleaseEvent(QMouseEvent *event)
 void LipstickCompositorWindow::wheelEvent(QWheelEvent *event)
 {
     QWaylandSurface *m_surface = surface();
-    if (m_surface) {
+    if (m_surface
+            && (!m_mouseRegionValid || m_mouseRegion.contains(event->pos()))
+            && m_surface->inputRegionContains(event->pos()) && event->source() != Qt::MouseEventSynthesizedByQt) {
         QWaylandInputDevice *inputDevice = m_surface->compositor()->defaultInputDevice();
         if (inputDevice->mouseFocus() != this) {
             inputDevice->setMouseFocus(this, event->pos(), event->globalPos());
