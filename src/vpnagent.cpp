@@ -91,10 +91,10 @@ void VpnAgent::respond(const QString &path, const QVariantMap &details)
                 && (fieldType == QStringLiteral("boolean"))) {
             keepCredentials = fieldValue.toBool();
         } else {
-            if (fieldRequirement == QStringLiteral("mandatory") ||
-                (fieldRequirement != QStringLiteral("informational")
-                 && fieldRequirement != QStringLiteral("control")
-                 && fieldValue.isValid())) {
+            if (fieldRequirement == QStringLiteral("mandatory")
+                    || (fieldRequirement != QStringLiteral("informational")
+                        && fieldRequirement != QStringLiteral("control")
+                        && fieldValue.isValid())) {
                 response.insert(it.key(), fieldValue);
             }
         }

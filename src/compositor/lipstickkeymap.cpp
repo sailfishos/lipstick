@@ -72,10 +72,10 @@ void LipstickKeymap::setOptions(const QString &options)
 
 bool operator!=(const LipstickKeymap &a, const LipstickKeymap &b)
 {
-    return a.rules() != b.rules() ||
-        a.model() != b.model() ||
-        a.layout() != b.layout() ||
-        a.variant() != b.variant() ||
-        a.options() != b.options();
+    return a.rules() != b.rules()
+            || a.model() != b.model()
+            || a.layout() != b.layout()
+            || a.variant() != b.variant()
+            || a.options() != b.options();
 }
 

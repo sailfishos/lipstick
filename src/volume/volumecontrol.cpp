@@ -62,7 +62,8 @@ VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent) :
         m_hwKeysEnabled = true;
         m_hwKeyResource->setAlwaysReply();
         m_hwKeyResource->addResourceObject(new ResourcePolicy::ScaleButtonResource);
-        connect(m_hwKeyResource, SIGNAL(resourcesGranted(QList<ResourcePolicy::ResourceType>)), this, SLOT(hwKeyResourceAcquired()));
+        connect(m_hwKeyResource, SIGNAL(resourcesGranted(QList<ResourcePolicy::ResourceType>)),
+                this, SLOT(hwKeyResourceAcquired()));
         connect(m_hwKeyResource, SIGNAL(lostResources()), this, SLOT(hwKeyResourceLost()));
         m_hwKeyResource->acquire();
 
@@ -97,7 +98,6 @@ VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent) :
     connect(m_pulseAudioControl, SIGNAL(callActiveChanged(bool)), SLOT(handleCallActive(bool)));
     connect(m_pulseAudioControl, SIGNAL(mediaStateChanged(QString)), SLOT(handleMediaStateChanged(QString)));
     m_pulseAudioControl->update();
-
 }
 
 VolumeControl::~VolumeControl()
@@ -287,6 +287,7 @@ void VolumeControl::hwKeysEnabled()
         evaluateKeyState();
     }
 }
+
 void VolumeControl::hwKeysDisabled()
 {
     if (m_hwKeysEnabled) {
@@ -385,8 +386,8 @@ bool VolumeControl::eventFilter(QObject *, QEvent *event)
 {
     bool handled = false;
 
-    if (m_hwKeysActive && (event->type() == QEvent::KeyPress ||
-                           event->type() == QEvent::KeyRelease)) {
+    if (m_hwKeysActive && (event->type() == QEvent::KeyPress
+                           || event->type() == QEvent::KeyRelease)) {
         bool pressed = (event->type() == QEvent::KeyPress);
 
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
