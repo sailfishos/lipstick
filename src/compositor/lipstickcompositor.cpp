@@ -61,7 +61,8 @@ LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()    
     : QWaylandQuickCompositor(nullptr,
-                              (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+                              static_cast<QWaylandCompositor::ExtensionFlags>(
+                                  QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension))
     , m_output(this, this, QString(), QString())
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
@@ -399,7 +400,8 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
 
 static LipstickCompositorWindow *surfaceWindow(QWaylandSurface *surface)
 {
-    return surface->views().isEmpty() ? 0 : static_cast<LipstickCompositorWindow *>(surface->views().first());
+    return surface->views().isEmpty() ? nullptr
+                                      : static_cast<LipstickCompositorWindow *>(surface->views().first());
 }
 
 void LipstickCompositor::activateLogindSession()

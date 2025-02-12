@@ -244,11 +244,10 @@ private:
     friend class WindowPixmapItem;
     friend class WindowProperty;
 
+    void surfaceUnmapped(QWaylandSurface *);
     void surfaceUnmapped(LipstickCompositorWindow *item);
 
     int windowIdForLink(int, uint) const;
-
-    void surfaceUnmapped(QWaylandSurface *);
 
     void windowAdded(int);
     void windowRemoved(int);
