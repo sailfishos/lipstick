@@ -40,7 +40,7 @@ void Ut_LipstickSettings::testSetLockScreenVisible()
     QCOMPARE(gScreenLockStub->stubCallCount("lockScreen"), 0);
 
     // Screen lock set: calling setLockscreenVisible() with a changed lock state calls the appropriate function
-    ScreenLock screenLock(new TouchScreen);
+    ScreenLock screenLock(new TouchScreen(this));
     settings.setScreenLock(&screenLock);
     gScreenLockStub->stubSetReturnValue("isScreenLocked", false);
     settings.setLockscreenVisible(true);

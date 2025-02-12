@@ -61,7 +61,8 @@ LipstickCompositor *LipstickCompositor::m_instance = 0;
 
 LipstickCompositor::LipstickCompositor()    
     : QWaylandQuickCompositor(nullptr,
-                              (QWaylandCompositor::ExtensionFlags)QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension)
+                              static_cast<QWaylandCompositor::ExtensionFlags>(
+                                  QWaylandCompositor::DefaultExtensions & ~QWaylandCompositor::QtKeyExtension))
     , m_output(this, this, QString(), QString())
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
@@ -399,7 +400,8 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
 
 static LipstickCompositorWindow *surfaceWindow(QWaylandSurface *surface)
 {
-    return surface->views().isEmpty() ? 0 : static_cast<LipstickCompositorWindow *>(surface->views().first());
+    return surface->views().isEmpty() ? nullptr
+                                      : static_cast<LipstickCompositorWindow *>(surface->views().first());
 }
 
 void LipstickCompositor::activateLogindSession()
@@ -935,13 +937,13 @@ bool LipstickCompositor::event(QEvent *event)
 
 void LipstickCompositor::sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode)
 {
-    QKeyEvent *event = new QKeyEvent(type, key, Qt::NoModifier, nativeScanCode, 0, 0);
+    QKeyEvent event(type, key, Qt::NoModifier, nativeScanCode, 0, 0);
 
     // Not all Lipstick windows are real windows
     LipstickCompositorWindow *topmostWindow = qobject_cast<LipstickCompositorWindow *>(windowForId(topmostWindowId()));
     if (topmostWindow && topmostWindow->isInProcess()) {
-        QCoreApplication::sendEvent(activeFocusItem(), event);
+        QCoreApplication::sendEvent(activeFocusItem(), &event);
     } else {
-        defaultInputDevice()->sendFullKeyEvent(event);
+        defaultInputDevice()->sendFullKeyEvent(&event);
     }
 }
