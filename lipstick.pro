@@ -4,6 +4,7 @@ SUBDIRS += src plugin tools tests doc
 plugin.depends = src
 tools.depends = src
 tests.depends = src
+doc.depends = src
 
 QMAKE_CLEAN += \
     build-stamp \
