@@ -124,7 +124,7 @@ SOURCES += \
     devicestate/devicestate.cpp \
     logging.cpp \
 
-CONFIG += link_pkgconfig mobility qt warn_on depend_includepath qmake_cache target_qt
+CONFIG += link_pkgconfig qt warn_on depend_includepath qmake_cache target_qt
 CONFIG -= link_prl
 PKGCONFIG += \
     dbus-1 \

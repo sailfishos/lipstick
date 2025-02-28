@@ -30,4 +30,4 @@ notification_htmldocs.CONFIG += no_check_exist
 
 INSTALLS += htmldocs notification_htmldocs
 
-OTHER_FILES = src/*.dox
+OTHER_FILES = src/*.dox doxygen.cfg
