@@ -258,23 +258,26 @@ MRemoteAction LauncherItem::remoteAction(const QStringList &arguments) const
 {
     if (m_desktopEntry) {
         const QString service = m_desktopEntry->xMaemoService();
-        const QString path = m_desktopEntry->value(QStringLiteral("Desktop Entry/X-Maemo-Object-Path"));
         const QString method = m_desktopEntry->value(QStringLiteral("Desktop Entry/X-Maemo-Method"));
 
         const int period = method.lastIndexOf(QLatin1Char('.'));
 
         if (!service.isEmpty() && !method.isEmpty() && period != -1) {
+            const QString path = m_desktopEntry->value(QStringLiteral("Desktop Entry/X-Maemo-Object-Path"));
+            // similar to libcontentaction / dbus.cpp, assuming we want the fixed parameters first
+            const QString fixedArgs = m_desktopEntry->value(QStringLiteral("Desktop Entry/X-Maemo-Fixed-Args"));
+            QStringList totalArguments = fixedArgs.split(';', QString::SkipEmptyParts) + arguments;
+
             return MRemoteAction(
                         service,
                         path.isEmpty() ? QStringLiteral("/") : path,
                         method.left(period),
                         method.mid(period + 1),
-                        { QVariant::fromValue(arguments) });
+                        { QVariant::fromValue(totalArguments) });
         } else if (!m_serviceName.isEmpty() && dBusActivatable()) {
-            const QString path = QLatin1Char('/')
-                    + (QString(m_serviceName)
-                       .replace(QLatin1Char('.'), QLatin1Char('/'))
-                       .replace(QLatin1Char('-'), QLatin1Char('_')));
+            const QString path = QLatin1Char('/') + (QString(m_serviceName)
+                                                     .replace(QLatin1Char('.'), QLatin1Char('/'))
+                                                     .replace(QLatin1Char('-'), QLatin1Char('_')));
             const QString interface = QStringLiteral("org.freedesktop.Application");
 
             QVariantList dBusArguments;
@@ -395,7 +398,6 @@ void LauncherItem::setIsTemporary(bool isTemporary)
         emit isTemporaryChanged();
     }
 }
-
 
 QString LauncherItem::dBusServiceName() const
 {
