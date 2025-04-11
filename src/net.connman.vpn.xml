@@ -21,7 +21,7 @@
       <arg name="path" type="o" direction="in"/>
     </method>
     <signal name="ConnectionAdded">
-      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
       <arg name="identifier" type="o"/>
       <arg name="properties" type="a{sv}"/>
     </signal>
