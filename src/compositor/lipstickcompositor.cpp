@@ -83,7 +83,7 @@ LipstickCompositor::LipstickCompositor()
     , m_mceNameOwner(new QMceNameOwner(this))
     , m_sessionActivationTries(0)
 {
-    QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("DisplayOn");
+    QGuiApplication::primaryScreen()->handle()->setPowerState(QPlatformScreen::PowerStateOn);
     if (debuggingCompositorHandover()) {
         setColor(Qt::magenta);
         showFullScreen();
@@ -829,13 +829,13 @@ void LipstickCompositor::setUpdatesEnabledNow(bool enabled)
             }
             hide();
             if (QWindow::handle()) {
-                QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("DisplayOff");
+                QGuiApplication::primaryScreen()->handle()->setPowerState(QPlatformScreen::PowerStateOff);
             }
             // trigger frame callbacks which are pending already at this time
             surfaceCommitted();
         } else {
             if (QWindow::handle()) {
-                QGuiApplication::platformNativeInterface()->nativeResourceForIntegration("DisplayOn");
+                QGuiApplication::primaryScreen()->handle()->setPowerState(QPlatformScreen::PowerStateOn);
             }
             emit displayAboutToBeOn();
             showFullScreen();
