@@ -20,9 +20,9 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QtGui/qpa/qplatformnativeinterface.h>
+#include <QtGui/qpa/qplatformintegration.h>
 #include <qpa/qwindowsysteminterface.h>
 #include <private/qguiapplication_p.h>
-#include <QtGui/qpa/qplatformintegration.h>
 
 #include <qmcenameowner.h>
 #include <dbus/dbus-protocol.h>

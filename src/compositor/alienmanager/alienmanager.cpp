@@ -32,8 +32,6 @@ void AlienManagerGlobal::bind(wl_client *client, uint32_t version, uint32_t id)
     new AlienManager(client, version, id, this);
 }
 
-
-
 AlienManager::AlienManager(wl_client *client, uint32_t version, uint32_t id, QObject *parent)
     : QObject(parent)
     , QtWaylandServer::alien_manager(client, id, version)

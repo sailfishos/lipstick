@@ -21,6 +21,7 @@
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QWaylandSurfaceItem>
+
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositor.h"
 #include "windowpixmapitem.h"

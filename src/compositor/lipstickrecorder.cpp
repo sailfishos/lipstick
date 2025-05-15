@@ -127,7 +127,6 @@ void LipstickRecorderManager::lipstick_recorder_manager_create_recorder(Resource
     new LipstickRecorder(this, resource->client(), id, LipstickCompositor::instance());
 }
 
-
 LipstickRecorder::LipstickRecorder(LipstickRecorderManager *manager, wl_client *client, quint32 id,
                                    QQuickWindow *window)
     : QtWaylandServer::lipstick_recorder(client, id, 1)
