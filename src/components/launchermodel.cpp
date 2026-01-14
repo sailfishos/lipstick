@@ -56,7 +56,7 @@ static inline bool isIconFile(const QString &filename)
 
 static inline QString filenameFromIconId(const QString &filename, const QString &path)
 {
-    return QString("%1%2%3").arg(path).arg(filename).arg(".png");
+    return path + filename + QStringLiteral(".png");
 }
 
 static inline bool isVisibleDesktopFile(const QString &filename)
