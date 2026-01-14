@@ -16,20 +16,23 @@
 #ifndef LIPSTICKCOMPOSITOR_H
 #define LIPSTICKCOMPOSITOR_H
 
-#include <QQuickWindow>
 #include "lipstickglobal.h"
 #include "homeapplication.h"
+
+#include <QQuickWindow>
 #include <QQmlParserStatus>
+#include <QPointer>
+#include <QTimer>
+#include <QDBusConnection>
+#include <QDBusContext>
+#include <QDBusMessage>
+
 #include <QtCompositorVersion>
 #include <QWaylandQuickOutput>
 #include <QWaylandQuickCompositor>
 #include <QWaylandSurfaceItem>
-#include <QPointer>
-#include <QTimer>
+
 #include <MDConfItem>
-#include <QDBusConnection>
-#include <QDBusContext>
-#include <QDBusMessage>
 
 #ifdef LIPSTICK_UNIT_TEST_STUB
 #undef Q_DECL_OVERRIDE

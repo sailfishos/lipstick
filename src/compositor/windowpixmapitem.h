@@ -23,6 +23,7 @@ class QWaylandUnmapLock;
 
 class LipstickCompositor;
 class LipstickCompositorWindow;
+
 class LIPSTICK_EXPORT WindowPixmapItem : public QQuickItem
 {
     Q_OBJECT

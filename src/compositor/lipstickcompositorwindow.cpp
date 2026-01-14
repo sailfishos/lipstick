@@ -13,18 +13,19 @@
 **
 ****************************************************************************/
 
-#include <QtCompositorVersion>
-
 #include <QCoreApplication>
+#include <QTimer>
+
+#include <QtCompositorVersion>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
 #include <QWaylandClient>
-#include <QTimer>
+
 #include <sys/types.h>
 #include <signal.h>
+
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
-
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)

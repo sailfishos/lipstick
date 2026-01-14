@@ -20,11 +20,9 @@
 #include <QObject>
 #include "lipstickglobal.h"
 
-
 class LIPSTICK_EXPORT LipstickKeymap : public QObject
 {
     Q_OBJECT
-
     Q_PROPERTY(QString rules READ rules WRITE setRules NOTIFY rulesChanged)
     Q_PROPERTY(QString model READ model WRITE setModel NOTIFY modelChanged)
     Q_PROPERTY(QString layout READ layout WRITE setLayout NOTIFY layoutChanged)
@@ -68,6 +66,5 @@ private:
 };
 
 bool operator!=(const LipstickKeymap &a, const LipstickKeymap &b);
-
 
 #endif // LIPSTICKKEYMAP_H
