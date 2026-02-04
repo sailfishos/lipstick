@@ -16,6 +16,7 @@
 #include <QtCompositor/QWaylandCompositor>
 #include <QtCompositor/QWaylandSurface>
 
+#include "lipsticksurfaceinterface.h"
 #include "xdgshell.h"
 #include "xdgpositioner.h"
 #include "xdgsurface.h"
@@ -29,6 +30,7 @@ XdgSurface::XdgSurface(XdgShell *mgr, QWaylandSurface *surface, uint32_t version
     , m_manager(mgr)
     , m_xdgParent(nullptr)
     , m_toplevel(nullptr)
+    , m_preferredScale(1.0)
     , m_serial(0)
 {
     connect(surface, &QWaylandSurface::configure, this, &XdgSurface::handleCommit);
@@ -71,6 +73,14 @@ XdgToplevel *XdgSurface::findToplevel(QPointF *offset) const
     }
 
     return nullptr;
+}
+
+void XdgSurface::setPreferredScale(qreal scale)
+{
+    m_preferredScale = scale;
+
+    LipstickBufferScaleOp op(scale);
+    surface()->sendInterfaceOp(op);
 }
 
 void XdgSurface::sendConfigure()
@@ -122,6 +132,7 @@ void XdgSurface::xdg_surface_get_popup(Resource *resource, uint32_t id, ::wl_res
 
     m_xdgParent = static_cast<XdgSurface *>(Resource::fromResource(parent)->xdg_surface_object);
     setParent(m_xdgParent);
+    setPreferredScale(m_xdgParent->m_preferredScale);
 
     QRect pos = XdgPositioner::fromResource(positioner)->toRect(m_xdgParent);
     new XdgPopup(this, pos, wl_resource_get_version(resource->handle), id);

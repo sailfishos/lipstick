@@ -28,7 +28,9 @@ SOURCES += \
     $$PWD/windowpixmapitem.cpp \
     $$PWD/windowproperty.cpp \
     $$PWD/lipsticksurfaceinterface.cpp \
-    $$PWD/lipstickrecorder.cpp
+    $$PWD/lipstickrecorder.cpp \
+    $$PWD/lipstickviewporter.cpp \
+    $$PWD/lipstickfractionalscale.cpp \
 
 DEFINES += QT_COMPOSITOR_QUICK
 
@@ -37,6 +39,11 @@ QT += compositor
 # needed for hardware compositor
 QT += quick-private gui-private core-private compositor-private qml-private
 
-WAYLANDSERVERSOURCES += ../protocol/lipstick-recorder.xml \
+PROTOCOL_PATH = $$system($$pkgConfigExecutable() --variable=pkgdatadir wayland-protocols)
+
+WAYLANDSERVERSOURCES += \
+    ../protocol/lipstick-recorder.xml \
+    $$PROTOCOL_PATH/stable/viewporter/viewporter.xml \
+    $$PROTOCOL_PATH/staging/fractional-scale/fractional-scale-v1.xml \
 
 OTHER_FILES += $$PWD/compositor.xml $$PWD/fileservice.xml

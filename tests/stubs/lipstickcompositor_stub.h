@@ -56,7 +56,6 @@ public:
     virtual QWaylandSurface *surfaceForId(int) const;
     virtual void surfaceMapped();
     virtual void surfaceUnmapped();
-    virtual void surfaceSizeChanged();
     virtual void surfaceTitleChanged();
     virtual void surfaceRaised();
     virtual void surfaceLowered();
@@ -276,11 +275,6 @@ void LipstickCompositorStub::surfaceMapped()
 void LipstickCompositorStub::surfaceUnmapped()
 {
     stubMethodEntered("surfaceUnmapped");
-}
-
-void LipstickCompositorStub::surfaceSizeChanged()
-{
-    stubMethodEntered("surfaceSizeChanged");
 }
 
 void LipstickCompositorStub::surfaceTitleChanged()
@@ -565,11 +559,6 @@ void LipstickCompositor::surfaceMapped()
 void LipstickCompositor::surfaceUnmapped()
 {
     gLipstickCompositorStub->surfaceUnmapped();
-}
-
-void LipstickCompositor::surfaceSizeChanged()
-{
-    gLipstickCompositorStub->surfaceSizeChanged();
 }
 
 void LipstickCompositor::surfaceTitleChanged()

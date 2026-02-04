@@ -76,6 +76,7 @@ bool XdgToplevel::runOperation(QWaylandSurfaceOp *op)
             return true;
         case LipstickScaleOp::Type:
             m_scale = static_cast<LipstickScaleOp *>(op)->scale();
+            m_xdgSurface->setPreferredScale(m_scale);
             sendConfigure();
             return true;
         default:
