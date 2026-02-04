@@ -16,6 +16,8 @@
 #include <QCoreApplication>
 #include <QTimer>
 
+#include <QSGSimpleTextureNode>
+
 #include <QtCompositorVersion>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
@@ -55,7 +57,7 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
         tryRemove();
     });
 
-    connect(this, &QQuickItem::scaleChanged, this, &LipstickCompositorWindow::handleScaleChanged);
+    connect(this, &QQuickItem::scaleChanged, this, &LipstickCompositorWindow::updateScale);
 
     if (surface) {
         m_processId = surface->client()->processId();
@@ -64,8 +66,11 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
 
         connect(surface, &QWaylandSurface::clientDestroyedSurface, this, &LipstickCompositorWindow::closed);
 
+        updateViewport();
+
         connect(surface, &QWaylandSurface::titleChanged, this, &LipstickCompositorWindow::titleChanged);
         connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
+        connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::updateViewport);
     }
 
     updatePolicyApplicationId();
@@ -325,6 +330,18 @@ void LipstickCompositorWindow::itemChange(ItemChange change, const ItemChangeDat
     QWaylandSurfaceItem::itemChange(change, data);
 }
 
+QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
+{
+    QSGNode *qsgNode = QWaylandSurfaceItem::updatePaintNode(oldNode, data);
+    if (!qsgNode || m_sourceRect.isNull())
+        return qsgNode;
+
+    QSGSimpleTextureNode *node = static_cast<QSGSimpleTextureNode *>(qsgNode);
+    node->setSourceRect(m_sourceRect);
+
+    return node;
+}
+
 bool LipstickCompositorWindow::event(QEvent *e)
 {
     bool rv = QWaylandSurfaceItem::event(e);
@@ -486,7 +503,7 @@ void LipstickCompositorWindow::handleTouchCancel()
     m_interceptingTouch = false;
 }
 
-void LipstickCompositorWindow::handleScaleChanged()
+void LipstickCompositorWindow::updateScale()
 {
     QWaylandSurface *m_surface = surface();
     if (!m_surface)
@@ -494,6 +511,21 @@ void LipstickCompositorWindow::handleScaleChanged()
 
     LipstickScaleOp op(scale());
     surface()->sendInterfaceOp(op);
+}
+
+void LipstickCompositorWindow::updateViewport()
+{
+    LipstickGetViewportOp op;
+    surface()->sendInterfaceOp(op);
+    m_sourceRect = op.sourceRect();
+
+    if (op.destSize().isValid()) {
+        setSize(op.destSize());
+    } else if (m_sourceRect.isValid()) {
+        setSize(m_sourceRect.size());
+    } else if (surface()) {
+        setSize(surface()->size());
+    }
 }
 
 void LipstickCompositorWindow::terminateProcess(int killTimeout)

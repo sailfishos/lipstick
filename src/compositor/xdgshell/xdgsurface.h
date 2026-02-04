@@ -44,6 +44,8 @@ public:
 
     XdgToplevel *findToplevel(QPointF *offset) const;
 
+    void setPreferredScale(qreal scale);
+
     void sendConfigure();
     void roleDestroyed();
 
@@ -69,6 +71,7 @@ private:
     XdgToplevel *m_toplevel;
     QRect m_pendingGeometry;
     QRect m_geometry;
+    qreal m_preferredScale;
     uint32_t m_serial;
 };
 

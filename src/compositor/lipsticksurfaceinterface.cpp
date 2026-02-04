@@ -26,3 +26,16 @@ LipstickScaleOp::LipstickScaleOp(qreal scale)
     , m_scale(scale)
 {
 }
+
+
+LipstickGetViewportOp::LipstickGetViewportOp()
+    : QWaylandSurfaceOp((QWaylandSurfaceOp::Type)Type)
+{
+}
+
+
+LipstickBufferScaleOp::LipstickBufferScaleOp(qreal scale)
+    : QWaylandSurfaceOp((QWaylandSurfaceOp::Type)Type)
+    , m_scale(scale)
+{
+}
