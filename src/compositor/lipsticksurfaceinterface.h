@@ -31,4 +31,16 @@ private:
     int m_score;
 };
 
+class LipstickScaleOp : public QWaylandSurfaceOp
+{
+public:
+    enum { Type = QWaylandSurfaceOp::UserType + 2 };
+    LipstickScaleOp(qreal scale);
+
+    qreal scale() const { return m_scale; }
+
+private:
+    qreal m_scale;
+};
+
 #endif

@@ -30,6 +30,7 @@ XdgToplevel::XdgToplevel(XdgSurface *xdgSurface, uint32_t version, uint32_t id)
     , m_xdgSurface(xdgSurface)
     , m_hidden(false)
     , m_coverized(false)
+    , m_scale(1.0)
 {
     setSurfaceType(QWaylandSurface::Toplevel);
 
@@ -46,6 +47,11 @@ XdgToplevel::~XdgToplevel()
     wl_resource_set_implementation(resource()->handle, nullptr, nullptr, nullptr);
     surface()->setMapped(false);
     m_xdgSurface->roleDestroyed();
+}
+
+qreal XdgToplevel::scale() const
+{
+    return m_scale;
 }
 
 bool XdgToplevel::runOperation(QWaylandSurfaceOp *op)
@@ -66,6 +72,10 @@ bool XdgToplevel::runOperation(QWaylandSurfaceOp *op)
             return true;
         case QWaylandSurfaceOp::Resize:
             m_size = static_cast<QWaylandSurfaceResizeOp *>(op)->size();
+            sendConfigure();
+            return true;
+        case LipstickScaleOp::Type:
+            m_scale = static_cast<LipstickScaleOp *>(op)->scale();
             sendConfigure();
             return true;
         default:
@@ -106,7 +116,7 @@ void XdgToplevel::xdg_toplevel_set_minimized(Resource *resource)
 void XdgToplevel::configure(bool hasBuffer)
 {
     if (hasBuffer && m_xdgSurface->geometry().isNull()) {
-        m_size = surface()->size();
+        m_size = surface()->size() * m_scale;
     }
     surface()->setMapped(hasBuffer);
 }
@@ -120,13 +130,13 @@ void XdgToplevel::sendConfigure()
     }
     QByteArray data = QByteArray::fromRawData((char *)states.data(), states.size() * sizeof(uint32_t));
 
-    send_configure(m_size.width(), m_size.height(), data);
+    send_configure(m_size.width() / m_scale, m_size.height() / m_scale, data);
     m_xdgSurface->sendConfigure();
 }
 
 void XdgToplevel::geometryChanged()
 {
     if (m_xdgSurface->geometry().isValid()) {
-        m_size = m_xdgSurface->geometry().size();
+        m_size = m_xdgSurface->geometry().size() * m_scale;
     }
 }

@@ -30,6 +30,8 @@ public:
     XdgToplevel(XdgSurface *xdgSurface, uint32_t version, uint32_t id);
     ~XdgToplevel();
 
+    qreal scale() const;
+
 protected:
     bool runOperation(QWaylandSurfaceOp *op) Q_DECL_OVERRIDE;
 
@@ -48,6 +50,7 @@ private:
     bool m_hidden;
     bool m_coverized;
     QSize m_size;
+    qreal m_scale;
 };
 
 #endif

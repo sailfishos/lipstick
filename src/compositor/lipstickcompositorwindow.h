@@ -93,6 +93,7 @@ signals:
 
 private slots:
     void handleTouchCancel();
+    void handleScaleChanged();
     void killProcess();
 
 private:
