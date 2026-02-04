@@ -19,3 +19,10 @@ LipstickOomScoreOp::LipstickOomScoreOp(int score)
     , m_score(score)
 {
 }
+
+
+LipstickScaleOp::LipstickScaleOp(qreal scale)
+    : QWaylandSurfaceOp((QWaylandSurfaceOp::Type)Type)
+    , m_scale(scale)
+{
+}

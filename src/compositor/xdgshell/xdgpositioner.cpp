@@ -48,8 +48,8 @@ QRect XdgPositioner::toRect(const XdgSurface *surface) const
         return QRect();
 
     LipstickCompositor *compositor = LipstickCompositor::instance();
-    QSize size = QSize(compositor->width(), compositor->height());
-    QRect bounds = QRect(offset.toPoint(), size);
+    QSizeF size = QSizeF(compositor->width(), compositor->height()) / top->scale();
+    QRect bounds = QRectF(offset, size).toRect();
 
     uint32_t adjustment = m_adjustment;
     Qt::Edges anchor, gravity;

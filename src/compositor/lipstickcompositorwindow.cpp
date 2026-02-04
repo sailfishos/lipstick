@@ -26,6 +26,7 @@
 
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
+#include "lipsticksurfaceinterface.h"
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)
@@ -53,6 +54,8 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
         m_windowClosed = true;
         tryRemove();
     });
+
+    connect(this, &QQuickItem::scaleChanged, this, &LipstickCompositorWindow::handleScaleChanged);
 
     if (surface) {
         m_processId = surface->client()->processId();
@@ -481,6 +484,16 @@ void LipstickCompositorWindow::handleTouchCancel()
     if (QWindow *w = window())
         w->removeEventFilter(this);
     m_interceptingTouch = false;
+}
+
+void LipstickCompositorWindow::handleScaleChanged()
+{
+    QWaylandSurface *m_surface = surface();
+    if (!m_surface)
+        return;
+
+    LipstickScaleOp op(scale());
+    surface()->sendInterfaceOp(op);
 }
 
 void LipstickCompositorWindow::terminateProcess(int killTimeout)
