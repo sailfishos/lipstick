@@ -16,6 +16,8 @@
 #include <QCoreApplication>
 #include <QTimer>
 
+#include <QSGSimpleTextureNode>
+
 #include <QtCompositorVersion>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
@@ -26,6 +28,7 @@
 
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
+#include "lipsticksurfaceinterface.h"
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)
@@ -54,6 +57,8 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
         tryRemove();
     });
 
+    connect(this, &QQuickItem::scaleChanged, this, &LipstickCompositorWindow::updateScale);
+
     if (surface) {
         m_processId = surface->client()->processId();
 
@@ -61,8 +66,11 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
 
         connect(surface, &QWaylandSurface::clientDestroyedSurface, this, &LipstickCompositorWindow::closed);
 
+        updateViewport();
+
         connect(surface, &QWaylandSurface::titleChanged, this, &LipstickCompositorWindow::titleChanged);
         connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
+        connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::updateViewport);
     }
 
     updatePolicyApplicationId();
@@ -265,7 +273,7 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
             // handling is maintained.
             if (te->touchPointStates() & (Qt::TouchPointPressed | Qt::TouchPointReleased))
                 return false;
-            handleTouchEvent(static_cast<QTouchEvent *>(event));
+            handleTouchEvent(static_cast<QTouchEvent *>(event), true);
             return true;
         }
         case QEvent::TouchEnd: // Intentional fall through...
@@ -320,6 +328,18 @@ void LipstickCompositorWindow::itemChange(ItemChange change, const ItemChangeDat
         handleTouchCancel();
     }
     QWaylandSurfaceItem::itemChange(change, data);
+}
+
+QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
+{
+    QSGNode *qsgNode = QWaylandSurfaceItem::updatePaintNode(oldNode, data);
+    if (!qsgNode || m_sourceRect.isNull())
+        return qsgNode;
+
+    QSGSimpleTextureNode *node = static_cast<QSGSimpleTextureNode *>(qsgNode);
+    node->setSourceRect(m_sourceRect);
+
+    return node;
 }
 
 bool LipstickCompositorWindow::event(QEvent *e)
@@ -396,7 +416,7 @@ void LipstickCompositorWindow::wheelEvent(QWheelEvent *event)
 void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
 {
     if (touchEventsEnabled() && surface()) {
-        handleTouchEvent(event);
+        handleTouchEvent(event, false);
 
         static bool lipstick_touch_interception = qEnvironmentVariableIsEmpty("LIPSTICK_NO_TOUCH_INTERCEPTION");
         if (lipstick_touch_interception && event->type() == QEvent::TouchBegin) {
@@ -411,7 +431,7 @@ void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
     }
 }
 
-void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
+void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event, bool intercepted)
 {
     QList<QTouchEvent::TouchPoint> points = event->touchPoints();
 
@@ -436,15 +456,35 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
 
     if (inputDevice->mouseFocus() != this) {
         QPoint pointPos;
-        if (!points.isEmpty())
-            pointPos = points.at(0).pos().toPoint();
+        if (!points.isEmpty()) {
+            QPointF p = points.at(0).pos();
+            if (intercepted) {
+                pointPos = mapFromScene(p).toPoint();
+            } else {
+                pointPos = p.toPoint();
+            }
+        }
         inputDevice->setMouseFocus(this, pointPos, pointPos);
 
         if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
             takeFocus();
         }
     }
-    inputDevice->sendFullTouchEvent(event);
+
+    if (event->type() == QEvent::TouchCancel) {
+        inputDevice->sendTouchCancelEvent();
+        return;
+    }
+
+    foreach (const QTouchEvent::TouchPoint &tp, points) {
+        QPointF p = tp.pos();
+        if (intercepted) {
+            p = mapFromScene(p);
+        }
+        inputDevice->sendTouchPointEvent(tp.id(), p.x(), p.y(), tp.state());
+    }
+
+    inputDevice->sendTouchFrameEvent();
 }
 
 void LipstickCompositorWindow::handleTouchCancel()
@@ -461,6 +501,31 @@ void LipstickCompositorWindow::handleTouchCancel()
     if (QWindow *w = window())
         w->removeEventFilter(this);
     m_interceptingTouch = false;
+}
+
+void LipstickCompositorWindow::updateScale()
+{
+    QWaylandSurface *m_surface = surface();
+    if (!m_surface)
+        return;
+
+    LipstickScaleOp op(scale());
+    surface()->sendInterfaceOp(op);
+}
+
+void LipstickCompositorWindow::updateViewport()
+{
+    LipstickGetViewportOp op;
+    surface()->sendInterfaceOp(op);
+    m_sourceRect = op.sourceRect();
+
+    if (op.destSize().isValid()) {
+        setSize(op.destSize());
+    } else if (m_sourceRect.isValid()) {
+        setSize(m_sourceRect.size());
+    } else if (surface()) {
+        setSize(surface()->size());
+    }
 }
 
 void LipstickCompositorWindow::terminateProcess(int killTimeout)

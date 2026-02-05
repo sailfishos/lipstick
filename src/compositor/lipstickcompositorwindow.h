@@ -73,6 +73,7 @@ public:
 
 protected:
     void itemChange(ItemChange change, const ItemChangeData &data);
+    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data);
 
     virtual bool event(QEvent *);
     virtual void mousePressEvent(QMouseEvent *event);
@@ -93,6 +94,8 @@ signals:
 
 private slots:
     void handleTouchCancel();
+    void updateScale();
+    void updateViewport();
     void killProcess();
 
 private:
@@ -105,7 +108,7 @@ private:
     void tryRemove();
     void refreshMouseRegion();
     void refreshGrabbedKeys();
-    void handleTouchEvent(QTouchEvent *e);
+    void handleTouchEvent(QTouchEvent *e, bool intercepted);
 
     void updatePolicyApplicationId();
 
@@ -129,6 +132,7 @@ private:
         QList<int> keys;
     } m_pressedGrabbedKeys;
     QVector<QQuickItem *> m_refs;
+    QRectF m_sourceRect;
 };
 
 #endif // LIPSTICKCOMPOSITORWINDOW_H
