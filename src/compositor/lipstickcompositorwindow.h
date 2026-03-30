@@ -39,6 +39,8 @@ class LIPSTICK_EXPORT LipstickCompositorWindow : public QWaylandSurfaceItem
 
     Q_PROPERTY(QRect mouseRegionBounds READ mouseRegionBounds NOTIFY mouseRegionBoundsChanged)
     Q_PROPERTY(bool focusOnTouch READ focusOnTouch WRITE setFocusOnTouch NOTIFY focusOnTouchChanged)
+    Q_PROPERTY(QRect popupArea READ popupArea WRITE setPopupArea NOTIFY popupAreaChanged)
+    Q_PROPERTY(bool isXdg READ isXdg CONSTANT)
 
 public:
     LipstickCompositorWindow(int windowId, const QString &, QWaylandQuickSurface *surface, QQuickItem *parent = 0);
@@ -59,6 +61,7 @@ public:
     virtual bool isInProcess() const;
 
     bool isAlien() const;
+    bool isXdg() const;
 
     QRect mouseRegionBounds() const;
 
@@ -70,6 +73,9 @@ public:
     void setFocusOnTouch(bool focusOnTouch);
 
     Q_INVOKABLE void resize(const QSize &size);
+
+    QRect popupArea() const;
+    void setPopupArea(const QRect &bounds);
 
 protected:
     void itemChange(ItemChange change, const ItemChangeData &data);
@@ -90,10 +96,13 @@ signals:
     void focusOnTouchChanged();
     void resized();
     void closed();
+    void resizeAcked();
+    void popupAreaChanged();
 
 private slots:
     void handleTouchCancel();
     void killProcess();
+    void configure();
 
 private:
     friend class LipstickCompositor;
@@ -129,6 +138,8 @@ private:
         QList<int> keys;
     } m_pressedGrabbedKeys;
     QVector<QQuickItem *> m_refs;
+    QRect m_popupArea;
+    bool m_isXdg;
 };
 
 #endif // LIPSTICKCOMPOSITORWINDOW_H

@@ -19,3 +19,15 @@ LipstickOomScoreOp::LipstickOomScoreOp(int score)
     , m_score(score)
 {
 }
+
+LipstickSetPopupAreaOp::LipstickSetPopupAreaOp(const QRect &bounds)
+    : QWaylandSurfaceOp((QWaylandSurfaceOp::Type)Type)
+    , m_bounds(bounds)
+{
+}
+
+LipstickGetShellStateOp::LipstickGetShellStateOp()
+    : QWaylandSurfaceOp((QWaylandSurfaceOp::Type)Type)
+    , m_resizeAcked(false)
+{
+}

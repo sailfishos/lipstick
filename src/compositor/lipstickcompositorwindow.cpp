@@ -41,6 +41,7 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     , m_interceptingTouch(false)
     , m_mapped(false)
     , m_focusOnTouch(false)
+    , m_isXdg(false)
 {
     setFlags(QQuickItem::ItemIsFocusScope | flags());
     refreshMouseRegion();
@@ -58,11 +59,14 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
         m_processId = surface->client()->processId();
 
         m_isAlien = surface->property("alienSurface").toBool();
+        m_isXdg = surface->property("xdgSurface").toBool();
+
+        configure();
 
         connect(surface, &QWaylandSurface::clientDestroyedSurface, this, &LipstickCompositorWindow::closed);
 
         connect(surface, &QWaylandSurface::titleChanged, this, &LipstickCompositorWindow::titleChanged);
-        connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
+        connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::configure);
     }
 
     updatePolicyApplicationId();
@@ -133,6 +137,11 @@ int LipstickCompositorWindow::windowId() const
 bool LipstickCompositorWindow::isAlien() const
 {
     return m_isAlien;
+}
+
+bool LipstickCompositorWindow::isXdg() const
+{
+    return m_isXdg;
 }
 
 qint64 LipstickCompositorWindow::processId() const
@@ -500,4 +509,36 @@ void LipstickCompositorWindow::resize(const QSize &size)
         surface()->requestSize(size);
         emit resized();
     }
+}
+
+void LipstickCompositorWindow::configure()
+{
+    LipstickGetShellStateOp op;
+    surface()->sendInterfaceOp(op);
+
+    if (op.m_resizeAcked)
+        emit resizeAcked();
+
+    emit committed();
+}
+
+QRect LipstickCompositorWindow::popupArea() const
+{
+    return m_popupArea;
+}
+
+void LipstickCompositorWindow::setPopupArea(const QRect &bounds)
+{
+    if (m_popupArea == bounds)
+        return;
+
+    m_popupArea = bounds;
+
+    QWaylandSurface *m_surface = surface();
+    if (m_surface) {
+        LipstickSetPopupAreaOp op(bounds);
+        surface()->sendInterfaceOp(op);
+    }
+
+    emit popupAreaChanged();
 }

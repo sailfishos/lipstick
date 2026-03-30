@@ -31,4 +31,25 @@ private:
     int m_score;
 };
 
+class LipstickSetPopupAreaOp : public QWaylandSurfaceOp
+{
+public:
+    enum { Type = QWaylandSurfaceOp::UserType + 2 };
+    LipstickSetPopupAreaOp(const QRect &bounds);
+
+    const QRect &bounds() const { return m_bounds; }
+
+private:
+    QRect m_bounds;
+};
+
+class LipstickGetShellStateOp : public QWaylandSurfaceOp
+{
+public:
+    enum { Type = QWaylandSurfaceOp::UserType + 3 };
+    LipstickGetShellStateOp();
+
+    bool m_resizeAcked : 1;
+};
+
 #endif
