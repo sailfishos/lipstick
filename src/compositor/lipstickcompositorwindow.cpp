@@ -274,7 +274,7 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
             // handling is maintained.
             if (te->touchPointStates() & (Qt::TouchPointPressed | Qt::TouchPointReleased))
                 return false;
-            handleTouchEvent(static_cast<QTouchEvent *>(event));
+            handleTouchEvent(static_cast<QTouchEvent *>(event), true);
             return true;
         }
         case QEvent::TouchEnd: // Intentional fall through...
@@ -405,7 +405,7 @@ void LipstickCompositorWindow::wheelEvent(QWheelEvent *event)
 void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
 {
     if (touchEventsEnabled() && surface()) {
-        handleTouchEvent(event);
+        handleTouchEvent(event, false);
 
         static bool lipstick_touch_interception = qEnvironmentVariableIsEmpty("LIPSTICK_NO_TOUCH_INTERCEPTION");
         if (lipstick_touch_interception && event->type() == QEvent::TouchBegin) {
@@ -420,7 +420,7 @@ void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
     }
 }
 
-void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
+void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event, bool intercepted)
 {
     QList<QTouchEvent::TouchPoint> points = event->touchPoints();
 
@@ -431,6 +431,7 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
     }
 
     if (event->touchPointStates() & Qt::TouchPointPressed) {
+        Q_ASSERT(!intercepted);
         foreach (const QTouchEvent::TouchPoint &p, points) {
             if ((m_mouseRegionValid && !m_mouseRegion.contains(p.pos().toPoint()))
                     || !m_surface->inputRegionContains(p.pos().toPoint())) {
@@ -445,15 +446,35 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
 
     if (inputDevice->mouseFocus() != this) {
         QPoint pointPos;
-        if (!points.isEmpty())
-            pointPos = points.at(0).pos().toPoint();
+        if (!points.isEmpty()) {
+            QPointF p = points.at(0).pos();
+            if (intercepted) {
+                pointPos = mapFromScene(p).toPoint();
+            } else {
+                pointPos = p.toPoint();
+            }
+        }
         inputDevice->setMouseFocus(this, pointPos, pointPos);
 
         if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
             takeFocus();
         }
     }
-    inputDevice->sendFullTouchEvent(event);
+
+    if (event->type() == QEvent::TouchCancel) {
+        inputDevice->sendTouchCancelEvent();
+        return;
+    }
+
+    foreach (const QTouchEvent::TouchPoint &tp, points) {
+        QPointF p = tp.pos();
+        if (intercepted) {
+            p = mapFromScene(p);
+        }
+        inputDevice->sendTouchPointEvent(tp.id(), p.x(), p.y(), tp.state());
+    }
+
+    inputDevice->sendTouchFrameEvent();
 }
 
 void LipstickCompositorWindow::handleTouchCancel()

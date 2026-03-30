@@ -114,7 +114,7 @@ private:
     void tryRemove();
     void refreshMouseRegion();
     void refreshGrabbedKeys();
-    void handleTouchEvent(QTouchEvent *e);
+    void handleTouchEvent(QTouchEvent *e, bool intercepted);
 
     void updatePolicyApplicationId();
 
