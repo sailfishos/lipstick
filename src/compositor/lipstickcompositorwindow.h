@@ -39,6 +39,7 @@ class LIPSTICK_EXPORT LipstickCompositorWindow : public QWaylandSurfaceItem
 
     Q_PROPERTY(QRect mouseRegionBounds READ mouseRegionBounds NOTIFY mouseRegionBoundsChanged)
     Q_PROPERTY(bool focusOnTouch READ focusOnTouch WRITE setFocusOnTouch NOTIFY focusOnTouchChanged)
+    Q_PROPERTY(double bufferScale READ bufferScale WRITE setBufferScale NOTIFY bufferScaleChanged)
     Q_PROPERTY(QRect popupArea READ popupArea WRITE setPopupArea NOTIFY popupAreaChanged)
     Q_PROPERTY(bool isXdg READ isXdg CONSTANT)
 
@@ -74,11 +75,15 @@ public:
 
     Q_INVOKABLE void resize(const QSize &size);
 
+    qreal bufferScale() const;
+    void setBufferScale(qreal scale);
+
     QRect popupArea() const;
     void setPopupArea(const QRect &bounds);
 
 protected:
     void itemChange(ItemChange change, const ItemChangeData &data);
+    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data);
 
     virtual bool event(QEvent *);
     virtual void mousePressEvent(QMouseEvent *event);
@@ -97,6 +102,7 @@ signals:
     void resized();
     void closed();
     void resizeAcked();
+    void bufferScaleChanged();
     void popupAreaChanged();
 
 private slots:
@@ -138,6 +144,8 @@ private:
         QList<int> keys;
     } m_pressedGrabbedKeys;
     QVector<QQuickItem *> m_refs;
+    QRectF m_sourceRect;
+    qreal m_bufferScale;
     QRect m_popupArea;
     bool m_isXdg;
 };

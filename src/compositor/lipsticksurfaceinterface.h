@@ -52,4 +52,32 @@ public:
     bool m_resizeAcked : 1;
 };
 
+class LipstickGetViewportOp : public QWaylandSurfaceOp
+{
+public:
+    enum { Type = QWaylandSurfaceOp::UserType + 4 };
+    LipstickGetViewportOp();
+
+    const QRectF &sourceRect() const { return m_sourceRect; }
+    const QSize &destSize() const { return m_destSize; }
+
+private:
+    QRectF m_sourceRect;
+    QSize m_destSize;
+
+    friend class LipstickViewport;
+};
+
+class LipstickBufferScaleOp : public QWaylandSurfaceOp
+{
+public:
+    enum { Type = QWaylandSurfaceOp::UserType + 5 };
+    LipstickBufferScaleOp(qreal scale);
+
+    qreal scale() const { return m_scale; }
+
+private:
+    qreal m_scale;
+};
+
 #endif

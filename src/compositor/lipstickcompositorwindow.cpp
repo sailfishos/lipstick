@@ -16,6 +16,8 @@
 #include <QCoreApplication>
 #include <QTimer>
 
+#include <QSGSimpleTextureNode>
+
 #include <QtCompositorVersion>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
@@ -26,6 +28,7 @@
 
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
+#include "lipsticksurfaceinterface.h"
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)
@@ -331,6 +334,18 @@ void LipstickCompositorWindow::itemChange(ItemChange change, const ItemChangeDat
     QWaylandSurfaceItem::itemChange(change, data);
 }
 
+QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
+{
+    QSGNode *qsgNode = QWaylandSurfaceItem::updatePaintNode(oldNode, data);
+    if (!qsgNode || !m_sourceRect.isValid())
+        return qsgNode;
+
+    QSGSimpleTextureNode *node = static_cast<QSGSimpleTextureNode *>(qsgNode);
+    node->setSourceRect(m_sourceRect);
+
+    return node;
+}
+
 bool LipstickCompositorWindow::event(QEvent *e)
 {
     bool rv = QWaylandSurfaceItem::event(e);
@@ -540,7 +555,40 @@ void LipstickCompositorWindow::configure()
     if (op.m_resizeAcked)
         emit resizeAcked();
 
+    LipstickGetViewportOp vp;
+    surface()->sendInterfaceOp(vp);
+    m_sourceRect = vp.sourceRect();
+
+    if (vp.destSize().isValid()) {
+        setSize(vp.destSize());
+    } else if (m_sourceRect.isValid()) {
+        setSize(m_sourceRect.size());
+    } else if (surface()) {
+        setSize(surface()->size());
+    }
+
     emit committed();
+}
+
+qreal LipstickCompositorWindow::bufferScale() const
+{
+    return m_bufferScale;
+}
+
+void LipstickCompositorWindow::setBufferScale(qreal scale)
+{
+    if (m_bufferScale == scale)
+        return;
+
+    m_bufferScale = scale;
+
+    QWaylandSurface *m_surface = surface();
+    if (m_surface) {
+        LipstickBufferScaleOp op(scale);
+        surface()->sendInterfaceOp(op);
+    }
+
+    emit bufferScaleChanged();
 }
 
 QRect LipstickCompositorWindow::popupArea() const
