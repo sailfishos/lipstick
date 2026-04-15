@@ -36,6 +36,7 @@ BuildRequires:  pkgconfig(libresourceqt5)
 BuildRequires:  pkgconfig(ngf-qt5)
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(wayland-server)
+BuildRequires:  pkgconfig(wayland-protocols)
 BuildRequires:  pkgconfig(usb-moded-qt5) >= 1.8
 BuildRequires:  pkgconfig(systemsettings) >= 0.8.0
 BuildRequires:  pkgconfig(nemodevicelock)

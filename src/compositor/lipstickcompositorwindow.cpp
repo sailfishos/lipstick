@@ -16,6 +16,8 @@
 #include <QCoreApplication>
 #include <QTimer>
 
+#include <QSGSimpleTextureNode>
+
 #include <QtCompositorVersion>
 #include <QWaylandCompositor>
 #include <QWaylandInputDevice>
@@ -26,6 +28,7 @@
 
 #include "lipstickcompositor.h"
 #include "lipstickcompositorwindow.h"
+#include "lipsticksurfaceinterface.h"
 
 LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &category,
                                                    QWaylandQuickSurface *surface, QQuickItem *parent)
@@ -41,6 +44,7 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     , m_interceptingTouch(false)
     , m_mapped(false)
     , m_focusOnTouch(false)
+    , m_isXdg(false)
 {
     setFlags(QQuickItem::ItemIsFocusScope | flags());
     refreshMouseRegion();
@@ -58,11 +62,14 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
         m_processId = surface->client()->processId();
 
         m_isAlien = surface->property("alienSurface").toBool();
+        m_isXdg = surface->property("xdgSurface").toBool();
+
+        configure();
 
         connect(surface, &QWaylandSurface::clientDestroyedSurface, this, &LipstickCompositorWindow::closed);
 
         connect(surface, &QWaylandSurface::titleChanged, this, &LipstickCompositorWindow::titleChanged);
-        connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::committed);
+        connect(surface, &QWaylandSurface::configure, this, &LipstickCompositorWindow::configure);
     }
 
     updatePolicyApplicationId();
@@ -133,6 +140,11 @@ int LipstickCompositorWindow::windowId() const
 bool LipstickCompositorWindow::isAlien() const
 {
     return m_isAlien;
+}
+
+bool LipstickCompositorWindow::isXdg() const
+{
+    return m_isXdg;
 }
 
 qint64 LipstickCompositorWindow::processId() const
@@ -265,7 +277,7 @@ bool LipstickCompositorWindow::eventFilter(QObject *obj, QEvent *event)
             // handling is maintained.
             if (te->touchPointStates() & (Qt::TouchPointPressed | Qt::TouchPointReleased))
                 return false;
-            handleTouchEvent(static_cast<QTouchEvent *>(event));
+            handleTouchEvent(static_cast<QTouchEvent *>(event), true);
             return true;
         }
         case QEvent::TouchEnd: // Intentional fall through...
@@ -320,6 +332,18 @@ void LipstickCompositorWindow::itemChange(ItemChange change, const ItemChangeDat
         handleTouchCancel();
     }
     QWaylandSurfaceItem::itemChange(change, data);
+}
+
+QSGNode *LipstickCompositorWindow::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *data)
+{
+    QSGNode *qsgNode = QWaylandSurfaceItem::updatePaintNode(oldNode, data);
+    if (!qsgNode || !m_sourceRect.isValid())
+        return qsgNode;
+
+    QSGSimpleTextureNode *node = static_cast<QSGSimpleTextureNode *>(qsgNode);
+    node->setSourceRect(m_sourceRect);
+
+    return node;
 }
 
 bool LipstickCompositorWindow::event(QEvent *e)
@@ -396,7 +420,7 @@ void LipstickCompositorWindow::wheelEvent(QWheelEvent *event)
 void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
 {
     if (touchEventsEnabled() && surface()) {
-        handleTouchEvent(event);
+        handleTouchEvent(event, false);
 
         static bool lipstick_touch_interception = qEnvironmentVariableIsEmpty("LIPSTICK_NO_TOUCH_INTERCEPTION");
         if (lipstick_touch_interception && event->type() == QEvent::TouchBegin) {
@@ -411,7 +435,7 @@ void LipstickCompositorWindow::touchEvent(QTouchEvent *event)
     }
 }
 
-void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
+void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event, bool intercepted)
 {
     QList<QTouchEvent::TouchPoint> points = event->touchPoints();
 
@@ -422,6 +446,7 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
     }
 
     if (event->touchPointStates() & Qt::TouchPointPressed) {
+        Q_ASSERT(!intercepted);
         foreach (const QTouchEvent::TouchPoint &p, points) {
             if ((m_mouseRegionValid && !m_mouseRegion.contains(p.pos().toPoint()))
                     || !m_surface->inputRegionContains(p.pos().toPoint())) {
@@ -436,15 +461,35 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event)
 
     if (inputDevice->mouseFocus() != this) {
         QPoint pointPos;
-        if (!points.isEmpty())
-            pointPos = points.at(0).pos().toPoint();
+        if (!points.isEmpty()) {
+            QPointF p = points.at(0).pos();
+            if (intercepted) {
+                pointPos = mapFromScene(p).toPoint();
+            } else {
+                pointPos = p.toPoint();
+            }
+        }
         inputDevice->setMouseFocus(this, pointPos, pointPos);
 
         if (m_focusOnTouch && inputDevice->keyboardFocus() != m_surface) {
             takeFocus();
         }
     }
-    inputDevice->sendFullTouchEvent(event);
+
+    if (event->type() == QEvent::TouchCancel) {
+        inputDevice->sendTouchCancelEvent();
+        return;
+    }
+
+    foreach (const QTouchEvent::TouchPoint &tp, points) {
+        QPointF p = tp.pos();
+        if (intercepted) {
+            p = mapFromScene(p);
+        }
+        inputDevice->sendTouchPointEvent(tp.id(), p.x(), p.y(), tp.state());
+    }
+
+    inputDevice->sendTouchFrameEvent();
 }
 
 void LipstickCompositorWindow::handleTouchCancel()
@@ -500,4 +545,69 @@ void LipstickCompositorWindow::resize(const QSize &size)
         surface()->requestSize(size);
         emit resized();
     }
+}
+
+void LipstickCompositorWindow::configure()
+{
+    LipstickGetShellStateOp op;
+    surface()->sendInterfaceOp(op);
+
+    if (op.m_resizeAcked)
+        emit resizeAcked();
+
+    LipstickGetViewportOp vp;
+    surface()->sendInterfaceOp(vp);
+    m_sourceRect = vp.sourceRect();
+
+    if (vp.destSize().isValid()) {
+        setSize(vp.destSize());
+    } else if (m_sourceRect.isValid()) {
+        setSize(m_sourceRect.size());
+    } else if (surface()) {
+        setSize(surface()->size());
+    }
+
+    emit committed();
+}
+
+qreal LipstickCompositorWindow::bufferScale() const
+{
+    return m_bufferScale;
+}
+
+void LipstickCompositorWindow::setBufferScale(qreal scale)
+{
+    if (m_bufferScale == scale)
+        return;
+
+    m_bufferScale = scale;
+
+    QWaylandSurface *m_surface = surface();
+    if (m_surface) {
+        LipstickBufferScaleOp op(scale);
+        surface()->sendInterfaceOp(op);
+    }
+
+    emit bufferScaleChanged();
+}
+
+QRect LipstickCompositorWindow::popupArea() const
+{
+    return m_popupArea;
+}
+
+void LipstickCompositorWindow::setPopupArea(const QRect &bounds)
+{
+    if (m_popupArea == bounds)
+        return;
+
+    m_popupArea = bounds;
+
+    QWaylandSurface *m_surface = surface();
+    if (m_surface) {
+        LipstickSetPopupAreaOp op(bounds);
+        surface()->sendInterfaceOp(op);
+    }
+
+    emit popupAreaChanged();
 }

@@ -41,7 +41,10 @@
 #include "lipstickkeymap.h"
 #include "lipsticksettings.h"
 #include "lipstickrecorder.h"
+#include "lipstickviewporter.h"
+#include "lipstickfractionalscale.h"
 #include "alienmanager/alienmanager.h"
+#include "xdgshell/xdgshell.h"
 #include "logging.h"
 
 namespace {
@@ -124,7 +127,10 @@ LipstickCompositor::LipstickCompositor()
 
     m_recorder = new LipstickRecorderManager;
     addGlobalInterface(m_recorder);
+    addGlobalInterface(new ViewporterGlobal);
+    addGlobalInterface(new FractionalScaleGlobal);
     addGlobalInterface(new AlienManagerGlobal);
+    addGlobalInterface(new XdgShellGlobal);
 
     QObject::connect(m_mceNameOwner, &QMceNameOwner::validChanged,
                      this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
@@ -208,7 +214,6 @@ void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)
 {
     connect(surface, SIGNAL(mapped()), this, SLOT(surfaceMapped()));
     connect(surface, SIGNAL(unmapped()), this, SLOT(surfaceUnmapped()));
-    connect(surface, SIGNAL(sizeChanged()), this, SLOT(surfaceSizeChanged()));
     connect(surface, SIGNAL(titleChanged()), this, SLOT(surfaceTitleChanged()));
     connect(surface, SIGNAL(windowPropertyChanged(QString,QVariant)), this, SLOT(windowPropertyChanged(QString)));
     connect(surface, SIGNAL(raiseRequested()), this, SLOT(surfaceRaised()));
@@ -547,7 +552,6 @@ void LipstickCompositor::surfaceMapped()
         item->setParentItem(contentItem());
     }
 
-    item->setSize(surface->size());
     m_totalWindowCount++;
     m_mappedSurfaces.insert(item->windowId(), item);
 
@@ -564,15 +568,6 @@ void LipstickCompositor::surfaceMapped()
 void LipstickCompositor::surfaceUnmapped()
 {
     surfaceUnmapped(qobject_cast<QWaylandSurface *>(sender()));
-}
-
-void LipstickCompositor::surfaceSizeChanged()
-{
-    QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
-
-    LipstickCompositorWindow *window = surfaceWindow(surface);
-    if (window)
-        window->setSize(surface->size());
 }
 
 void LipstickCompositor::surfaceTitleChanged()
