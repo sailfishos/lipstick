@@ -618,7 +618,6 @@ void LipstickCompositor::windowSwapped()
 void LipstickCompositor::windowDestroyed()
 {
     m_totalWindowCount--;
-    m_windows.remove(static_cast<LipstickCompositorWindow *>(sender())->windowId());
     emit ghostWindowCountChanged();
 }
 
