@@ -206,8 +206,13 @@ void LipstickCompositor::componentComplete()
 {
     QScreen * const screen = QGuiApplication::primaryScreen();
 
-    m_output.setGeometry(QRect(QPoint(0, 0), screen->size()));
+    m_output.setPosition(QPoint(0, 0));
     m_output.setPhysicalSize(screen->physicalSize().toSize());
+
+    QWaylandOutput::Mode output_mode;
+    output_mode.size = screen->size();
+    output_mode.refreshRate = screen->refreshRate();
+    m_output.setMode(output_mode);
 }
 
 void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)
