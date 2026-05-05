@@ -44,6 +44,7 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     , m_interceptingTouch(false)
     , m_mapped(false)
     , m_focusOnTouch(false)
+    , m_bufferScale(1.0)
     , m_isXdg(false)
 {
     setFlags(QQuickItem::ItemIsFocusScope | flags());
