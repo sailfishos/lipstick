@@ -61,6 +61,23 @@ struct QueuedSetUpdatesEnabledCall
     bool m_enable;
 };
 
+struct QueuedFileServiceCall
+{
+    QueuedFileServiceCall()
+        : m_connection(QDBusConnection::sessionBus())
+    {
+    }
+
+    QueuedFileServiceCall(const QDBusConnection &connection, const QDBusMessage &message)
+        : m_connection(connection)
+        , m_message(message)
+    {
+    }
+
+    QDBusConnection m_connection;
+    QDBusMessage m_message;
+};
+
 
 typedef QWaylandClient WaylandClient;
 
@@ -165,6 +182,11 @@ public:
         openUrl(QUrl(url));
     }
     Q_INVOKABLE bool openUrl(const QUrl &);
+    void checkMimeSupported(const QString &mimeType, const QDBusMessage &message,
+                            const QDBusConnection &connection);
+    void checkUrlSupported(const QString &url, const QDBusMessage &message,
+                           const QDBusConnection &connection);
+    void respondSupportCheck(uint requestId, bool supported);
 
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &);
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &,
@@ -222,6 +244,8 @@ signals:
     void showUnlockScreen();
 
     void openUrlRequested(const QUrl &url);
+    void checkMimeSupportedRequested(uint requestId, const QString &mimeType);
+    void checkUrlSupportedRequested(uint requestId, const QUrl &url);
 
 private slots:
     void surfaceMapped();
@@ -296,6 +320,8 @@ private:
     int m_fakeRepaintTimerId;
 
     QList<QueuedSetUpdatesEnabledCall> m_queuedSetUpdatesEnabledCalls;
+    QHash<uint, QueuedFileServiceCall> m_queuedFileServiceCalls;
+    uint m_nextFileServiceCallId;
     QMceNameOwner *m_mceNameOwner;
 
     QString m_logindSession;
