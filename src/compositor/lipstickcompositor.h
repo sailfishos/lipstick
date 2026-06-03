@@ -78,6 +78,7 @@ class LIPSTICK_EXPORT LipstickCompositor
     Q_PROPERTY(int windowCount READ windowCount NOTIFY windowCountChanged)
     Q_PROPERTY(int ghostWindowCount READ ghostWindowCount NOTIFY ghostWindowCountChanged)
     Q_PROPERTY(bool homeActive READ homeActive WRITE setHomeActive NOTIFY homeActiveChanged)
+    Q_PROPERTY(bool sessionActive READ sessionActive NOTIFY sessionActiveChanged)
     Q_PROPERTY(bool debug READ debug CONSTANT)
     Q_PROPERTY(int topmostWindowId READ topmostWindowId WRITE setTopmostWindowId NOTIFY topmostWindowIdChanged)
     Q_PROPERTY(Qt::ScreenOrientation topmostWindowOrientation READ topmostWindowOrientation WRITE setTopmostWindowOrientation NOTIFY topmostWindowOrientationChanged)
@@ -107,6 +108,7 @@ public:
 
     bool homeActive() const;
     void setHomeActive(bool);
+    bool sessionActive() const;
 
     int topmostWindowId() const { return m_topmostWindowId; }
     void setTopmostWindowId(int id);
@@ -197,6 +199,7 @@ signals:
     void availableWinIdsChanged();
 
     void homeActiveChanged();
+    void sessionActiveChanged();
     void topmostWindowIdChanged();
     void privateTopmostWindowProcessIdChanged(int pid);
     void privateTopmostWindowPolicyApplicationIdChanged(QString applicationId);
@@ -273,6 +276,7 @@ private:
     QList<WindowModel *> m_windowModels;
 
     bool m_homeActive;
+    bool m_sessionActive;
 
     int m_topmostWindowId;
     int m_topmostWindowProcessId;

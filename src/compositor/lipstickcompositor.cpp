@@ -70,6 +70,7 @@ LipstickCompositor::LipstickCompositor()
     , m_totalWindowCount(0)
     , m_nextWindowId(1)
     , m_homeActive(true)
+    , m_sessionActive(false)
     , m_topmostWindowId(0)
     , m_topmostWindowProcessId(0)
     , m_topmostWindowOrientation(Qt::PrimaryOrientation)
@@ -268,6 +269,11 @@ bool LipstickCompositor::homeActive() const
     return m_homeActive;
 }
 
+bool LipstickCompositor::sessionActive() const
+{
+    return m_sessionActive;
+}
+
 void LipstickCompositor::setHomeActive(bool a)
 {
     if (a == m_homeActive)
@@ -444,6 +450,10 @@ void LipstickCompositor::activateLogindSession()
     }
 
     if (sd_session_is_active(m_logindSession.toUtf8()) > 0) {
+        if (!m_sessionActive) {
+            m_sessionActive = true;
+            emit sessionActiveChanged();
+        }
         qCInfo(lcLipstickCoreLog) << "Session" << m_logindSession << "successfully activated";
         return;
     }
