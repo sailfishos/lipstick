@@ -18,7 +18,9 @@
 #include <QDesktopServices>
 #include <QtSensors/QOrientationSensor>
 #include <QClipboard>
+#include <QMetaMethod>
 #include <QMimeData>
+#include <QVariantList>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 #include <QtGui/qpa/qplatformintegration.h>
 #include <qpa/qwindowsysteminterface.h>
@@ -48,6 +50,8 @@
 #include "logging.h"
 
 namespace {
+const int FileServiceRequestTimeout = 30 * 1000;
+
 bool debuggingCompositorHandover()
 {
     static int debugging = -1;
@@ -84,6 +88,7 @@ LipstickCompositor::LipstickCompositor()
     , m_keymap(0)
     , m_fakeRepaintTimerId(0)
     , m_queuedSetUpdatesEnabledCalls()
+    , m_nextFileServiceCallId(1)
     , m_mceNameOwner(new QMceNameOwner(this))
     , m_sessionActivationTries(0)
 {
@@ -239,6 +244,53 @@ bool LipstickCompositor::openUrl(const QUrl &url)
     openUrlRequested(url);
 
     return true;
+}
+
+void LipstickCompositor::checkMimeSupported(const QString &mimeType, const QDBusMessage &message,
+                                            const QDBusConnection &connection)
+{
+    if (!isSignalConnected(QMetaMethod::fromSignal(&LipstickCompositor::checkMimeSupportedRequested))) {
+        connection.send(message.createReply(QVariantList() << false));
+        return;
+    }
+
+    const uint requestId = m_nextFileServiceCallId++;
+    if (m_nextFileServiceCallId == 0)
+        m_nextFileServiceCallId = 1;
+
+    m_queuedFileServiceCalls.insert(requestId, QueuedFileServiceCall(connection, message));
+    QTimer::singleShot(FileServiceRequestTimeout, this, [this, requestId]() {
+        respondSupportCheck(requestId, false);
+    });
+    emit checkMimeSupportedRequested(requestId, mimeType);
+}
+
+void LipstickCompositor::checkUrlSupported(const QString &url, const QDBusMessage &message,
+                                           const QDBusConnection &connection)
+{
+    if (!isSignalConnected(QMetaMethod::fromSignal(&LipstickCompositor::checkUrlSupportedRequested))) {
+        connection.send(message.createReply(QVariantList() << false));
+        return;
+    }
+
+    const uint requestId = m_nextFileServiceCallId++;
+    if (m_nextFileServiceCallId == 0)
+        m_nextFileServiceCallId = 1;
+
+    m_queuedFileServiceCalls.insert(requestId, QueuedFileServiceCall(connection, message));
+    QTimer::singleShot(FileServiceRequestTimeout, this, [this, requestId]() {
+        respondSupportCheck(requestId, false);
+    });
+    emit checkUrlSupportedRequested(requestId, QUrl(url));
+}
+
+void LipstickCompositor::respondSupportCheck(uint requestId, bool supported)
+{
+    if (!m_queuedFileServiceCalls.contains(requestId))
+        return;
+
+    const QueuedFileServiceCall queued = m_queuedFileServiceCalls.take(requestId);
+    queued.m_connection.send(queued.m_message.createReply(QVariantList() << supported));
 }
 
 void LipstickCompositor::retainedSelectionReceived(QMimeData *mimeData)
