@@ -111,7 +111,7 @@ LipstickCompositor::LipstickCompositor()
     connect(m_orientationLock, SIGNAL(valueChanged()), SIGNAL(orientationLockChanged()));
 
     connect(this, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
-    QObject::connect(this, SIGNAL(afterRendering()), this, SLOT(windowSwapped()));
+    connect(this, &QQuickWindow::frameSwapped, this, &LipstickCompositor::windowSwapped);
     QObject::connect(HomeApplication::instance(), SIGNAL(aboutToDestroy()), this, SLOT(homeApplicationAboutToDestroy()));
     connect(this, &QQuickWindow::afterRendering, this, &LipstickCompositor::readContent, Qt::DirectConnection);
 
