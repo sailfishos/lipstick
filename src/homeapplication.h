@@ -146,10 +146,6 @@ private slots:
 private:
     friend class LipstickApi;
 
-    //! A signal handler that quits the QApplication
-    static void quitSignalHandler(int);
-    //! An eventfd object for signal handling
-    static int s_quitSignalFd;
     //! Socket notifier for signal handling
     QSocketNotifier *m_quitSignalNotifier;
 

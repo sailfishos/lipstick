@@ -53,14 +53,14 @@
 
 #include <nemo-devicelock/devicelock.h>
 
-void HomeApplication::quitSignalHandler(int)
+static int quitSignalFd = -1;
+
+static void quitSignalHandler(int)
 {
     uint64_t a = 1;
-    ssize_t unused = ::write(s_quitSignalFd, &a, sizeof(a));
+    ssize_t unused = ::write(quitSignalFd, &a, sizeof(a));
     Q_UNUSED(unused);
 }
-
-int HomeApplication::s_quitSignalFd = -1;
 
 static void registerDBusObject(QDBusConnection &bus, const char *path, QObject *object)
 {
@@ -199,14 +199,14 @@ HomeApplication *HomeApplication::instance()
 
 void HomeApplication::setUpSignalHandlers()
 {
-    s_quitSignalFd = ::eventfd(0, 0);
-    if (s_quitSignalFd == -1)
+    quitSignalFd = ::eventfd(0, 0);
+    if (quitSignalFd == -1)
         qFatal("Failed to create eventfd object for signal handling");
 
-    m_quitSignalNotifier = new QSocketNotifier(s_quitSignalFd, QSocketNotifier::Read, this);
+    m_quitSignalNotifier = new QSocketNotifier(quitSignalFd, QSocketNotifier::Read, this);
     connect(m_quitSignalNotifier, &QSocketNotifier::activated, this, [this]() {
         uint64_t tmp;
-        ssize_t unused = ::read(s_quitSignalFd, &tmp, sizeof(tmp));
+        ssize_t unused = ::read(quitSignalFd, &tmp, sizeof(tmp));
         Q_UNUSED(unused);
 
         quit();
