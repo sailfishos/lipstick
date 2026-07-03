@@ -139,8 +139,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     auto registerVpnAgent = [this]() {
         if (!m_connmanVpn) {
-            if (QDBusConnection::systemBus().interface()->isServiceRegistered(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE)) {
-                m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE,
+            if (QDBusConnection::systemBus().interface()->isServiceRegistered(CONNMAN_DBUS_VPN_SERVICE)) {
+                m_connmanVpn = new ConnmanVpnProxy(CONNMAN_DBUS_VPN_SERVICE,
                                                    "/", QDBusConnection::systemBus());
                 m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
             }
@@ -152,7 +152,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     };
 
     QDBusServiceWatcher *connmanVpnWatcher
-            = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus,
+            = new QDBusServiceWatcher(CONNMAN_DBUS_VPN_SERVICE, systemBus,
                                       QDBusServiceWatcher::WatchForRegistration
                                       | QDBusServiceWatcher::WatchForUnregistration,
                                       this);
