@@ -561,13 +561,16 @@ bool LauncherItem::canOpenMimeType(const QString &mimeType)
     if (!m_mimeTypesPopulated && m_desktopEntry) {
         m_mimeTypesPopulated = true;
 
-        for (const QString &mimeType : m_desktopEntry->mimeType()) {
-            m_mimeTypes.append(QRegExp(mimeType, Qt::CaseInsensitive, QRegExp::Wildcard));
+        for (QString mimeType : m_desktopEntry->mimeType()) {
+            m_mimeTypes.append(QRegularExpression(mimeType.replace("*", ".*"),
+                                                  QRegularExpression::CaseInsensitiveOption));
         }
     }
 
-    for (const QRegExp &candidate : m_mimeTypes) {
-        if (candidate.exactMatch(mimeType)) {
+    for (const QRegularExpression &candidate : m_mimeTypes) {
+        QRegularExpressionMatch match = candidate.match(mimeType);
+
+        if (match.captured().length() == mimeType.length()) {
             return true;
         }
     }

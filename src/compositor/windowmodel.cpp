@@ -15,6 +15,8 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QFileInfo>
+#include <QRegularExpression>
+
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositor.h"
 #include "windowmodel.h"
@@ -195,7 +197,7 @@ void WindowModel::launchProcess(const QString &binaryName)
     if (!m_complete || !c || !isPrivileged())
         return;
 
-    QStringList binaryParts = binaryName.split(QRegExp(QRegExp("\\s+")));
+    QStringList binaryParts = binaryName.split(QRegularExpression("\\s+"));
 
     for (QHash<int, LipstickCompositorWindow *>::ConstIterator iter = c->m_mappedSurfaces.begin();
         iter != c->m_mappedSurfaces.end(); ++iter) {

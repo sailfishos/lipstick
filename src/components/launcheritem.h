@@ -22,7 +22,7 @@
 #include <QStringList>
 #include <QSharedPointer>
 #include <QBasicTimer>
-#include <QRegExp>
+#include <QRegularExpression>
 
 // Define DEBUG_LAUNCHER if you'd like to see debug messages from the launcher
 // #define DEBUG_LAUNCHER
@@ -152,7 +152,7 @@ private:
 
     QSharedPointer<MDesktopEntry> m_desktopEntry;
     QBasicTimer m_launchingTimeout;
-    QVector<QRegExp> m_mimeTypes;
+    QVector<QRegularExpression> m_mimeTypes;
     bool m_isLaunching;
     bool m_isUpdating;
     bool m_isTemporary;
