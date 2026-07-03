@@ -22,7 +22,6 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 
-
 LauncherDBus::LauncherDBus(LauncherModel *model)
     : QObject(model)
     , QDBusContext()

@@ -36,7 +36,8 @@ public:
     FrameEvent(uint32_t t)
         : QEvent(FrameEventType)
         , time(t)
-    { }
+    {}
+
     uint32_t time;
 };
 
@@ -46,7 +47,8 @@ public:
     FailedEvent(int r)
         : QEvent(FailedEventType)
         , result(r)
-    { }
+    {}
+
     int result;
 };
 
@@ -108,7 +110,7 @@ void LipstickRecorderManager::bind(wl_client *client, quint32 version, quint32 i
     Resource *res = add(client, id, version);
 
     gid_t gid;
-    wl_client_get_credentials(client, Q_NULLPTR, Q_NULLPTR, &gid);
+    wl_client_get_credentials(client, nullptr, nullptr, &gid);
     group *g = getgrgid(gid);
     if (strcmp(g->gr_name, "privileged") != 0) {
         wl_resource_post_error(res->handle, WL_DISPLAY_ERROR_INVALID_OBJECT,
@@ -131,7 +133,7 @@ LipstickRecorder::LipstickRecorder(LipstickRecorderManager *manager, wl_client *
                                    QQuickWindow *window)
     : QtWaylandServer::lipstick_recorder(client, id, 1)
     , m_manager(manager)
-    , m_bufferResource(Q_NULLPTR)
+    , m_bufferResource(nullptr)
     , m_client(client)
     , m_window(window)
 {
@@ -165,7 +167,7 @@ void LipstickRecorder::lipstick_recorder_record_frame(Resource *resource, ::wl_r
     if (m_buffer) {
         m_manager->requestFrame(m_window, this);
     } else {
-        m_bufferResource = Q_NULLPTR;
+        m_bufferResource = nullptr;
         send_failed(result_bad_buffer, buffer);
     }
 }
@@ -190,7 +192,7 @@ bool LipstickRecorder::event(QEvent *e)
         return QObject::event(e);
     }
 
-    m_bufferResource = Q_NULLPTR;
+    m_bufferResource = nullptr;
     wl_client_flush(client());
     return true;
 }

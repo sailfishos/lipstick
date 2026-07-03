@@ -25,7 +25,6 @@
 #include "launcheritem.h"
 #include "launchermodel.h"
 
-
 #define LAUNCHER_APPS_PATH "/usr/share/applications/"
 
 // Make sure to also update this in the .spec file, so it gets
@@ -79,34 +78,34 @@ static QStringList defaultDirectories()
 
 Q_GLOBAL_STATIC(LauncherDBus, _launcherDBus);
 
-LauncherModel::LauncherModel(QObject *parent) :
-    QObjectListModel(parent),
-    m_directories(defaultDirectories()),
-    m_iconDirectories(LAUNCHER_ICONS_PATH),
-    m_fileSystemWatcher(),
-    m_launcherSettings("nemomobile", "lipstick"),
-    m_globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat),
-    m_launcherOrderPrefix(QStringLiteral("LauncherOrder/")),
-    m_dbusWatcher(this),
-    m_packageNameToDBusService(),
-    m_temporaryLaunchers(),
-    m_initialized(false)
+LauncherModel::LauncherModel(QObject *parent)
+    : QObjectListModel(parent)
+    , m_directories(defaultDirectories())
+    , m_iconDirectories(LAUNCHER_ICONS_PATH)
+    , m_fileSystemWatcher()
+    , m_launcherSettings("nemomobile", "lipstick")
+    , m_globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat)
+    , m_launcherOrderPrefix(QStringLiteral("LauncherOrder/"))
+    , m_dbusWatcher(this)
+    , m_packageNameToDBusService()
+    , m_temporaryLaunchers()
+    , m_initialized(false)
 {
     initialize();
 }
 
-LauncherModel::LauncherModel(InitializationMode, QObject *parent) :
-    QObjectListModel(parent),
-    m_directories(defaultDirectories()),
-    m_iconDirectories(LAUNCHER_ICONS_PATH),
-    m_fileSystemWatcher(),
-    m_launcherSettings("nemomobile", "lipstick"),
-    m_globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat),
-    m_launcherOrderPrefix(QStringLiteral("LauncherOrder/")),
-    m_dbusWatcher(this),
-    m_packageNameToDBusService(),
-    m_temporaryLaunchers(),
-    m_initialized(false)
+LauncherModel::LauncherModel(InitializationMode, QObject *parent)
+    : QObjectListModel(parent)
+    , m_directories(defaultDirectories())
+    , m_iconDirectories(LAUNCHER_ICONS_PATH)
+    , m_fileSystemWatcher()
+    , m_launcherSettings("nemomobile", "lipstick")
+    , m_globalSettings("/usr/share/lipstick/lipstick.conf", QSettings::IniFormat)
+    , m_launcherOrderPrefix(QStringLiteral("LauncherOrder/"))
+    , m_dbusWatcher(this)
+    , m_packageNameToDBusService()
+    , m_temporaryLaunchers()
+    , m_initialized(false)
 {
 }
 
@@ -155,7 +154,7 @@ LauncherModel::~LauncherModel()
 }
 
 void LauncherModel::onFilesUpdated(const QStringList &added,
-        const QStringList &modified, const QStringList &removed)
+                                   const QStringList &modified, const QStringList &removed)
 {
     QStringList modifiedAndNeedUpdating = modified;
 
@@ -192,8 +191,8 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
                 // Replace the single temporary launcher with the newly-added icon
                 item = tempItem;
 
-                qWarning() << "Applying heuristics:" << filename <<
-                    "is the launcher item for" << item->packageName();
+                qWarning() << "Applying heuristics:" << filename
+                           << "is the launcher item for" << item->packageName();
                 item->setIconFilename("");
                 item->setFilePath(filename);
             }
@@ -325,7 +324,8 @@ void LauncherModel::reorderItems()
     QList<LauncherItem *> reordered;
     {
         // Order the positioned items into contiguous order
-        QMap<int, LauncherItem *>::const_iterator it = itemsWithPositions.constBegin(), end = itemsWithPositions.constEnd();
+        QMap<int, LauncherItem *>::const_iterator it = itemsWithPositions.constBegin(),
+                end = itemsWithPositions.constEnd();
         for ( ; it != end; ++it) {
             LAUNCHER_DEBUG("Planned move of" << it.value()->title() << "to" << reordered.count());
             reordered.append(it.value());
@@ -333,7 +333,8 @@ void LauncherModel::reorderItems()
     }
     {
         // Append the un-positioned items in sorted-by-title order
-        QMap<QString, LauncherItem *>::const_iterator it = itemsWithoutPositions.constBegin(), end = itemsWithoutPositions.constEnd();
+        QMap<QString, LauncherItem *>::const_iterator it = itemsWithoutPositions.constBegin(),
+                end = itemsWithoutPositions.constEnd();
         for ( ; it != end; ++it) {
             LAUNCHER_DEBUG("Planned move of" << it.value()->title() << "to" << reordered.count());
             reordered.append(it.value());

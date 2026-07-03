@@ -38,7 +38,8 @@ WindowModel::WindowModel()
 WindowModel::~WindowModel()
 {
     LipstickCompositor *c = LipstickCompositor::instance();
-    if (c) c->m_windowModels.removeAll(this);
+    if (c)
+        c->m_windowModels.removeAll(this);
 }
 
 int WindowModel::itemCount() const
@@ -229,7 +230,7 @@ void WindowModel::launchProcess(const QString &binaryName)
 
         // All parts of binaryName must be contained in this order in the
         // process command line to match the given process
-        for (int i=0; i<binaryParts.count(); i++) {
+        for (int i = 0; i < binaryParts.count(); i++) {
             if (proc[i] != binaryParts[i]) {
                 match = false;
                 break;
@@ -242,4 +243,3 @@ void WindowModel::launchProcess(const QString &binaryName)
         }
     }
 }
-

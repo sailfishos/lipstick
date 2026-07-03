@@ -68,13 +68,10 @@ class LIPSTICK_EXPORT LauncherItem : public QObject
     Q_PROPERTY(int updatingProgress READ updatingProgress WRITE setUpdatingProgress NOTIFY updatingProgressChanged)
     Q_PROPERTY(bool isBlacklisted READ isBlacklisted WRITE setIsBlacklisted NOTIFY isBlacklistedChanged)
 
-public slots:
-    void setIsLaunching(bool isLaunching = false);
-
 public:
     explicit LauncherItem(const QString &filePath = QString(), QObject *parent = 0);
-    explicit LauncherItem(const QString &packageName, const QString &label,
-            const QString &iconPath, const QString &desktopFile, QObject *parent);
+    LauncherItem(const QString &packageName, const QString &label,
+                 const QString &iconPath, const QString &desktopFile, QObject *parent);
     virtual ~LauncherItem();
 
     LauncherModel::ItemType type() const;
@@ -129,6 +126,9 @@ public:
     Q_INVOKABLE bool canOpenMimeType(const QString &mimeType);
 
     void invalidateCaches();
+
+public slots:
+    void setIsLaunching(bool isLaunching = false);
 
 signals:
     void itemChanged();

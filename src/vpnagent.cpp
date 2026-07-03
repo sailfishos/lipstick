@@ -16,20 +16,21 @@
 #include "vpnagent.h"
 
 #include <QGuiApplication>
-#include "homewindow.h"
 #include <QQuickItem>
 #include <QQmlContext>
 #include <QScreen>
 #include <QTimer>
 #include <QDBusArgument>
 #include <QDBusConnection>
+
+#include "homewindow.h"
 #include "utilities/closeeventeater.h"
 #include "lipstickqmlpath.h"
 
-VpnAgent::VpnAgent(QObject *parent) :
-    QObject(parent),
-    m_window(0),
-    m_connections(new SettingsVpnModel(this))
+VpnAgent::VpnAgent(QObject *parent)
+    : QObject(parent)
+    , m_window(nullptr)
+    , m_connections(new SettingsVpnModel(this))
 {
     QTimer::singleShot(0, this, SLOT(createWindow()));
 }
@@ -58,7 +59,7 @@ void VpnAgent::setWindowVisible(bool visible)
             m_window->showFullScreen();
             emit windowVisibleChanged();
         }
-    } else if (m_window != 0 && m_window->isVisible()) {
+    } else if (m_window && m_window->isVisible()) {
         m_window->hide();
         emit windowVisibleChanged();
     }
@@ -66,7 +67,7 @@ void VpnAgent::setWindowVisible(bool visible)
 
 bool VpnAgent::windowVisible() const
 {
-    return m_window != 0 && m_window->isVisible();
+    return m_window && m_window->isVisible();
 }
 
 void VpnAgent::respond(const QString &path, const QVariantMap &details)
@@ -169,9 +170,11 @@ T extract(const QDBusArgument &arg)
 }
 
 // Extracts a boolean value and removes it from the map
-bool ExtractRequestBool(QVariantMap &extracted, const QString &key, bool defaultValue) {
+bool ExtractRequestBool(QVariantMap &extracted, const QString &key, bool defaultValue)
+{
     bool result = defaultValue;
     QVariantMap::iterator it = extracted.find(key);
+
     while ((it != extracted.end()) && (it.key() == key)) {
         const QVariantMap field(it.value().value<QVariantMap>());
         const QString type = field.value(QStringLiteral("Type")).toString();
@@ -187,19 +190,21 @@ bool ExtractRequestBool(QVariantMap &extracted, const QString &key, bool default
     return result;
 }
 
-void AddMissingAttributes(QVariantMap &field) {
+void AddMissingAttributes(QVariantMap &field)
+{
     if (!field.contains(QStringLiteral("Requirement"))) {
         field.insert(QStringLiteral("Requirement"), QVariant(QStringLiteral("optional")));
     }
+
     if (!field.contains(QStringLiteral("Type"))) {
         field.insert(QStringLiteral("Type"), QVariant(QStringLiteral("string")));
     }
+
     if (!field.contains(QStringLiteral("Value"))) {
         const QString fieldType = field.value(QStringLiteral("Type")).toString();
         if (fieldType == "boolean") {
             field.insert(QStringLiteral("Value"), false);
-        }
-        else {
+        } else {
             field.insert(QStringLiteral("Value"), QStringLiteral(""));
         }
     }
@@ -296,7 +301,7 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
     }
 
     /*
-     * By default this is false if not set. This value needs to be explicitely
+     * By default this is false if not set. This value needs to be explicitly
      * set to retain the credentials although storing and retrieval is disabled.
      * This is used with Private Key passwords, which are stored in memory but
      * not in VPN agent and the actual credentials are required to be stored.
@@ -309,7 +314,7 @@ QVariantMap VpnAgent::RequestInput(const QDBusObjectPath &path, const QVariantMa
         extracted.insert(QStringLiteral("keepCredentials"), field);
     }
 
-    // Inform the caller that the reponse will be asynchronous
+    // Inform the caller that the response will be asynchronous
     QDBusContext::setDelayedReply(true);
 
     m_pending.append(Request(objectPath, extracted, QDBusContext::message()));
@@ -343,4 +348,3 @@ VpnAgent::Request::Request(const QString &path, const QVariantMap &details, cons
     , cancelReply(request.createErrorReply(QStringLiteral("net.connman.vpn.Agent.Error.Canceled"), QString()))
 {
 }
-

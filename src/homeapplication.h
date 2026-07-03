@@ -120,7 +120,7 @@ signals:
     void displayStateChanged(TouchScreen::DisplayState oldDisplayState, TouchScreen::DisplayState newDisplayState);
 
 protected:
-    virtual bool event(QEvent *);
+    bool event(QEvent *) override;
 
 private:
     void setUpSignalHandlers();
@@ -178,7 +178,7 @@ private:
     bool m_homeReadySent;
 
     VpnAgent *m_vpnAgent;
-    ConnmanVpnProxy * m_connmanVpn;
+    ConnmanVpnProxy *m_connmanVpn;
     ConnectivityMonitor *m_connectivityMonitor;
     bool m_online;
 };

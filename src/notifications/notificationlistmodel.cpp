@@ -29,9 +29,9 @@ void sortNotifications(QList<QObject *> &notifications)
 
 }
 
-NotificationListModel::NotificationListModel(QObject *parent) :
-    QObjectListModel(parent),
-    m_populated(false)
+NotificationListModel::NotificationListModel(QObject *parent)
+    : QObjectListModel(parent)
+    , m_populated(false)
 {
     connect(NotificationManager::instance(), SIGNAL(notificationsModified(const QList<uint> &)), this, SLOT(updateNotifications(const QList<uint> &)));
     connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));

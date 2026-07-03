@@ -50,9 +50,9 @@ class QMceNameOwner;
 struct QueuedSetUpdatesEnabledCall
 {
     QueuedSetUpdatesEnabledCall(const QDBusConnection &connection, const QDBusMessage &message, bool enable)
-    : m_connection(connection)
-    , m_message(message)
-    , m_enable(enable)
+        : m_connection(connection)
+        , m_message(message)
+        , m_enable(enable)
     {
     }
 
@@ -114,8 +114,8 @@ public:
 
     static LipstickCompositor *instance();
 
-    void classBegin() Q_DECL_OVERRIDE;
-    void componentComplete() Q_DECL_OVERRIDE;
+    void classBegin() override;
+    void componentComplete() override;
     void surfaceCreated(QWaylandSurface *surface) Q_DECL_OVERRIDE;
     bool openUrl(WaylandClient *client, const QUrl &url) Q_DECL_OVERRIDE;
     void retainedSelectionReceived(QMimeData *mimeData) Q_DECL_OVERRIDE;
@@ -130,7 +130,8 @@ public:
     int topmostWindowId() const { return m_topmostWindowId; }
     void setTopmostWindowId(int id);
     int privateTopmostWindowProcessId() const { return m_topmostWindowProcessId; }
-    uint privateGetSetupActions() const {
+    uint privateGetSetupActions() const
+    {
         /* Lipstick acquires graphics resources already in
          * QGuiApplication construction phase and there is
          * no practical way to delay this -> we need to return
@@ -204,8 +205,8 @@ public:
     QWaylandSurfaceView *createView(QWaylandSurface *surf) Q_DECL_OVERRIDE;
 
 protected:
-    void timerEvent(QTimerEvent *e) Q_DECL_OVERRIDE;
-    bool event(QEvent *e) Q_DECL_OVERRIDE;
+    void timerEvent(QTimerEvent *e) override;
+    bool event(QEvent *e) override;
     void sendKeyEvent(QEvent::Type type, Qt::Key key, quint32 nativeScanCode);
 
 signals:

@@ -16,6 +16,7 @@
 #include "launcheritem.h"
 #include "launcherfoldermodel.h"
 #include "launchermodel.h"
+
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 #include <QFile>
@@ -24,9 +25,10 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QStack>
+#include <QDebug>
+
 #include <mdesktopentry.h>
 #include <glib.h>
-#include <QDebug>
 
 static const int FOLDER_MODEL_SAVE_TIMER_MS = 1000;
 static const QString CONFIG_FOLDER_SUBDIRECTORY("/lipstick/");
@@ -577,7 +579,7 @@ LauncherFolderItem *LauncherFolderModel::findContainerFolder(const QString &dire
         }
     }
 
-    return 0;
+    return nullptr;
 }
 
 void LauncherFolderModel::setBlacklistedApplications(const QStringList &applications)

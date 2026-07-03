@@ -35,15 +35,15 @@ class LipstickRecorderManager : public QWaylandGlobalInterface, public QtWayland
 public:
     LipstickRecorderManager();
 
-    const wl_interface* interface() const Q_DECL_OVERRIDE;
+    const wl_interface* interface() const;
 
     void recordFrame(QWindow *window);
     void requestFrame(QWindow *window, LipstickRecorder *recorder);
     void remove(QWindow *window, LipstickRecorder *recorder);
 
 protected:
-    void bind(wl_client *client, quint32 version, quint32 id) Q_DECL_OVERRIDE;
-    void lipstick_recorder_manager_create_recorder(Resource *resource, uint32_t id, ::wl_resource *output) Q_DECL_OVERRIDE;
+    void bind(wl_client *client, quint32 version, quint32 id) override;
+    void lipstick_recorder_manager_create_recorder(Resource *resource, uint32_t id, ::wl_resource *output) override;
 
 private:
     QMultiHash<QWindow *, LipstickRecorder *> m_requests;
@@ -60,11 +60,11 @@ public:
     wl_client *client() const { return m_client; }
 
 protected:
-    bool event(QEvent *e) Q_DECL_OVERRIDE;
-    void lipstick_recorder_destroy_resource(Resource *resource) Q_DECL_OVERRIDE;
-    void lipstick_recorder_destroy(Resource *resource) Q_DECL_OVERRIDE;
-    void lipstick_recorder_record_frame(Resource *resource, ::wl_resource *buffer) Q_DECL_OVERRIDE;
-    void lipstick_recorder_repaint(Resource *resource) Q_DECL_OVERRIDE;
+    bool event(QEvent *e) override;
+    void lipstick_recorder_destroy_resource(Resource *resource) override;
+    void lipstick_recorder_destroy(Resource *resource) override;
+    void lipstick_recorder_record_frame(Resource *resource, ::wl_resource *buffer) override;
+    void lipstick_recorder_repaint(Resource *resource) override;
 
 private:
     LipstickRecorderManager *m_manager;

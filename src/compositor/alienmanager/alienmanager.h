@@ -28,8 +28,8 @@ class AlienManagerGlobal : public QObject, public QWaylandGlobalInterface
 public:
     explicit AlienManagerGlobal(QObject *parent = nullptr);
 
-    const wl_interface *interface() const Q_DECL_OVERRIDE;
-    void bind(wl_client *client, uint32_t version, uint32_t id) Q_DECL_OVERRIDE;
+    const wl_interface *interface() const override;
+    void bind(wl_client *client, uint32_t version, uint32_t id) override;
 };
 
 class AlienManager : public QObject, public QtWaylandServer::alien_manager
@@ -41,10 +41,10 @@ public:
     void ping(uint32_t serial, QWaylandSurface *surface);
 
 protected:
-    void alien_manager_destroy_resource(Resource *resource) Q_DECL_OVERRIDE;
-    void alien_manager_destroy(Resource *resource) Q_DECL_OVERRIDE;
-    void alien_manager_create_alien_client(Resource *resource, uint32_t id, const QString &package) Q_DECL_OVERRIDE;
-    void alien_manager_pong(Resource *resource, uint32_t serial) Q_DECL_OVERRIDE;
+    void alien_manager_destroy_resource(Resource *resource) override;
+    void alien_manager_destroy(Resource *resource) override;
+    void alien_manager_create_alien_client(Resource *resource, uint32_t id, const QString &package) override;
+    void alien_manager_pong(Resource *resource, uint32_t serial) override;
 
 private:
     QMap<uint32_t, QWaylandSurface *> m_pings;
@@ -59,9 +59,9 @@ public:
     AlienManager *manager() const;
 
 protected:
-    void alien_client_destroy_resource(Resource *resource) Q_DECL_OVERRIDE;
-    void alien_client_destroy(Resource *resource) Q_DECL_OVERRIDE;
-    void alien_client_get_alien_surface(Resource *resource, uint32_t id, ::wl_resource *surface) Q_DECL_OVERRIDE;
+    void alien_client_destroy_resource(Resource *resource) override;
+    void alien_client_destroy(Resource *resource) override;
+    void alien_client_get_alien_surface(Resource *resource, uint32_t id, ::wl_resource *surface) override;
 
 private:
     QString m_package;

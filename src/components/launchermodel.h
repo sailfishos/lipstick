@@ -43,11 +43,6 @@ class LIPSTICK_EXPORT LauncherModel : public QObjectListModel
 
     Q_ENUMS(ItemType)
 
-private slots:
-    void monitoredFileChanged(const QString &changedPath);
-    void onFilesUpdated(const QStringList &added, const QStringList &modified, const QStringList &removed);
-    void onServiceUnregistered(const QString &serviceName);
-
 public:
     explicit LauncherModel(QObject *parent = 0);
     virtual ~LauncherModel();
@@ -74,7 +69,7 @@ public:
     void setScope(const QString &scope);
 
     void updatingStarted(const QString &packageName, const QString &label,
-            const QString &iconPath, QString desktopFile, const QString &serviceName);
+                         const QString &iconPath, QString desktopFile, const QString &serviceName);
     void updatingProgress(const QString &packageName, int progress, const QString &serviceName);
     void updatingFinished(const QString &packageName, const QString &serviceName);
     void notifyLaunching(const QString &desktopFile);
@@ -109,6 +104,11 @@ protected:
     explicit LauncherModel(InitializationMode, QObject *parent = 0);
 
     void initialize();
+
+private slots:
+    void monitoredFileChanged(const QString &changedPath);
+    void onFilesUpdated(const QStringList &added, const QStringList &modified, const QStringList &removed);
+    void onServiceUnregistered(const QString &serviceName);
 
 private:
     void reorderItems();

@@ -29,12 +29,12 @@
 #include "lipstickqmlpath.h"
 #include <unistd.h>
 
-ShutdownScreen::ShutdownScreen(QObject *parent) :
-    QObject(parent),
-    QDBusContext(),
-    m_window(0),
-    m_systemState(new DeviceState::DeviceState(this)),
-    m_user(getuid())
+ShutdownScreen::ShutdownScreen(QObject *parent)
+    : QObject(parent)
+    , QDBusContext()
+    , m_window(0)
+    , m_systemState(new DeviceState::DeviceState(this))
+    , m_user(getuid())
 {
     connect(m_systemState, &DeviceState::DeviceState::systemStateChanged, this, &ShutdownScreen::applySystemState);
     connect(m_systemState, &DeviceState::DeviceState::nextUserChanged, this, &ShutdownScreen::setUser);
@@ -43,7 +43,7 @@ ShutdownScreen::ShutdownScreen(QObject *parent) :
 void ShutdownScreen::setWindowVisible(bool visible)
 {
     if (visible) {
-        if (m_window == 0) {
+        if (m_window == nullptr) {
             m_window = new HomeWindow();
             m_window->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
             m_window->setCategory(QLatin1String("notification"));
@@ -69,57 +69,57 @@ void ShutdownScreen::setWindowVisible(bool visible)
 
 bool ShutdownScreen::windowVisible() const
 {
-    return m_window != 0 && m_window->isVisible();
+    return m_window && m_window->isVisible();
 }
 
 void ShutdownScreen::applySystemState(DeviceState::DeviceState::StateIndication what)
 {
     switch (what) {
-        case DeviceState::DeviceState::Shutdown:
-            setWindowVisible(true);
-            break;
+    case DeviceState::DeviceState::Shutdown:
+        setWindowVisible(true);
+        break;
 
-        case DeviceState::DeviceState::ThermalStateFatal:
-            //% "Temperature too high. Device shutting down."
-            ThermalNotifier::publishTemperatureNotification(qtTrId("qtn_shut_high_temp"));
-            break;
+    case DeviceState::DeviceState::ThermalStateFatal:
+        //% "Temperature too high. Device shutting down."
+        ThermalNotifier::publishTemperatureNotification(qtTrId("qtn_shut_high_temp"));
+        break;
 
-        case DeviceState::DeviceState::ShutdownDeniedUSB:
-            //% "USB cable plugged in. Unplug the USB cable to shutdown."
-            publishNotification("icon-system-usb", "accessory_connected", qtTrId("qtn_shut_unplug_usb"));
-            break;
+    case DeviceState::DeviceState::ShutdownDeniedUSB:
+        //% "USB cable plugged in. Unplug the USB cable to shutdown."
+        publishNotification("icon-system-usb", "accessory_connected", qtTrId("qtn_shut_unplug_usb"));
+        break;
 
-        case DeviceState::DeviceState::BatteryStateEmpty:
-            //% "Battery empty. Device shutting down."
-            publishNotification("icon-system-battery", "battery_empty", qtTrId("qtn_shut_batt_empty"));
-            break;
+    case DeviceState::DeviceState::BatteryStateEmpty:
+        //% "Battery empty. Device shutting down."
+        publishNotification("icon-system-battery", "battery_empty", qtTrId("qtn_shut_batt_empty"));
+        break;
 
-        case DeviceState::DeviceState::Reboot:
-            // Set shutdown mode unless already set explicitly
-            if (m_shutdownMode.isEmpty()) {
-                m_shutdownMode = "reboot";
-                m_window->setContextProperty("shutdownMode", m_shutdownMode);
-            }
-            break;
-
-        case DeviceState::DeviceState::UserSwitching:
-            m_shutdownMode = "userswitch";
-            applySystemState(DeviceState::DeviceState::Shutdown);
-            break;
-
-        case DeviceState::DeviceState::UserSwitchingFailed:
-            m_shutdownMode = "userswitchFailed";
+    case DeviceState::DeviceState::Reboot:
+        // Set shutdown mode unless already set explicitly
+        if (m_shutdownMode.isEmpty()) {
+            m_shutdownMode = "reboot";
             m_window->setContextProperty("shutdownMode", m_shutdownMode);
-            emit userSwitchFailed();
-            QTimer::singleShot(10000, this, [this] {
-                // Allow for some time for the notification to be visible
-                setWindowVisible(false);
-                m_shutdownMode.clear();
-            });
-            break;
+        }
+        break;
 
-        default:
-            break;
+    case DeviceState::DeviceState::UserSwitching:
+        m_shutdownMode = "userswitch";
+        applySystemState(DeviceState::DeviceState::Shutdown);
+        break;
+
+    case DeviceState::DeviceState::UserSwitchingFailed:
+        m_shutdownMode = "userswitchFailed";
+        m_window->setContextProperty("shutdownMode", m_shutdownMode);
+        emit userSwitchFailed();
+        QTimer::singleShot(10000, this, [this] {
+            // Allow for some time for the notification to be visible
+            setWindowVisible(false);
+            m_shutdownMode.clear();
+        });
+        break;
+
+    default:
+        break;
     }
 }
 

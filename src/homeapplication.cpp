@@ -71,11 +71,11 @@ static void registerDBusObject(QDBusConnection &bus, const char *path, QObject *
 
 HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     : QGuiApplication(argc, argv)
-    , m_quitSignalNotifier(0)
-    , m_mainWindowInstance(0)
+    , m_quitSignalNotifier(nullptr)
+    , m_mainWindowInstance(nullptr)
     , m_qmlPath(qmlPath)
     , m_homeReadySent(false)
-    , m_connmanVpn(0)
+    , m_connmanVpn(nullptr)
     , m_online(false)
 {
     setUpSignalHandlers();
@@ -148,7 +148,7 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     };
     auto unregisterVpnAgent = [this]() {
         delete m_connmanVpn;
-        m_connmanVpn = 0;
+        m_connmanVpn = nullptr;
     };
 
     QDBusServiceWatcher *connmanVpnWatcher
@@ -274,7 +274,7 @@ void HomeApplication::setDisplayOff()
 bool HomeApplication::event(QEvent *e)
 {
     bool rv = QGuiApplication::event(e);
-    if (LipstickCompositor::instance() == 0
+    if (LipstickCompositor::instance() == nullptr
             && (e->type() == QEvent::ApplicationActivate
                 || e->type() == QEvent::ApplicationDeactivate)) {
         emit homeActiveChanged();
@@ -386,7 +386,7 @@ bool HomeApplication::takeScreenshot(const QString &path)
         result->waitForFinished();
 
         return result->status() == ScreenshotResult::Finished;
-    } else {
-        return false;
     }
+
+    return false;
 }
