@@ -69,7 +69,8 @@ ScreenLock::~ScreenLock()
     m_touchScreen = 0;
 }
 
-int ScreenLock::tklock_open(const QString &service, const QString &path, const QString &interface, const QString &method, uint mode, bool, bool)
+int ScreenLock::tklock_open(const QString &service, const QString &path, const QString &interface,
+                            const QString &method, uint mode, bool, bool)
 {
     if (m_shuttingDown) {
         // Don't show the touch screen lock while shutting down
@@ -144,7 +145,8 @@ void ScreenLock::setInteractionExpected(bool expected)
 
 void ScreenLock::lockScreen(bool immediate)
 {
-    QDBusMessage message = QDBusMessage::createMethodCall("com.nokia.mce", "/com/nokia/mce/request", "com.nokia.mce.request", "req_tklock_mode_change");
+    QDBusMessage message = QDBusMessage::createMethodCall("com.nokia.mce", "/com/nokia/mce/request",
+                                                          "com.nokia.mce.request", "req_tklock_mode_change");
     message.setArguments(QVariantList() << (immediate ? MCE_TK_LOCKED : MCE_TK_LOCKED_DELAY));
     QDBusConnection::systemBus().asyncCall(message);
 

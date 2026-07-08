@@ -28,7 +28,7 @@ Q_GLOBAL_STATIC(LipstickSettings, settingsInstance)
 
 LipstickSettings::LipstickSettings()
     : QObject()
-    , m_screenLock(0)
+    , m_screenLock(nullptr)
 {
 }
 
@@ -49,12 +49,12 @@ void LipstickSettings::setScreenLock(ScreenLock *screenLock)
 
 bool LipstickSettings::lockscreenVisible() const
 {
-    return m_screenLock != 0 ? m_screenLock->isScreenLocked() : false;
+    return m_screenLock && m_screenLock->isScreenLocked();
 }
 
 void LipstickSettings::setLockscreenVisible(bool lockscreenVisible)
 {
-    if (m_screenLock != 0 && lockscreenVisible != m_screenLock->isScreenLocked()) {
+    if (m_screenLock && lockscreenVisible != m_screenLock->isScreenLocked()) {
         if (lockscreenVisible) {
             m_screenLock->lockScreen();
         } else {
@@ -70,14 +70,14 @@ bool LipstickSettings::lowPowerMode() const
 
 void LipstickSettings::lockScreen(bool immediate)
 {
-    if (m_screenLock != 0 && (!m_screenLock->isScreenLocked() || immediate)) {
+    if (m_screenLock && (!m_screenLock->isScreenLocked() || immediate)) {
         m_screenLock->lockScreen(immediate);
     }
 }
 
 void LipstickSettings::setInteractionExpected(bool expected)
 {
-    if (m_screenLock != 0) {
+    if (m_screenLock) {
         m_screenLock->setInteractionExpected(expected);
     }
 }
@@ -132,4 +132,3 @@ QString LipstickSettings::blankingPolicy()
 
     return "default";
 }
-

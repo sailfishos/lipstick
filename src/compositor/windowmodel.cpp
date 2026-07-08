@@ -15,6 +15,8 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QFileInfo>
+#include <QRegularExpression>
+
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositor.h"
 #include "windowmodel.h"
@@ -38,7 +40,8 @@ WindowModel::WindowModel()
 WindowModel::~WindowModel()
 {
     LipstickCompositor *c = LipstickCompositor::instance();
-    if (c) c->m_windowModels.removeAll(this);
+    if (c)
+        c->m_windowModels.removeAll(this);
 }
 
 int WindowModel::itemCount() const
@@ -194,7 +197,7 @@ void WindowModel::launchProcess(const QString &binaryName)
     if (!m_complete || !c || !isPrivileged())
         return;
 
-    QStringList binaryParts = binaryName.split(QRegExp(QRegExp("\\s+")));
+    QStringList binaryParts = binaryName.split(QRegularExpression("\\s+"));
 
     for (QHash<int, LipstickCompositorWindow *>::ConstIterator iter = c->m_mappedSurfaces.begin();
         iter != c->m_mappedSurfaces.end(); ++iter) {
@@ -229,7 +232,7 @@ void WindowModel::launchProcess(const QString &binaryName)
 
         // All parts of binaryName must be contained in this order in the
         // process command line to match the given process
-        for (int i=0; i<binaryParts.count(); i++) {
+        for (int i = 0; i < binaryParts.count(); i++) {
             if (proc[i] != binaryParts[i]) {
                 match = false;
                 break;
@@ -242,4 +245,3 @@ void WindowModel::launchProcess(const QString &binaryName)
         }
     }
 }
-

@@ -53,14 +53,14 @@
 
 #include <nemo-devicelock/devicelock.h>
 
-void HomeApplication::quitSignalHandler(int)
+static int quitSignalFd = -1;
+
+static void quitSignalHandler(int)
 {
     uint64_t a = 1;
-    ssize_t unused = ::write(s_quitSignalFd, &a, sizeof(a));
+    ssize_t unused = ::write(quitSignalFd, &a, sizeof(a));
     Q_UNUSED(unused);
 }
-
-int HomeApplication::s_quitSignalFd = -1;
 
 static void registerDBusObject(QDBusConnection &bus, const char *path, QObject *object)
 {
@@ -71,11 +71,11 @@ static void registerDBusObject(QDBusConnection &bus, const char *path, QObject *
 
 HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     : QGuiApplication(argc, argv)
-    , m_quitSignalNotifier(0)
-    , m_mainWindowInstance(0)
+    , m_quitSignalNotifier(nullptr)
+    , m_mainWindowInstance(nullptr)
     , m_qmlPath(qmlPath)
     , m_homeReadySent(false)
-    , m_connmanVpn(0)
+    , m_connmanVpn(nullptr)
     , m_online(false)
 {
     setUpSignalHandlers();
@@ -139,8 +139,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
 
     auto registerVpnAgent = [this]() {
         if (!m_connmanVpn) {
-            if (QDBusConnection::systemBus().interface()->isServiceRegistered(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE)) {
-                m_connmanVpn = new ConnmanVpnProxy(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE,
+            if (QDBusConnection::systemBus().interface()->isServiceRegistered(CONNMAN_DBUS_VPN_SERVICE)) {
+                m_connmanVpn = new ConnmanVpnProxy(CONNMAN_DBUS_VPN_SERVICE,
                                                    "/", QDBusConnection::systemBus());
                 m_connmanVpn->RegisterAgent(QDBusObjectPath(LIPSTICK_DBUS_VPNAGENT_PATH));
             }
@@ -148,11 +148,11 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     };
     auto unregisterVpnAgent = [this]() {
         delete m_connmanVpn;
-        m_connmanVpn = 0;
+        m_connmanVpn = nullptr;
     };
 
     QDBusServiceWatcher *connmanVpnWatcher
-            = new QDBusServiceWatcher(LIPSTICK_DBUS_CONNMAN_VPN_SERVICE, systemBus,
+            = new QDBusServiceWatcher(CONNMAN_DBUS_VPN_SERVICE, systemBus,
                                       QDBusServiceWatcher::WatchForRegistration
                                       | QDBusServiceWatcher::WatchForUnregistration,
                                       this);
@@ -199,14 +199,14 @@ HomeApplication *HomeApplication::instance()
 
 void HomeApplication::setUpSignalHandlers()
 {
-    s_quitSignalFd = ::eventfd(0, 0);
-    if (s_quitSignalFd == -1)
+    quitSignalFd = ::eventfd(0, 0);
+    if (quitSignalFd == -1)
         qFatal("Failed to create eventfd object for signal handling");
 
-    m_quitSignalNotifier = new QSocketNotifier(s_quitSignalFd, QSocketNotifier::Read, this);
+    m_quitSignalNotifier = new QSocketNotifier(quitSignalFd, QSocketNotifier::Read, this);
     connect(m_quitSignalNotifier, &QSocketNotifier::activated, this, [this]() {
         uint64_t tmp;
-        ssize_t unused = ::read(s_quitSignalFd, &tmp, sizeof(tmp));
+        ssize_t unused = ::read(quitSignalFd, &tmp, sizeof(tmp));
         Q_UNUSED(unused);
 
         quit();
@@ -274,7 +274,7 @@ void HomeApplication::setDisplayOff()
 bool HomeApplication::event(QEvent *e)
 {
     bool rv = QGuiApplication::event(e);
-    if (LipstickCompositor::instance() == 0
+    if (LipstickCompositor::instance() == nullptr
             && (e->type() == QEvent::ApplicationActivate
                 || e->type() == QEvent::ApplicationDeactivate)) {
         emit homeActiveChanged();
@@ -386,7 +386,7 @@ bool HomeApplication::takeScreenshot(const QString &path)
         result->waitForFinished();
 
         return result->status() == ScreenshotResult::Finished;
-    } else {
-        return false;
     }
+
+    return false;
 }

@@ -446,7 +446,7 @@ void SurfaceNode::setTextureProvider(QSGTextureProvider *p, bool owned)
     if (m_provider) {
         QObject::disconnect(m_provider, SIGNAL(destroyed(QObject *)), this, SLOT(providerDestroyed()));
         QObject::disconnect(m_provider, SIGNAL(textureChanged()), this, SLOT(textureChanged()));
-        m_provider = 0;
+        m_provider = nullptr;
     }
 
     m_provider = p;
@@ -625,8 +625,8 @@ void SurfaceNode::textureChanged()
 
 void SurfaceNode::providerDestroyed()
 {
-    m_provider = 0;
-    setTexture(0);
+    m_provider = nullptr;
+    setTexture(nullptr);
 }
 
 }
@@ -649,20 +649,22 @@ public:
         delete fbo;
         delete t;
     }
-    QSGTexture *texture() const Q_DECL_OVERRIDE
+
+    QSGTexture *texture() const override
     {
         return t;
     }
+
     QSGTexture *t;
     QOpenGLFramebufferObject *fbo;
 };
 
 
 WindowPixmapItem::WindowPixmapItem()
-    : m_item(0), m_id(0), m_opaque(false), m_radius(0), m_xOffset(0), m_yOffset(0)
+    : m_item(nullptr), m_id(0), m_opaque(false), m_radius(0), m_xOffset(0), m_yOffset(0)
     , m_xScale(1), m_yScale(1), m_unmapLock(0), m_hasBuffer(false), m_hasPixmap(false)
     , m_surfaceDestroyed(false), m_haveSnapshot(false)
-    , m_textureProvider(0)
+    , m_textureProvider(nullptr)
 {
     setFlag(ItemHasContents);
 }
@@ -693,9 +695,9 @@ void WindowPixmapItem::setWindowId(int id)
         if (!m_surfaceDestroyed)
             m_item->imageRelease(this);
         m_item->setDelayRemove(false);
-        m_item = 0;
+        m_item = nullptr;
         delete m_unmapLock;
-        m_unmapLock = 0;
+        m_unmapLock = nullptr;
     }
 
     m_surfaceDestroyed = false;
@@ -844,7 +846,7 @@ void WindowPixmapItem::handleWindowSizeChanged()
 
 void WindowPixmapItem::itemDestroyed(QObject *)
 {
-    m_item = 0;
+    m_item = nullptr;
     if (!m_haveSnapshot) {
         m_hasPixmap = false;
         emit hasPixmapChanged();
@@ -855,15 +857,16 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
 {
     SurfaceNode *node = static_cast<SurfaceNode *>(oldNode);
 
-    if (m_item == 0 && !m_haveSnapshot) {
+    if (m_item == nullptr && !m_haveSnapshot) {
         if (node)
-            node->setTextureProvider(0, false);
+            node->setTextureProvider(nullptr, false);
         delete node;
-        return 0;
+        return nullptr;
     }
 
-    QSGTextureProvider *provider = 0;
-    QSGTexture *texture = 0;
+    QSGTextureProvider *provider = nullptr;
+    QSGTexture *texture = nullptr;
+
     if (m_item) {
         provider = m_item->textureProvider();
         texture = provider->texture();
@@ -909,7 +912,7 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
             if (!prov->fbo || prov->fbo->size() != QSize(width(), height())) {
                 delete prov->fbo;
                 delete prov->t;
-                prov->t = 0;
+                prov->t = nullptr;
                 prov->fbo = new QOpenGLFramebufferObject(width(), height());
             }
 
@@ -939,7 +942,7 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
             }
             prov->fbo->release();
             delete m_unmapLock;
-            m_unmapLock = 0;
+            m_unmapLock = nullptr;
             s_snapshotProgram->program.disableAttributeArray(s_snapshotProgram->vertexLocation);
 
             m_haveSnapshot = true;
@@ -948,16 +951,16 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
         provider = m_textureProvider;
     } else if (!provider) {
         if (node)
-            node->setTextureProvider(0, false);
+            node->setTextureProvider(nullptr, false);
         delete node;
-        return 0;
+        return nullptr;
     }
     // The else case here is no buffer and no screenshot, so no way to show a sane image.
     // It should normally not happen, though.
 
     if (provider != m_textureProvider) {
         delete m_textureProvider;
-        m_textureProvider = 0;
+        m_textureProvider = nullptr;
     }
 
     if (m_surfaceDestroyed && m_item) {
@@ -970,10 +973,11 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
             node->setTextureProvider(0, false);
             delete node;
         }
-        return 0;
+        return nullptr;
     }
 
-    if (!node) node = new SurfaceNode;
+    if (!node)
+        node = new SurfaceNode;
 
     node->setTextureProvider(provider, provider == m_textureProvider);
     node->setRect(QRectF(0, 0, width(), height()));
@@ -991,7 +995,7 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
 void WindowPixmapItem::updateItem()
 {
     LipstickCompositor *c = LipstickCompositor::instance();
-    Q_ASSERT(m_item == 0);
+    Q_ASSERT(m_item == nullptr);
 
     if (c && m_id) {
         LipstickCompositorWindow *w = static_cast<LipstickCompositorWindow *>(c->windowForId(m_id));
@@ -1040,7 +1044,7 @@ void WindowPixmapItem::cleanupOpenGL()
 {
     disconnect(window(), &QQuickWindow::sceneGraphInvalidated, this, &WindowPixmapItem::cleanupOpenGL);
     delete s_snapshotProgram;
-    s_snapshotProgram = 0;
+    s_snapshotProgram = nullptr;
 }
 
 #include "windowpixmapitem.moc"

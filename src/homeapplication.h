@@ -120,7 +120,7 @@ signals:
     void displayStateChanged(TouchScreen::DisplayState oldDisplayState, TouchScreen::DisplayState newDisplayState);
 
 protected:
-    virtual bool event(QEvent *);
+    bool event(QEvent *) override;
 
 private:
     void setUpSignalHandlers();
@@ -146,10 +146,6 @@ private slots:
 private:
     friend class LipstickApi;
 
-    //! A signal handler that quits the QApplication
-    static void quitSignalHandler(int);
-    //! An eventfd object for signal handling
-    static int s_quitSignalFd;
     //! Socket notifier for signal handling
     QSocketNotifier *m_quitSignalNotifier;
 
@@ -178,7 +174,7 @@ private:
     bool m_homeReadySent;
 
     VpnAgent *m_vpnAgent;
-    ConnmanVpnProxy * m_connmanVpn;
+    ConnmanVpnProxy *m_connmanVpn;
     ConnectivityMonitor *m_connectivityMonitor;
     bool m_online;
 };

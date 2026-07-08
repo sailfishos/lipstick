@@ -17,12 +17,14 @@
 
 #include "lipstickdbus.h"
 #include "lipstickglobal.h"
+
 #include <QQmlParserStatus>
 #include <QAbstractListModel>
 #include <QDBusContext>
 
 class LipstickCompositor;
 class LipstickCompositorWindow;
+
 class LIPSTICK_EXPORT WindowModel : public QAbstractListModel,
                                     public QQmlParserStatus,
                                     public QDBusContext

@@ -38,22 +38,22 @@ VolumeControl::VolumeControl(QObject *parent)
 {
 }
 
-VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent) :
-    QObject(parent),
-    m_window(nullptr),
-    m_pulseAudioControl(new PulseAudioControl(this)),
-    m_hwKeyResource(nullptr),
-    m_hwKeysAcquired(false),
-    m_hwKeysEnabled(false),
-    m_hwKeysActive(false),
-    m_volume(0),
-    m_maximumVolume(0),
-    m_audioWarning(new MDConfItem("/desktop/nemo/audiowarning", this)),
-    m_safeVolume(0),
-    m_callActive(false),
-    m_upPressed(false),
-    m_downPressed(false),
-    m_mediaState(MediaStateUnknown)
+VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent)
+    : QObject(parent)
+    , m_window(nullptr)
+    , m_pulseAudioControl(new PulseAudioControl(this))
+    , m_hwKeyResource(nullptr)
+    , m_hwKeysAcquired(false)
+    , m_hwKeysEnabled(false)
+    , m_hwKeysActive(false)
+    , m_volume(0)
+    , m_maximumVolume(0)
+    , m_audioWarning(new MDConfItem("/desktop/nemo/audiowarning", this))
+    , m_safeVolume(0)
+    , m_callActive(false)
+    , m_upPressed(false)
+    , m_downPressed(false)
+    , m_mediaState(MediaStateUnknown)
 {
     if (hwKeysCapability) {
         Q_ASSERT_X(!s_hwKeysCreated, Q_FUNC_INFO, "Hw key capable VolumeControl must be a singleton created from C++");

@@ -22,7 +22,7 @@
 #include <QStringList>
 #include <QSharedPointer>
 #include <QBasicTimer>
-#include <QRegExp>
+#include <QRegularExpression>
 
 // Define DEBUG_LAUNCHER if you'd like to see debug messages from the launcher
 // #define DEBUG_LAUNCHER
@@ -68,13 +68,10 @@ class LIPSTICK_EXPORT LauncherItem : public QObject
     Q_PROPERTY(int updatingProgress READ updatingProgress WRITE setUpdatingProgress NOTIFY updatingProgressChanged)
     Q_PROPERTY(bool isBlacklisted READ isBlacklisted WRITE setIsBlacklisted NOTIFY isBlacklistedChanged)
 
-public slots:
-    void setIsLaunching(bool isLaunching = false);
-
 public:
     explicit LauncherItem(const QString &filePath = QString(), QObject *parent = 0);
-    explicit LauncherItem(const QString &packageName, const QString &label,
-            const QString &iconPath, const QString &desktopFile, QObject *parent);
+    LauncherItem(const QString &packageName, const QString &label,
+                 const QString &iconPath, const QString &desktopFile, QObject *parent);
     virtual ~LauncherItem();
 
     LauncherModel::ItemType type() const;
@@ -130,6 +127,9 @@ public:
 
     void invalidateCaches();
 
+public slots:
+    void setIsLaunching(bool isLaunching = false);
+
 signals:
     void itemChanged();
     void isLaunchingChanged();
@@ -152,7 +152,7 @@ private:
 
     QSharedPointer<MDesktopEntry> m_desktopEntry;
     QBasicTimer m_launchingTimeout;
-    QVector<QRegExp> m_mimeTypes;
+    QVector<QRegularExpression> m_mimeTypes;
     bool m_isLaunching;
     bool m_isUpdating;
     bool m_isTemporary;

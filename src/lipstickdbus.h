@@ -35,6 +35,6 @@
 #define LIPSTICK_DBUS_SCREENSHOT_PATH "/org/nemomobile/lipstick/screenshot"
 
 #define LIPSTICK_DBUS_VPNAGENT_PATH "/org/nemomobile/lipstick/vpnagent"
-#define LIPSTICK_DBUS_CONNMAN_VPN_SERVICE "net.connman.vpn"
+#define CONNMAN_DBUS_VPN_SERVICE "net.connman.vpn"
 
 #endif /* LIPSTICK_DBUS_H */

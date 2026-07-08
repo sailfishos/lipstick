@@ -84,7 +84,7 @@ LauncherItem::LauncherItem(const QString &filePath, QObject *parent)
 }
 
 LauncherItem::LauncherItem(const QString &packageName, const QString &label,
-        const QString &iconPath, const QString &desktopFile, QObject *parent)
+                           const QString &iconPath, const QString &desktopFile, QObject *parent)
     : QObject(parent)
     , m_isLaunching(false)
     , m_isUpdating(false)
@@ -532,7 +532,8 @@ bool LauncherItem::isBlacklisted() const
     return m_isBlacklisted;
 }
 
-void LauncherItem::setIsBlacklisted(bool isBlacklisted) {
+void LauncherItem::setIsBlacklisted(bool isBlacklisted)
+{
     if (m_isBlacklisted != isBlacklisted) {
         m_isBlacklisted = isBlacklisted;
         emit isBlacklistedChanged();
@@ -560,13 +561,16 @@ bool LauncherItem::canOpenMimeType(const QString &mimeType)
     if (!m_mimeTypesPopulated && m_desktopEntry) {
         m_mimeTypesPopulated = true;
 
-        for (const QString &mimeType : m_desktopEntry->mimeType()) {
-            m_mimeTypes.append(QRegExp(mimeType, Qt::CaseInsensitive, QRegExp::Wildcard));
+        for (QString mimeType : m_desktopEntry->mimeType()) {
+            m_mimeTypes.append(QRegularExpression(mimeType.replace("*", ".*"),
+                                                  QRegularExpression::CaseInsensitiveOption));
         }
     }
 
-    for (const QRegExp &candidate : m_mimeTypes) {
-        if (candidate.exactMatch(mimeType)) {
+    for (const QRegularExpression &candidate : m_mimeTypes) {
+        QRegularExpressionMatch match = candidate.match(mimeType);
+
+        if (match.captured().length() == mimeType.length()) {
             return true;
         }
     }

@@ -28,15 +28,16 @@ public:
     ~AlienSurface();
 
 protected:
-    bool runOperation(QWaylandSurfaceOp *op) Q_DECL_OVERRIDE;
+    bool runOperation(QWaylandSurfaceOp *op) override;
 
-    void alien_surface_destroy_resource(Resource *resource) Q_DECL_OVERRIDE;
-    void alien_surface_destroy(Resource *resource) Q_DECL_OVERRIDE;
-    void alien_surface_set_title(Resource *resource, const QString &title) Q_DECL_OVERRIDE;
-    void alien_surface_ack_configure(Resource *resource, uint32_t serial) Q_DECL_OVERRIDE;
-    void alien_surface_request_state(Resource *resource, wl_array *states, uint32_t serial) Q_DECL_OVERRIDE;
-    void alien_surface_set_minimized(Resource *resource) Q_DECL_OVERRIDE;
-    void alien_surface_terminated(Resource *resource) Q_DECL_OVERRIDE;
+    void alien_surface_destroy_resource(Resource *resource) override;
+    void alien_surface_destroy(Resource *resource) override;
+    void alien_surface_set_title(Resource *resource, const QString &title) override;
+    void alien_surface_ack_configure(Resource *resource, uint32_t serial) override;
+    void alien_surface_request_state(Resource *resource, wl_array *states, uint32_t serial) override;
+    void alien_surface_set_minimized(Resource *resource) override;
+    void alien_surface_terminated(Resource *resource) override;
+
 private:
     void configure(bool hasBuffer);
     void sendConfigure(int width, int height);

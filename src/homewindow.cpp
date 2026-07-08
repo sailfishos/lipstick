@@ -290,4 +290,3 @@ void HomeWindow::setContextProperty(const QString &property, QObject *value)
 {
     d->context->setContextProperty(property, value);
 }
-

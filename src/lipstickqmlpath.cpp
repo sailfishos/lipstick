@@ -19,10 +19,8 @@
 #include <QFile>
 #include <QDebug>
 
-
 // Private list of paths
 static QStringList g_paths;
-
 
 void QmlPath::append(const QString &path)
 {
