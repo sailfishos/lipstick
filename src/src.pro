@@ -66,7 +66,6 @@ HEADERS += \
     notifications/categorydefinitionstore.h \
     notifications/batterynotifier.h \
     notifications/notificationfeedbackplayer.h \
-    notifications/androidprioritystore.h \
     screenlock/screenlock.h \
     screenlock/screenlockadaptor.h \
     touchscreen/touchscreen_p.h \
@@ -105,7 +104,6 @@ SOURCES += \
     notifications/notificationlistmodel.cpp \
     notifications/notificationpreviewpresenter.cpp \
     notifications/batterynotifier.cpp \
-    notifications/androidprioritystore.cpp \
     screenlock/screenlock.cpp \
     screenlock/screenlockadaptor.cpp \
     touchscreen/touchscreen.cpp \
@@ -211,10 +209,6 @@ engineering_english_install.CONFIG += no_check_exist
 QMAKE_EXTRA_TARGETS += ts engineering_english
 PRE_TARGETDEPS += ts engineering_english
 
-androidpriorities.files = androidnotificationpriorities
-androidpriorities.path = /usr/share/lipstick/
-
-INSTALLS += androidpriorities
-OTHER_FILES += androidnotificationpriorities *.xml screenlock/screenlock.xml notifications/notificationmanager.xml
+OTHER_FILES += *.xml screenlock/screenlock.xml notifications/notificationmanager.xml
 
 include(notificationcategories/notificationcategories.pri)

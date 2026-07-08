@@ -35,7 +35,7 @@
 #include <sys/statfs.h>
 #include <unistd.h>
 #include <limits>
-#include "androidprioritystore.h"
+
 #include "categorydefinitionstore.h"
 #include "notificationmanageradaptor.h"
 #include "notificationmanager.h"
@@ -46,9 +46,6 @@
 #else
 #define NOTIFICATIONS_DEBUG(things)
 #endif
-
-//! The android priority store path
-static const char *ANDROID_PRIORITY_DEFINITION_PATH = "/usr/share/lipstick/androidnotificationpriorities";
 
 //! The category definitions directory
 static const char *CATEGORY_DEFINITION_FILE_DIRECTORY = "/usr/share/lipstick/notificationcategories";
@@ -280,7 +277,6 @@ NotificationManager::NotificationManager(QObject *parent, bool owner)
       m_previousNotificationID(0),
       m_categoryDefinitionStore(new CategoryDefinitionStore(CATEGORY_DEFINITION_FILE_DIRECTORY,
                                                             MAX_CATEGORY_DEFINITION_FILES, this)),
-      m_androidPriorityStore(new AndroidPriorityStore(ANDROID_PRIORITY_DEFINITION_PATH, this)),
       m_database(new QSqlDatabase),
       m_committed(true),
       m_nextExpirationTime(0)
@@ -490,22 +486,13 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
     }
 
     QPair<QString, QString> pidProperties;
-    bool androidOrigin(false);
     if (clientPid > 0) {
         // Look up the properties of the originating process
         pidProperties = processProperties(clientPid);
-        // Only Alien4 has special notification handling
-        androidOrigin = pidProperties.first == QLatin1String("alien_bridge_server");
     }
 
-    // Allow notifications originating from android to be differentiated from native app notifications
-    QString disambiguatedAppName(appName);
-    if (androidOrigin) {
-        disambiguatedAppName.append("-android");
-    }
-
-    LipstickNotification notificationData(
-                appName, appName, disambiguatedAppName, id, appIcon, summary, body, actions, hints_, expireTimeout);
+    LipstickNotification notificationData(appName, appName, appName, id, appIcon,
+                                          summary, body, actions, hints_, expireTimeout);
     applyCategoryDefinition(&notificationData);
     hints_ = notificationData.hints();
 
@@ -532,7 +519,7 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
 
         notification->setAppName(notificationData.appName());
         notification->setExplicitAppName(notificationData.explicitAppName());
-        notification->setDisambiguatedAppName(notificationData.disambiguatedAppName());
+        notification->setDisambiguatedAppName(notificationData.appName());
         notification->setSummary(notificationData.summary());
         notification->setBody(notificationData.body());
         notification->setActions(notificationData.actions());
@@ -556,58 +543,25 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
     const QString previewSummary(hints_.value(LipstickNotification::HINT_PREVIEW_SUMMARY).toString());
     const QString previewBody(hints_.value(LipstickNotification::HINT_PREVIEW_BODY).toString());
 
-    if (androidOrigin) {
-        // If this notification includes a preview, ensure it has a non-empty body and summary
-        if (!previewSummary.isEmpty()) {
-            if (previewBody.isEmpty()) {
-                hints_.insert(LipstickNotification::HINT_PREVIEW_BODY, QStringLiteral(" "));
-            }
-        }
-        if (!previewBody.isEmpty()) {
-            if (previewSummary.isEmpty()) {
-                hints_.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, QStringLiteral(" "));
-            }
-        }
+    if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {
+        notification->setAppName(pidProperties.first);
+    }
+    if (notification->appIcon().isEmpty() && !pidProperties.second.isEmpty()) {
+        notification->setAppIcon(pidProperties.second, LipstickNotification::InferredValue);
+    }
 
-        // See if this notification has elevated priority and feedback
-        AndroidPriorityStore::PriorityDetails priority;
-        const QString packageName(hints_.value(LipstickNotification::HINT_ORIGIN_PACKAGE).toString());
-        if (!packageName.isEmpty()) {
-            priority = m_androidPriorityStore->packageDetails(packageName);
-        } else {
-            priority = m_androidPriorityStore->appDetails(appName);
-        }
-        hints_.insert(LipstickNotification::HINT_PRIORITY, priority.first);
+    // Use the summary and body as fallback values for previewSummary and previewBody.
+    // (This can be avoided by setting them explicitly to empty strings.)
+    if (!hints_.contains(LipstickNotification::HINT_PREVIEW_SUMMARY)) {
+        hints_.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, summary);
+    }
+    if (!hints_.contains(LipstickNotification::HINT_PREVIEW_BODY)) {
+        hints_.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
+    }
 
-        if (!priority.second.isEmpty()) {
-            hints_.insert(LipstickNotification::HINT_FEEDBACK, priority.second);
-            // Also turn the display on if required, but only if it's really playing vibra or sound feedback
-            if (hints_.value(LipstickNotification::HINT_VIBRA, false).toBool()
-                    || !hints_.value(LipstickNotification::HINT_SUPPRESS_SOUND, false).toBool()) {
-                hints_.insert(LipstickNotification::HINT_DISPLAY_ON, true);
-            }
-        }
-    } else {
-        if (notification->appName().isEmpty() && !pidProperties.first.isEmpty()) {
-            notification->setAppName(pidProperties.first);
-        }
-        if (notification->appIcon().isEmpty() && !pidProperties.second.isEmpty()) {
-            notification->setAppIcon(pidProperties.second, LipstickNotification::InferredValue);
-        }
-
-        // Use the summary and body as fallback values for previewSummary and previewBody.
-        // (This can be avoided by setting them explicitly to empty strings.)
-        if (!hints_.contains(LipstickNotification::HINT_PREVIEW_SUMMARY)) {
-            hints_.insert(LipstickNotification::HINT_PREVIEW_SUMMARY, summary);
-        }
-        if (!hints_.contains(LipstickNotification::HINT_PREVIEW_BODY)) {
-            hints_.insert(LipstickNotification::HINT_PREVIEW_BODY, body);
-        }
-
-        // Unspecified priority should result in medium priority to permit low priorities
-        if (!hints_.contains(LipstickNotification::HINT_PRIORITY)) {
-            hints_.insert(LipstickNotification::HINT_PRIORITY, DefaultNotificationPriority);
-        }
+    // Unspecified priority should result in medium priority to permit low priorities
+    if (!hints_.contains(LipstickNotification::HINT_PRIORITY)) {
+        hints_.insert(LipstickNotification::HINT_PRIORITY, DefaultNotificationPriority);
     }
 
     notification->setHints(hints_);

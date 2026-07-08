@@ -25,7 +25,6 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 
-class AndroidPriorityStore;
 class CategoryDefinitionStore;
 class QSqlDatabase;
 class QDBusPendingCallWatcher;
@@ -496,9 +495,6 @@ private:
 
     //! The category definition store
     CategoryDefinitionStore *m_categoryDefinitionStore;
-
-    //! The Android application priority store
-    AndroidPriorityStore *m_androidPriorityStore;
 
     //! Database for the notifications
     QSqlDatabase *m_database;
