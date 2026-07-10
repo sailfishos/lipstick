@@ -20,7 +20,7 @@
 #include "notificationmanageradaptor_stub.h"
 #include "lipsticknotification.h"
 #include "categorydefinitionstore_stub.h"
-#include "androidprioritystore_stub.h"
+
 #include <QSqlQuery>
 #include <QSqlTableModel>
 #include <QSqlRecord>
