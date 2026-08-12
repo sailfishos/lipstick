@@ -50,8 +50,8 @@ signals:
     void itemAdded(int index);
 
 protected:
-    virtual void classBegin();
-    virtual void componentComplete();
+    void classBegin() override;
+    void componentComplete() override;
 
     virtual bool approveWindow(LipstickCompositorWindow *);
 

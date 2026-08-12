@@ -33,12 +33,16 @@ NotificationListModel::NotificationListModel(QObject *parent)
     : QObjectListModel(parent)
     , m_populated(false)
 {
-    connect(NotificationManager::instance(), SIGNAL(notificationsModified(const QList<uint> &)), this, SLOT(updateNotifications(const QList<uint> &)));
-    connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), this, SLOT(removeNotification(uint)));
-    connect(NotificationManager::instance(), SIGNAL(notificationsRemoved(const QList<uint> &)), this, SLOT(removeNotifications(const QList<uint> &)));
-    connect(this, SIGNAL(clearRequested()), NotificationManager::instance(), SLOT(removeUserRemovableNotifications()));
+    connect(NotificationManager::instance(), &NotificationManager::notificationsModified,
+            this, &NotificationListModel::updateNotifications);
+    connect(NotificationManager::instance(), &NotificationManager::notificationRemoved,
+            this, &NotificationListModel::removeNotification);
+    connect(NotificationManager::instance(), &NotificationManager::notificationsRemoved,
+            this, &NotificationListModel::removeNotifications);
+    connect(this, &NotificationListModel::clearRequested,
+            NotificationManager::instance(), &NotificationManager::removeUserRemovableNotifications);
 
-    QTimer::singleShot(0, this, SLOT(init()));
+    QTimer::singleShot(0, this, &NotificationListModel::init);
 }
 
 NotificationListModel::~NotificationListModel()

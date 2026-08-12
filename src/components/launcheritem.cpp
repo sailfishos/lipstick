@@ -344,18 +344,18 @@ bool LauncherItem::shouldDisplay() const
 {
     if (m_desktopEntry.isNull()) {
         return m_isTemporary;
-    } else {
-        return !m_desktopEntry->noDisplay() && !m_desktopEntry->notShowIn().contains(QStringLiteral("X-MeeGo"));
     }
+
+    return !m_desktopEntry->noDisplay() && !m_desktopEntry->notShowIn().contains(QStringLiteral("X-MeeGo"));
 }
 
 bool LauncherItem::isSandboxed() const
 {
     if (m_sandboxingInfoFetched) {
         return m_sandboxed;
-    } else {
-        return !m_desktopEntry.isNull() && m_desktopEntry->isSandboxed();
     }
+
+    return !m_desktopEntry.isNull() && m_desktopEntry->isSandboxed();
 }
 
 bool LauncherItem::isValid() const
@@ -467,6 +467,7 @@ void LauncherItem::launchWithArguments(const QStringList &arguments)
                     NULL,
                     NULL,
                     &error);
+
         if (error != NULL) {
             qCWarning(lcLipstickAppLaunchLog) << "Failed to execute" << filename() << error->message;
             g_error_free(error);
