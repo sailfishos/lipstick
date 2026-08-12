@@ -56,6 +56,8 @@ protected:
     virtual bool approveWindow(LipstickCompositorWindow *);
 
 public slots:
+    void raiseProcessWindow(const QString &binaryName);
+    // deprecated
     void launchProcess(const QString &binaryName);
 
 private:

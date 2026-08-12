@@ -190,8 +190,14 @@ bool WindowModel::isPrivileged() const
     return true;
 }
 
-// used by mapplauncherd to bring a binary to the front
 void WindowModel::launchProcess(const QString &binaryName)
+{
+    qWarning() << "Deprecated Lipstick WindowModel.launchProcess d-bus method called. Use raiseProcessWindow.";
+    raiseProcessWindow(binaryName);
+}
+
+// used by mapplauncherd to bring a binary to the front
+void WindowModel::raiseProcessWindow(const QString &binaryName)
 {
     LipstickCompositor *c = LipstickCompositor::instance();
     if (!m_complete || !c || !isPrivileged())
