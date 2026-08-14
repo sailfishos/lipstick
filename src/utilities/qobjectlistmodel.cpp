@@ -84,7 +84,8 @@ void QObjectListModel::insertItem(int index, QObject *item)
 {
     beginInsertRows(QModelIndex(), index, index);
     _list->insert(index, item);
-    connect(item, SIGNAL(destroyed()), this, SLOT(removeDestroyedItem()));
+    connect(item, &QObject::destroyed,
+            this, &QObjectListModel::removeDestroyedItem);
     endInsertRows();
 
     emit itemAdded(item);
@@ -103,7 +104,8 @@ void QObjectListModel::addItems(const QList<QObject *> &items)
         beginInsertRows(QModelIndex(), index, (index + items.count() - 1));
         foreach (QObject *item, items) {
             _list->append(item);
-            connect(item, SIGNAL(destroyed()), this, SLOT(removeDestroyedItem()));
+            connect(item, &QObject::destroyed,
+                    this, &QObjectListModel::removeDestroyedItem);
         }
         endInsertRows();
 
@@ -126,7 +128,8 @@ void QObjectListModel::removeItem(QObject *item)
     if (index >= 0) {
         beginRemoveRows(QModelIndex(), index, index);
         _list->removeAt(index);
-        disconnect(item, SIGNAL(destroyed()), this, SLOT(removeDestroyedItem()));
+        disconnect(item, &QObject::destroyed,
+                   this, &QObjectListModel::removeDestroyedItem);
         endRemoveRows();
         emit itemRemoved(item);
         emit itemCountChanged();
@@ -166,7 +169,8 @@ void QObjectListModel::removeItems(const QList<QObject *> &items)
                 --last;
 
                 _list->removeAt(removal.first);
-                disconnect(removal.second, SIGNAL(destroyed()), this, SLOT(removeDestroyedItem()));
+                disconnect(removal.second, &QObject::destroyed,
+                           this, &QObjectListModel::removeDestroyedItem);
             }
             endRemoveRows();
 
@@ -185,7 +189,8 @@ void QObjectListModel::removeItems(const QList<QObject *> &items)
 void QObjectListModel::removeItem(int index)
 {
     beginRemoveRows(QModelIndex(), index, index);
-    disconnect(((QObject*)_list->at(index)), SIGNAL(destroyed()), this, SLOT(removeDestroyedItem()));
+    disconnect(((QObject*)_list->at(index)), &QObject::destroyed,
+               this, &QObjectListModel::removeDestroyedItem);
     QObject *item = _list->takeAt(index);
     endRemoveRows();
     emit itemRemoved(item);

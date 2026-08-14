@@ -50,12 +50,14 @@ signals:
     void itemAdded(int index);
 
 protected:
-    virtual void classBegin();
-    virtual void componentComplete();
+    void classBegin() override;
+    void componentComplete() override;
 
     virtual bool approveWindow(LipstickCompositorWindow *);
 
 public slots:
+    void raiseProcessWindow(const QString &binaryName);
+    // deprecated
     void launchProcess(const QString &binaryName);
 
 private:
