@@ -72,10 +72,10 @@ void NotificationListModel::init()
 
         sortNotifications(initialNotifications);
         addItems(initialNotifications);
-    }
 
-    m_populated = true;
-    emit populatedChanged(m_populated);
+        m_populated = true;
+        emit populatedChanged(m_populated);
+    }
 }
 
 void NotificationListModel::updateNotification(uint id)
