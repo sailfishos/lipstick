@@ -58,7 +58,7 @@ void CategoryDefinitionStore::updateCategoryDefinitionFileList()
         QSet<QString> files = categoryDefinitionsDir.entryList(filter, QDir::Files).toSet();
         QSet<QString> removedFiles = m_categoryDefinitionFiles - files;
 
-        foreach(const QString &removedCategory, removedFiles) {
+        foreach (const QString &removedCategory, removedFiles) {
             QString category = QFileInfo(removedCategory).completeBaseName();
             QString categoryDefinitionPath = m_categoryDefinitionsPath + removedCategory;
             m_categoryDefinitionPathWatcher.removePath(categoryDefinitionPath);
@@ -69,7 +69,7 @@ void CategoryDefinitionStore::updateCategoryDefinitionFileList()
         m_categoryDefinitionFiles = files;
 
         // Add category definition files to watcher
-        foreach(QString file, m_categoryDefinitionFiles){
+        foreach (QString file, m_categoryDefinitionFiles){
             QString categoryDefinitionFilePath = m_categoryDefinitionsPath + file;
             if (!m_categoryDefinitionPathWatcher.files().contains(categoryDefinitionFilePath)) {
                 m_categoryDefinitionPathWatcher.addPath(categoryDefinitionFilePath);

@@ -199,7 +199,7 @@ int parseArguments(int argc, char *argv[])
                 action.append(actionList.takeFirst()).append(' ');
                 action.append(actionList.takeFirst());
 
-                foreach(const QString &arg, actionList) {
+                foreach (const QString &arg, actionList) {
                     // Serialize the QVariant into a QBuffer
                     QBuffer buffer;
                     buffer.open(QIODevice::ReadWrite);

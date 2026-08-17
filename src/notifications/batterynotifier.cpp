@@ -235,7 +235,7 @@ void BatteryNotifier::onEvaluateStateTimeout()
                                        m_previousState, m_currentState,
                                        toRemove, toSend);
     removeNotifications(toRemove);
-    foreach(NotificationType type, toSend)
+    foreach (NotificationType type, toSend)
         sendNotification(type);
     m_previousState = m_currentState;
     updateLowBatteryNotifier();
