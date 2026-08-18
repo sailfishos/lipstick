@@ -879,7 +879,7 @@ LauncherItem *LauncherModel::temporaryItemToReplace()
         // Only one item. It must be this.
         item = m_temporaryLaunchers.first();
     } else {
-        foreach(LauncherItem *tempItem, m_temporaryLaunchers) {
+        foreach (LauncherItem *tempItem, m_temporaryLaunchers) {
             if (!tempItem->isUpdating()) {
                 if (!item) {
                     // Pick the finished item.

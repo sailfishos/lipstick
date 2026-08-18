@@ -57,13 +57,13 @@ bool NotificationListModel::populated() const
 void NotificationListModel::init()
 {
     if (m_populated) {
-        foreach(uint id, NotificationManager::instance()->notificationIds()) {
+        foreach (uint id, NotificationManager::instance()->notificationIds()) {
             updateNotification(id);
         }
     } else {
         QList<QObject *> initialNotifications;
 
-        foreach(uint id, NotificationManager::instance()->notificationIds()) {
+        foreach (uint id, NotificationManager::instance()->notificationIds()) {
             LipstickNotification *notification = NotificationManager::instance()->notification(id);
             if (notificationShouldBeShown(notification)) {
                 initialNotifications.append(notification);
@@ -72,17 +72,17 @@ void NotificationListModel::init()
 
         sortNotifications(initialNotifications);
         addItems(initialNotifications);
-    }
 
-    m_populated = true;
-    emit populatedChanged(m_populated);
+        m_populated = true;
+        emit populatedChanged(m_populated);
+    }
 }
 
 void NotificationListModel::updateNotification(uint id)
 {
     LipstickNotification *notification = NotificationManager::instance()->notification(id);
 
-    if (notification != 0) {
+    if (notification) {
         int currentIndex = indexOf(notification);
         if (notificationShouldBeShown(notification)) {
             // Place the notifications in the model latest first, moving existing notifications if necessary

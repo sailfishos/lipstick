@@ -18,16 +18,6 @@
 #include "notificationmanager_stub.h"
 #include "lipsticknotification.h"
 
-void QTimer::singleShot(int, const QObject *receiver, const char *member)
-{
-    // The "member" string is of form "1member()", so remove the trailing 1 and the ()
-    int memberLength = strlen(member) - 3;
-    char modifiedMember[memberLength + 1];
-    strncpy(modifiedMember, member + 1, memberLength);
-    modifiedMember[memberLength] = 0;
-    QMetaObject::invokeMethod(const_cast<QObject *>(receiver), modifiedMember, Qt::DirectConnection);
-}
-
 void Ut_NotificationListModel::init()
 {
 }
@@ -40,18 +30,24 @@ void Ut_NotificationListModel::cleanup()
 void Ut_NotificationListModel::testSignalConnections()
 {
     NotificationListModel model;
-    QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationsModified(const QList<uint> &)), &model, SLOT(updateNotifications(const QList<uint> &))), true);
-    QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)), &model, SLOT(removeNotification(uint))), true);
-    QCOMPARE(disconnect(NotificationManager::instance(), SIGNAL(notificationsRemoved(const QList<uint> &)), &model, SLOT(removeNotifications(const QList<uint> &))), true);
-    QCOMPARE(disconnect(&model, SIGNAL(clearRequested()), NotificationManager::instance(), SLOT(removeUserRemovableNotifications())), true);
+    QVERIFY(disconnect(NotificationManager::instance(), &NotificationManager::notificationsModified,
+                        &model, &NotificationListModel::updateNotifications));
+    QVERIFY(disconnect(NotificationManager::instance(), &NotificationManager::notificationRemoved,
+                        &model, &NotificationListModel::removeNotification));
+    QVERIFY(disconnect(NotificationManager::instance(), &NotificationManager::notificationsRemoved,
+                        &model, &NotificationListModel::removeNotifications));
+    QVERIFY(disconnect(&model, &NotificationListModel::clearRequested,
+                        NotificationManager::instance(), &NotificationManager::removeUserRemovableNotifications));
 }
 
 void Ut_NotificationListModel::testModelPopulatesOnConstruction()
 {
-    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body",
+                                      QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
+    QTest::qWait(1); // allow model to trigger init
     QCOMPARE(model.populated(), true);
     QCOMPARE(model.itemCount(), 1);
     QCOMPARE(model.get(0), &notification);
@@ -59,10 +55,12 @@ void Ut_NotificationListModel::testModelPopulatesOnConstruction()
 
 void Ut_NotificationListModel::testNotificationIsOnlyAddedIfNotAlreadyAdded()
 {
-    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body",
+                                      QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
+    QTest::qWait(1);
     model.updateNotification(1);
     QCOMPARE(model.itemCount(), 1);
 }
@@ -84,27 +82,33 @@ void Ut_NotificationListModel::testNotificationIsNotAddedIfNoSummaryOrBody()
     QFETCH(QString, body);
     QFETCH(int, addItemCount);
 
-    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", summary, body, QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", summary, body,
+                                      QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
+    QTest::qWait(1);
     QCOMPARE(model.itemCount(), addItemCount);
 }
 
 void Ut_NotificationListModel::testAlreadyAddedNotificationIsRemovedIfNoLongerAddable()
 {
-    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "", "", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "", "",
+                                      QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
+    QTest::qWait(1);
     QCOMPARE(model.itemCount(), 0);
 }
 
 void Ut_NotificationListModel::testNotificationRemoval()
 {
-    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body",
+                                      QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
     NotificationListModel model;
+    QTest::qWait(1);
     model.removeNotification(1);
     QCOMPARE(model.itemCount(), 0);
     QCOMPARE(model.populated(), true);
@@ -113,15 +117,19 @@ void Ut_NotificationListModel::testNotificationRemoval()
 void Ut_NotificationListModel::testNotificationOrdering()
 {
     NotificationListModel model;
+    QTest::qWait(1);
     QVariantHash hints1;
     QVariantHash hints2;
     QVariantHash hints3;
     hints1.insert(LipstickNotification::HINT_TIMESTAMP, QDateTime(QDate(2013, 1, 1), QTime(12, 34, 56)));
     hints2.insert(LipstickNotification::HINT_TIMESTAMP, QDateTime(QDate(2013, 1, 3), QTime(12, 34, 56)));
     hints3.insert(LipstickNotification::HINT_TIMESTAMP, QDateTime(QDate(2013, 1, 5), QTime(12, 34, 56)));
-    LipstickNotification notification1("appName1", "appName1", "appName1", 1, "appIcon1", "summary1", "body1", QStringList() << "action1", hints1, 1);
-    LipstickNotification notification2("appName2", "appName2", "appName2", 2, "appIcon2", "summary2", "body2", QStringList() << "action2", hints2, 1);
-    LipstickNotification notification3("appName3", "appName3", "appName3", 3, "appIcon3", "summary3", "body3", QStringList() << "action3", hints3, 1);
+    LipstickNotification notification1("appName1", "appName1", "appName1", 1, "appIcon1", "summary1", "body1",
+                                       QStringList() << "action1", hints1, 1);
+    LipstickNotification notification2("appName2", "appName2", "appName2", 2, "appIcon2", "summary2", "body2",
+                                       QStringList() << "action2", hints2, 1);
+    LipstickNotification notification3("appName3", "appName3", "appName3", 3, "appIcon3", "summary3", "body3",
+                                       QStringList() << "action3", hints3, 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification1);
     model.updateNotification(1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification3);
@@ -152,11 +160,13 @@ void Ut_NotificationListModel::testNotificationOrdering()
 
 void Ut_NotificationListModel::testNotificationUpdate()
 {
-    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body", QStringList() << "action", QVariantHash(), 1);
+    LipstickNotification notification("appName", "appName", "appName", 1, "appIcon", "summary", "body",
+                                      QStringList() << "action", QVariantHash(), 1);
     gNotificationManagerStub->stubSetReturnValue("notificationIds", QList<uint>() << 1);
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
 
     NotificationListModel model;
+    QTest::qWait(1);
     QCOMPARE(model.itemCount(), 1);
     QCOMPARE(model.get(0)->property("id").value<uint>(), 1u);
 
@@ -195,6 +205,7 @@ void Ut_NotificationListModel::testRemoteActions()
     gNotificationManagerStub->stubSetReturnValue("notification", &notification);
 
     NotificationListModel model;
+    QTest::qWait(1);
     QCOMPARE(model.itemCount(), 1);
     LipstickNotification *modelNotification(qobject_cast<LipstickNotification *>(model.get(0)));
     QCOMPARE(modelNotification, &notification);

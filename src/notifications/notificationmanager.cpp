@@ -1373,7 +1373,7 @@ void NotificationManager::execSQL(const QString &command, const QVariantList &ar
     QSqlQuery query(*m_database);
     query.prepare(command);
 
-    foreach(const QVariant &arg, args) {
+    foreach (const QVariant &arg, args) {
         query.addBindValue(arg);
     }
 
@@ -1507,7 +1507,7 @@ void NotificationManager::removeUserRemovableNotifications()
     closeNotifications(closableNotifications, NotificationDismissedByUser);
 
     // Remove any remaining notifications
-    foreach(uint id, m_notifications.keys()) {
+    foreach (uint id, m_notifications.keys()) {
         removeNotificationIfUserRemovable(id);
     }
 }
