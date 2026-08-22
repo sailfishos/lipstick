@@ -385,6 +385,8 @@ LauncherFolderModel::LauncherFolderModel(QObject *parent)
     connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::updateblacklistedApplications);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::categoriesChanged, this, &LauncherFolderModel::categoriesChanged);
+    connect(m_launcherModel, &LauncherModel::replacementIdentityKeyChanged,
+            this, &LauncherFolderModel::replacementIdentityKeyChanged);
 
     initialize();
 }
@@ -400,6 +402,8 @@ LauncherFolderModel::LauncherFolderModel(InitializationMode, QObject *parent)
     connect(m_launcherModel, &LauncherModel::blacklistedApplicationsChanged, this, &LauncherFolderModel::updateblacklistedApplications);
     connect(m_launcherModel, &LauncherModel::iconDirectoriesChanged, this, &LauncherFolderModel::iconDirectoriesChanged);
     connect(m_launcherModel, &LauncherModel::categoriesChanged, this, &LauncherFolderModel::categoriesChanged);
+    connect(m_launcherModel, &LauncherModel::replacementIdentityKeyChanged,
+            this, &LauncherFolderModel::replacementIdentityKeyChanged);
 }
 
 void LauncherFolderModel::initialize()
@@ -415,6 +419,8 @@ void LauncherFolderModel::initialize()
             this, SLOT(appRemoved(QObject*)));
     connect(m_launcherModel, SIGNAL(itemAdded(QObject*)),
             this, SLOT(appAdded(QObject*)));
+    connect(m_launcherModel, &LauncherModel::launcherReplaced,
+            this, &LauncherFolderModel::onAppReplaced);
     connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::notifyLaunching,
             this, &LauncherFolderModel::notifyLaunching);
     connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::canceledNotifyLaunching,
@@ -592,6 +598,16 @@ QStringList LauncherFolderModel::blacklistedApplications() const
     return m_launcherModel->blacklistedApplications();
 }
 
+QString LauncherFolderModel::replacementIdentityKey() const
+{
+    return m_launcherModel->replacementIdentityKey();
+}
+
+void LauncherFolderModel::setReplacementIdentityKey(const QString &key)
+{
+    m_launcherModel->setReplacementIdentityKey(key);
+}
+
 // Move item to folder at index. If index < 0 the item will be appended.
 bool LauncherFolderModel::moveToFolder(QObject *item, LauncherFolderItem *folder, int index)
 {
@@ -627,6 +643,17 @@ void LauncherFolderModel::appRemoved(QObject *item)
         folder->removeItem(item);
         scheduleSave();
     }
+}
+
+void LauncherFolderModel::onAppReplaced(LauncherItem *item, const QString &oldFilePath)
+{
+    if (m_blacklistedApplications.contains(oldFilePath)) {
+        const QString position = m_blacklistedApplications.take(oldFilePath);
+        m_blacklistedApplications.insert(item->filePath(), position);
+    }
+
+    updateblacklistedApplications();
+    scheduleSave();
 }
 
 // An app added to system

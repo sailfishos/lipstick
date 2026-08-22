@@ -30,6 +30,9 @@ public:
     QString m_fileName;
 };
 
+static QHash<QString, QHash<QString, QString> > desktopEntryValues;
+static QHash<QString, QStringList> desktopEntryMimeTypes;
+
 MDesktopEntry::MDesktopEntry(const QString &fileName)
     : d_ptr(new MDesktopEntryPrivate(fileName))
 {
@@ -76,6 +79,12 @@ MDesktopEntry::categories() const
     return QStringList();
 }
 
+QStringList
+MDesktopEntry::mimeType() const
+{
+    return desktopEntryMimeTypes.value(d_ptr->m_fileName);
+}
+
 QString
 MDesktopEntry::nameUnlocalized() const
 {
@@ -109,10 +118,7 @@ MDesktopEntry::hash() const
 QString
 MDesktopEntry::value(const QString &group, const QString &key) const
 {
-    Q_UNUSED(key)
-    Q_UNUSED(group)
-
-    return QString();
+    return desktopEntryValues.value(d_ptr->m_fileName).value(group + QLatin1Char('/') + key);
 }
 
 void QTimer::singleShot(int, const QObject *receiver, const char *member)
@@ -132,6 +138,8 @@ bool QFile::exists() const
 
 void Ut_LauncherModel::init()
 {
+    desktopEntryValues.clear();
+    desktopEntryMimeTypes.clear();
     launcherModel = new LauncherModel();
 }
 
@@ -143,13 +151,13 @@ void Ut_LauncherModel::cleanup()
 void Ut_LauncherModel::testUpdating()
 {
     // Test if basic updating behavior works for a random package
-    QVERIFY(launcherModel->packageInModel("somepackage") == NULL);
+    QVERIFY(launcherModel->packageInModel("somepackage") == nullptr);
 
     launcherModel->updatingStarted("somepackage", "Some Package",
                                    "/usr/share/pixmaps/example.png", "", "org.example.caller");
 
     auto item = launcherModel->packageInModel("somepackage");
-    QVERIFY(item != NULL);
+    QVERIFY(item != nullptr);
     QVERIFY(item->updatingProgress() == -1);
     QVERIFY(item->isTemporary());
     QVERIFY(launcherModel->temporaryItemToReplace() == item);
@@ -166,8 +174,8 @@ void Ut_LauncherModel::testUpdating()
 
     launcherModel->updatingFinished("somepackage", "org.example.caller");
 
-    QVERIFY(launcherModel->packageInModel("somepackage") == NULL);
-    QVERIFY(launcherModel->temporaryItemToReplace() == NULL);
+    QVERIFY(launcherModel->packageInModel("somepackage") == nullptr);
+    QVERIFY(launcherModel->temporaryItemToReplace() == nullptr);
 }
 
 void Ut_LauncherModel::testUpdatingFileAppears()
@@ -176,7 +184,7 @@ void Ut_LauncherModel::testUpdatingFileAppears()
     // launcher list, and that when the file appears during the updating phase,
     // it will properly be transformed into a non-temporary launcher item and
     // persist even after the updating phase has finished.
-    QVERIFY(launcherModel->packageInModel("somepackage") == NULL);
+    QVERIFY(launcherModel->packageInModel("somepackage") == nullptr);
 
     const QString DESKTOPFILE("/usr/share/applications/lipstick_ut_launchermodel.desktop");
 
@@ -185,7 +193,7 @@ void Ut_LauncherModel::testUpdatingFileAppears()
                                    "org.example.caller");
 
     auto item = launcherModel->packageInModel("somepackage");
-    QVERIFY(item != NULL);
+    QVERIFY(item != nullptr);
     QVERIFY(item->updatingProgress() == -1);
     QVERIFY(item->isTemporary());
     QVERIFY(launcherModel->temporaryItemToReplace() == item);
@@ -204,8 +212,73 @@ void Ut_LauncherModel::testUpdatingFileAppears()
     QVERIFY(launcherModel->itemInModel(DESKTOPFILE) == item);
     QVERIFY(!item->isUpdating());
 
-    QVERIFY(launcherModel->packageInModel("somepackage") == NULL);
-    QVERIFY(launcherModel->temporaryItemToReplace() == NULL);
+    QVERIFY(launcherModel->packageInModel("somepackage") == nullptr);
+    QVERIFY(launcherModel->temporaryItemToReplace() == nullptr);
+}
+
+void Ut_LauncherModel::testReplacingLauncherFile()
+{
+    const QString oldDesktopFile("/usr/share/applications/launcher_old.desktop");
+    const QString newDesktopFile("/usr/share/applications/launcher_new.desktop");
+    const QString replacementIdentityKey("X-Test-Replacement-Identity");
+    const QString replacementIdentity("stable-identity");
+    const QString desktopEntryKey(QStringLiteral("Desktop Entry/") + replacementIdentityKey);
+
+    desktopEntryValues[oldDesktopFile][desktopEntryKey] = replacementIdentity;
+    desktopEntryValues[newDesktopFile][desktopEntryKey] = replacementIdentity;
+    desktopEntryMimeTypes[oldDesktopFile] << QStringLiteral("application/old");
+    desktopEntryMimeTypes[newDesktopFile] << QStringLiteral("application/new");
+    launcherModel->setReplacementIdentityKey(replacementIdentityKey);
+    launcherModel->setBlacklistedApplications(QStringList() << oldDesktopFile);
+
+    launcherModel->onFilesUpdated(QStringList() << oldDesktopFile,
+                                  QStringList(), QStringList());
+    LauncherItem *item = launcherModel->itemInModel(oldDesktopFile);
+    QVERIFY(item != nullptr);
+    QVERIFY(item->canOpenMimeType(QStringLiteral("application/old")));
+    QVERIFY(!item->canOpenMimeType(QStringLiteral("application/new")));
+
+    LauncherItem *replacedItem = nullptr;
+    QString replacedFilePath;
+    connect(launcherModel, &LauncherModel::launcherReplaced,
+            [&replacedItem, &replacedFilePath](LauncherItem *item, const QString &oldFilePath) {
+        replacedItem = item;
+        replacedFilePath = oldFilePath;
+    });
+    QSignalSpy addedSpy(launcherModel, &LauncherModel::itemAdded);
+    QSignalSpy removedSpy(launcherModel, &LauncherModel::itemRemoved);
+    QSignalSpy blacklistSpy(launcherModel, &LauncherModel::blacklistedApplicationsChanged);
+
+    launcherModel->onFilesUpdated(QStringList() << newDesktopFile,
+                                  QStringList(), QStringList() << oldDesktopFile);
+
+    QCOMPARE(launcherModel->itemInModel(newDesktopFile), item);
+    QVERIFY(launcherModel->itemInModel(oldDesktopFile) == nullptr);
+    QCOMPARE(replacedItem, item);
+    QCOMPARE(replacedFilePath, oldDesktopFile);
+    QCOMPARE(addedSpy.count(), 0);
+    QCOMPARE(removedSpy.count(), 0);
+    QCOMPARE(blacklistSpy.count(), 0);
+    QCOMPARE(launcherModel->blacklistedApplications(), QStringList() << oldDesktopFile);
+    QVERIFY(!launcherModel->isBlacklisted(item));
+    QVERIFY(!item->canOpenMimeType(QStringLiteral("application/old")));
+    QVERIFY(item->canOpenMimeType(QStringLiteral("application/new")));
+}
+
+void Ut_LauncherModel::testRemovingLauncherFile()
+{
+    const QString desktopFile("/usr/share/applications/launcher_removed.desktop");
+
+    launcherModel->onFilesUpdated(QStringList() << desktopFile,
+                                  QStringList(), QStringList());
+    QVERIFY(launcherModel->itemInModel(desktopFile) != nullptr);
+
+    QSignalSpy removedSpy(launcherModel, &LauncherModel::itemRemoved);
+    launcherModel->onFilesUpdated(QStringList(),
+                                  QStringList(), QStringList() << desktopFile);
+
+    QVERIFY(launcherModel->itemInModel(desktopFile) == nullptr);
+    QCOMPARE(removedSpy.count(), 1);
 }
 
 QTEST_MAIN(Ut_LauncherModel)
