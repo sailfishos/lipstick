@@ -33,8 +33,7 @@ class LauncherMonitor : public QObject
 
 public:
     LauncherMonitor();
-    LauncherMonitor(const QString &desktopFilesPath,
-            const QString &iconFilesPath);
+    LauncherMonitor(const QString &desktopFilesPath, const QString &iconFilesPath);
     ~LauncherMonitor();
 
     void start();
@@ -52,7 +51,6 @@ private:
     void initialize();
     void setDirectories(const QStringList &newDirs, QStringList *targetDirs);
 
-    // fields
     QFileSystemWatcher m_watcher;
     QTimer m_holdbackTimer;
 

@@ -169,7 +169,7 @@ void LauncherFolderItem::setParentFolder(LauncherFolderItem *parent)
 LauncherFolderItem *LauncherFolderItem::createFolder(int index, const QString &name)
 {
     if (index < 0 || index > rowCount())
-        return 0;
+        return nullptr;
 
     LauncherFolderItem *folder = new LauncherFolderItem(this);
     folder->setTitle(name);
@@ -216,7 +216,7 @@ LauncherFolderItem *LauncherFolderItem::findContainer(QObject *item)
         }
     }
 
-    return 0;
+    return nullptr;
 }
 
 QString LauncherFolderItem::directoryFile() const
@@ -290,20 +290,25 @@ void LauncherFolderItem::clear()
         LauncherFolderItem *folder = qobject_cast<LauncherFolderItem*>(item);
 
         if (launcherItem) {
-            disconnect(item, SIGNAL(isTemporaryChanged()), this, SIGNAL(saveNeeded()));
+            disconnect(launcherItem, &LauncherItem::isTemporaryChanged,
+                       this, &LauncherFolderItem::saveNeeded);
+            disconnect(launcherItem, &LauncherItem::isUpdatingChanged,
+                       this, &LauncherFolderItem::isUpdatingChanged);
+            disconnect(launcherItem, &LauncherItem::updatingProgressChanged,
+                       this, &LauncherFolderItem::updatingProgressChanged);
         } else if (folder) {
-            disconnect(item, SIGNAL(saveNeeded()), this, SIGNAL(saveNeeded()));
-        }
+            disconnect(folder, &LauncherFolderItem::saveNeeded,
+                       this, &LauncherFolderItem::saveNeeded);
+            disconnect(folder, &LauncherFolderItem::isUpdatingChanged,
+                       this, &LauncherFolderItem::isUpdatingChanged);
+            disconnect(folder, &LauncherFolderItem::updatingProgressChanged,
+                       this, &LauncherFolderItem::updatingProgressChanged);
 
-        if (launcherItem || folder) {
-            disconnect(item, SIGNAL(isUpdatingChanged()), this, SIGNAL(isUpdatingChanged()));
-            disconnect(item, SIGNAL(updatingProgressChanged()), this, SIGNAL(updatingProgressChanged()));
-        }
-        if (folder) {
             folder->clear();
             folder->deleteLater();
         }
     }
+
     reset();
 }
 
@@ -317,18 +322,23 @@ void LauncherFolderItem::handleAdded(QObject *item)
             emit isUpdatingChanged();
             emit updatingProgressChanged();
         }
-        connect(item, SIGNAL(isTemporaryChanged()), this, SIGNAL(saveNeeded()));
+        connect(launcherItem, &LauncherItem::isTemporaryChanged,
+                this, &LauncherFolderItem::saveNeeded);
+        connect(launcherItem, &LauncherItem::isUpdatingChanged,
+                this, &LauncherFolderItem::isUpdatingChanged);
+        connect(launcherItem, &LauncherItem::updatingProgressChanged,
+                this, &LauncherFolderItem::updatingProgressChanged);
     } else if (folder) {
         if (folder->isUpdating()) {
             emit isUpdatingChanged();
             emit updatingProgressChanged();
         }
-        connect(item, SIGNAL(saveNeeded()), this, SIGNAL(saveNeeded()));
-    }
-
-    if (launcherItem || folder) {
-        connect(item, SIGNAL(isUpdatingChanged()), this, SIGNAL(isUpdatingChanged()));
-        connect(item, SIGNAL(updatingProgressChanged()), this, SIGNAL(updatingProgressChanged()));
+        connect(folder, &LauncherFolderItem::saveNeeded,
+                this, &LauncherFolderItem::saveNeeded);
+        connect(folder, &LauncherFolderItem::isUpdatingChanged,
+                this, &LauncherFolderItem::isUpdatingChanged);
+        connect(folder, &LauncherFolderItem::updatingProgressChanged,
+                this, &LauncherFolderItem::updatingProgressChanged);
     }
 
     emit saveNeeded();
@@ -344,18 +354,23 @@ void LauncherFolderItem::handleRemoved(QObject *item)
             emit isUpdatingChanged();
             emit updatingProgressChanged();
         }
-        disconnect(item, SIGNAL(isTemporaryChanged()), this, SIGNAL(saveNeeded()));
+        disconnect(launcherItem, &LauncherItem::isTemporaryChanged,
+                   this, &LauncherFolderItem::saveNeeded);
+        disconnect(launcherItem, &LauncherItem::isUpdatingChanged,
+                   this, &LauncherFolderItem::isUpdatingChanged);
+        disconnect(launcherItem, &LauncherItem::updatingProgressChanged,
+                   this, &LauncherFolderItem::updatingProgressChanged);
     } else if (folder) {
         if (folder->isUpdating()) {
             emit isUpdatingChanged();
             emit updatingProgressChanged();
         }
-        disconnect(item, SIGNAL(saveNeeded()), this, SIGNAL(saveNeeded()));
-    }
-
-    if (launcherItem || folder) {
-        disconnect(item, SIGNAL(isUpdatingChanged()), this, SIGNAL(isUpdatingChanged()));
-        disconnect(item, SIGNAL(updatingProgressChanged()), this, SIGNAL(updatingProgressChanged()));
+        disconnect(folder, &LauncherFolderItem::saveNeeded,
+                   this, &LauncherFolderItem::saveNeeded);
+        disconnect(folder, &LauncherFolderItem::isUpdatingChanged,
+                   this, &LauncherFolderItem::isUpdatingChanged);
+        disconnect(folder, &LauncherFolderItem::updatingProgressChanged,
+                   this, &LauncherFolderItem::updatingProgressChanged);
     }
 
     emit saveNeeded();
@@ -410,29 +425,30 @@ void LauncherFolderModel::initialize()
 {
     if (m_initialized)
         return;
+
     m_initialized = true;
-
     m_launcherModel->initialize();
-
     m_saveTimer.setSingleShot(true);
-    connect(m_launcherModel, SIGNAL(itemRemoved(QObject*)),
-            this, SLOT(appRemoved(QObject*)));
-    connect(m_launcherModel, SIGNAL(itemAdded(QObject*)),
-            this, SLOT(appAdded(QObject*)));
+
+    connect(m_launcherModel, &DeferredLauncherModel::itemRemoved,
+            this, &LauncherFolderModel::onAppRemoved);
+    connect(m_launcherModel, &DeferredLauncherModel::itemAdded,
+            this, &LauncherFolderModel::onAppAdded);
     connect(m_launcherModel, &LauncherModel::launcherReplaced,
             this, &LauncherFolderModel::onAppReplaced);
     connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::notifyLaunching,
             this, &LauncherFolderModel::notifyLaunching);
     connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::canceledNotifyLaunching,
             this, &LauncherFolderModel::canceledNotifyLaunching);
-    connect(&m_saveTimer, SIGNAL(timeout()), this, SLOT(save()));
+    connect(&m_saveTimer, &QTimer::timeout, this, &LauncherFolderModel::save);
 
     QDir config;
     config.mkpath(configDir());
 
     load();
 
-    connect(this, SIGNAL(saveNeeded()), this, SLOT(scheduleSave()));
+    connect(this, &LauncherFolderModel::saveNeeded,
+            this, &LauncherFolderModel::scheduleSave);
 }
 
 LauncherModel *LauncherFolderModel::allItems() const
@@ -632,7 +648,7 @@ bool LauncherFolderModel::moveToFolder(QObject *item, LauncherFolderItem *folder
 }
 
 // An app removed from system
-void LauncherFolderModel::appRemoved(QObject *item)
+void LauncherFolderModel::onAppRemoved(QObject *item)
 {
     if (LauncherItem *launcherItem = qobject_cast<LauncherItem*>(item)) {
         emit applicationRemoved(launcherItem);
@@ -657,7 +673,7 @@ void LauncherFolderModel::onAppReplaced(LauncherItem *item, const QString &oldFi
 }
 
 // An app added to system
-void LauncherFolderModel::appAdded(QObject *item)
+void LauncherFolderModel::onAppAdded(QObject *item)
 {
     addItem(item);
     scheduleSave();
@@ -745,6 +761,7 @@ void LauncherFolderModel::saveFolder(QXmlStreamWriter &xml, LauncherFolderItem *
 {
     xml.writeStartElement("Menu");
     xml.writeTextElement("Name", folder->title());
+
     if (!folder->directoryFile().isEmpty())
         xml.writeTextElement("Directory", folder->directoryFile());
 
@@ -814,7 +831,7 @@ void LauncherFolderModel::load()
         xml.readNext();
         if (xml.isStartElement()) {
             if (xml.name() == QLatin1String("Menu")) {
-                LauncherFolderItem *folder = 0;
+                LauncherFolderItem *folder = nullptr;
                 if (menus.isEmpty())
                     folder = this;
                 else

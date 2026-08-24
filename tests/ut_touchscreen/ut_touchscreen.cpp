@@ -24,7 +24,7 @@
 
 #include <mce/mode-names.h>
 
-TouchScreen *gTouchScreen = 0;
+TouchScreen *gTouchScreen = nullptr;
 
 HomeApplication::~HomeApplication()
 {
@@ -178,7 +178,8 @@ void Ut_TouchScreen::testTouchBlocking()
     QCOMPARE(touchScreen->eventFilter(0, &touch), false);
 }
 
-void Ut_TouchScreen::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState)
+void Ut_TouchScreen::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState,
+                                        DeviceState::DisplayStateMonitor::DisplayState newState)
 {
     emit gDisplayStateMonitorStub->displayState->displayStateChanged(oldState);
     emit gDisplayStateMonitorStub->displayState->displayStateChanged(newState);

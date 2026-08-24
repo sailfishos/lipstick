@@ -102,7 +102,8 @@ void Ut_ScreenLock::testToggleEventEater()
 
 void Ut_ScreenLock::testUnlockScreenWhenLocked()
 {
-    screenLock->tklock_open(TEST_SERVICE, TEST_PATH, TEST_INTERFACE, TEST_METHOD, ScreenLock::TkLockModeNone, false, false);
+    screenLock->tklock_open(TEST_SERVICE, TEST_PATH, TEST_INTERFACE, TEST_METHOD,
+                            ScreenLock::TkLockModeNone, false, false);
     screenLock->setScreenLocked(true);
     screenLock->setEventEaterEnabled(true);
     screenLock->unlockScreen();
@@ -201,7 +202,8 @@ void Ut_ScreenLock::testTkLockClose()
     QCOMPARE(touchScreen->eventFilter(0, &event), true);
 }
 
-void Ut_ScreenLock::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState)
+void Ut_ScreenLock::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState,
+                                       DeviceState::DisplayStateMonitor::DisplayState newState)
 {
     emit gDisplayStateMonitorStub->displayState->displayStateChanged(oldState);
     emit gDisplayStateMonitorStub->displayState->displayStateChanged(newState);

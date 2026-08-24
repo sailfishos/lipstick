@@ -114,6 +114,7 @@ void LauncherMonitor::setDirectories(const QStringList &newDirs, QStringList *ta
 {
     QStringList newPaths;
     QStringList::ConstIterator it = newDirs.begin();
+
     while (it != newDirs.end()) {
         if (!targetDirs->contains(*it)) {
             if (!QDir(*it).exists()) {

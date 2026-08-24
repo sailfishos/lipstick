@@ -21,6 +21,7 @@
 #include <QPointer>
 #include <QSharedPointer>
 #include <QTimer>
+
 #include "qobjectlistmodel.h"
 #include "launchermodel.h"
 #include "lipstickglobal.h"
@@ -89,6 +90,7 @@ private:
 };
 
 class DeferredLauncherModel;
+
 class LIPSTICK_EXPORT LauncherFolderModel : public LauncherFolderItem
 {
     Q_OBJECT
@@ -99,6 +101,7 @@ class LIPSTICK_EXPORT LauncherFolderModel : public LauncherFolderItem
     Q_PROPERTY(QStringList blacklistedApplications READ blacklistedApplications WRITE setBlacklistedApplications NOTIFY blacklistedApplicationsChanged)
     Q_PROPERTY(QString replacementIdentityKey READ replacementIdentityKey WRITE setReplacementIdentityKey NOTIFY replacementIdentityKeyChanged)
     Q_PROPERTY(LauncherModel *allItems READ allItems CONSTANT)
+
 public:
     LauncherFolderModel(QObject *parent = 0);
 
@@ -156,8 +159,8 @@ protected:
 
 private slots:
     void scheduleSave();
-    void appRemoved(QObject *item);
-    void appAdded(QObject *item);
+    void onAppRemoved(QObject *item);
+    void onAppAdded(QObject *item);
     void onAppReplaced(LauncherItem *item, const QString &oldFilePath);
 
     void updateblacklistedApplications();

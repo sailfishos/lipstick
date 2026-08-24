@@ -13,10 +13,12 @@
 ** of this file.
 **
 ****************************************************************************/
+
 #include <QtTest/QtTest>
 #include <QQuickView>
 #include <QQmlContext>
 #include <QScreen>
+
 #include "shutdownscreen.h"
 #include "homeapplication.h"
 #include "ut_shutdownscreen.h"
@@ -25,7 +27,7 @@
 #include "closeeventeater_stub.h"
 #include "lipstickqmlpath_stub.h"
 
-QList<QQuickView *> qQuickViews;
+static QList<QQuickView *> qQuickViews;
 void QQuickView::setSource(const QUrl &)
 {
     qQuickViews.append(this);
@@ -49,9 +51,6 @@ HomeApplication *HomeApplication::instance()
 {
     return 0;
 }
-
-int argc = 1;
-char *argv[] = { (char *) "./ut_shutdownscreen", NULL };
 
 void Ut_ShutdownScreen::initTestCase()
 {
@@ -110,8 +109,10 @@ void Ut_ShutdownScreen::testSystemState()
     // Check window properties
     QCOMPARE(qQuickViews.first()->title(), QString("Shutdown"));
     QCOMPARE(qQuickViews.first()->resizeMode(), QQuickView::SizeRootObjectToView);
-    QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("initialSize").toSize(), QGuiApplication::primaryScreen()->size());
-    QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownScreen"), QVariant::fromValue(static_cast<QObject *>(shutdownScreen)));
+    QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("initialSize").toSize(),
+             QGuiApplication::primaryScreen()->size());
+    QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownScreen"),
+             QVariant::fromValue(static_cast<QObject *>(shutdownScreen)));
     QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownMode").toString(), QString(""));
 
     // Check that the window was shown
@@ -122,4 +123,4 @@ void Ut_ShutdownScreen::testSystemState()
     QCOMPARE(qQuickViews.first()->rootContext()->contextProperty("shutdownMode").toString(), QString("reboot"));
 }
 
-QTEST_MAIN (Ut_ShutdownScreen)
+QTEST_MAIN(Ut_ShutdownScreen)

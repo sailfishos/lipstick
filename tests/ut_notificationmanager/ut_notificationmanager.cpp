@@ -162,14 +162,17 @@ void Ut_NotificationManager::testActionIsInvokedIfDefined()
 {
     // Add two notifications, only the first one with an action named "action1"
     NotificationManager *manager = NotificationManager::instance();
-    uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList() << "action1" << "Action 1", QVariantHash(), 0);
-    uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList() << "action2" << "Action 2", QVariantHash(), 0);
+    uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(),
+                               QStringList() << "action1" << "Action 1", QVariantHash(), 0);
+    uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(),
+                               QStringList() << "action2" << "Action 2", QVariantHash(), 0);
     LipstickNotification *notification1 = manager->notification(id1);
     LipstickNotification *notification2 = manager->notification(id2);
     connect(this, SIGNAL(actionInvoked(QString)), notification1, SIGNAL(actionInvoked(QString)));
     connect(this, SIGNAL(actionInvoked(QString)), notification2, SIGNAL(actionInvoked(QString)));
 
-    // Make both notifications emit the actionInvoked() signal for action "action1"; only the first one contains it and should be invoked
+    // Make both notifications emit the actionInvoked() signal for action "action1"
+    // only the first one contains it and should be invoked
     QSignalSpy spy(manager, SIGNAL(ActionInvoked(uint, QString)));
     emit actionInvoked("action1");
     QCoreApplication::processEvents();
@@ -182,8 +185,10 @@ void Ut_NotificationManager::testActionIsNotInvokedIfIncomplete()
 {
     // Add two notifications, the first one with an incomplete action named "action1"
     NotificationManager *manager = NotificationManager::instance();
-    uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList() << "action1", QVariantHash(), 0);
-    uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(), QStringList() << "action2" << "Action 2", QVariantHash(), 0);
+    uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(),
+                               QStringList() << "action1", QVariantHash(), 0);
+    uint id2 = manager->Notify("app2", 0, QString(), QString(), QString(),
+                               QStringList() << "action2" << "Action 2", QVariantHash(), 0);
     LipstickNotification *notification1 = manager->notification(id1);
     LipstickNotification *notification2 = manager->notification(id2);
     connect(this, SIGNAL(actionInvoked(QString)), notification1, SIGNAL(actionInvoked(QString)));
@@ -345,7 +350,8 @@ void Ut_NotificationManager::testRemoveUserRemovableNotifications()
 void Ut_NotificationManager::testRemoveRequested()
 {
     NotificationManager *manager = NotificationManager::instance();
-    uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(), QStringList() << "action1" << "Action 1", QVariantHash(), 0);
+    uint id1 = manager->Notify("app1", 0, QString(), QString(), QString(),
+                               QStringList() << "action1" << "Action 1", QVariantHash(), 0);
     LipstickNotification *notification1 = manager->notification(id1);
     connect(this, SIGNAL(removeRequested()), notification1, SIGNAL(removeRequested()));
 

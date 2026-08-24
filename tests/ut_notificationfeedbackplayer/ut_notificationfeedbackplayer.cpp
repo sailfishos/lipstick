@@ -117,7 +117,8 @@ LipstickNotification *createNotification(uint id, int urgency = 0, QVariant prio
     if (priority.isValid()) {
         hints.insert(LipstickNotification::HINT_PRIORITY, priority);
     }
-    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer", "", "", id, "", "", "", QStringList(), hints, -1);
+    LipstickNotification *notification = new LipstickNotification("ut_notificationfeedbackplayer",
+                                                                  "", "", id, "", "", "", QStringList(), hints, -1);
     notificationManagerNotification.insert(id, notification);
     return notification;
 }
@@ -320,18 +321,31 @@ void Ut_NotificationFeedbackPlayer::testNotificationPreviewsDisabled_data()
     applicationNotificationsDisabled.insert("NOTIFICATION_PREVIEWS_DISABLED", 1);
     systemNotificationsDisabled.insert("NOTIFICATION_PREVIEWS_DISABLED", 2);
     allNotificationsDisabled.insert("NOTIFICATION_PREVIEWS_DISABLED", 3);
-    QTest::newRow("No surface, application notification") << (QWaylandSurface *)0 << QVariantMap() << 1 << 1;
-    QTest::newRow("Surface, no properties, application notification") << surface << QVariantMap() << 1 << 1;
-    QTest::newRow("Surface, all notifications enabled, application notification") << surface << allNotificationsEnabled << 1 << 1;
-    QTest::newRow("Surface, application notifications disabled, application notification") << surface << applicationNotificationsDisabled << 1 << 0;
-    QTest::newRow("Surface, system notifications disabled, application notification") << surface << systemNotificationsDisabled << 1 << 1;
-    QTest::newRow("Surface, all notifications disabled, application notification") << surface << allNotificationsDisabled << 1 << 0;
-    QTest::newRow("No surface, system notification") << (QWaylandSurface *)0 << QVariantMap() << 2 << 1;
-    QTest::newRow("Surface, no properties, system notification") << surface << QVariantMap() << 2 << 1;
-    QTest::newRow("Surface, all notifications enabled, system notification") << surface << allNotificationsEnabled << 2 << 1;
-    QTest::newRow("Surface, application notifications disabled, system notification") << surface << applicationNotificationsDisabled << 2 << 1;
-    QTest::newRow("Surface, system notifications disabled, system notification") << surface << systemNotificationsDisabled << 2 << 0;
-    QTest::newRow("Surface, all notifications disabled, system notification") << surface << allNotificationsDisabled << 2 << 0;
+
+    QTest::newRow("No surface, application notification")
+        << (QWaylandSurface *)0 << QVariantMap() << 1 << 1;
+    QTest::newRow("Surface, no properties, application notification")
+        << surface << QVariantMap() << 1 << 1;
+    QTest::newRow("Surface, all notifications enabled, application notification")
+        << surface << allNotificationsEnabled << 1 << 1;
+    QTest::newRow("Surface, application notifications disabled, application notification")
+        << surface << applicationNotificationsDisabled << 1 << 0;
+    QTest::newRow("Surface, system notifications disabled, application notification")
+        << surface << systemNotificationsDisabled << 1 << 1;
+    QTest::newRow("Surface, all notifications disabled, application notification")
+        << surface << allNotificationsDisabled << 1 << 0;
+    QTest::newRow("No surface, system notification")
+        << (QWaylandSurface *)0 << QVariantMap() << 2 << 1;
+    QTest::newRow("Surface, no properties, system notification")
+        << surface << QVariantMap() << 2 << 1;
+    QTest::newRow("Surface, all notifications enabled, system notification")
+        << surface << allNotificationsEnabled << 2 << 1;
+    QTest::newRow("Surface, application notifications disabled, system notification")
+        << surface << applicationNotificationsDisabled << 2 << 1;
+    QTest::newRow("Surface, system notifications disabled, system notification")
+        << surface << systemNotificationsDisabled << 2 << 0;
+    QTest::newRow("Surface, all notifications disabled, system notification")
+        << surface << allNotificationsDisabled << 2 << 0;
 }
 
 void Ut_NotificationFeedbackPlayer::testNotificationPreviewsDisabled()
