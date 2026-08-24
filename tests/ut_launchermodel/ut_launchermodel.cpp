@@ -121,16 +121,6 @@ MDesktopEntry::value(const QString &group, const QString &key) const
     return desktopEntryValues.value(d_ptr->m_fileName).value(group + QLatin1Char('/') + key);
 }
 
-void QTimer::singleShot(int, const QObject *receiver, const char *member)
-{
-    // The "member" string is of form "1member()", so remove the trailing 1 and the ()
-    int memberLength = strlen(member) - 3;
-    char modifiedMember[memberLength + 1];
-    strncpy(modifiedMember, member + 1, memberLength);
-    modifiedMember[memberLength] = 0;
-    QMetaObject::invokeMethod(const_cast<QObject *>(receiver), modifiedMember, Qt::DirectConnection);
-}
-
 bool QFile::exists() const
 {
     return true;
@@ -158,23 +148,23 @@ void Ut_LauncherModel::testUpdating()
 
     auto item = launcherModel->packageInModel("somepackage");
     QVERIFY(item != nullptr);
-    QVERIFY(item->updatingProgress() == -1);
+    QCOMPARE(item->updatingProgress(), -1);
     QVERIFY(item->isTemporary());
-    QVERIFY(launcherModel->temporaryItemToReplace() == item);
+    QCOMPARE(launcherModel->temporaryItemToReplace(), item);
 
     launcherModel->updatingProgress("somepackage", 20, "org.example.caller");
 
-    QVERIFY(launcherModel->packageInModel("somepackage") == item);
-    QVERIFY(item->updatingProgress() == 20);
+    QCOMPARE(launcherModel->packageInModel("somepackage"), item);
+    QCOMPARE(item->updatingProgress(), 20);
 
     launcherModel->updatingProgress("somepackage", 40, "org.example.caller");
 
-    QVERIFY(launcherModel->packageInModel("somepackage") == item);
-    QVERIFY(item->updatingProgress() == 40);
+    QCOMPARE(launcherModel->packageInModel("somepackage"), item);
+    QCOMPARE(item->updatingProgress(), 40);
 
     launcherModel->updatingFinished("somepackage", "org.example.caller");
 
-    QVERIFY(launcherModel->packageInModel("somepackage") == nullptr);
+    QTRY_VERIFY(launcherModel->packageInModel("somepackage") == nullptr);
     QVERIFY(launcherModel->temporaryItemToReplace() == nullptr);
 }
 

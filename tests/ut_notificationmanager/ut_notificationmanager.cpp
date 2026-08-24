@@ -95,8 +95,8 @@ void Ut_NotificationManager::testModifyingCategoryDefinitionUpdatesNotifications
     NotificationManager *manager = NotificationManager::instance();
 
     // Check the signal connection
-    QCOMPARE(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)),
-                        manager, SLOT(updateNotificationsWithCategory(QString))), true);
+    QVERIFY(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)),
+                       manager, SLOT(updateNotificationsWithCategory(QString))));
 
     QSignalSpy multiModifiedSpy(manager, SIGNAL(notificationsModified(QList<uint>)));
 
@@ -136,8 +136,8 @@ void Ut_NotificationManager::testUninstallingCategoryDefinitionRemovesNotificati
     NotificationManager *manager = NotificationManager::instance();
 
     // Check the signal connection
-    QCOMPARE(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)),
-                        manager, SLOT(removeNotificationsWithCategory(QString))), true);
+    QVERIFY(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)),
+                       manager, SLOT(removeNotificationsWithCategory(QString))));
 
     // Add two notifications, one with category "category1" and one with category "category2"
     QVariantHash hints1;

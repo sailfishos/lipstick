@@ -79,7 +79,8 @@ void Ut_ShutdownScreen::cleanup()
 
 void Ut_ShutdownScreen::testConnections()
 {
-    QCOMPARE(disconnect(shutdownScreen->m_systemState, &DeviceState::DeviceState::systemStateChanged, shutdownScreen, &ShutdownScreen::applySystemState), true);
+    QVERIFY(disconnect(shutdownScreen->m_systemState, &DeviceState::DeviceState::systemStateChanged,
+                        shutdownScreen, &ShutdownScreen::applySystemState));
 }
 
 void Ut_ShutdownScreen::testSystemState()
