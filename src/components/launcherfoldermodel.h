@@ -173,7 +173,7 @@ private:
     QTimer m_saveTimer;
     bool m_loading;
     bool m_initialized;
-    QMap<QString, QString> m_blacklistedApplications;
+    QMap<QString, QString> m_blacklistedApplicationPositions;
 
     static QString s_configDir;
 };

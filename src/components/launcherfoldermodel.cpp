@@ -494,7 +494,7 @@ void LauncherFolderModel::blacklistApps(LauncherFolderItem *folder, const QStrin
         if (item && m_launcherModel->isBlacklisted(item)) {
             item->setIsBlacklisted(true);
             if (!m_loading) {
-                m_blacklistedApplications.insert(item->filePath(), buildBlacklistValue(directoryId, i));
+                m_blacklistedApplicationPositions.insert(item->filePath(), buildBlacklistValue(directoryId, i));
             }
         } else if (LauncherFolderItem *subFolder = qobject_cast<LauncherFolderItem*>(folder->get(i))) {
             blacklistApps(subFolder, subFolder->directoryFile());
@@ -504,15 +504,15 @@ void LauncherFolderModel::blacklistApps(LauncherFolderItem *folder, const QStrin
 
 void LauncherFolderModel::removeAppsFromBlacklist()
 {
-    QMap<QString, QString>::iterator i = m_blacklistedApplications.begin();
+    QMap<QString, QString>::iterator i = m_blacklistedApplicationPositions.begin();
 
     // Same index can exist in subfolders. Thus, multimap.
     QMultiMap<int, FolderItem*> unblacklistedItems;
 
-    while (i != m_blacklistedApplications.end()) {
+    while (i != m_blacklistedApplicationPositions.end()) {
         LauncherItem* item = m_launcherModel->itemInModel(i.key());
         if (!item) {
-            i = m_blacklistedApplications.erase(i);
+            i = m_blacklistedApplicationPositions.erase(i);
         } else if (!m_launcherModel->isBlacklisted(item)) {
             QString positionId = i.value();
             QString directory;
@@ -526,7 +526,7 @@ void LauncherFolderModel::removeAppsFromBlacklist()
 
             unblacklistedItems.insert(index, new FolderItem(folder, item));
             item->setIsBlacklisted(false);
-            i = m_blacklistedApplications.erase(i);
+            i = m_blacklistedApplicationPositions.erase(i);
         } else {
             ++i;
         }
@@ -552,8 +552,8 @@ void LauncherFolderModel::removeAppsFromBlacklist()
 void LauncherFolderModel::updateAppsInBlacklistedFolders()
 {
     QMap<QString, QString> tmpDesktopFiles;
-    QMap<QString, QString>::iterator i = m_blacklistedApplications.begin();
-    while (i != m_blacklistedApplications.end()) {
+    QMap<QString, QString>::iterator i = m_blacklistedApplicationPositions.begin();
+    while (i != m_blacklistedApplicationPositions.end()) {
         QString positionId = i.value();
         QString directory;
         int index = -1;
@@ -561,7 +561,7 @@ void LauncherFolderModel::updateAppsInBlacklistedFolders()
         if (!findContainerFolder(directory) && positionId.startsWith(directory)) {
             positionId.remove(directory + "-");
             tmpDesktopFiles.insert(i.key(), positionId);
-            i = m_blacklistedApplications.erase(i);
+            i = m_blacklistedApplicationPositions.erase(i);
         } else {
             ++i;
         }
@@ -569,7 +569,7 @@ void LauncherFolderModel::updateAppsInBlacklistedFolders()
 
     i = tmpDesktopFiles.begin();
     while (i != tmpDesktopFiles.end()) {
-        m_blacklistedApplications.insert(i.key(), i.value());
+        m_blacklistedApplicationPositions.insert(i.key(), i.value());
         ++i;
     }
 }
@@ -647,9 +647,9 @@ void LauncherFolderModel::appRemoved(QObject *item)
 
 void LauncherFolderModel::onAppReplaced(LauncherItem *item, const QString &oldFilePath)
 {
-    if (m_blacklistedApplications.contains(oldFilePath)) {
-        const QString position = m_blacklistedApplications.take(oldFilePath);
-        m_blacklistedApplications.insert(item->filePath(), position);
+    if (m_blacklistedApplicationPositions.contains(oldFilePath)) {
+        const QString position = m_blacklistedApplicationPositions.take(oldFilePath);
+        m_blacklistedApplicationPositions.insert(item->filePath(), position);
     }
 
     updateblacklistedApplications();
@@ -671,8 +671,8 @@ void LauncherFolderModel::updateblacklistedApplications()
     QString positionId;
     blacklistApps(this, positionId);
 
-    QMap<QString, QString>::iterator i = m_blacklistedApplications.begin();
-    while (i != m_blacklistedApplications.end()) {
+    QMap<QString, QString>::iterator i = m_blacklistedApplicationPositions.begin();
+    while (i != m_blacklistedApplicationPositions.end()) {
         LauncherItem *item = m_launcherModel->itemInModel(i.key());
         LauncherFolderItem *folder = findContainer(item);
         if (folder) {
@@ -757,12 +757,12 @@ void LauncherFolderModel::saveFolder(QXmlStreamWriter &xml, LauncherFolderItem *
         // Blacklisted apps have been removed from the LauncherFolderModel already over here.
         // Populate the menu still so that it contains also blacklisted apps.
         QStringList desktopFiles;
-        if (!m_blacklistedApplications.key(currentPosId).isEmpty()) {
-            desktopFiles = m_blacklistedApplications.keys(currentPosId);
+        if (!m_blacklistedApplicationPositions.key(currentPosId).isEmpty()) {
+            desktopFiles = m_blacklistedApplicationPositions.keys(currentPosId);
         } else if (folder && !folder->directoryFile().isEmpty()) {
             // If app is in out of bounds indexes of the current folder.
-            QMap<QString, QString>::const_iterator iter = m_blacklistedApplications.constBegin();
-            while (iter != m_blacklistedApplications.constEnd()) {
+            QMap<QString, QString>::const_iterator iter = m_blacklistedApplicationPositions.constBegin();
+            while (iter != m_blacklistedApplicationPositions.constEnd()) {
                 QString positionId = iter.value();
                 QString directory;
                 int folderIndex;
@@ -857,7 +857,7 @@ void LauncherFolderModel::load()
                                     positionId = QString("%1-%2").arg(folder->directoryFile()).arg(lastIndex);
                                 }
 
-                                m_blacklistedApplications.insert(item->filePath(), positionId);
+                                m_blacklistedApplicationPositions.insert(item->filePath(), positionId);
                             }
                         }
                     }
@@ -876,7 +876,7 @@ void LauncherFolderModel::load()
                 if (!item->isBlacklisted()) {
                     addItem(item);
                 } else {
-                    m_blacklistedApplications.insert(item->filePath(), QString::number(itemCount()));
+                    m_blacklistedApplicationPositions.insert(item->filePath(), QString::number(itemCount()));
                 }
             }
         }
