@@ -24,71 +24,12 @@
 
 #include "qobjectlistmodel.h"
 #include "launchermodel.h"
+#include "launcherfolderitem.h"
 #include "lipstickglobal.h"
 
-class LauncherModel;
 class QXmlStreamWriter;
-class MDesktopEntry;
+class LauncherModel;
 class LauncherItem;
-
-class LIPSTICK_EXPORT LauncherFolderItem : public QObjectListModel
-{
-    Q_OBJECT
-    Q_PROPERTY(LauncherModel::ItemType type READ type CONSTANT)
-    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
-    Q_PROPERTY(QString iconId READ iconId WRITE setIconId NOTIFY iconIdChanged)
-    Q_PROPERTY(bool isUpdating READ isUpdating NOTIFY isUpdatingChanged)
-    Q_PROPERTY(int updatingProgress READ updatingProgress NOTIFY updatingProgressChanged)
-    Q_PROPERTY(LauncherFolderItem *parentFolder READ parentFolder NOTIFY parentFolderChanged)
-
-public:
-    LauncherFolderItem(QObject *parent = 0);
-
-    LauncherModel::ItemType type() const;
-
-    const QString &title() const;
-    void setTitle(const QString &name);
-
-    const QString &iconId() const;
-    void setIconId(const QString &icon);
-
-    bool isUpdating() const;
-    int updatingProgress() const;
-
-    LauncherFolderItem *parentFolder() const;
-    void setParentFolder(LauncherFolderItem *parent);
-
-    Q_INVOKABLE LauncherFolderItem *createFolder(int index, const QString &name);
-    Q_INVOKABLE void destroyFolder();
-
-    LauncherFolderItem *findContainer(QObject *item);
-
-    QString directoryFile() const;
-    void loadDirectoryFile(const QString &filename);
-    void saveDirectoryFile();
-    void clear();
-
-signals:
-    void titleChanged();
-    void iconIdChanged();
-    void isUpdatingChanged();
-    void updatingProgressChanged();
-    void parentFolderChanged();
-    void directoryFileChanged();
-    void saveNeeded();
-
-private slots:
-    void handleAdded(QObject*);
-    void handleRemoved(QObject*);
-
-private:
-    QString m_title;
-    QString m_iconId;
-    QString m_directoryFile;
-    QSharedPointer<MDesktopEntry> m_desktopEntry;
-    QPointer<LauncherFolderItem> m_parentFolder;
-};
-
 class DeferredLauncherModel;
 
 class LIPSTICK_EXPORT LauncherFolderModel : public LauncherFolderItem
