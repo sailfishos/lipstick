@@ -39,6 +39,7 @@ class LIPSTICK_EXPORT LauncherModel : public QObjectListModel
     Q_PROPERTY(QStringList iconDirectories READ iconDirectories WRITE setIconDirectories NOTIFY iconDirectoriesChanged)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories NOTIFY categoriesChanged)
     Q_PROPERTY(QStringList blacklistedApplications READ blacklistedApplications WRITE setBlacklistedApplications NOTIFY blacklistedApplicationsChanged)
+    Q_PROPERTY(QString replacementIdentityKey READ replacementIdentityKey WRITE setReplacementIdentityKey NOTIFY replacementIdentityKeyChanged)
     Q_PROPERTY(QString scope READ scope WRITE setScope NOTIFY scopeChanged)
 
     Q_ENUMS(ItemType)
@@ -64,6 +65,9 @@ public:
     QStringList blacklistedApplications() const;
     void setBlacklistedApplications(const QStringList &blacklistedApplications);
     bool isBlacklisted(LauncherItem *item) const;
+
+    QString replacementIdentityKey() const;
+    void setReplacementIdentityKey(const QString &key);
 
     QString scope() const;
     void setScope(const QString &scope);
@@ -92,7 +96,9 @@ signals:
     void iconDirectoriesChanged();
     void categoriesChanged();
     void blacklistedApplicationsChanged();
+    void replacementIdentityKeyChanged();
     void scopeChanged();
+    void launcherReplaced(LauncherItem *item, const QString &oldFilePath);
     void notifyLaunching(LauncherItem *item);
     void canceledNotifyLaunching(LauncherItem *item);
 
@@ -130,6 +136,7 @@ private:
     QStringList m_iconDirectories;
     QStringList m_categories;
     QStringList m_blacklistedApplications;
+    QString m_replacementIdentityKey;
     QFileSystemWatcher m_fileSystemWatcher;
     QSettings m_launcherSettings;
     QSettings m_globalSettings;

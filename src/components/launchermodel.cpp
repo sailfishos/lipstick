@@ -60,7 +60,8 @@ static inline QString filenameFromIconId(const QString &filename, const QString 
 
 static inline bool isVisibleDesktopFile(const QString &filename)
 {
-    LauncherItem item(filename);
+    LauncherItem item;
+    item.setFilePath(filename);
 
     return item.isValid() && item.shouldDisplay();
 }
@@ -156,10 +157,65 @@ LauncherModel::~LauncherModel()
 void LauncherModel::onFilesUpdated(const QStringList &added,
                                    const QStringList &modified, const QStringList &removed)
 {
+    QStringList addedFiles = added;
+    QStringList removedFiles = removed;
     QStringList modifiedAndNeedUpdating = modified;
 
+    // Keep the existing launcher item when a desktop file is replaced by
+    // another file with the same configured identity, so consumers do not
+    // mistake the change for an application uninstall.
+    QMap<QString, QStringList> replacementFiles;
+    if (!m_replacementIdentityKey.isEmpty()) {
+        for (const QString &filename : addedFiles) {
+            if (!isDesktopFile(m_directories, filename)) {
+                continue;
+            }
+
+            LauncherItem replacementItem;
+            replacementItem.setFilePath(filename);
+
+            if (replacementItem.isValid() && replacementItem.shouldDisplay()
+                    && displayCategory(&replacementItem)) {
+                const QString identity = replacementItem.readValue(m_replacementIdentityKey);
+                if (!identity.isEmpty()) {
+                    replacementFiles[identity].append(filename);
+                }
+            }
+        }
+
+        for (int i = removedFiles.count() - 1; i >= 0; --i) {
+            const QString oldFilePath = removedFiles.at(i);
+            LauncherItem *item = itemInModel(oldFilePath);
+            if (!item) {
+                continue;
+            }
+
+            const QString identity = item->readValue(m_replacementIdentityKey);
+            QMap<QString, QStringList>::iterator replacement = replacementFiles.find(identity);
+            if (identity.isEmpty() || replacement == replacementFiles.end()) {
+                continue;
+            }
+
+            const QString newFilePath = replacement.value().takeFirst();
+            if (replacement.value().isEmpty()) {
+                replacementFiles.erase(replacement);
+            }
+
+            LAUNCHER_DEBUG("Replacing launcher item:" << oldFilePath << "with" << newFilePath);
+            item->setIconFilename(QString());
+            item->setFilePath(newFilePath);
+            item->invalidateCaches();
+
+            addedFiles.removeOne(newFilePath);
+            removedFiles.removeAt(i);
+
+            updateItemsWithIcon(item->getOriginalIconId(), QString());
+            emit launcherReplaced(item, oldFilePath);
+        }
+    }
+
     // First, remove all removed launcher items before adding new ones
-    for (const QString &filename : removed) {
+    for (const QString &filename : removedFiles) {
         if (isDesktopFile(m_directories, filename)) {
             // Desktop file has been removed - remove launcher
             LauncherItem *item = itemInModel(filename);
@@ -174,7 +230,7 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
         }
     }
 
-    for (const QString &filename : added) {
+    for (const QString &filename : addedFiles) {
         if (isDesktopFile(m_directories, filename)) {
             // New desktop file appeared - add launcher
             LauncherItem *item = itemInModel(filename);
@@ -442,6 +498,19 @@ void LauncherModel::setBlacklistedApplications(const QStringList &blacklistedApp
     if (m_blacklistedApplications != blacklistedApplications) {
         m_blacklistedApplications = blacklistedApplications;
         emit blacklistedApplicationsChanged();
+    }
+}
+
+QString LauncherModel::replacementIdentityKey() const
+{
+    return m_replacementIdentityKey;
+}
+
+void LauncherModel::setReplacementIdentityKey(const QString &key)
+{
+    if (m_replacementIdentityKey != key) {
+        m_replacementIdentityKey = key;
+        emit replacementIdentityKeyChanged();
     }
 }
 

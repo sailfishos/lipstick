@@ -97,6 +97,7 @@ class LIPSTICK_EXPORT LauncherFolderModel : public LauncherFolderItem
     Q_PROPERTY(QStringList iconDirectories READ iconDirectories WRITE setIconDirectories NOTIFY iconDirectoriesChanged)
     Q_PROPERTY(QStringList categories READ categories WRITE setCategories NOTIFY categoriesChanged)
     Q_PROPERTY(QStringList blacklistedApplications READ blacklistedApplications WRITE setBlacklistedApplications NOTIFY blacklistedApplicationsChanged)
+    Q_PROPERTY(QString replacementIdentityKey READ replacementIdentityKey WRITE setReplacementIdentityKey NOTIFY replacementIdentityKeyChanged)
     Q_PROPERTY(LauncherModel *allItems READ allItems CONSTANT)
 public:
     LauncherFolderModel(QObject *parent = 0);
@@ -118,6 +119,9 @@ public:
     QStringList blacklistedApplications() const;
     void setBlacklistedApplications(const QStringList &applications);
 
+    QString replacementIdentityKey() const;
+    void setReplacementIdentityKey(const QString &key);
+
     Q_INVOKABLE bool moveToFolder(QObject *item, LauncherFolderItem *folder, int index = -1);
 
     void import();
@@ -136,6 +140,7 @@ signals:
     void iconDirectoriesChanged();
     void categoriesChanged();
     void blacklistedApplicationsChanged();
+    void replacementIdentityKeyChanged();
     void notifyLaunching(LauncherItem *item);
     void canceledNotifyLaunching(LauncherItem *item);
     void applicationRemoved(LauncherItem *item);
@@ -153,6 +158,7 @@ private slots:
     void scheduleSave();
     void appRemoved(QObject *item);
     void appAdded(QObject *item);
+    void onAppReplaced(LauncherItem *item, const QString &oldFilePath);
 
     void updateblacklistedApplications();
 
@@ -167,7 +173,7 @@ private:
     QTimer m_saveTimer;
     bool m_loading;
     bool m_initialized;
-    QMap<QString, QString> m_blacklistedApplications;
+    QMap<QString, QString> m_blacklistedApplicationPositions;
 
     static QString s_configDir;
 };

@@ -581,6 +581,7 @@ bool LauncherItem::canOpenMimeType(const QString &mimeType)
 
 void LauncherItem::invalidateCaches()
 {
+    m_mimeTypes.clear();
     m_mimeTypesPopulated = false;
     m_sandboxingInfoFetched = false;
 }
