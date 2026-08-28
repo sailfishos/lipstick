@@ -53,8 +53,9 @@ static void getDirAndIndex(const QString &positionId, QString &directoryId, int 
     index = strIndex.toInt();
 }
 
-struct FolderItem {
-    FolderItem(LauncherFolderItem *folder, LauncherItem *item)
+struct FolderItemData
+{
+    FolderItemData(LauncherFolderItem *folder, LauncherItem *item)
         : folder(folder)
         , item(item)
     {
@@ -210,7 +211,7 @@ void LauncherFolderModel::removeAppsFromBlacklist()
     QMap<QString, QString>::iterator i = m_blacklistedApplicationPositions.begin();
 
     // Same index can exist in subfolders. Thus, multimap.
-    QMultiMap<int, FolderItem*> unblacklistedItems;
+    QMultiMap<int, FolderItemData*> unblacklistedItems;
 
     while (i != m_blacklistedApplicationPositions.end()) {
         LauncherItem* item = m_launcherModel->itemInModel(i.key());
@@ -227,7 +228,7 @@ void LauncherFolderModel::removeAppsFromBlacklist()
                 folder = findContainerFolder(directory);
             }
 
-            unblacklistedItems.insert(index, new FolderItem(folder, item));
+            unblacklistedItems.insert(index, new FolderItemData(folder, item));
             item->setIsBlacklisted(false);
             i = m_blacklistedApplicationPositions.erase(i);
         } else {
@@ -235,10 +236,10 @@ void LauncherFolderModel::removeAppsFromBlacklist()
         }
     }
 
-    QMultiMap<int, FolderItem*>::iterator unblacklistIterator = unblacklistedItems.begin();
+    QMultiMap<int, FolderItemData*>::iterator unblacklistIterator = unblacklistedItems.begin();
     while (unblacklistIterator != unblacklistedItems.end()) {
         int index = unblacklistIterator.key();
-        FolderItem *folderItem = unblacklistIterator.value();
+        FolderItemData *folderItem = unblacklistIterator.value();
         if (folderItem) {
             if (folderItem->folder) {
                 folderItem->folder->insertItem(index, folderItem->item);
