@@ -12,9 +12,11 @@
 ** of this file.
 **
 ****************************************************************************/
+
 #include <QtTest/QtTest>
 #include <QQmlContext>
 #include <QScreen>
+
 #include <usbmodeselector.h>
 #include <qusbmoded.h>
 
@@ -24,9 +26,6 @@
 #include "lipstickqmlpath_stub.h"
 
 #include <nemo-devicelock/devicelock.h>
-
-int argc = 1;
-char *argv[] = { (char *) "./ut_usbmodeselector", NULL };
 
 void Ut_USBModeSelector::initTestCase()
 {
@@ -156,4 +155,4 @@ void Ut_USBModeSelector::testSetUSBMode()
     QCOMPARE(usbModeSelector->m_usbMode->currentMode(), QUsbModed::Mode::Charging);
 }
 
-QTEST_MAIN (Ut_USBModeSelector)
+QTEST_MAIN(Ut_USBModeSelector)

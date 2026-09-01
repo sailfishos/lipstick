@@ -77,7 +77,7 @@ static QStringList defaultDirectories()
     return QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
 }
 
-Q_GLOBAL_STATIC(LauncherDBus, _launcherDBus);
+Q_GLOBAL_STATIC(LauncherDBus, _launcherDBus)
 
 LauncherModel::LauncherModel(QObject *parent)
     : QObjectListModel(parent)
@@ -307,16 +307,16 @@ void LauncherModel::onFilesUpdated(const QStringList &added,
     savePositions();
 }
 
-void LauncherModel::updateItemsWithIcon(const QString &iconId, const QString &filename)
+void LauncherModel::updateItemsWithIcon(const QString &iconId, const QString &iconFilename)
 {
-    LAUNCHER_DEBUG("updateItemsWithIcon: iconId=" << iconId << "filename=" << filename);
+    LAUNCHER_DEBUG("updateItemsWithIcon: iconId=" << iconId << "filename=" << iconFilename);
 
     QStringList iconDirectories = m_launcherMonitor.iconDirectories();
 
     // Try to determine icon id from filename
     QString id = iconId;
-    if (id.isEmpty()) {
-        QFileInfo fileInfo(filename);
+    if (id.isEmpty() && !iconFilename.isEmpty()) {
+        QFileInfo fileInfo(iconFilename);
         if (iconDirectories.contains(fileInfo.path() + "/")) {
             id = fileInfo.baseName();
         }
@@ -549,10 +549,9 @@ static QString desktopFileFromPackageName(const QStringList &directories, const 
 }
 
 void LauncherModel::updatingStarted(const QString &packageName, const QString &label,
-        const QString &iconPath, QString desktopFile, const QString &serviceName)
+                                    const QString &iconPath, QString desktopFile, const QString &serviceName)
 {
-    LAUNCHER_DEBUG("Update started:" << packageName << label
-            << iconPath << desktopFile);
+    LAUNCHER_DEBUG("Update started:" << packageName << label << iconPath << desktopFile);
 
     // Remember which service notified us about this package, so we can
     // clean up existing updates when the service vanishes from D-Bus.
@@ -625,15 +624,14 @@ void LauncherModel::updatingStarted(const QString &packageName, const QString &l
     }
 }
 
-void LauncherModel::updatingProgress(const QString &packageName, int progress,
-        const QString &serviceName)
+void LauncherModel::updatingProgress(const QString &packageName, int progress, const QString &serviceName)
 {
     LAUNCHER_DEBUG("Update progress:" << packageName << progress);
 
     QString expectedServiceName = m_packageNameToDBusService[packageName];
     if (expectedServiceName != serviceName) {
-        qWarning() << "Got update from" << serviceName <<
-                      "but expected update from" << expectedServiceName;
+        qWarning() << "Got update from" << serviceName
+                   << "but expected update from" << expectedServiceName;
     }
 
     LauncherItem *item = packageInModel(packageName);
@@ -647,15 +645,14 @@ void LauncherModel::updatingProgress(const QString &packageName, int progress,
     item->setIsUpdating(true);
 }
 
-void LauncherModel::updatingFinished(const QString &packageName,
-        const QString &serviceName)
+void LauncherModel::updatingFinished(const QString &packageName, const QString &serviceName)
 {
     LAUNCHER_DEBUG("Update finished:" << packageName);
 
     QString expectedServiceName = m_packageNameToDBusService[packageName];
     if (expectedServiceName != serviceName) {
-        qWarning() << "Got update from" << serviceName <<
-                      "but expected update from" << expectedServiceName;
+        qWarning() << "Got update from" << serviceName
+                   << "but expected update from" << expectedServiceName;
     }
 
     m_packageNameToDBusService.remove(packageName);
@@ -676,7 +673,7 @@ void LauncherModel::updatingFinished(const QString &packageName,
     if (item->isTemporary()) {
         // Schedule removal of temporary icons
         QTimer::singleShot(LAUNCHER_UPDATING_REMOVAL_HOLDBACK_MS,
-                this, SLOT(removeTemporaryLaunchers()));
+                           this, &LauncherModel::removeTemporaryLaunchers);
     }
 }
 

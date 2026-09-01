@@ -17,7 +17,7 @@
 #include "closeeventeater.h"
 #include "ut_closeeventeater.h"
 
-bool qObjectEventFilterReturnValue = false;
+static bool qObjectEventFilterReturnValue = false;
 bool QObject::eventFilter(QObject *, QEvent *)
 {
     return qObjectEventFilterReturnValue;

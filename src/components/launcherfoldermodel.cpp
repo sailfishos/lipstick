@@ -33,13 +33,6 @@
 static const int FOLDER_MODEL_SAVE_TIMER_MS = 1000;
 static const QString CONFIG_FOLDER_SUBDIRECTORY("/lipstick/");
 static const QString CONFIG_MENU_FILENAME("applications.menu");
-static const QString DEFAULT_ICON_ID("icon-launcher-folder-01");
-
-static QString absoluteConfigPath(const QString &fileName)
-{
-    return LauncherFolderModel::configDir() + fileName;
-}
-
 
 QString LauncherFolderModel::s_configDir = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
         + CONFIG_FOLDER_SUBDIRECTORY;
@@ -60,8 +53,9 @@ static void getDirAndIndex(const QString &positionId, QString &directoryId, int 
     index = strIndex.toInt();
 }
 
-struct FolderItem {
-    FolderItem(LauncherFolderItem *folder, LauncherItem *item)
+struct FolderItemData
+{
+    FolderItemData(LauncherFolderItem *folder, LauncherItem *item)
         : folder(folder)
         , item(item)
     {
@@ -71,295 +65,6 @@ struct FolderItem {
     LauncherItem *item;
 };
 
-// This is modeled after the freedesktop.org menu files http://standards.freedesktop.org/menu-spec/latest/
-// but handles only the basic elements, i.e. no merging, filtering, layout, etc. is supported.
-
-LauncherFolderItem::LauncherFolderItem(QObject *parent)
-    : QObjectListModel(parent), m_iconId(DEFAULT_ICON_ID)
-{
-    connect(this, &LauncherFolderItem::itemRemoved,
-            this, &LauncherFolderItem::handleRemoved);
-    connect(this, &LauncherFolderItem::itemAdded,
-            this, &LauncherFolderItem::handleAdded);
-    connect(this, &LauncherFolderItem::rowsMoved,
-            this, &LauncherFolderItem::saveNeeded);
-}
-
-LauncherModel::ItemType LauncherFolderItem::type() const
-{
-    return LauncherModel::Folder;
-}
-
-const QString &LauncherFolderItem::title() const
-{
-    return m_title;
-}
-
-void LauncherFolderItem::setTitle(const QString &title)
-{
-    if (title == m_title)
-        return;
-
-    m_title = title;
-    emit titleChanged();
-    emit saveNeeded();
-}
-
-const QString &LauncherFolderItem::iconId() const
-{
-    return m_iconId;
-}
-
-void LauncherFolderItem::setIconId(const QString &icon)
-{
-    if (icon == m_iconId)
-        return;
-
-    m_iconId = icon;
-    saveDirectoryFile();
-    emit iconIdChanged();
-}
-
-bool LauncherFolderItem::isUpdating() const
-{
-    LauncherFolderItem *me = const_cast<LauncherFolderItem*>(this);
-    for (int i = 0; i < rowCount(); ++i) {
-        const LauncherItem *launcherItem = qobject_cast<const LauncherItem*>(me->get(i));
-        if (launcherItem && launcherItem->isUpdating())
-            return true;
-    }
-
-    return false;
-}
-
-int LauncherFolderItem::updatingProgress() const
-{
-    int updatingCount = 0;
-    int updatingTotal = 0;
-    LauncherFolderItem *me = const_cast<LauncherFolderItem*>(this);
-    for (int i = 0; i < rowCount(); ++i) {
-        const LauncherItem *launcherItem = qobject_cast<const LauncherItem*>(me->get(i));
-        if (launcherItem && launcherItem->isUpdating()) {
-            int progress = launcherItem->updatingProgress();
-            if (progress < 0 || progress > 100)
-                return progress;
-            ++updatingCount;
-            updatingTotal += progress;
-        }
-    }
-
-    return updatingCount ? updatingTotal / updatingCount : 0;
-}
-
-LauncherFolderItem *LauncherFolderItem::parentFolder() const
-{
-    return m_parentFolder;
-}
-
-void LauncherFolderItem::setParentFolder(LauncherFolderItem *parent)
-{
-    if (parent == m_parentFolder)
-        return;
-
-    m_parentFolder = parent;
-    emit parentFolderChanged();
-}
-
-// Creates a folder and moves the item at that index into the folder
-LauncherFolderItem *LauncherFolderItem::createFolder(int index, const QString &name)
-{
-    if (index < 0 || index > rowCount())
-        return 0;
-
-    LauncherFolderItem *folder = new LauncherFolderItem(this);
-    folder->setTitle(name);
-    folder->setParentFolder(this);
-    QObject *item = get(index);
-    insertItem(index, folder);
-    if (item) {
-        removeItem(item);
-        folder->addItem(item);
-    }
-
-    emit saveNeeded();
-
-    return folder;
-}
-
-void LauncherFolderItem::destroyFolder()
-{
-    if (itemCount() != 0)
-        qWarning() << "Removing a folder that is not empty.";
-    if (m_parentFolder)
-        m_parentFolder->removeItem(this);
-    if (!m_directoryFile.isEmpty()) {
-        QFile file(m_directoryFile);
-        file.remove();
-    }
-
-    emit saveNeeded();
-
-    deleteLater();
-}
-
-LauncherFolderItem *LauncherFolderItem::findContainer(QObject *item)
-{
-    LauncherFolderItem *me = const_cast<LauncherFolderItem*>(this);
-    for (int i = 0; i < rowCount(); ++i) {
-        QObject *obj = me->get(i);
-        if (obj == item) {
-            return this;
-        } else if (LauncherFolderItem *subFolder = qobject_cast<LauncherFolderItem*>(obj)) {
-            LauncherFolderItem *folder = subFolder->findContainer(item);
-            if (folder)
-                return folder;
-        }
-    }
-
-    return 0;
-}
-
-QString LauncherFolderItem::directoryFile() const
-{
-    return m_directoryFile;
-}
-
-void LauncherFolderItem::loadDirectoryFile(const QString &filename)
-{
-    m_directoryFile = filename;
-    if (!m_directoryFile.startsWith('/')) {
-        m_directoryFile = absoluteConfigPath(m_directoryFile);
-    }
-
-    GKeyFile *keyfile = g_key_file_new();
-    GError *err = NULL;
-
-    if (g_key_file_load_from_file(keyfile, m_directoryFile.toLatin1(), G_KEY_FILE_NONE, &err)) {
-        m_iconId = QString::fromLatin1(g_key_file_get_string(keyfile, "Desktop Entry", "Icon", &err));
-        emit iconIdChanged();
-    }
-
-    if (err != NULL) {
-        qWarning() << "Failed to load .directory file" << err->message;
-        g_error_free(err);
-    }
-
-    g_key_file_free(keyfile);
-}
-
-void LauncherFolderItem::saveDirectoryFile()
-{
-    QScopedPointer<QFile> dirFile;
-    if (m_directoryFile.isEmpty()) {
-        QTemporaryFile *tempFile = new QTemporaryFile(absoluteConfigPath("FolderXXXXXX.directory"));
-        dirFile.reset(tempFile);
-        tempFile->open();
-        tempFile->setAutoRemove(false);
-        m_directoryFile = tempFile->fileName();
-        emit directoryFileChanged();
-        emit saveNeeded();
-    } else {
-        dirFile.reset(new QFile(m_directoryFile));
-        dirFile.data()->open(QIODevice::WriteOnly);
-    }
-
-    if (!dirFile.data()->isOpen()) {
-        qWarning() << "Cannot open" << m_directoryFile;
-        return;
-    }
-
-    GKeyFile *keyfile = g_key_file_new();
-    GError *err = NULL;
-
-    g_key_file_load_from_file(keyfile, m_directoryFile.toLatin1(), G_KEY_FILE_NONE, &err);
-    g_key_file_set_string(keyfile, "Desktop Entry", "Icon", m_iconId.toLatin1());
-
-    gchar *data = g_key_file_to_data(keyfile, NULL, &err);
-    dirFile.data()->write(data);
-    dirFile.data()->close();
-    g_free(data);
-
-    g_key_file_free(keyfile);
-}
-
-void LauncherFolderItem::clear()
-{
-    for (int i = 0; i < rowCount(); ++i) {
-        QObject *item = get(i);
-        LauncherItem *launcherItem = qobject_cast<LauncherItem*>(item);
-        LauncherFolderItem *folder = qobject_cast<LauncherFolderItem*>(item);
-
-        if (launcherItem) {
-            disconnect(item, SIGNAL(isTemporaryChanged()), this, SIGNAL(saveNeeded()));
-        } else if (folder) {
-            disconnect(item, SIGNAL(saveNeeded()), this, SIGNAL(saveNeeded()));
-        }
-
-        if (launcherItem || folder) {
-            disconnect(item, SIGNAL(isUpdatingChanged()), this, SIGNAL(isUpdatingChanged()));
-            disconnect(item, SIGNAL(updatingProgressChanged()), this, SIGNAL(updatingProgressChanged()));
-        }
-        if (folder) {
-            folder->clear();
-            folder->deleteLater();
-        }
-    }
-    reset();
-}
-
-void LauncherFolderItem::handleAdded(QObject *item)
-{
-    const LauncherItem *launcherItem = qobject_cast<const LauncherItem*>(item);
-    const LauncherFolderItem *folder = qobject_cast<const LauncherFolderItem*>(item);
-
-    if (launcherItem) {
-        if (launcherItem->isUpdating()) {
-            emit isUpdatingChanged();
-            emit updatingProgressChanged();
-        }
-        connect(item, SIGNAL(isTemporaryChanged()), this, SIGNAL(saveNeeded()));
-    } else if (folder) {
-        if (folder->isUpdating()) {
-            emit isUpdatingChanged();
-            emit updatingProgressChanged();
-        }
-        connect(item, SIGNAL(saveNeeded()), this, SIGNAL(saveNeeded()));
-    }
-
-    if (launcherItem || folder) {
-        connect(item, SIGNAL(isUpdatingChanged()), this, SIGNAL(isUpdatingChanged()));
-        connect(item, SIGNAL(updatingProgressChanged()), this, SIGNAL(updatingProgressChanged()));
-    }
-
-    emit saveNeeded();
-}
-
-void LauncherFolderItem::handleRemoved(QObject *item)
-{
-    const LauncherItem *launcherItem = qobject_cast<const LauncherItem*>(item);
-    const LauncherFolderItem *folder = qobject_cast<const LauncherFolderItem*>(item);
-
-    if (launcherItem) {
-        if (launcherItem->isUpdating()) {
-            emit isUpdatingChanged();
-            emit updatingProgressChanged();
-        }
-        disconnect(item, SIGNAL(isTemporaryChanged()), this, SIGNAL(saveNeeded()));
-    } else if (folder) {
-        if (folder->isUpdating()) {
-            emit isUpdatingChanged();
-            emit updatingProgressChanged();
-        }
-        disconnect(item, SIGNAL(saveNeeded()), this, SIGNAL(saveNeeded()));
-    }
-
-    if (launcherItem || folder) {
-        disconnect(item, SIGNAL(isUpdatingChanged()), this, SIGNAL(isUpdatingChanged()));
-        disconnect(item, SIGNAL(updatingProgressChanged()), this, SIGNAL(updatingProgressChanged()));
-    }
-
-    emit saveNeeded();
-}
 
 class DeferredLauncherModel : public LauncherModel
 {
@@ -371,8 +76,6 @@ public:
 
     using LauncherModel::initialize;
 };
-
-//============
 
 LauncherFolderModel::LauncherFolderModel(QObject *parent)
     : LauncherFolderItem(parent)
@@ -410,29 +113,30 @@ void LauncherFolderModel::initialize()
 {
     if (m_initialized)
         return;
+
     m_initialized = true;
-
     m_launcherModel->initialize();
-
     m_saveTimer.setSingleShot(true);
-    connect(m_launcherModel, SIGNAL(itemRemoved(QObject*)),
-            this, SLOT(appRemoved(QObject*)));
-    connect(m_launcherModel, SIGNAL(itemAdded(QObject*)),
-            this, SLOT(appAdded(QObject*)));
+
+    connect(m_launcherModel, &DeferredLauncherModel::itemRemoved,
+            this, &LauncherFolderModel::onAppRemoved);
+    connect(m_launcherModel, &DeferredLauncherModel::itemAdded,
+            this, &LauncherFolderModel::onAppAdded);
     connect(m_launcherModel, &LauncherModel::launcherReplaced,
             this, &LauncherFolderModel::onAppReplaced);
     connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::notifyLaunching,
             this, &LauncherFolderModel::notifyLaunching);
     connect(m_launcherModel, (void (LauncherModel::*)(LauncherItem *))&LauncherModel::canceledNotifyLaunching,
             this, &LauncherFolderModel::canceledNotifyLaunching);
-    connect(&m_saveTimer, SIGNAL(timeout()), this, SLOT(save()));
+    connect(&m_saveTimer, &QTimer::timeout, this, &LauncherFolderModel::save);
 
     QDir config;
     config.mkpath(configDir());
 
     load();
 
-    connect(this, SIGNAL(saveNeeded()), this, SLOT(scheduleSave()));
+    connect(this, &LauncherFolderModel::saveNeeded,
+            this, &LauncherFolderModel::scheduleSave);
 }
 
 LauncherModel *LauncherFolderModel::allItems() const
@@ -507,7 +211,7 @@ void LauncherFolderModel::removeAppsFromBlacklist()
     QMap<QString, QString>::iterator i = m_blacklistedApplicationPositions.begin();
 
     // Same index can exist in subfolders. Thus, multimap.
-    QMultiMap<int, FolderItem*> unblacklistedItems;
+    QMultiMap<int, FolderItemData*> unblacklistedItems;
 
     while (i != m_blacklistedApplicationPositions.end()) {
         LauncherItem* item = m_launcherModel->itemInModel(i.key());
@@ -524,7 +228,7 @@ void LauncherFolderModel::removeAppsFromBlacklist()
                 folder = findContainerFolder(directory);
             }
 
-            unblacklistedItems.insert(index, new FolderItem(folder, item));
+            unblacklistedItems.insert(index, new FolderItemData(folder, item));
             item->setIsBlacklisted(false);
             i = m_blacklistedApplicationPositions.erase(i);
         } else {
@@ -532,10 +236,10 @@ void LauncherFolderModel::removeAppsFromBlacklist()
         }
     }
 
-    QMultiMap<int, FolderItem*>::iterator unblacklistIterator = unblacklistedItems.begin();
+    QMultiMap<int, FolderItemData*>::iterator unblacklistIterator = unblacklistedItems.begin();
     while (unblacklistIterator != unblacklistedItems.end()) {
         int index = unblacklistIterator.key();
-        FolderItem *folderItem = unblacklistIterator.value();
+        FolderItemData *folderItem = unblacklistIterator.value();
         if (folderItem) {
             if (folderItem->folder) {
                 folderItem->folder->insertItem(index, folderItem->item);
@@ -632,7 +336,7 @@ bool LauncherFolderModel::moveToFolder(QObject *item, LauncherFolderItem *folder
 }
 
 // An app removed from system
-void LauncherFolderModel::appRemoved(QObject *item)
+void LauncherFolderModel::onAppRemoved(QObject *item)
 {
     if (LauncherItem *launcherItem = qobject_cast<LauncherItem*>(item)) {
         emit applicationRemoved(launcherItem);
@@ -657,7 +361,7 @@ void LauncherFolderModel::onAppReplaced(LauncherItem *item, const QString &oldFi
 }
 
 // An app added to system
-void LauncherFolderModel::appAdded(QObject *item)
+void LauncherFolderModel::onAppAdded(QObject *item)
 {
     addItem(item);
     scheduleSave();
@@ -745,6 +449,7 @@ void LauncherFolderModel::saveFolder(QXmlStreamWriter &xml, LauncherFolderItem *
 {
     xml.writeStartElement("Menu");
     xml.writeTextElement("Name", folder->title());
+
     if (!folder->directoryFile().isEmpty())
         xml.writeTextElement("Directory", folder->directoryFile());
 
@@ -814,7 +519,7 @@ void LauncherFolderModel::load()
         xml.readNext();
         if (xml.isStartElement()) {
             if (xml.name() == QLatin1String("Menu")) {
-                LauncherFolderItem *folder = 0;
+                LauncherFolderItem *folder = nullptr;
                 if (menus.isEmpty())
                     folder = this;
                 else

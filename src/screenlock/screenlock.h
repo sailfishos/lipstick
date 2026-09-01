@@ -56,7 +56,8 @@ public:
      * \param silent Whether to show a notification or not (deprecated)
      * \param flicker Deprecated/not used
      */
-    int tklock_open(const QString &service, const QString &path, const QString &interface, const QString &method, uint mode, bool silent, bool flicker);
+    int tklock_open(const QString &service, const QString &path, const QString &interface, const QString &method,
+                    uint mode, bool silent, bool flicker);
 
     /*!
      * Hides the screen lock.

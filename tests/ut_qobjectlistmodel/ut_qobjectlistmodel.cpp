@@ -498,4 +498,3 @@ void Ut_QObjectListModel::testSynchronization()
 QTEST_MAIN(Ut_QObjectListModel)
 
 #include "ut_qobjectlistmodel.moc"
-

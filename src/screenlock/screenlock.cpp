@@ -28,17 +28,16 @@
 #include "touchscreen/touchscreen.h"
 #include "utilities/closeeventeater.h"
 
-ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent) :
-    QObject(parent),
-    m_touchScreen(touch),
-    m_shuttingDown(false),
-    m_lockscreenVisible(false),
-    m_lowPowerMode(false),
-    m_mceBlankingPolicy("default"),
-    m_interactionExpectedTimer(0),
-    m_interactionExpectedCurrent(false),
-    m_interactionExpectedEmitted(-1)
-
+ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent)
+    : QObject(parent)
+    , m_touchScreen(touch)
+    , m_shuttingDown(false)
+    , m_lockscreenVisible(false)
+    , m_lowPowerMode(false)
+    , m_mceBlankingPolicy("default")
+    , m_interactionExpectedTimer(0)
+    , m_interactionExpectedCurrent(false)
+    , m_interactionExpectedEmitted(-1)
 {
     /* Setup idle timer for signaling interaction expected changes on D-Bus */
     m_interactionExpectedTimer = new QTimer(this);
@@ -47,7 +46,8 @@ ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent) :
     connect(m_interactionExpectedTimer, &QTimer::timeout,
             this, &ScreenLock::interactionExpectedBroadcast);
 
-    connect(m_touchScreen, SIGNAL(touchBlockedChanged()), this, SIGNAL(touchBlockedChanged()));
+    connect(m_touchScreen, &TouchScreen::touchBlockedChanged,
+            this, &ScreenLock::touchBlockedChanged);
 
     auto systemBus = QDBusConnection::systemBus();
     systemBus.connect(QString(),
@@ -66,7 +66,7 @@ ScreenLock::ScreenLock(TouchScreen *touch, QObject* parent) :
 
 ScreenLock::~ScreenLock()
 {
-    m_touchScreen = 0;
+    m_touchScreen = nullptr;
 }
 
 int ScreenLock::tklock_open(const QString &service, const QString &path, const QString &interface,
@@ -84,26 +84,26 @@ int ScreenLock::tklock_open(const QString &service, const QString &path, const Q
     switch (mode) {
     case TkLockModeEnable:
         // Create the lock screen already so that it's readily available
-        QTimer::singleShot(0, this, SLOT(showScreenLock()));
+        QTimer::singleShot(0, this, &ScreenLock::showScreenLock);
         break;
 
     case TkLockModeOneInput:
-        QTimer::singleShot(0, this, SLOT(showEventEater()));
+        QTimer::singleShot(0, this, &ScreenLock::showEventEater);
         break;
 
     case TkLockEnableVisual:
         // Raise the lock screen window on top if it isn't already
-        QTimer::singleShot(0, this, SLOT(showScreenLock()));
+        QTimer::singleShot(0, this, &ScreenLock::showScreenLock);
         break;
 
     case TkLockEnableLowPowerMode:
         // Raise the lock screen window on top if it isn't already
         // (XXX: Low power mode is now handled via lpm_ui_mode_ind)
-        QTimer::singleShot(0, this, SLOT(showLowPowerMode()));
+        QTimer::singleShot(0, this, &ScreenLock::showLowPowerMode);
         break;
 
     case TkLockRealBlankMode:
-        QTimer::singleShot(0, this, SLOT(setDisplayOffMode()));
+        QTimer::singleShot(0, this, &ScreenLock::setDisplayOffMode);
         break;
 
     default:
@@ -115,7 +115,7 @@ int ScreenLock::tklock_open(const QString &service, const QString &path, const Q
 
 int ScreenLock::tklock_close(bool)
 {
-    QTimer::singleShot(0, this, SLOT(hideScreenLock()));
+    QTimer::singleShot(0, this, &ScreenLock::hideScreenLock);
 
     return TkLockReplyOk;
 }

@@ -31,17 +31,7 @@
 #include "displaystate_stub.h"
 #include "lipsticktest.h"
 
-TouchScreen *gTouchScreen = 0;
-
-void QTimer::singleShot(int, const QObject *receiver, const char *member)
-{
-    // The "member" string is of form "1member()", so remove the trailing 1 and the ()
-    int memberLength = strlen(member) - 3;
-    char modifiedMember[memberLength + 1];
-    strncpy(modifiedMember, member + 1, memberLength);
-    modifiedMember[memberLength] = 0;
-    QMetaObject::invokeMethod(const_cast<QObject *>(receiver), modifiedMember, Qt::DirectConnection);
-}
+TouchScreen *gTouchScreen = nullptr;
 
 HomeApplication::~HomeApplication()
 {
@@ -112,7 +102,8 @@ void Ut_ScreenLock::testToggleEventEater()
 
 void Ut_ScreenLock::testUnlockScreenWhenLocked()
 {
-    screenLock->tklock_open(TEST_SERVICE, TEST_PATH, TEST_INTERFACE, TEST_METHOD, ScreenLock::TkLockModeNone, false, false);
+    screenLock->tklock_open(TEST_SERVICE, TEST_PATH, TEST_INTERFACE, TEST_METHOD,
+                            ScreenLock::TkLockModeNone, false, false);
     screenLock->setScreenLocked(true);
     screenLock->setEventEaterEnabled(true);
     screenLock->unlockScreen();
@@ -178,7 +169,7 @@ void Ut_ScreenLock::testTkLockOpen()
 
     // Check that main window title and stacking layer were only changed if needed (and to the correct state)
     if (mainWindowModified) {
-        QCOMPARE(spy.count(), 1);
+        QTRY_COMPARE(spy.count(), 1);
         QCOMPARE(spy.last().at(0).toBool(), screenLockedChanged);
     }
 
@@ -202,7 +193,7 @@ void Ut_ScreenLock::testTkLockClose()
     QCOMPARE(reply, (int)ScreenLock::TkLockReplyOk);
 
     // The screen should no longer be locked
-    QCOMPARE(spy.count(), 1);
+    QTRY_COMPARE(spy.count(), 1);
     QCOMPARE(spy.last().at(0).toBool(), false);
 
     // Events should still be eaten
@@ -211,7 +202,8 @@ void Ut_ScreenLock::testTkLockClose()
     QCOMPARE(touchScreen->eventFilter(0, &event), true);
 }
 
-void Ut_ScreenLock::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState)
+void Ut_ScreenLock::updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState,
+                                       DeviceState::DisplayStateMonitor::DisplayState newState)
 {
     emit gDisplayStateMonitorStub->displayState->displayStateChanged(oldState);
     emit gDisplayStateMonitorStub->displayState->displayStateChanged(newState);

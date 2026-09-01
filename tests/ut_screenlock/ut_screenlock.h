@@ -41,7 +41,8 @@ private slots:
     void testTkLockClose();
 
 private:
-    void updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState, DeviceState::DisplayStateMonitor::DisplayState newState);
+    void updateDisplayState(DeviceState::DisplayStateMonitor::DisplayState oldState,
+                            DeviceState::DisplayStateMonitor::DisplayState newState);
     void fakeDisplayOnAndReady();
 
     ScreenLock *screenLock;

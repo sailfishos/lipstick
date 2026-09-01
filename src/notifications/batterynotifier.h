@@ -46,7 +46,7 @@ public:
      *
      * \param the parent QObject
      */
-    BatteryNotifier(QObject *parent = NULL);
+    BatteryNotifier(QObject *parent = nullptr);
 
     /*!
      * Destroys the battery business logic.
@@ -144,7 +144,7 @@ private:
     QMceChargerType *m_mceChargerType;
     QMceChargerState *m_mceChargerState;
     QMceChargingState *m_mceChargingState;
-    QMceBatteryStatus *m_mceBatteryStatus;;
+    QMceBatteryStatus *m_mceBatteryStatus;
     QMceBatteryLevel *m_mceBatteryLevel;
     QMcePowerSaveMode *m_mcePowerSaveMode;
     QMceDisplay *m_mceDisplay;

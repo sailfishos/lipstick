@@ -48,7 +48,7 @@ public:
     inline QString options() const { return m_options; }
     void setOptions(const QString &options);
 
-    inline QWaylandKeymap waylandKeymap() const { return QWaylandKeymap(m_layout, m_variant, m_options, m_model, m_rules); };
+    inline QWaylandKeymap waylandKeymap() const { return QWaylandKeymap(m_layout, m_variant, m_options, m_model, m_rules); }
 
 signals:
     void rulesChanged();

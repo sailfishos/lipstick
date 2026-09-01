@@ -112,8 +112,10 @@ void Ut_VolumeControl::cleanup()
 void Ut_VolumeControl::testConnections()
 {
     // Check that pulse audio and the volume bar are connected
-    QCOMPARE(disconnect(volumeControl->m_pulseAudioControl, SIGNAL(volumeChanged(int,int)), volumeControl, SLOT(setVolume(int,int))), true);
-    QCOMPARE(disconnect(volumeControl->m_pulseAudioControl, SIGNAL(callActiveChanged(bool)), volumeControl, SLOT(handleCallActive(bool))), true);
+    QVERIFY(disconnect(volumeControl->m_pulseAudioControl, SIGNAL(volumeChanged(int,int)),
+                       volumeControl, SLOT(setVolume(int,int))));
+    QVERIFY(disconnect(volumeControl->m_pulseAudioControl, SIGNAL(callActiveChanged(bool)),
+                       volumeControl, SLOT(handleCallActive(bool))));
 }
 
 Q_DECLARE_METATYPE(Qt::Key)

@@ -47,7 +47,8 @@ void Ut_Notification::testGettersAndSetters()
     int expireTimeout = 1;
 
     // Ensure that the constructor puts things in place
-    LipstickNotification notification(appName, explicitAppName, disambiguatedAppName, id, appIcon, summary, body, actions, hints, expireTimeout);
+    LipstickNotification notification(appName, explicitAppName, disambiguatedAppName, id, appIcon,
+                                      summary, body, actions, hints, expireTimeout);
     QCOMPARE(notification.appName(), appName);
     QCOMPARE(notification.explicitAppName(), explicitAppName);
     QCOMPARE(notification.disambiguatedAppName(), disambiguatedAppName);
