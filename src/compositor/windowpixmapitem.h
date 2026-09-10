@@ -84,12 +84,14 @@ signals:
 private slots:
     void handleWindowSizeChanged();
     void itemDestroyed(QObject *);
+    void handleCompositorVisibleChanged(bool visible);
 
 private:
     void updateItem();
     void surfaceDestroyed();
     void configure(bool hasBuffer);
     void cleanupOpenGL();
+    void completeDeferredCleanup();
 
     QPointer<LipstickCompositorWindow> m_item;
     int m_id;

@@ -667,6 +667,8 @@ WindowPixmapItem::WindowPixmapItem()
     , m_textureProvider(nullptr)
 {
     setFlag(ItemHasContents);
+    if (LipstickCompositor *c = LipstickCompositor::instance())
+        connect(c, &QWindow::visibleChanged, this, &WindowPixmapItem::handleCompositorVisibleChanged);
 }
 
 WindowPixmapItem::~WindowPixmapItem()
@@ -710,12 +712,36 @@ void WindowPixmapItem::setWindowId(int id)
         emit windowSizeChanged();
 }
 
+void WindowPixmapItem::completeDeferredCleanup()
+{
+    delete m_unmapLock;
+    m_unmapLock = nullptr;
+    if (m_item)
+        m_item->setDelayRemove(false);
+}
+
+void WindowPixmapItem::handleCompositorVisibleChanged(bool visible)
+{
+    // Snapshots are taken in updatePaintNode, which does not run while the
+    // compositor window is hidden (display blanked). Finish bookkeeping now
+    // so destroyed/unmapped surfaces are not kept alive until unsleep.
+    if (!visible && (m_surfaceDestroyed || !m_hasBuffer))
+        completeDeferredCleanup();
+}
+
 void WindowPixmapItem::surfaceDestroyed()
 {
     m_surfaceDestroyed = true;
     m_hasBuffer = false;
-    m_unmapLock = new QWaylandUnmapLock(m_item->surface());
-    m_item->imageRelease(this);
+    if (m_item)
+        m_item->imageRelease(this);
+
+    LipstickCompositor *c = LipstickCompositor::instance();
+    if (!m_unmapLock || !c || !c->isVisible()) {
+        completeDeferredCleanup();
+        return;
+    }
+
     update();
 }
 
@@ -1033,8 +1059,17 @@ void WindowPixmapItem::configure(bool hasBuffer)
 {
     if (hasBuffer != m_hasBuffer) {
         m_hasBuffer = hasBuffer;
-        if (m_hasBuffer && !m_unmapLock)
-            m_unmapLock = new QWaylandUnmapLock(m_item->surface());
+        if (m_hasBuffer) {
+            if (!m_unmapLock)
+                m_unmapLock = new QWaylandUnmapLock(m_item->surface());
+        } else {
+            LipstickCompositor *c = LipstickCompositor::instance();
+            if (!c || !c->isVisible()) {
+                delete m_unmapLock;
+                m_unmapLock = nullptr;
+                return;
+            }
+        }
 
         update();
     }
