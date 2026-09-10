@@ -16,12 +16,14 @@
 #define ALIENMANAGER_H
 
 #include <QObject>
+#include <QPointer>
 #include <QtCompositor/qwaylandglobalinterface.h>
 
 #include "qwayland-server-alien-manager.h"
 
 class AlienClient;
 class AlienSurface;
+class QWaylandSurface;
 
 class AlienManagerGlobal : public QObject, public QWaylandGlobalInterface
 {
@@ -47,7 +49,7 @@ protected:
     void alien_manager_pong(Resource *resource, uint32_t serial) override;
 
 private:
-    QMap<uint32_t, QWaylandSurface *> m_pings;
+    QMap<uint32_t, QPointer<QWaylandSurface> > m_pings;
 };
 
 class AlienClient : public QObject, public QtWaylandServer::alien_client
