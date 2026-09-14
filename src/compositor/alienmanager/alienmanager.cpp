@@ -68,7 +68,7 @@ void AlienManager::alien_manager_create_alien_client(Resource *resource, uint32_
 void AlienManager::alien_manager_pong(Resource *resource, uint32_t serial)
 {
     Q_UNUSED(resource)
-    QWaylandSurface *surf = m_pings.value(serial);
+    QWaylandSurface *surf = m_pings.take(serial);
     if (surf)
         surf->pong();
 }
