@@ -452,10 +452,17 @@ void LipstickCompositor::setTopmostWindowId(int id)
     }
 }
 
+static QString surfaceCategory(QWaylandSurface *surface)
+{
+    QString category = surface->windowProperties().value(QLatin1String("CATEGORY")).toString();
+    if (category.isEmpty())
+        category = surface->property("CATEGORY").toString();
+    return category;
+}
+
 QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
 {
-    QVariantMap properties = surface->windowProperties();
-    QString category = properties.value("CATEGORY").toString();
+    QString category = surfaceCategory(surface);
 
     int id = m_nextWindowId++;
     LipstickCompositorWindow *item = new LipstickCompositorWindow(id, category,
@@ -609,10 +616,8 @@ void LipstickCompositor::surfaceMapped()
         }
     }
 
-    QVariantMap properties = surface->windowProperties();
-
     item->m_mapped = true;
-    item->m_category = properties.value("CATEGORY").toString();
+    item->m_category = surfaceCategory(surface);
 
     if (!item->parentItem()) {
         // TODO why contentItem?

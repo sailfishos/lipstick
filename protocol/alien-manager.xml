@@ -24,7 +24,7 @@
         THIS SOFTWARE.
     </copyright>
 
-    <interface name="alien_manager" version="1">
+    <interface name="alien_manager" version="2">
         <description summary="manager interface for alien clients">
             This global interface is used by alien clients to integrate
             with the shell.
@@ -66,7 +66,7 @@
         </event>
     </interface>
 
-    <interface name="alien_client" version="1">
+    <interface name="alien_client" version="2">
         <description summary="alien client metadata interface">
             Interface used to associate one or more wl_surfaces with an
             external alien application.
@@ -100,7 +100,7 @@
         </event>
     </interface>
 
-    <interface name="alien_surface" version="1">
+    <interface name="alien_surface" version="2">
         <description summary="main window interface for alien clients">
             This interface extends a basic wl_surface with additional metadata
             needed to map it on screen.
@@ -210,6 +210,18 @@
                 This notifies that the application associated with the surface has
                 terminated abnormally.
           </description>
+        </request>
+
+        <request name="set_category" since="2">
+            <description summary="set the shell window category">
+                Associate this surface with a shell window category. The category
+                is used by the compositor to choose which layer the window is
+                stacked in.
+
+                The string must be encoded in UTF-8. Known values include "call".
+                This request must be sent before the surface is mapped.
+            </description>
+            <arg name="category" type="string"/>
         </request>
 
         <event name="close">

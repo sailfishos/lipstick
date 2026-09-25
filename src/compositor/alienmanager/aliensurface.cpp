@@ -96,6 +96,18 @@ void AlienSurface::alien_surface_set_title(Resource *resource, const QString &ti
     setSurfaceTitle(title);
 }
 
+void AlienSurface::alien_surface_set_category(Resource *resource, const QString &category)
+{
+    Q_UNUSED(resource)
+    if (category.isEmpty())
+        return;
+
+    // Qt clients publish this through window properties. AppSupport clients do not,
+    // so keep the value on the surface for LipstickCompositor to read at map time.
+    surface()->setProperty("CATEGORY", category);
+    surface()->setWindowProperty(QStringLiteral("CATEGORY"), category);
+}
+
 void AlienSurface::alien_surface_ack_configure(Resource *resource, uint32_t serial)
 {
     Q_UNUSED(resource);
