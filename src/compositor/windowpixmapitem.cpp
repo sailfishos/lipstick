@@ -18,6 +18,8 @@
 #include <QSGMaterialShader>
 #include <QSGTexture>
 #include <QSGTextureProvider>
+#include <QOpenGLContext>
+#include <QOpenGLExtraFunctions>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QWaylandSurfaceItem>
@@ -646,8 +648,7 @@ public:
     SnapshotTextureProvider() : t(0), fbo(0) {}
     ~SnapshotTextureProvider()
     {
-        delete fbo;
-        delete t;
+        releaseResources();
     }
 
     QSGTexture *texture() const override
@@ -655,10 +656,135 @@ public:
         return t;
     }
 
+    void releaseResources()
+    {
+        delete fbo;
+        delete t;
+        fbo = nullptr;
+        t = nullptr;
+    }
+
     QSGTexture *t;
     QOpenGLFramebufferObject *fbo;
 };
 
+static bool copyTexture(QOpenGLShaderProgram *program, int vertexLocation, int textureLocation,
+                        QSGTexture *texture, const QSize &size)
+{
+    if (!texture || size.isEmpty() || vertexLocation < 0)
+        return false;
+
+    QOpenGLContext *context = QOpenGLContext::currentContext();
+    if (!context)
+        return false;
+
+    QOpenGLExtraFunctions *gl = context->extraFunctions();
+    const bool haveVao = context->format().majorVersion() >= 3
+            || context->hasExtension(QByteArrayLiteral("GL_OES_vertex_array_object"));
+
+    GLint previousVao = 0;
+    GLint previousViewport[4] = { 0, 0, 0, 0 };
+    GLint previousScissor[4] = { 0, 0, 0, 0 };
+    GLint previousProgram = 0;
+    GLint previousActiveTexture = GL_TEXTURE0;
+    GLint previousTexture = 0;
+    GLfloat previousClear[4] = { 0, 0, 0, 0 };
+    GLint attribEnabled = GL_FALSE;
+    GLint attribSize = 4;
+    GLint attribType = GL_FLOAT;
+    GLint attribNormalized = GL_FALSE;
+    GLint attribStride = 0;
+    void *attribPointer = nullptr;
+
+    const GLboolean scissor = gl->glIsEnabled(GL_SCISSOR_TEST);
+    const GLboolean blend = gl->glIsEnabled(GL_BLEND);
+    const GLboolean depth = gl->glIsEnabled(GL_DEPTH_TEST);
+    const GLboolean stencil = gl->glIsEnabled(GL_STENCIL_TEST);
+    const GLboolean cull = gl->glIsEnabled(GL_CULL_FACE);
+
+    gl->glGetIntegerv(GL_VIEWPORT, previousViewport);
+    gl->glGetIntegerv(GL_CURRENT_PROGRAM, &previousProgram);
+    gl->glGetIntegerv(GL_ACTIVE_TEXTURE, &previousActiveTexture);
+    gl->glGetFloatv(GL_COLOR_CLEAR_VALUE, previousClear);
+    if (scissor)
+        gl->glGetIntegerv(GL_SCISSOR_BOX, previousScissor);
+    if (haveVao) {
+        gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previousVao);
+        if (previousVao)
+            gl->glBindVertexArray(0);
+    }
+
+    // Attribute state is global on GLES2. Query it on the VAO this draw uses.
+    gl->glGetVertexAttribiv(vertexLocation, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &attribEnabled);
+    if (attribEnabled) {
+        gl->glGetVertexAttribiv(vertexLocation, GL_VERTEX_ATTRIB_ARRAY_SIZE, &attribSize);
+        gl->glGetVertexAttribiv(vertexLocation, GL_VERTEX_ATTRIB_ARRAY_TYPE, &attribType);
+        gl->glGetVertexAttribiv(vertexLocation, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &attribNormalized);
+        gl->glGetVertexAttribiv(vertexLocation, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &attribStride);
+        gl->glGetVertexAttribPointerv(vertexLocation, GL_VERTEX_ATTRIB_ARRAY_POINTER, &attribPointer);
+    }
+
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glGetIntegerv(GL_TEXTURE_BINDING_2D, &previousTexture);
+
+    gl->glDisable(GL_SCISSOR_TEST);
+    gl->glDisable(GL_BLEND);
+    gl->glDisable(GL_DEPTH_TEST);
+    gl->glDisable(GL_STENCIL_TEST);
+    gl->glDisable(GL_CULL_FACE);
+    gl->glViewport(0, 0, size.width(), size.height());
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+
+    const bool bound = program->bind();
+    if (bound) {
+        program->setUniformValue(textureLocation, 0);
+        texture->bind();
+
+        static const GLfloat vertices[] = {
+            0.f, 0.f,
+            1.f, 0.f,
+            0.f, 1.f,
+            1.f, 1.f,
+        };
+        program->enableAttributeArray(vertexLocation);
+        program->setAttributeArray(vertexLocation, vertices, 2);
+        gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        program->release();
+    }
+
+    if (attribEnabled) {
+        gl->glVertexAttribPointer(vertexLocation, attribSize, attribType,
+                                  attribNormalized ? GL_TRUE : GL_FALSE,
+                                  attribStride, attribPointer);
+        gl->glEnableVertexAttribArray(vertexLocation);
+    } else {
+        gl->glDisableVertexAttribArray(vertexLocation);
+    }
+
+    gl->glBindTexture(GL_TEXTURE_2D, previousTexture);
+    gl->glActiveTexture(previousActiveTexture);
+    if (haveVao && previousVao)
+        gl->glBindVertexArray(previousVao);
+    gl->glViewport(previousViewport[0], previousViewport[1], previousViewport[2], previousViewport[3]);
+    if (scissor) {
+        gl->glEnable(GL_SCISSOR_TEST);
+        gl->glScissor(previousScissor[0], previousScissor[1], previousScissor[2], previousScissor[3]);
+    }
+    if (blend)
+        gl->glEnable(GL_BLEND);
+    if (depth)
+        gl->glEnable(GL_DEPTH_TEST);
+    if (stencil)
+        gl->glEnable(GL_STENCIL_TEST);
+    if (cull)
+        gl->glEnable(GL_CULL_FACE);
+    gl->glClearColor(previousClear[0], previousClear[1], previousClear[2], previousClear[3]);
+    if (previousProgram)
+        gl->glUseProgram(previousProgram);
+
+    return bound;
+}
 
 WindowPixmapItem::WindowPixmapItem()
     : m_item(nullptr), m_id(0), m_opaque(false), m_radius(0), m_xOffset(0), m_yOffset(0)
@@ -667,8 +793,10 @@ WindowPixmapItem::WindowPixmapItem()
     , m_textureProvider(nullptr)
 {
     setFlag(ItemHasContents);
-    if (LipstickCompositor *c = LipstickCompositor::instance())
+    if (LipstickCompositor *c = LipstickCompositor::instance()) {
         connect(c, &QWindow::visibleChanged, this, &WindowPixmapItem::handleCompositorVisibleChanged);
+        connect(c, &QQuickWindow::sceneGraphInvalidated, this, &WindowPixmapItem::releaseSnapshot, Qt::DirectConnection);
+    }
 }
 
 WindowPixmapItem::~WindowPixmapItem()
@@ -722,11 +850,15 @@ void WindowPixmapItem::completeDeferredCleanup()
 
 void WindowPixmapItem::handleCompositorVisibleChanged(bool visible)
 {
-    // Snapshots are taken in updatePaintNode, which does not run while the
-    // compositor window is hidden (display blanked). Finish bookkeeping now
-    // so destroyed/unmapped surfaces are not kept alive until unsleep.
-    if (!visible && (m_surfaceDestroyed || !m_hasBuffer))
+    // updatePaintNode does not run while the compositor window is hidden, so a
+    // destroyed surface must drop delayRemove now. Otherwise window bookkeeping
+    // keeps pointing at a surface that is already gone. A live unmapped surface
+    // keeps its lock, though, because dropping it would let beforeSynchronizing
+    // release the client buffer before the cover can be copied.
+    if (!visible && m_surfaceDestroyed)
         completeDeferredCleanup();
+    else if (visible && m_unmapLock && !m_hasBuffer && !m_surfaceDestroyed)
+        update();
 }
 
 void WindowPixmapItem::surfaceDestroyed()
@@ -902,76 +1034,63 @@ QSGNode *WindowPixmapItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     }
 
     if (!m_hasBuffer && texture) {
-        if (!m_textureProvider) {
-            SnapshotTextureProvider *prov = new SnapshotTextureProvider;
-            m_textureProvider = prov;
+        if (!m_textureProvider)
+            m_textureProvider = new SnapshotTextureProvider;
 
-            if (!s_snapshotProgram) {
-                s_snapshotProgram = new SnapshotProgram;
-                s_snapshotProgram->program.addShaderFromSourceCode(QOpenGLShader::Vertex,
-                    "attribute highp vec4 vertex;\n"
-                    "varying highp vec2 texPos;\n"
-                    "void main(void) {\n"
-                    "   texPos = vertex.xy;\n"
-                    "   gl_Position = vec4(vertex.xy * 2.0 - 1.0, 0, 1);\n"
-                    "}");
-                s_snapshotProgram->program.addShaderFromSourceCode(QOpenGLShader::Fragment,
-                    "uniform sampler2D texture;\n"
-                    "varying highp vec2 texPos;\n"
-                    "void main(void) {\n"
-                    "   gl_FragColor = texture2D(texture, texPos);\n"
-                    "}");
-                if (!s_snapshotProgram->program.link())
-                    qDebug() << s_snapshotProgram->program.log();
+        // The shader is static, and cleanupOpenGL() drops it when the scene
+        // graph is invalidated. The provider can still be alive afterwards,
+        // so create the shader whenever it is missing.
+        if (!s_snapshotProgram) {
+            s_snapshotProgram = new SnapshotProgram;
+            s_snapshotProgram->program.addShaderFromSourceCode(QOpenGLShader::Vertex,
+                "attribute highp vec4 vertex;\n"
+                "varying highp vec2 texPos;\n"
+                "void main(void) {\n"
+                "   texPos = vertex.xy;\n"
+                "   gl_Position = vec4(vertex.xy * 2.0 - 1.0, 0, 1);\n"
+                "}");
+            s_snapshotProgram->program.addShaderFromSourceCode(QOpenGLShader::Fragment,
+                "uniform sampler2D texture;\n"
+                "varying highp vec2 texPos;\n"
+                "void main(void) {\n"
+                "   gl_FragColor = texture2D(texture, texPos);\n"
+                "}");
+            if (!s_snapshotProgram->program.link())
+                qDebug() << s_snapshotProgram->program.log();
 
-                s_snapshotProgram->vertexLocation = s_snapshotProgram->program.attributeLocation("vertex");
-                s_snapshotProgram->textureLocation = s_snapshotProgram->program.uniformLocation("texture");
+            s_snapshotProgram->vertexLocation = s_snapshotProgram->program.attributeLocation("vertex");
+            s_snapshotProgram->textureLocation = s_snapshotProgram->program.uniformLocation("texture");
 
-                connect(window(), &QQuickWindow::sceneGraphInvalidated, this, &WindowPixmapItem::cleanupOpenGL);
-            }
+            connect(window(), &QQuickWindow::sceneGraphInvalidated, this, &WindowPixmapItem::cleanupOpenGL, Qt::DirectConnection);
         }
         provider = m_textureProvider;
 
-        if (m_unmapLock) {
+        if (m_unmapLock && width() >= 1 && height() >= 1) {
             SnapshotTextureProvider *prov = static_cast<SnapshotTextureProvider *>(provider);
+            const QSize snapshotSize(qRound(width()), qRound(height()));
 
-            if (!prov->fbo || prov->fbo->size() != QSize(width(), height())) {
-                delete prov->fbo;
-                delete prov->t;
-                prov->t = nullptr;
-                prov->fbo = new QOpenGLFramebufferObject(width(), height());
+            if (!prov->fbo || prov->fbo->size() != snapshotSize) {
+                prov->releaseResources();
+                prov->fbo = new QOpenGLFramebufferObject(snapshotSize);
             }
 
-            prov->fbo->bind();
-            s_snapshotProgram->program.bind();
-
-            texture->bind();
-
-            static GLfloat const triangleVertices[] = {
-                1.f, 0.f,
-                1.f, 1.f,
-                0.f, 0.f,
-                0.f, 1.f,
-            };
-            s_snapshotProgram->program.enableAttributeArray(s_snapshotProgram->vertexLocation);
-            s_snapshotProgram->program.setAttributeArray(s_snapshotProgram->vertexLocation, triangleVertices, 2);
-
-            glViewport(0, 0, width(), height());
-            glDisable(GL_BLEND);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-            s_snapshotProgram->program.release();
-
-            if (!prov->t) {
-                prov->t = window()->createTextureFromId(prov->fbo->texture(), prov->fbo->size(), 0);
-                emit prov->textureChanged();
+            if (prov->fbo->isValid()) {
+                prov->fbo->bind();
+                const bool copied = copyTexture(&s_snapshotProgram->program,
+                                                 s_snapshotProgram->vertexLocation,
+                                                 s_snapshotProgram->textureLocation,
+                                                 texture, snapshotSize);
+                if (!prov->t && copied) {
+                    prov->t = window()->createTextureFromId(prov->fbo->texture(), prov->fbo->size(), 0);
+                    emit prov->textureChanged();
+                }
+                prov->fbo->release();
+                if (copied) {
+                    delete m_unmapLock;
+                    m_unmapLock = nullptr;
+                    m_haveSnapshot = true;
+                }
             }
-            prov->fbo->release();
-            delete m_unmapLock;
-            m_unmapLock = nullptr;
-            s_snapshotProgram->program.disableAttributeArray(s_snapshotProgram->vertexLocation);
-
-            m_haveSnapshot = true;
         }
     } else if (!m_hasBuffer && m_textureProvider) {
         provider = m_textureProvider;
@@ -1064,15 +1183,35 @@ void WindowPixmapItem::configure(bool hasBuffer)
                 m_unmapLock = new QWaylandUnmapLock(m_item->surface());
         } else {
             LipstickCompositor *c = LipstickCompositor::instance();
-            if (!c || !c->isVisible()) {
+            if (!c) {
                 delete m_unmapLock;
                 m_unmapLock = nullptr;
                 return;
             }
+            // Keep the lock while the compositor is hidden. The cover can be
+            // copied only from updatePaintNode, but that does not run until the
+            // window is visible again, so dropping the lock now would let
+            // beforeSynchronizing release the client buffer before the copy.
+            // A destroyed surface does not get here, because surfaceDestroyed()
+            // drops the lock immediately when the window is hidden.
+            if (!c->isVisible())
+                return;
         }
 
         update();
     }
+}
+
+void WindowPixmapItem::releaseSnapshot()
+{
+    // Emitted on the render thread while the GL context is still current, but
+    // only after the scene graph has deleted its nodes. SurfaceNode owns the
+    // provider, so m_textureProvider is usually null here. When the node never
+    // took ownership, release the FBO now, since it cannot be used once the
+    // context is gone.
+    m_haveSnapshot = false;
+    if (SnapshotTextureProvider *prov = static_cast<SnapshotTextureProvider *>(m_textureProvider.data()))
+        prov->releaseResources();
 }
 
 void WindowPixmapItem::cleanupOpenGL()

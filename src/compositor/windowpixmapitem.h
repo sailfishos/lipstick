@@ -17,6 +17,7 @@
 
 #include <QQuickItem>
 #include <QPointer>
+#include <QSGTextureProvider>
 #include "lipstickglobal.h"
 
 class QWaylandUnmapLock;
@@ -85,6 +86,7 @@ private slots:
     void handleWindowSizeChanged();
     void itemDestroyed(QObject *);
     void handleCompositorVisibleChanged(bool visible);
+    void releaseSnapshot();
 
 private:
     void updateItem();
@@ -107,7 +109,7 @@ private:
     bool m_hasPixmap;
     bool m_surfaceDestroyed;
     bool m_haveSnapshot;
-    QSGTextureProvider *m_textureProvider;
+    QPointer<QSGTextureProvider> m_textureProvider;
 
     static struct SnapshotProgram *s_snapshotProgram;
 };
