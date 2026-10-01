@@ -77,9 +77,9 @@ LipstickCompositor::LipstickCompositor()
     , m_sessionActive(false)
     , m_topmostWindowId(0)
     , m_topmostWindowProcessId(0)
-    , m_topmostWindowOrientation(Qt::PrimaryOrientation)
-    , m_screenOrientation(Qt::PrimaryOrientation)
-    , m_sensorOrientation(Qt::PrimaryOrientation)
+    , m_topmostWindowOrientation(Qt::InvertedPortraitOrientation)
+    , m_screenOrientation(Qt::InvertedPortraitOrientation)
+    , m_sensorOrientation(Qt::InvertedPortraitOrientation)
     , m_retainedSelection(0)
     , m_updatesEnabled(true)
     , m_completed(false)
@@ -116,7 +116,6 @@ LipstickCompositor::LipstickCompositor()
     connect(this, &QQuickWindow::afterRendering, this, &LipstickCompositor::readContent, Qt::DirectConnection);
 
     m_orientationSensor = new QOrientationSensor(this);
-    QObject::connect(m_orientationSensor, SIGNAL(readingChanged()), this, SLOT(setScreenOrientationFromSensor()));
     if (!m_orientationSensor->connectToBackend()) {
         qWarning() << "Could not connect to the orientation sensor backend";
     } else {
@@ -864,7 +863,7 @@ void LipstickCompositor::setScreenOrientationFromSensor()
             break;
         case QOrientationReading::Undefined:
         default:
-            sensorOrientation = Qt::PrimaryOrientation;
+            sensorOrientation = Qt::InvertedPortraitOrientation;
             break;
     }
 
