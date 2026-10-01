@@ -36,8 +36,8 @@ USBModeSelector::USBModeSelector(NemoDeviceLock::DeviceLock *deviceLock, QObject
     connect(m_usbMode, &QUsbModed::eventReceived, this, &USBModeSelector::handleUSBEvent);
     connect(m_usbMode, &QUsbModed::currentModeChanged, this, &USBModeSelector::handleUSBState);
     connect(m_usbMode, &QUsbModed::targetModeChanged, this, &USBModeSelector::updateModePreparing);
-    connect(m_usbMode, SIGNAL(usbStateError(QString)), this, SIGNAL(showError(QString)));
-    connect(m_usbMode, SIGNAL(supportedModesChanged()), this, SIGNAL(supportedModesChanged()));
+    connect(m_usbMode, &QUsbModed::usbStateError, this, &USBModeSelector::showError);
+    connect(m_usbMode, &QUsbModed::supportedModesChanged, this, &USBModeSelector::supportedModesChanged);
     connect(m_usbMode, &QUsbModed::availableModesChanged, this, &USBModeSelector::availableModesChanged);
 
     // Lazy initialize to improve startup time

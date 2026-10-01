@@ -177,7 +177,7 @@ public slots:
 
 private slots:
     //! Sets the volume and maximum volume
-    void setVolume(int volume, int maximumVolume);
+    void setVolumeLevels(int volume, int maximumVolume);
 
     //! An internal slot to handle the case when we got the hardware volume keys resource
     void hwKeyResourceAcquired();

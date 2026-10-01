@@ -100,7 +100,7 @@ void Ut_VolumeControl::init()
     gPulseAudioControlStub->stubReset();
 
     volumeControl = new VolumeControl(true);
-    volumeControl->setVolume(5, 10);
+    volumeControl->setVolumeLevels(5, 10);
 }
 
 void Ut_VolumeControl::cleanup()
@@ -112,10 +112,10 @@ void Ut_VolumeControl::cleanup()
 void Ut_VolumeControl::testConnections()
 {
     // Check that pulse audio and the volume bar are connected
-    QVERIFY(disconnect(volumeControl->m_pulseAudioControl, SIGNAL(volumeChanged(int,int)),
-                       volumeControl, SLOT(setVolume(int,int))));
-    QVERIFY(disconnect(volumeControl->m_pulseAudioControl, SIGNAL(callActiveChanged(bool)),
-                       volumeControl, SLOT(handleCallActive(bool))));
+    QVERIFY(disconnect(volumeControl->m_pulseAudioControl, &PulseAudioControl::volumeChanged,
+                       volumeControl, &VolumeControl::setVolumeLevels));
+    QVERIFY(disconnect(volumeControl->m_pulseAudioControl, &PulseAudioControl::callActiveChanged,
+                       volumeControl, &VolumeControl::handleCallActive));
 }
 
 Q_DECLARE_METATYPE(Qt::Key)
@@ -177,11 +177,11 @@ void Ut_VolumeControl::testMaximumVolume()
     QSignalSpy volumeChangedSpy(volumeControl, SIGNAL(volumeChanged()));
     QSignalSpy maximumVolumeChangedSpy(volumeControl, SIGNAL(maximumVolumeChanged()));
 
-    volumeControl->setVolume(2, 2);
+    volumeControl->setVolumeLevels(2, 2);
     QCOMPARE(volumeChangedSpy.count(), 1);
     QCOMPARE(maximumVolumeChangedSpy.count(), 1);
 
-    volumeControl->setVolume(2, 2);
+    volumeControl->setVolumeLevels(2, 2);
     QCOMPARE(volumeChangedSpy.count(), 1);
     QCOMPARE(maximumVolumeChangedSpy.count(), 1);
 

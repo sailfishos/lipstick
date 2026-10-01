@@ -25,8 +25,8 @@
 #include <QSqlTableModel>
 #include <QSqlRecord>
 #include <QSqlError>
-#include <mremoteaction.h>
 
+#include <mremoteaction.h>
 
 void Ut_NotificationManager::init()
 {
@@ -35,7 +35,7 @@ void Ut_NotificationManager::init()
 void Ut_NotificationManager::cleanup()
 {
     delete NotificationManager::s_instance;
-    NotificationManager::s_instance = 0;
+    NotificationManager::s_instance = nullptr;
 }
 
 void Ut_NotificationManager::testManagerIsSingleton()
@@ -95,8 +95,8 @@ void Ut_NotificationManager::testModifyingCategoryDefinitionUpdatesNotifications
     NotificationManager *manager = NotificationManager::instance();
 
     // Check the signal connection
-    QVERIFY(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)),
-                       manager, SLOT(updateNotificationsWithCategory(QString))));
+    QVERIFY(disconnect(manager->m_categoryDefinitionStore, &CategoryDefinitionStore::categoryDefinitionModified,
+                       manager, &NotificationManager::updateNotificationsWithCategory));
 
     QSignalSpy multiModifiedSpy(manager, SIGNAL(notificationsModified(QList<uint>)));
 
@@ -136,8 +136,8 @@ void Ut_NotificationManager::testUninstallingCategoryDefinitionRemovesNotificati
     NotificationManager *manager = NotificationManager::instance();
 
     // Check the signal connection
-    QVERIFY(disconnect(manager->m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)),
-                       manager, SLOT(removeNotificationsWithCategory(QString))));
+    QVERIFY(disconnect(manager->m_categoryDefinitionStore, &CategoryDefinitionStore::categoryDefinitionUninstalled,
+                       manager, &NotificationManager::removeNotificationsWithCategory));
 
     // Add two notifications, one with category "category1" and one with category "category2"
     QVariantHash hints1;

@@ -145,7 +145,7 @@ void HomeWindow::hide()
         d->window->hide();
     } else if (d->compositorWindow) {
         d->compositorWindow->hide();
-        d->compositorWindow = 0;
+        d->compositorWindow = nullptr;
     }
 
     emit visibleChanged(d->isVisible);
@@ -179,7 +179,7 @@ void HomeWindow::setSource(const QUrl &source)
     d->errors.clear();
     if (d->root) {
         delete d->root;
-        d->root = 0;
+        d->root = nullptr;
     }
 
     QQmlComponent component(d->context->engine(), source);

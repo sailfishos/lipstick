@@ -44,16 +44,16 @@ DisplayStateMonitor::DisplayStateMonitor(QObject *parent)
 {
     Q_D(DisplayStateMonitor);
 
-    connect(d, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
-            this, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)));
+    connect(d, &DisplayStateMonitorPrivate::displayStateChanged,
+            this, &DisplayStateMonitor::displayStateChanged);
 }
 
 DisplayStateMonitor::~DisplayStateMonitor()
 {
     Q_D(DisplayStateMonitor);
 
-    disconnect(d, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)),
-               this, SIGNAL(displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState)));
+    disconnect(d, &DisplayStateMonitorPrivate::displayStateChanged,
+               this, &DisplayStateMonitor::displayStateChanged);
 
     delete d_ptr;
 }

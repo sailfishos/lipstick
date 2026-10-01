@@ -62,7 +62,7 @@ public:
     virtual void surfaceLowered();
     virtual void surfaceDamaged(const QRegion &);
     virtual void windowSwapped();
-    virtual void windowDestroyed();
+    virtual void decreaseWindowCount();
     virtual void windowPropertyChanged(const QString &);
     virtual void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
     virtual void setScreenOrientationFromSensor();
@@ -363,9 +363,9 @@ void LipstickCompositorStub::windowSwapped()
     stubMethodEntered("windowSwapped");
 }
 
-void LipstickCompositorStub::windowDestroyed()
+void LipstickCompositorStub::decreaseWindowCount()
 {
-    stubMethodEntered("windowDestroyed");
+    stubMethodEntered("decreaseWindowCount");
 }
 
 void LipstickCompositorStub::windowPropertyChanged(const QString &property)
@@ -598,9 +598,9 @@ void LipstickCompositor::windowSwapped()
     gLipstickCompositorStub->windowSwapped();
 }
 
-void LipstickCompositor::windowDestroyed()
+void LipstickCompositor::decreaseWindowCount()
 {
-    gLipstickCompositorStub->windowDestroyed();
+    gLipstickCompositorStub->decreaseWindowCount();
 }
 
 void LipstickCompositor::windowPropertyChanged(const QString &property)

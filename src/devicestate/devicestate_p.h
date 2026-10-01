@@ -46,12 +46,14 @@ namespace DeviceState
         Q_OBJECT
 
     public:
-        DeviceStatePrivate() {
+        DeviceStatePrivate()
+        {
             connectCount[SIGNAL_SYSTEM_STATE] = 0;
             userManagerWatcher = nullptr;
         }
 
-        ~DeviceStatePrivate() {
+        ~DeviceStatePrivate()
+        {
         }
 
         QMutex connectMutex;
@@ -59,32 +61,35 @@ namespace DeviceState
         QDBusServiceWatcher *userManagerWatcher;
 
     Q_SIGNALS:
-
         void systemStateChanged(DeviceState::DeviceState::StateIndication what);
         void nextUserChanged(uint uid);
 
     private Q_SLOTS:
-
-        void emitShutdown() {
+        void emitShutdown()
+        {
             emit systemStateChanged(DeviceState::Shutdown);
         }
 
-        void emitThermalShutdown(QString thermalState) {
+        void emitThermalShutdown(QString thermalState)
+        {
             // TODO: hardcoded "fatal"
             if (thermalState == "fatal") {
                 emit systemStateChanged(DeviceState::ThermalStateFatal);
             }
         }
 
-        void emitBatteryShutdown() {
+        void emitBatteryShutdown()
+        {
             emit systemStateChanged(DeviceState::BatteryStateEmpty);
         }
 
-        void emitSaveData() {
+        void emitSaveData()
+        {
             emit systemStateChanged(DeviceState::SaveData);
         }
 
-        void emitShutdownDenied(QString reqType, QString reason) {
+        void emitShutdownDenied(QString reqType, QString reason)
+        {
             // XXX: Move hardcoded strings somewere else
             if (reason == "usb") {
                 if (reqType == "shutdown") {
@@ -95,22 +100,26 @@ namespace DeviceState
             }
         }
 
-        void emitStateChangeInd(QString state) {
+        void emitStateChangeInd(QString state)
+        {
             // TODO: hardcoded "REBOOT"
             if (state == "REBOOT") {
                 emit systemStateChanged(DeviceState::Reboot);
             }
         }
 
-        void emitUserSwitching(uint uid) {
+        void emitUserSwitching(uint uid)
+        {
             emit nextUserChanged(uid);
             emit systemStateChanged(DeviceState::UserSwitching);
         }
 
-        void emitUserSwitchingFailed(uint uid) {
+        void emitUserSwitchingFailed(uint uid)
+        {
             Q_UNUSED(uid)
             emit systemStateChanged(DeviceState::UserSwitchingFailed);
         }
     };
 }
+
 #endif // DEVICESTATE_P_H

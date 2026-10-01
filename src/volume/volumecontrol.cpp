@@ -62,13 +62,14 @@ VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent)
         m_hwKeysEnabled = true;
         m_hwKeyResource->setAlwaysReply();
         m_hwKeyResource->addResourceObject(new ResourcePolicy::ScaleButtonResource);
-        connect(m_hwKeyResource, SIGNAL(resourcesGranted(QList<ResourcePolicy::ResourceType>)),
-                this, SLOT(hwKeyResourceAcquired()));
-        connect(m_hwKeyResource, SIGNAL(lostResources()), this, SLOT(hwKeyResourceLost()));
+        connect(m_hwKeyResource, &ResourcePolicy::ResourceSet::resourcesGranted,
+                this, &VolumeControl::hwKeyResourceAcquired);
+        connect(m_hwKeyResource, &ResourcePolicy::ResourceSet::lostResources,
+                this, &VolumeControl::hwKeyResourceLost);
         m_hwKeyResource->acquire();
 
         qApp->installEventFilter(this);
-        QTimer::singleShot(0, this, SLOT(createWindow()));
+        QTimer::singleShot(0, this, &VolumeControl::createWindow);
 
         QDBusConnection systemBus = QDBusConnection::systemBus();
 
@@ -90,13 +91,13 @@ VolumeControl::VolumeControl(bool hwKeysCapability, QObject *parent)
     }
 
     setWarningAcknowledged(false);
-    connect(m_audioWarning, SIGNAL(valueChanged()), this, SIGNAL(restrictedVolumeChanged()));
-    connect(this, SIGNAL(maximumVolumeChanged()), this, SIGNAL(restrictedVolumeChanged()));
-    connect(m_pulseAudioControl, SIGNAL(volumeChanged(int,int)), this, SLOT(setVolume(int,int)));
-    connect(m_pulseAudioControl, SIGNAL(highVolume(int)), SLOT(handleHighVolume(int)));
-    connect(m_pulseAudioControl, SIGNAL(longListeningTime(int)), SLOT(handleLongListeningTime(int)));
-    connect(m_pulseAudioControl, SIGNAL(callActiveChanged(bool)), SLOT(handleCallActive(bool)));
-    connect(m_pulseAudioControl, SIGNAL(mediaStateChanged(QString)), SLOT(handleMediaStateChanged(QString)));
+    connect(m_audioWarning, &MDConfItem::valueChanged, this, &VolumeControl::restrictedVolumeChanged);
+    connect(this, &VolumeControl::maximumVolumeChanged, this, &VolumeControl::restrictedVolumeChanged);
+    connect(m_pulseAudioControl, &PulseAudioControl::volumeChanged, this, &VolumeControl::setVolumeLevels);
+    connect(m_pulseAudioControl, &PulseAudioControl::highVolume, this, &VolumeControl::handleHighVolume);
+    connect(m_pulseAudioControl, &PulseAudioControl::longListeningTime, this, &VolumeControl::handleLongListeningTime);
+    connect(m_pulseAudioControl, &PulseAudioControl::callActiveChanged, this, &VolumeControl::handleCallActive);
+    connect(m_pulseAudioControl, &PulseAudioControl::mediaStateChanged, this, &VolumeControl::handleMediaStateChanged);
     m_pulseAudioControl->update();
 }
 
@@ -211,7 +212,7 @@ int VolumeControl::mediaState() const
     return m_mediaState;
 }
 
-void VolumeControl::setVolume(int volume, int maximumVolume)
+void VolumeControl::setVolumeLevels(int volume, int maximumVolume)
 {
     int clampedMaxVolume = qMax(0, maximumVolume);
     int clampedVolume = qBound(0, volume, maximumVolume);

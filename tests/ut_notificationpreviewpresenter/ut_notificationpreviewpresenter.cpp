@@ -113,6 +113,10 @@ void NotificationManager::invokeAction(const QString &, const QString &)
 {
 }
 
+void NotificationManager::handleRemoveRequest()
+{
+}
+
 void NotificationManager::removeNotificationIfUserRemovable(uint)
 {
 }

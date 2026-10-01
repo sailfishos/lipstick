@@ -42,14 +42,16 @@ namespace DeviceState
 {
     class DisplayStateMonitorPrivate : public QObject
     {
-        Q_OBJECT;
+        Q_OBJECT
 
     public:
-        DisplayStateMonitorPrivate() {
+        DisplayStateMonitorPrivate()
+        {
             connectCount[SIGNAL_DISPLAY_STATE] = 0;
         }
 
-        ~DisplayStateMonitorPrivate() {
+        ~DisplayStateMonitorPrivate()
+        {
         }
 
         QMutex connectMutex;
@@ -59,8 +61,8 @@ namespace DeviceState
         void displayStateChanged(DeviceState::DisplayStateMonitor::DisplayState);
 
     private Q_SLOTS:
-
-        void slotDisplayStateChanged(const QString& state) {
+        void slotDisplayStateChanged(const QString& state)
+        {
             if (state == MCE_DISPLAY_OFF_STRING)
                 emit displayStateChanged(DisplayStateMonitor::Off);
             else if (state == MCE_DISPLAY_DIM_STRING)

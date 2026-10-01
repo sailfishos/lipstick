@@ -42,9 +42,12 @@ void LipstickSettings::setScreenLock(ScreenLock *screenLock)
     // TODO: Disconnect from previous screenlock signals?
 
     m_screenLock = screenLock;
-    connect(screenLock, SIGNAL(screenLockedChanged(bool)), this, SIGNAL(lockscreenVisibleChanged()));
-    connect(screenLock, SIGNAL(lowPowerModeChanged()), this, SIGNAL(lowPowerModeChanged()));
-    connect(screenLock, SIGNAL(blankingPolicyChanged(QString)), this, SIGNAL(blankingPolicyChanged()));
+    connect(screenLock, &ScreenLock::screenLockedChanged,
+            this, &LipstickSettings::lockscreenVisibleChanged);
+    connect(screenLock, &ScreenLock::lowPowerModeChanged,
+            this, &LipstickSettings::lowPowerModeChanged);
+    connect(screenLock, &ScreenLock::blankingPolicyChanged,
+            this, &LipstickSettings::blankingPolicyChanged);
 }
 
 bool LipstickSettings::lockscreenVisible() const

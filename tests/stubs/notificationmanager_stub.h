@@ -38,6 +38,7 @@ public:
     virtual void updateNotificationsWithCategory(const QString &category);
     virtual void commit();
     virtual void invokeAction(const QString &action, const QString &actionText);
+    virtual void handleRemoveRequest();
     virtual void removeNotificationIfUserRemovable(uint id);
     virtual void removeUserRemovableNotifications();
     virtual void expire();
@@ -160,6 +161,11 @@ void NotificationManagerStub::invokeAction(const QString &action, const QString 
     params.append( new Parameter<QString >(action));
     params.append( new Parameter<QString >(actionText));
     stubMethodEntered("invokeAction", params);
+}
+
+void NotificationManagerStub::handleRemoveRequest()
+{
+    stubMethodEntered("handleRemoveRequest");
 }
 
 void NotificationManagerStub::removeNotificationIfUserRemovable(uint id)
@@ -288,6 +294,11 @@ void NotificationManager::commit()
 void NotificationManager::invokeAction(const QString &action, const QString &actionText)
 {
     gNotificationManagerStub->invokeAction(action, actionText);
+}
+
+void NotificationManager::handleRemoveRequest()
+{
+    gNotificationManagerStub->handleRemoveRequest();
 }
 
 void NotificationManager::removeNotificationIfUserRemovable(uint id)

@@ -11,6 +11,7 @@
 ** of this file.
 **
 ****************************************************************************/
+
 #ifndef UT_NOTIFICATIONMANAGER_H
 #define UT_NOTIFICATIONMANAGER_H
 
