@@ -27,6 +27,7 @@ include(compositor/alienmanager/alienmanager.pri)
 include(compositor/xdgshell/xdgshell.pri)
 
 PUBLICHEADERS += \
+    intenturl.h \
     utilities/qobjectlistmodel.h \
     utilities/closeeventeater.h \
     touchscreen/touchscreen.h \

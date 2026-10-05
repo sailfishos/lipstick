@@ -1,3 +1,4 @@
+#include "intenturl.h"
 /***************************************************************************
 **
 ** Copyright (c) 2013 - 2023 Jolla Ltd.
@@ -241,6 +242,8 @@ bool LipstickCompositor::openUrl(WaylandClient *client, const QUrl &url)
 
 bool LipstickCompositor::openUrl(const QUrl &url)
 {
+    if (url.scheme() == QLatin1String("intent")
+            && !Lipstick::IntentUrl::parse(url.toString(QUrl::FullyEncoded)).valid) return false;
     openUrlRequested(url);
 
     return true;
@@ -268,6 +271,12 @@ void LipstickCompositor::checkMimeSupported(const QString &mimeType, const QDBus
 void LipstickCompositor::checkUrlSupported(const QString &url, const QDBusMessage &message,
                                            const QDBusConnection &connection)
 {
+    const QUrl target(url, QUrl::StrictMode);
+    if (!target.isValid() || (target.scheme() == QLatin1String("intent")
+            && !Lipstick::IntentUrl::parse(url).valid)) {
+        connection.send(message.createReply(QVariantList() << false));
+        return;
+    }
     if (!isSignalConnected(QMetaMethod::fromSignal(&LipstickCompositor::checkUrlSupportedRequested))) {
         connection.send(message.createReply(QVariantList() << false));
         return;
