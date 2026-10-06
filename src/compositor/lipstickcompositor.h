@@ -273,6 +273,7 @@ private:
     friend class WindowModel;
     friend class WindowPixmapItem;
     friend class WindowProperty;
+    void applyPhysicalRotation();
 
     void surfaceUnmapped(QWaylandSurface *);
     void surfaceUnmapped(LipstickCompositorWindow *item);
@@ -319,6 +320,7 @@ private:
     LipstickRecorderManager *m_recorder;
     LipstickKeymap *m_keymap;
     int m_fakeRepaintTimerId;
+    int m_physicalRotation;
 
     QList<QueuedSetUpdatesEnabledCall> m_queuedSetUpdatesEnabledCalls;
     QHash<uint, QueuedFileServiceCall> m_queuedFileServiceCalls;

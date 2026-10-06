@@ -49,6 +49,10 @@
 #include "xdgshell/xdgshell.h"
 #include "logging.h"
 
+#include <QMouseEvent>
+#include <QQuickItem>
+#include <QTouchEvent>
+
 namespace {
 const int FileServiceRequestTimeout = 30 * 1000;
 
@@ -87,6 +91,7 @@ LipstickCompositor::LipstickCompositor()
     , m_onUpdatesDisabledUnfocusedWindowId(0)
     , m_keymap(0)
     , m_fakeRepaintTimerId(0)
+    , m_physicalRotation(0)
     , m_queuedSetUpdatesEnabledCalls()
     , m_nextFileServiceCallId(1)
     , m_mceNameOwner(new QMceNameOwner(this))
@@ -151,6 +156,14 @@ LipstickCompositor::LipstickCompositor()
     QTimer::singleShot(0, this, SLOT(initialize()));
 
     setClientFullScreenHint(true);
+
+    m_physicalRotation = qgetenv("LIPSTICK_ROTATION").toInt();
+    if (m_physicalRotation != 0 && m_physicalRotation != 180) {
+        qWarning("LipstickCompositor: LIPSTICK_ROTATION=%d unsupported (only 0 and 180)",
+                 m_physicalRotation);
+        m_physicalRotation = 0;
+    }
+    applyPhysicalRotation();
 }
 
 static inline bool displayStateIsDimmed(TouchScreen::DisplayState state)
@@ -210,6 +223,8 @@ void LipstickCompositor::onVisibleChanged(bool visible)
 
 void LipstickCompositor::componentComplete()
 {
+    applyPhysicalRotation();
+
     QScreen * const screen = QGuiApplication::primaryScreen();
 
     m_output.setPosition(QPoint(0, 0));
@@ -745,6 +760,21 @@ void LipstickCompositor::windowRemoved(int id)
         m_windowModels.at(ii)->remItem(id);
 }
 
+void LipstickCompositor::applyPhysicalRotation()
+{
+    if (m_physicalRotation != 180)
+        return;
+
+    QQuickItem *root = contentItem();
+    if (!root)
+        return;
+
+    // Rotate the whole compositor scene, including home and Wayland surfaces.
+    // Do not change screenOrientation: that would also rotate clients a second time.
+    root->setTransformOrigin(QQuickItem::Center);
+    root->setRotation(180);
+}
+
 void LipstickCompositor::setTopmostWindowOrientation(Qt::ScreenOrientation topmostWindowOrientation)
 {
     if (m_topmostWindowOrientation != topmostWindowOrientation) {
@@ -980,6 +1010,13 @@ void LipstickCompositor::timerEvent(QTimerEvent *e)
         killTimer(e->timerId());
         m_fakeRepaintTimerId = 0;
     }
+}
+
+static QPointF mapPhysicalRotation(const QPointF &pos, const QSize &size, int rotation)
+{
+    if (rotation != 180)
+        return pos;
+    return QPointF(size.width() - pos.x(), size.height() - pos.y());
 }
 
 bool LipstickCompositor::event(QEvent *event)

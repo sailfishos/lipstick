@@ -681,4 +681,8 @@ void LipstickCompositor::processQueuedSetUpdatesEnabledCalls()
 {
 }
 
+void LipstickCompositor::applyPhysicalRotation()
+{
+}
+
 #endif
