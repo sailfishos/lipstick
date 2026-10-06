@@ -49,10 +49,7 @@
 #include "xdgshell/xdgshell.h"
 #include "logging.h"
 
-#include <QMouseEvent>
 #include <QQuickItem>
-#include <QTouchEvent>
-
 namespace {
 const int FileServiceRequestTimeout = 30 * 1000;
 
@@ -92,6 +89,7 @@ LipstickCompositor::LipstickCompositor()
     , m_keymap(0)
     , m_fakeRepaintTimerId(0)
     , m_physicalRotation(0)
+    , m_rotationItem(0)
     , m_queuedSetUpdatesEnabledCalls()
     , m_nextFileServiceCallId(1)
     , m_mceNameOwner(new QMceNameOwner(this))
@@ -564,6 +562,8 @@ void LipstickCompositor::activateLogindSession()
 
 void LipstickCompositor::initialize()
 {
+    applyPhysicalRotation();
+
     activateLogindSession();
 
     TouchScreen *touchScreen = HomeApplication::instance()->touchScreen();
@@ -635,8 +635,7 @@ void LipstickCompositor::surfaceMapped()
     item->m_category = surfaceCategory(surface);
 
     if (!item->parentItem()) {
-        // TODO why contentItem?
-        item->setParentItem(contentItem());
+        item->setParentItem(rotationParent());
     }
 
     m_totalWindowCount++;
@@ -769,10 +768,30 @@ void LipstickCompositor::applyPhysicalRotation()
     if (!root)
         return;
 
-    // Rotate the whole compositor scene, including home and Wayland surfaces.
-    // Do not change screenOrientation: that would also rotate clients a second time.
-    root->setTransformOrigin(QQuickItem::Center);
-    root->setRotation(180);
+    // Do not rotate contentItem itself: Qt Quick on eglfs often skips that
+    // transform for QML hit-testing (edge swipes), while Wayland items still
+    // map through it. A child wrapper is honored by both.
+    root->setRotation(0);
+
+    if (!m_rotationItem) {
+        m_rotationItem = new QQuickItem(root);
+        m_rotationItem->setTransformOrigin(QQuickItem::Center);
+        m_rotationItem->setRotation(180);
+        connect(root, &QQuickItem::widthChanged, this, &LipstickCompositor::applyPhysicalRotation);
+        connect(root, &QQuickItem::heightChanged, this, &LipstickCompositor::applyPhysicalRotation);
+    }
+
+    m_rotationItem->setX(0);
+    m_rotationItem->setY(0);
+    m_rotationItem->setWidth(root->width());
+    m_rotationItem->setHeight(root->height());
+
+    const QList<QQuickItem *> children = root->childItems();
+    for (int i = 0; i < children.size(); ++i) {
+        QQuickItem *child = children.at(i);
+        if (child != m_rotationItem)
+            child->setParentItem(m_rotationItem);
+    }
 }
 
 void LipstickCompositor::setTopmostWindowOrientation(Qt::ScreenOrientation topmostWindowOrientation)
@@ -1010,13 +1029,6 @@ void LipstickCompositor::timerEvent(QTimerEvent *e)
         killTimer(e->timerId());
         m_fakeRepaintTimerId = 0;
     }
-}
-
-static QPointF mapPhysicalRotation(const QPointF &pos, const QSize &size, int rotation)
-{
-    if (rotation != 180)
-        return pos;
-    return QPointF(size.width() - pos.x(), size.height() - pos.y());
 }
 
 bool LipstickCompositor::event(QEvent *event)

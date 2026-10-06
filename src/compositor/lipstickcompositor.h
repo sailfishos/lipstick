@@ -274,6 +274,10 @@ private:
     friend class WindowPixmapItem;
     friend class WindowProperty;
     void applyPhysicalRotation();
+    QQuickItem *rotationParent() const
+    {
+        return m_rotationItem ? m_rotationItem : contentItem();
+    }
 
     void surfaceUnmapped(QWaylandSurface *);
     void surfaceUnmapped(LipstickCompositorWindow *item);
@@ -321,6 +325,7 @@ private:
     LipstickKeymap *m_keymap;
     int m_fakeRepaintTimerId;
     int m_physicalRotation;
+    QQuickItem *m_rotationItem;
 
     QList<QueuedSetUpdatesEnabledCall> m_queuedSetUpdatesEnabledCalls;
     QHash<uint, QueuedFileServiceCall> m_queuedFileServiceCalls;
