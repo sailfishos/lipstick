@@ -53,7 +53,7 @@ public:
     virtual void closeClientForWindowId(int);
     virtual void clearKeyboardFocus();
     virtual void setDisplayOff();
-    virtual LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &);
+    virtual LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &, QQuickItem *);
     virtual QWaylandSurface *surfaceForId(int) const;
     virtual void surfaceMapped();
     virtual void surfaceUnmapped();
@@ -256,12 +256,13 @@ void LipstickCompositorStub::setDisplayOff()
     stubMethodEntered("setDisplayOff");
 }
 
-LipstickCompositorProcWindow *LipstickCompositorStub::mapProcWindow(const QString &title, const QString &category, const QRect &rect)
+LipstickCompositorProcWindow *LipstickCompositorStub::mapProcWindow(const QString &title, const QString &category, const QRect &rect, QQuickItem *rootItem)
 {
     QList<ParameterBase *> params;
     params.append(new Parameter<const QString & >(title));
     params.append(new Parameter<const QString & >(category));
     params.append(new Parameter<const QRect & >(rect));
+    params.append(new Parameter<QQuickItem *>(rootItem));
     stubMethodEntered("mapProcWindow", params);
     return stubReturnValue<LipstickCompositorProcWindow *>("mapProcWindow");
 }
@@ -553,9 +554,10 @@ void LipstickCompositor::setDisplayOff()
     gLipstickCompositorStub->setDisplayOff();
 }
 
-LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category, const QRect &rect)
+LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category,
+                                                                const QRect &rect, QQuickItem *rootItem)
 {
-    return gLipstickCompositorStub->mapProcWindow(title, category, rect);
+    return gLipstickCompositorStub->mapProcWindow(title, category, rect, rootItem);
 }
 
 QWaylandSurface *LipstickCompositor::surfaceForId(int id) const

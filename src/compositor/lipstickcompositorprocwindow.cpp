@@ -16,12 +16,7 @@
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositorprocwindow.h"
 
-LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category,
-                                                                const QRect &g)
-{
-    return mapProcWindow(title, category, g, nullptr);
-}
-
+// Note: LipstickCompositor API
 LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category,
                                                                 const QRect &g, QQuickItem *rootItem)
 {

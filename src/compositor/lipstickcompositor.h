@@ -190,7 +190,6 @@ public:
                            const QDBusConnection &connection);
     void respondSupportCheck(uint requestId, bool supported);
 
-    LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &);
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &,
                                                 QQuickItem *rootItem);
 
