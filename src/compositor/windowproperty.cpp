@@ -37,11 +37,11 @@ void WindowProperty::setWindowId(int window)
     m_windowId = window;
 
     if (m_surface) {
-        QObject::disconnect(m_surface, SIGNAL(windowPropertyChanged(QString,QVariant)), 
-                            this, SLOT(windowPropertyChanged(QString)));
-        QObject::disconnect(m_surface, SIGNAL(destroyed(QObject *)),
-                            this, SIGNAL(valueChanged()));
-        m_surface = 0;
+        QObject::disconnect(m_surface, &QWaylandSurface::windowPropertyChanged,
+                            this, &WindowProperty::windowPropertyChanged);
+        QObject::disconnect(m_surface, &QWaylandSurface::destroyed,
+                            this, &WindowProperty::valueChanged);
+        m_surface = nullptr;
     }
 
     LipstickCompositor *c = LipstickCompositor::instance();
@@ -49,10 +49,10 @@ void WindowProperty::setWindowId(int window)
 
     if (m_surface) {
         // this must use a queued connection in order to avoid QTBUG-32859
-        QObject::connect(m_surface, SIGNAL(windowPropertyChanged(QString,QVariant)), 
-                         this, SLOT(windowPropertyChanged(QString)), Qt::QueuedConnection);
-        QObject::connect(m_surface, SIGNAL(destroyed(QObject *)),
-                         this, SIGNAL(valueChanged()));
+        QObject::connect(m_surface, &QWaylandSurface::windowPropertyChanged,
+                         this, &WindowProperty::windowPropertyChanged, Qt::QueuedConnection);
+        QObject::connect(m_surface, &QWaylandSurface::destroyed,
+                         this, &WindowProperty::valueChanged);
     }
 
     emit windowIdChanged();
@@ -85,7 +85,8 @@ void WindowProperty::connectRef()
     LipstickCompositor *c = LipstickCompositor::instance();
     if (c && !m_waitingRefProperty) {
         m_waitingRefProperty = true;
-        QObject::connect(c, SIGNAL(availableWinIdsChanged()), this, SLOT(availableWinIdsChanged()));
+        QObject::connect(c, &LipstickCompositor::availableWinIdsChanged,
+                         this, &WindowProperty::availableWinIdsChanged);
     }
 }
 
@@ -93,7 +94,6 @@ QVariant WindowProperty::value()
 {
     if (!m_surface)
         return QVariant();
-
 
     QVariant rv = m_surface->windowProperties().value(m_property);
     if (rv.type() == QVariant::String && rv.toString().startsWith("__winref:")) {

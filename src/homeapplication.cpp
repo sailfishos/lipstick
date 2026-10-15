@@ -173,7 +173,8 @@ HomeApplication::HomeApplication(int &argc, char **argv, const QString &qmlPath)
     m_qmlEngine->rootContext()->setContextProperty("volumeControl", m_volumeControl);
     m_qmlEngine->rootContext()->setContextProperty("usbModeSelector", m_usbModeSelector);
 
-    connect(this, SIGNAL(homeReady()), this, SLOT(sendStartupNotifications()));
+    connect(this, &HomeApplication::homeReady,
+            this, &HomeApplication::sendStartupNotifications);
 }
 
 HomeApplication::~HomeApplication()
@@ -228,8 +229,8 @@ void HomeApplication::sendHomeReadySignalIfNotAlreadySent()
 {
     if (!m_homeReadySent) {
         m_homeReadySent = true;
-        disconnect(LipstickCompositor::instance(), SIGNAL(frameSwapped()),
-                   this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
+        disconnect(LipstickCompositor::instance(), &LipstickCompositor::frameSwapped,
+                   this, &HomeApplication::sendHomeReadySignalIfNotAlreadySent);
 
         emit homeReady();
     }
@@ -331,8 +332,8 @@ void HomeApplication::setCompositorPath(const QString &path)
         if (LipstickCompositor::instance()) {
             LipstickCompositor::instance()->setGeometry(QRect(QPoint(0, 0),
                                                               QGuiApplication::primaryScreen()->size()));
-            connect(m_usbModeSelector, SIGNAL(showUnlockScreen()),
-                    LipstickCompositor::instance(), SIGNAL(showUnlockScreen()));
+            connect(m_usbModeSelector, &USBModeSelector::showUnlockScreen,
+                    LipstickCompositor::instance(), &LipstickCompositor::showUnlockScreen);
         }
 
         component.completeCreate();
@@ -355,10 +356,11 @@ HomeWindow *HomeApplication::mainWindowInstance()
     m_mainWindowInstance = new HomeWindow();
     m_mainWindowInstance->setGeometry(QRect(QPoint(), QGuiApplication::primaryScreen()->size()));
     m_mainWindowInstance->setWindowTitle("Home");
-    QObject::connect(m_mainWindowInstance->engine(), SIGNAL(quit()),
-                     qApp, SLOT(quit()));
-    QObject::connect(m_mainWindowInstance, SIGNAL(visibleChanged(bool)),
-                     this, SLOT(connectFrameSwappedSignal(bool)));
+
+    QObject::connect(m_mainWindowInstance->engine(), &QQmlEngine::quit,
+                     qApp, &QGuiApplication::quit);
+    QObject::connect(m_mainWindowInstance, &HomeWindow::visibleChanged,
+                     this, &HomeApplication::connectFrameSwappedSignal);
 
     // Setting the source, if present
     if (!m_qmlPath.isEmpty())
@@ -375,8 +377,8 @@ QQmlEngine *HomeApplication::engine() const
 void HomeApplication::connectFrameSwappedSignal(bool mainWindowVisible)
 {
     if (!m_homeReadySent && mainWindowVisible) {
-        connect(LipstickCompositor::instance(), SIGNAL(frameSwapped()),
-                this, SLOT(sendHomeReadySignalIfNotAlreadySent()));
+        connect(LipstickCompositor::instance(), &LipstickCompositor::frameSwapped,
+                this, &HomeApplication::sendHomeReadySignalIfNotAlreadySent);
     }
 }
 

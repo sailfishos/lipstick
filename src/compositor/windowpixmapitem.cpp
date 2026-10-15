@@ -446,8 +446,10 @@ void SurfaceNode::setTextureProvider(QSGTextureProvider *p, bool owned)
         return;
 
     if (m_provider) {
-        QObject::disconnect(m_provider, SIGNAL(destroyed(QObject *)), this, SLOT(providerDestroyed()));
-        QObject::disconnect(m_provider, SIGNAL(textureChanged()), this, SLOT(textureChanged()));
+        QObject::disconnect(m_provider, &QSGTextureProvider::destroyed,
+                            this, &SurfaceNode::providerDestroyed);
+        QObject::disconnect(m_provider, &QSGTextureProvider::textureChanged,
+                            this, &SurfaceNode::textureChanged);
         m_provider = nullptr;
     }
 
@@ -455,8 +457,10 @@ void SurfaceNode::setTextureProvider(QSGTextureProvider *p, bool owned)
     m_providerOwned = owned;
 
     if (m_provider) {
-        QObject::connect(m_provider, SIGNAL(destroyed(QObject *)), this, SLOT(providerDestroyed()));
-        QObject::connect(m_provider, SIGNAL(textureChanged()), this, SLOT(textureChanged()));
+        QObject::connect(m_provider, &QSGTextureProvider::destroyed,
+                         this, &SurfaceNode::providerDestroyed);
+        QObject::connect(m_provider, &QSGTextureProvider::textureChanged,
+                         this, &SurfaceNode::textureChanged);
 
         setTexture(m_provider->texture());
     }

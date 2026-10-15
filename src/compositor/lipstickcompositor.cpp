@@ -80,12 +80,11 @@ LipstickCompositor::LipstickCompositor()
     , m_topmostWindowOrientation(Qt::PrimaryOrientation)
     , m_screenOrientation(Qt::PrimaryOrientation)
     , m_sensorOrientation(Qt::PrimaryOrientation)
-    , m_retainedSelection(0)
     , m_updatesEnabled(true)
     , m_completed(false)
     , m_synthesizeBackEvent(true)
     , m_onUpdatesDisabledUnfocusedWindowId(0)
-    , m_keymap(0)
+    , m_keymap(nullptr)
     , m_fakeRepaintTimerId(0)
     , m_queuedSetUpdatesEnabledCalls()
     , m_nextFileServiceCallId(1)
@@ -93,6 +92,7 @@ LipstickCompositor::LipstickCompositor()
     , m_sessionActivationTries(0)
 {
     QGuiApplication::primaryScreen()->handle()->setPowerState(QPlatformScreen::PowerStateOn);
+
     if (debuggingCompositorHandover()) {
         setColor(Qt::magenta);
         showFullScreen();
@@ -108,15 +108,23 @@ LipstickCompositor::LipstickCompositor()
     m_instance = this;
 
     m_orientationLock = new MDConfItem("/lipstick/orientationLock", this);
-    connect(m_orientationLock, SIGNAL(valueChanged()), SIGNAL(orientationLockChanged()));
+    connect(m_orientationLock, &MDConfItem::valueChanged,
+            this, &LipstickCompositor::orientationLockChanged);
 
-    connect(this, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
-    QObject::connect(this, SIGNAL(afterRendering()), this, SLOT(windowSwapped()));
-    QObject::connect(HomeApplication::instance(), SIGNAL(aboutToDestroy()), this, SLOT(homeApplicationAboutToDestroy()));
-    connect(this, &QQuickWindow::afterRendering, this, &LipstickCompositor::readContent, Qt::DirectConnection);
+    connect(this, &LipstickCompositor::visibleChanged,
+            this, &LipstickCompositor::onVisibleChanged);
+
+    connect(this, &LipstickCompositor::afterRendering,
+            this, &LipstickCompositor::windowSwapped);
+    connect(HomeApplication::instance(), &HomeApplication::aboutToDestroy,
+            this, &LipstickCompositor::homeApplicationAboutToDestroy);
+    connect(this, &QQuickWindow::afterRendering,
+            this, &LipstickCompositor::readContent, Qt::DirectConnection);
 
     m_orientationSensor = new QOrientationSensor(this);
-    QObject::connect(m_orientationSensor, SIGNAL(readingChanged()), this, SLOT(setScreenOrientationFromSensor()));
+    connect(m_orientationSensor, &QOrientationSensor::readingChanged,
+            this, &LipstickCompositor::setScreenOrientationFromSensor);
+
     if (!m_orientationSensor->connectToBackend()) {
         qWarning() << "Could not connect to the orientation sensor backend";
     } else {
@@ -129,7 +137,8 @@ LipstickCompositor::LipstickCompositor()
     QDesktopServices::setUrlHandler("https", this, "openUrl");
     QDesktopServices::setUrlHandler("mailto", this, "openUrl");
 
-    connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()), SLOT(clipboardDataChanged()));
+    connect(QGuiApplication::clipboard(), &QClipboard::dataChanged,
+            this, &LipstickCompositor::clipboardDataChanged);
 
     m_recorder = new LipstickRecorderManager;
     addGlobalInterface(m_recorder);
@@ -138,17 +147,17 @@ LipstickCompositor::LipstickCompositor()
     addGlobalInterface(new AlienManagerGlobal);
     addGlobalInterface(new XdgShellGlobal);
 
-    QObject::connect(m_mceNameOwner, &QMceNameOwner::validChanged,
-                     this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
-    QObject::connect(m_mceNameOwner, &QMceNameOwner::nameOwnerChanged,
-                     this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
+    connect(m_mceNameOwner, &QMceNameOwner::validChanged,
+            this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
+    connect(m_mceNameOwner, &QMceNameOwner::nameOwnerChanged,
+            this, &LipstickCompositor::processQueuedSetUpdatesEnabledCalls);
 
     if (debuggingCompositorHandover()) {
         // Leave window visible and display on
     } else {
         setUpdatesEnabledNow(false);
     }
-    QTimer::singleShot(0, this, SLOT(initialize()));
+    QTimer::singleShot(0, this, &LipstickCompositor::initialize);
 
     setClientFullScreenHint(true);
 }
@@ -167,7 +176,8 @@ LipstickCompositor::~LipstickCompositor()
 {
     // ~QWindow can a call into onVisibleChanged and QWaylandCompositor after we
     // are destroyed, so disconnect it.
-    disconnect(this, SIGNAL(visibleChanged(bool)), this, SLOT(onVisibleChanged(bool)));
+    disconnect(this, &LipstickCompositor::visibleChanged,
+               this, &LipstickCompositor::onVisibleChanged);
 
     m_instance = nullptr;
 }
@@ -193,7 +203,7 @@ void LipstickCompositor::homeApplicationAboutToDestroy()
 
     QWaylandQuickCompositor::cleanupGraphicsResources();
 
-    m_instance = 0;
+    m_instance = nullptr;
     delete this;
 }
 
@@ -223,13 +233,13 @@ void LipstickCompositor::componentComplete()
 
 void LipstickCompositor::surfaceCreated(QWaylandSurface *surface)
 {
-    connect(surface, SIGNAL(mapped()), this, SLOT(surfaceMapped()));
-    connect(surface, SIGNAL(unmapped()), this, SLOT(surfaceUnmapped()));
-    connect(surface, SIGNAL(titleChanged()), this, SLOT(surfaceTitleChanged()));
-    connect(surface, SIGNAL(windowPropertyChanged(QString,QVariant)), this, SLOT(windowPropertyChanged(QString)));
-    connect(surface, SIGNAL(raiseRequested()), this, SLOT(surfaceRaised()));
-    connect(surface, SIGNAL(lowerRequested()), this, SLOT(surfaceLowered()));
-    connect(surface, SIGNAL(damaged(QRegion)), this, SLOT(surfaceDamaged(QRegion)));
+    connect(surface, &QWaylandSurface::mapped, this, &LipstickCompositor::surfaceMapped);
+    connect(surface, &QWaylandSurface::unmapped, this, &LipstickCompositor::surfaceUnmapped);
+    connect(surface, &QWaylandSurface::titleChanged, this, &LipstickCompositor::surfaceTitleChanged);
+    connect(surface, &QWaylandSurface::windowPropertyChanged, this, &LipstickCompositor::windowPropertyChanged);
+    connect(surface, &QWaylandSurface::raiseRequested, this, &LipstickCompositor::surfaceRaised);
+    connect(surface, &QWaylandSurface::lowerRequested, this, &LipstickCompositor::surfaceLowered);
+    connect(surface, &QWaylandSurface::damaged, this, &LipstickCompositor::surfaceDamaged);
     connect(surface, &QWaylandSurface::redraw, this, &LipstickCompositor::surfaceCommitted);
 }
 
@@ -365,7 +375,7 @@ void LipstickCompositor::closeClientForWindowId(int id)
 QWaylandSurface *LipstickCompositor::surfaceForId(int id) const
 {
     LipstickCompositorWindow *window = m_windows.value(id, 0);
-    return window ? window->surface() : 0;
+    return window ? window->surface() : nullptr;
 }
 
 bool LipstickCompositor::completed()
@@ -468,7 +478,8 @@ QWaylandSurfaceView *LipstickCompositor::createView(QWaylandSurface *surface)
     LipstickCompositorWindow *item = new LipstickCompositorWindow(id, category,
                                                                   static_cast<QWaylandQuickSurface *>(surface));
     item->setParent(this);
-    QObject::connect(item, SIGNAL(destroyed(QObject*)), this, SLOT(windowDestroyed()));
+    QObject::connect(item, &LipstickCompositorWindow::destroyed,
+                     this, &LipstickCompositor::decreaseWindowCount);
     m_windows.insert(item->windowId(), item);
     return item;
 }
@@ -589,7 +600,7 @@ void LipstickCompositor::windowDestroyed(LipstickCompositorWindow *item)
     int id = item->windowId();
 
     m_windows.remove(id);
-    surfaceUnmapped(item);
+    windowSurfaceUnmapped(item);
 }
 
 void LipstickCompositor::surfaceMapped()
@@ -639,7 +650,7 @@ void LipstickCompositor::surfaceMapped()
 
 void LipstickCompositor::surfaceUnmapped()
 {
-    surfaceUnmapped(qobject_cast<QWaylandSurface *>(sender()));
+    waylandSurfaceUnmapped(qobject_cast<QWaylandSurface *>(sender()));
 }
 
 void LipstickCompositor::surfaceTitleChanged()
@@ -682,7 +693,7 @@ void LipstickCompositor::windowSwapped()
     sendFrameCallbacks(surfaces());
 }
 
-void LipstickCompositor::windowDestroyed()
+void LipstickCompositor::decreaseWindowCount()
 {
     m_totalWindowCount--;
     emit ghostWindowCountChanged();
@@ -706,14 +717,14 @@ void LipstickCompositor::windowPropertyChanged(const QString &property)
     }
 }
 
-void LipstickCompositor::surfaceUnmapped(QWaylandSurface *surface)
+void LipstickCompositor::waylandSurfaceUnmapped(QWaylandSurface *surface)
 {
     LipstickCompositorWindow *window = surfaceWindow(surface);
     if (window)
         emit windowHidden(window);
 }
 
-void LipstickCompositor::surfaceUnmapped(LipstickCompositorWindow *item)
+void LipstickCompositor::windowSurfaceUnmapped(LipstickCompositorWindow *item)
 {
     int id = item->windowId();
 
@@ -845,27 +856,28 @@ void LipstickCompositor::setScreenOrientationFromSensor()
         qDebug() << "Screen orientation changed " << reading->orientation();
 
     Qt::ScreenOrientation sensorOrientation = m_sensorOrientation;
+
     switch (reading->orientation()) {
-        case QOrientationReading::TopUp:
-            sensorOrientation = Qt::PortraitOrientation;
-            break;
-        case QOrientationReading::TopDown:
-            sensorOrientation = Qt::InvertedPortraitOrientation;
-            break;
-        case QOrientationReading::LeftUp:
-            sensorOrientation = Qt::InvertedLandscapeOrientation;
-            break;
-        case QOrientationReading::RightUp:
-            sensorOrientation = Qt::LandscapeOrientation;
-            break;
-        case QOrientationReading::FaceUp:
-        case QOrientationReading::FaceDown:
-            /* Keep screen orientation at previous state */
-            break;
-        case QOrientationReading::Undefined:
-        default:
-            sensorOrientation = Qt::PrimaryOrientation;
-            break;
+    case QOrientationReading::TopUp:
+        sensorOrientation = Qt::PortraitOrientation;
+        break;
+    case QOrientationReading::TopDown:
+        sensorOrientation = Qt::InvertedPortraitOrientation;
+        break;
+    case QOrientationReading::LeftUp:
+        sensorOrientation = Qt::InvertedLandscapeOrientation;
+        break;
+    case QOrientationReading::RightUp:
+        sensorOrientation = Qt::LandscapeOrientation;
+        break;
+    case QOrientationReading::FaceUp:
+    case QOrientationReading::FaceDown:
+        /* Keep screen orientation at previous state */
+        break;
+    case QOrientationReading::Undefined:
+    default:
+        sensorOrientation = Qt::PrimaryOrientation;
+        break;
     }
 
     if (sensorOrientation != m_sensorOrientation) {

@@ -23,7 +23,8 @@ LipstickApi::LipstickApi(QObject *parent)
 {
     HomeApplication *homeApp = HomeApplication::instance();
     if (homeApp) {
-        QObject::connect(homeApp, SIGNAL(homeActiveChanged()), this, SIGNAL(activeChanged()));
+        QObject::connect(homeApp, &HomeApplication::homeActiveChanged,
+                         this, &LipstickApi::activeChanged);
     }
 }
 

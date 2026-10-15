@@ -16,12 +16,7 @@
 #include "lipstickcompositorwindow.h"
 #include "lipstickcompositorprocwindow.h"
 
-LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category,
-                                                                const QRect &g)
-{
-    return mapProcWindow(title, category, g, 0);
-}
-
+// Note: LipstickCompositor API
 LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category,
                                                                 const QRect &g, QQuickItem *rootItem)
 {
@@ -31,7 +26,8 @@ LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &t
     item->setSize(g.size());
     item->setTitle(title);
     item->setRootItem(rootItem);
-    QObject::connect(item, SIGNAL(destroyed(QObject*)), this, SLOT(windowDestroyed()));
+    connect(item, &LipstickCompositorProcWindow::destroyed,
+            this, &LipstickCompositor::decreaseWindowCount);
     m_totalWindowCount++;
     m_mappedSurfaces.insert(id, item);
     m_windows.insert(id, item);
@@ -50,7 +46,7 @@ LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &t
 }
 
 LipstickCompositorProcWindow::LipstickCompositorProcWindow(int windowId, const QString &c, QQuickItem *parent)
-    : LipstickCompositorWindow(windowId, c, 0, parent)
+    : LipstickCompositorWindow(windowId, c, nullptr, parent)
 {
 }
 
@@ -60,7 +56,7 @@ LipstickCompositorProcWindow::LipstickCompositorProcWindow(int windowId, const Q
 void LipstickCompositorProcWindow::hide()
 {
     LipstickCompositor *c = LipstickCompositor::instance();
-    c->surfaceUnmapped(this);
+    c->windowSurfaceUnmapped(this);
 }
 
 bool LipstickCompositorProcWindow::isInProcess() const

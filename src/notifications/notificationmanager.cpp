@@ -265,7 +265,7 @@ NotificationManager *NotificationManager::s_instance = 0;
 
 NotificationManager *NotificationManager::instance(bool owner)
 {
-    if (s_instance == 0) {
+    if (s_instance == nullptr) {
         s_instance = new NotificationManager(qApp, owner);
     }
     return s_instance;
@@ -290,23 +290,23 @@ NotificationManager::NotificationManager(QObject *parent, bool owner)
         QDBusConnection::sessionBus().registerObject("/org/freedesktop/Notifications", this);
         QDBusConnection::sessionBus().registerService("org.freedesktop.Notifications");
 
-        connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionUninstalled(QString)),
-                this, SLOT(removeNotificationsWithCategory(QString)));
-        connect(m_categoryDefinitionStore, SIGNAL(categoryDefinitionModified(QString)),
-                this, SLOT(updateNotificationsWithCategory(QString)));
+        connect(m_categoryDefinitionStore, &CategoryDefinitionStore::categoryDefinitionUninstalled,
+                this, &NotificationManager::removeNotificationsWithCategory);
+        connect(m_categoryDefinitionStore, &CategoryDefinitionStore::categoryDefinitionModified,
+                this, &NotificationManager::updateNotificationsWithCategory);
 
         // Commit the modifications to the database 10 seconds after the last modification so that writing
         // to disk doesn't affect user experience
         m_databaseCommitTimer.setInterval(CommitDelay);
         m_databaseCommitTimer.setSingleShot(true);
-        connect(&m_databaseCommitTimer, SIGNAL(timeout()), this, SLOT(commit()));
+        connect(&m_databaseCommitTimer, &QTimer::timeout, this, &NotificationManager::commit);
 
         m_expirationTimer.setSingleShot(true);
-        connect(&m_expirationTimer, SIGNAL(timeout()), this, SLOT(expire()));
+        connect(&m_expirationTimer, &QTimer::timeout, this, &NotificationManager::expire);
 
         m_modificationTimer.setInterval(PublicationDelay);
         m_modificationTimer.setSingleShot(true);
-        connect(&m_modificationTimer, SIGNAL(timeout()), this, SLOT(reportModifications()));
+        connect(&m_modificationTimer, &QTimer::timeout, this, &NotificationManager::reportModifications);
     }
 
     restoreNotifications(owner);
@@ -532,8 +532,8 @@ uint NotificationManager::handleNotify(int clientPid, const QString &appName, ui
 
         connect(notification, &LipstickNotification::actionInvoked,
                 this, &NotificationManager::invokeAction, Qt::QueuedConnection);
-        connect(notification, &LipstickNotification::removeRequested, // default prevents direction connection.
-                this, [this]() { removeNotificationIfUserRemovable(); }, Qt::QueuedConnection);
+        connect(notification, &LipstickNotification::removeRequested,
+                this, &NotificationManager::handleRemoveRequest, Qt::QueuedConnection);
 
         m_notifications.insert(id, notification);
     }
@@ -1334,7 +1334,8 @@ void NotificationManager::fetchData(bool update)
     foreach (LipstickNotification *n, m_notifications) {
         connect(n, &LipstickNotification::actionInvoked,
                 this, &NotificationManager::invokeAction, Qt::QueuedConnection);
-        connect(n, SIGNAL(removeRequested()), this, SLOT(removeNotificationIfUserRemovable()), Qt::QueuedConnection);
+        connect(n, &LipstickNotification::removeRequested,
+                this, &NotificationManager::handleRemoveRequest, Qt::QueuedConnection);
 #ifdef DEBUG_NOTIFICATIONS
         const uint id = n->id();
         NOTIFICATIONS_DEBUG("RESTORED:" << n->appName() << n->appIcon() << n->summary() << n->body() << actions[id]
@@ -1429,15 +1430,17 @@ void NotificationManager::invokeAction(const QString &action, const QString &act
     }
 }
 
+void NotificationManager::handleRemoveRequest()
+{
+    LipstickNotification *notification = qobject_cast<LipstickNotification *>(sender());
+    if (notification) {
+        uint id = m_notifications.key(notification, 0);
+        removeNotificationIfUserRemovable(id);
+    }
+}
+
 void NotificationManager::removeNotificationIfUserRemovable(uint id)
 {
-    if (id == 0) {
-        LipstickNotification *notification = qobject_cast<LipstickNotification *>(sender());
-        if (notification != 0) {
-            id = m_notifications.key(notification, 0);
-        }
-    }
-
     LipstickNotification *notification = m_notifications.value(id);
     if (!notification) {
         return;

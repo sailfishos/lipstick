@@ -70,7 +70,7 @@ NotificationPreviewPresenter::NotificationPreviewPresenter(
     connect(NotificationManager::instance(), &NotificationManager::notificationRemoved,
             this, &NotificationPreviewPresenter::removeNotification);
 
-    QTimer::singleShot(0, this, SLOT(createWindowIfNecessary()));
+    QTimer::singleShot(0, this, &NotificationPreviewPresenter::createWindowIfNecessary);
 
     m_backgroundNotificationTimer.setSingleShot(true);
     m_backgroundNotificationTimer.setInterval(2000);
@@ -89,7 +89,7 @@ NotificationPreviewPresenter::~NotificationPreviewPresenter()
 void NotificationPreviewPresenter::showNextNotification()
 {
     if (!LipstickCompositor::instance() && !m_notificationQueue.isEmpty()) {
-        QTimer::singleShot(0, this, SLOT(showNextNotification()));
+        QTimer::singleShot(0, this, &NotificationPreviewPresenter::showNextNotification);
         return;
     }
 

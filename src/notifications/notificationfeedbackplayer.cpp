@@ -40,10 +40,10 @@ NotificationFeedbackPlayer::NotificationFeedbackPlayer(QObject *parent)
     , m_ngfClient(new Ngf::Client(this))
     , m_doNotDisturbSetting(QLatin1String("/lipstick/do_not_disturb"))
 {
-    connect(NotificationManager::instance(), SIGNAL(notificationRemoved(uint)),
-            this, SLOT(removeNotification(uint)));
+    connect(NotificationManager::instance(), &NotificationManager::notificationRemoved,
+            this, &NotificationFeedbackPlayer::removeNotification);
 
-    QTimer::singleShot(0, this, SLOT(init()));
+    QTimer::singleShot(0, this, &NotificationFeedbackPlayer::init);
 }
 
 void NotificationFeedbackPlayer::init()

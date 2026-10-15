@@ -183,13 +183,13 @@ public:
         openUrl(QUrl(url));
     }
     Q_INVOKABLE bool openUrl(const QUrl &);
+
     void checkMimeSupported(const QString &mimeType, const QDBusMessage &message,
                             const QDBusConnection &connection);
     void checkUrlSupported(const QString &url, const QDBusMessage &message,
                            const QDBusConnection &connection);
     void respondSupportCheck(uint requestId, bool supported);
 
-    LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &);
     LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &,
                                                 QQuickItem *rootItem);
 
@@ -256,7 +256,7 @@ private slots:
     void surfaceLowered();
     void surfaceDamaged(const QRegion &);
     void windowSwapped();
-    void windowDestroyed();
+    void decreaseWindowCount();
     void windowPropertyChanged(const QString &);
     void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
     void homeApplicationAboutToDestroy();
@@ -274,8 +274,8 @@ private:
     friend class WindowPixmapItem;
     friend class WindowProperty;
 
-    void surfaceUnmapped(QWaylandSurface *);
-    void surfaceUnmapped(LipstickCompositorWindow *item);
+    void waylandSurfaceUnmapped(QWaylandSurface *);
+    void windowSurfaceUnmapped(LipstickCompositorWindow *item);
 
     int windowIdForLink(int, uint) const;
 

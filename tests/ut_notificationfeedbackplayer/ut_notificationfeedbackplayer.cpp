@@ -23,7 +23,8 @@
 
 #include <QWaylandSurface>
 
-NotificationManager::NotificationManager(QObject *parent, bool owner) : QObject(parent)
+NotificationManager::NotificationManager(QObject *parent, bool owner)
+    : QObject(parent)
 {
     Q_UNUSED(owner)
 }
@@ -33,6 +34,10 @@ NotificationManager::~NotificationManager()
 }
 
 void NotificationManager::invokeAction(const QString &, const QString &)
+{
+}
+
+void NotificationManager::handleRemoveRequest()
 {
 }
 

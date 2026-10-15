@@ -32,7 +32,7 @@ VpnAgent::VpnAgent(QObject *parent)
     , m_window(nullptr)
     , m_connections(new SettingsVpnModel(this))
 {
-    QTimer::singleShot(0, this, SLOT(createWindow()));
+    QTimer::singleShot(0, this, &VpnAgent::createWindow);
 }
 
 VpnAgent::~VpnAgent()

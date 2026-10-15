@@ -78,10 +78,10 @@ void PulseAudioControl::openConnection()
                                                    | QDBusServiceWatcher::WatchForUnregistration,
                                                    this);
 
-        connect(m_serviceWatcher, SIGNAL(serviceRegistered(const QString&)),
-                this, SLOT(pulseRegistered(const QString&)));
-        connect(m_serviceWatcher, SIGNAL(serviceUnregistered(const QString&)),
-                this, SLOT(pulseUnregistered(const QString&)));
+        connect(m_serviceWatcher, &QDBusServiceWatcher::serviceRegistered,
+                this, &PulseAudioControl::pulseRegistered);
+        connect(m_serviceWatcher, &QDBusServiceWatcher::serviceUnregistered,
+                this, &PulseAudioControl::pulseUnregistered);
     }
 
     //! If the connection already exists, do nothing
@@ -122,7 +122,7 @@ void PulseAudioControl::openConnection()
     }
 
     if (!m_dbusConnection) {
-        QTimer::singleShot(m_reconnectTimeout, this, SLOT(update()));
+        QTimer::singleShot(m_reconnectTimeout, this, &PulseAudioControl::update);
         m_reconnectTimeout += PA_RECONNECT_TIMEOUT_MS; // next reconnect waits for reconnect timeout longer
     }
 }

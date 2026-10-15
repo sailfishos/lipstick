@@ -51,20 +51,20 @@ DeviceState::DeviceState(QObject *parent)
 {
     Q_D(DeviceState);
 
-    connect(d, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
-            this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
-    connect(d, SIGNAL(nextUserChanged(uint)),
-            this, SIGNAL(nextUserChanged(uint)));
+    connect(d, &DeviceStatePrivate::systemStateChanged,
+            this, &DeviceState::systemStateChanged);
+    connect(d, &DeviceStatePrivate::nextUserChanged,
+            this, &DeviceState::nextUserChanged);
 }
 
 DeviceState::~DeviceState()
 {
     Q_D(DeviceState);
 
-    disconnect(d, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)),
-               this, SIGNAL(systemStateChanged(DeviceState::DeviceState::StateIndication)));
-    disconnect(d, SIGNAL(nextUserChanged(uint)),
-               this, SIGNAL(nextUserChanged(uint)));
+    disconnect(d, &DeviceStatePrivate::systemStateChanged,
+               this, &DeviceState::systemStateChanged);
+    disconnect(d, &DeviceStatePrivate::nextUserChanged,
+               this, &DeviceState::nextUserChanged);
 
     delete d_ptr;
 }

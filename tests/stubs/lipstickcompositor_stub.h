@@ -53,7 +53,7 @@ public:
     virtual void closeClientForWindowId(int);
     virtual void clearKeyboardFocus();
     virtual void setDisplayOff();
-    virtual LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &);
+    virtual LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &, QQuickItem *);
     virtual QWaylandSurface *surfaceForId(int) const;
     virtual void surfaceMapped();
     virtual void surfaceUnmapped();
@@ -62,7 +62,7 @@ public:
     virtual void surfaceLowered();
     virtual void surfaceDamaged(const QRegion &);
     virtual void windowSwapped();
-    virtual void windowDestroyed();
+    virtual void decreaseWindowCount();
     virtual void windowPropertyChanged(const QString &);
     virtual void reactOnDisplayStateChanges(TouchScreen::DisplayState oldState, TouchScreen::DisplayState newState);
     virtual void setScreenOrientationFromSensor();
@@ -256,12 +256,13 @@ void LipstickCompositorStub::setDisplayOff()
     stubMethodEntered("setDisplayOff");
 }
 
-LipstickCompositorProcWindow *LipstickCompositorStub::mapProcWindow(const QString &title, const QString &category, const QRect &rect)
+LipstickCompositorProcWindow *LipstickCompositorStub::mapProcWindow(const QString &title, const QString &category, const QRect &rect, QQuickItem *rootItem)
 {
     QList<ParameterBase *> params;
     params.append(new Parameter<const QString & >(title));
     params.append(new Parameter<const QString & >(category));
     params.append(new Parameter<const QRect & >(rect));
+    params.append(new Parameter<QQuickItem *>(rootItem));
     stubMethodEntered("mapProcWindow", params);
     return stubReturnValue<LipstickCompositorProcWindow *>("mapProcWindow");
 }
@@ -363,9 +364,9 @@ void LipstickCompositorStub::windowSwapped()
     stubMethodEntered("windowSwapped");
 }
 
-void LipstickCompositorStub::windowDestroyed()
+void LipstickCompositorStub::decreaseWindowCount()
 {
-    stubMethodEntered("windowDestroyed");
+    stubMethodEntered("decreaseWindowCount");
 }
 
 void LipstickCompositorStub::windowPropertyChanged(const QString &property)
@@ -553,9 +554,10 @@ void LipstickCompositor::setDisplayOff()
     gLipstickCompositorStub->setDisplayOff();
 }
 
-LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category, const QRect &rect)
+LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category,
+                                                                const QRect &rect, QQuickItem *rootItem)
 {
-    return gLipstickCompositorStub->mapProcWindow(title, category, rect);
+    return gLipstickCompositorStub->mapProcWindow(title, category, rect, rootItem);
 }
 
 QWaylandSurface *LipstickCompositor::surfaceForId(int id) const
@@ -598,9 +600,9 @@ void LipstickCompositor::windowSwapped()
     gLipstickCompositorStub->windowSwapped();
 }
 
-void LipstickCompositor::windowDestroyed()
+void LipstickCompositor::decreaseWindowCount()
 {
-    gLipstickCompositorStub->windowDestroyed();
+    gLipstickCompositorStub->decreaseWindowCount();
 }
 
 void LipstickCompositor::windowPropertyChanged(const QString &property)

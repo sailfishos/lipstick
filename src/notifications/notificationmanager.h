@@ -318,7 +318,9 @@ private slots:
      *
      * \param id the ID of the notification to be removed
      */
-    void removeNotificationIfUserRemovable(uint id = 0);
+    void removeNotificationIfUserRemovable(uint id);
+
+    void handleRemoveRequest();
 
     /*!
      * Expires any notifications whose expiration time has been reached.

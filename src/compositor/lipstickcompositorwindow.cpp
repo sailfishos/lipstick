@@ -51,9 +51,12 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
     refreshMouseRegion();
 
     // Handle ungrab situations
-    connect(this, SIGNAL(visibleChanged()), SLOT(handleTouchCancel()));
-    connect(this, SIGNAL(enabledChanged()), SLOT(handleTouchCancel()));
-    connect(this, SIGNAL(touchEventsEnabledChanged()), SLOT(handleTouchCancel()));
+    connect(this, &LipstickCompositorWindow::visibleChanged,
+            this, &LipstickCompositorWindow::handleTouchCancel);
+    connect(this, &LipstickCompositorWindow::enabledChanged,
+            this, &LipstickCompositorWindow::handleTouchCancel);
+    connect(this, &LipstickCompositorWindow::touchEventsEnabledChanged,
+            this, &LipstickCompositorWindow::handleTouchCancel);
     connect(this, &QWaylandSurfaceItem::surfaceDestroyed, this, [this]() {
         m_windowClosed = true;
         tryRemove();
@@ -514,7 +517,7 @@ void LipstickCompositorWindow::terminateProcess(int killTimeout)
     pid_t pid = processId();
     if (pid > 0) {
         kill(pid, SIGTERM);
-        QTimer::singleShot(killTimeout, this, SLOT(killProcess()));
+        QTimer::singleShot(killTimeout, this, &LipstickCompositorWindow::killProcess);
     }
 }
 
