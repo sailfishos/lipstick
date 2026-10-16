@@ -54,7 +54,7 @@ public:
 HomeWindowPrivate::Mode HomeWindowPrivate::mode = HomeWindowPrivate::Unknown;
 
 HomeWindowPrivate::HomeWindowPrivate()
-    : isVisible(false), window(0), compositorWindow(0), context(0), root(0)
+    : isVisible(false), window(nullptr), compositorWindow(nullptr), context(nullptr), root(nullptr)
 {
     checkMode();
     if (0 == HomeApplication::instance())
@@ -75,18 +75,21 @@ HomeWindowPrivate::~HomeWindowPrivate()
 {
     delete root;
     delete context;
-    if (isWindow()) delete window;
+    if (isWindow())
+        delete window;
 }
 
 bool HomeWindowPrivate::isWindow()
 {
-    if (mode == Unknown) checkMode();
+    if (mode == Unknown)
+        checkMode();
     return mode == Window;
 }
 
 bool HomeWindowPrivate::isCompositor()
 {
-    if (mode == Unknown) checkMode();
+    if (mode == Unknown)
+        checkMode();
     return mode == Compositor;
 }
 
