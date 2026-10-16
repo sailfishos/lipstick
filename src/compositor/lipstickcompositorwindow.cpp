@@ -485,15 +485,13 @@ void LipstickCompositorWindow::handleTouchEvent(QTouchEvent *event, bool interce
         return;
     }
 
-    foreach (const QTouchEvent::TouchPoint &tp, points) {
-        QPointF p = tp.pos();
-        if (intercepted) {
-            p = mapFromScene(p);
-        }
-        inputDevice->sendTouchPointEvent(tp.id(), p.x(), p.y(), tp.state());
-    }
-
-    inputDevice->sendTouchFrameEvent();
+    /* Keep one channel per client: sendFullTouchEvent() hands the event to the
+     * qt_touch_extension when the client bound it and sends wl_touch events
+     * otherwise, so press, updates and release all reach the client on the same
+     * touch device. Routing only TouchBegin that way split a drag into a press
+     * on the extension device and motion on the wl_touch one, which Qt drops,
+     * and no Flickable scrolled any more (2026-10-04). */
+    inputDevice->sendFullTouchEvent(event);
 }
 
 void LipstickCompositorWindow::handleTouchCancel()
