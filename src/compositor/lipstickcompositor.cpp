@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "homeapplication.h"
+#include "intenturl.h"
 #include "touchscreen/touchscreen.h"
 #include "windowmodel.h"
 #include "lipstickcompositorprocwindow.h"
@@ -251,6 +252,10 @@ bool LipstickCompositor::openUrl(WaylandClient *client, const QUrl &url)
 
 bool LipstickCompositor::openUrl(const QUrl &url)
 {
+    if (url.scheme() == QLatin1String("intent")
+            && !Lipstick::IntentUrl::parse(url.toString(QUrl::FullyEncoded)).isAllowed()) {
+        return false;
+    }
     openUrlRequested(url);
 
     return true;
@@ -278,6 +283,12 @@ void LipstickCompositor::checkMimeSupported(const QString &mimeType, const QDBus
 void LipstickCompositor::checkUrlSupported(const QString &url, const QDBusMessage &message,
                                            const QDBusConnection &connection)
 {
+    const QUrl target(url, QUrl::StrictMode);
+    if (!target.isValid() || (target.scheme() == QLatin1String("intent")
+            && !Lipstick::IntentUrl::parse(url).isAllowed())) {
+        connection.send(message.createReply(QVariantList() << false));
+        return;
+    }
     if (!isSignalConnected(QMetaMethod::fromSignal(&LipstickCompositor::checkUrlSupportedRequested))) {
         connection.send(message.createReply(QVariantList() << false));
         return;
