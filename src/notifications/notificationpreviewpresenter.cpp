@@ -88,16 +88,14 @@ NotificationPreviewPresenter::~NotificationPreviewPresenter()
 
 void NotificationPreviewPresenter::showNextNotification()
 {
-    if (!LipstickCompositor::instance() && !m_notificationQueue.isEmpty()) {
+    if ((!LipstickCompositor::instance() && !m_notificationQueue.isEmpty()) || !m_window) {
         QTimer::singleShot(0, this, &NotificationPreviewPresenter::showNextNotification);
         return;
     }
 
     if (m_notificationQueue.isEmpty()) {
         // No more notifications to show: hide the notification window if it's visible
-        if (m_window != nullptr && m_window->isVisible()) {
-            m_window->hide();
-        }
+        m_window->hide();
 
         setCurrentNotification(nullptr);
     } else {
@@ -124,9 +122,7 @@ void NotificationPreviewPresenter::showNextNotification()
             }
         } else {
             // Show the notification window and the first queued notification in it
-            if (!m_window->isVisible()) {
-                m_window->show();
-            }
+            m_window->show();
 
             m_notificationFeedbackPlayer->addNotification(notification->id());
             setCurrentNotification(notification);
