@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 SUBDIRS = \
           ut_closeeventeater \
+          ut_intenturl \
           ut_launchermodel \
           ut_lipsticksettings \
           ut_lipsticknotification \

@@ -51,15 +51,16 @@ struct IntentUrl {
             return result;
         }
         const int marker = value.indexOf(QLatin1String("#Intent;"));
-        if (marker < 0 || !value.endsWith(QLatin1String(";end"))
-                || value.indexOf(QLatin1String("#Intent;"), marker + 1) >= 0) {
+        if (marker < 0 || value.indexOf(QLatin1String("#Intent;"), marker + 1) >= 0) {
             return result;
         }
-        const QString fields = value.mid(marker + 8, value.size() - marker - 12);
+        QStringList tokens = value.mid(marker + 8).split(QLatin1Char(';'), QString::SkipEmptyParts);
+        if (tokens.isEmpty() || tokens.takeLast() != QLatin1String("end")) {
+            return result;
+        }
         QString scheme;
         QString fallback;
         QSet<QString> seen;
-        const QStringList tokens = fields.split(QLatin1Char(';'));
         for (const QString &token : tokens) {
             const int equals = token.indexOf(QLatin1Char('='));
             if (equals <= 0) {
