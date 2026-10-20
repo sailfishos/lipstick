@@ -81,6 +81,14 @@ LipstickCompositorWindow::LipstickCompositorWindow(int windowId, const QString &
 
 LipstickCompositorWindow::~LipstickCompositorWindow()
 {
+    // QQuickItem teardown can emit signals after QWaylandSurfaceView is destroyed.
+    disconnect(this, &LipstickCompositorWindow::visibleChanged,
+               this, &LipstickCompositorWindow::handleTouchCancel);
+    disconnect(this, &LipstickCompositorWindow::enabledChanged,
+               this, &LipstickCompositorWindow::handleTouchCancel);
+    disconnect(this, &LipstickCompositorWindow::touchEventsEnabledChanged,
+               this, &LipstickCompositorWindow::handleTouchCancel);
+
     // We don't want tryRemove() posting an event anymore, we're dying anyway
     m_removePosted = true;
     LipstickCompositor::instance()->windowDestroyed(this);
