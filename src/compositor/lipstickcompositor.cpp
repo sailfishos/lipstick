@@ -198,7 +198,9 @@ void LipstickCompositor::homeApplicationAboutToDestroy()
     // up calling code such as LipstickCompositorWindow::handleTouchCancel(),
     // which will try to use the compositor, at that point not usable anymore.
     // So delete all the windows here.
-    qDeleteAll(m_windows);
+    foreach (LipstickCompositorWindow *w, m_windows) {
+        delete w;
+    }
 
     QWaylandQuickCompositor::cleanupGraphicsResources();
 
