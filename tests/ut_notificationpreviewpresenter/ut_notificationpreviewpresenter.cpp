@@ -301,6 +301,8 @@ void Ut_NotificationPreviewPresenter::testAddNotificationWhenWindowAlreadyOpen()
     // Create a notification: this will create a window
     createNotification(1);
     presenter.updateNotification(1);
+    QTest::qWait(0); // allow 0ms singleshots to happen
+    QCOMPARE(changedSpy.count(), 1);
 
     // Reset stubs to see what happens next
     homeWindows.clear();
@@ -308,6 +310,7 @@ void Ut_NotificationPreviewPresenter::testAddNotificationWhenWindowAlreadyOpen()
     // Create another notification
     LipstickNotification *notification = createNotification(2);
     presenter.updateNotification(2);
+    QTest::qWait(0);
 
     // The second notification should not be signaled onwards yet since the first one is being presented
     QCOMPARE(changedSpy.count(), 1);
@@ -447,7 +450,7 @@ void Ut_NotificationPreviewPresenter::testNotificationNotShownIfRestored()
     QCOMPARE(homeWindowVisible.isEmpty(), true);
 
     // The notification should be considered presented
-    QCOMPARE(playedFeedbacks(), 1);
+    QTRY_COMPARE(playedFeedbacks(), 1);
     QCOMPARE(lastFeedbackId(), (uint)1);
 }
 
