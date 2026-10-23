@@ -998,6 +998,10 @@ void WindowPixmapItem::setWindowSize(const QSize &s)
 
 void WindowPixmapItem::handleWindowSizeChanged()
 {
+    if (!m_item || !m_item->surface()) {
+        return;
+    }
+
     if (m_item->surface()->size().isValid()) {
         // Window size is retained even when surface is destroyed. This allows snapshots to continue
         // rendering correctly.
