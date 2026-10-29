@@ -191,6 +191,10 @@ void NotificationPreviewPresenter::createWindowIfNecessary()
 
 bool NotificationPreviewPresenter::notificationShouldBeShown(LipstickNotification *notification)
 {
+    if (m_notificationFeedbackPlayer->doNotDisturbMode()) {
+        return false;
+    }
+
     if (notification->restored()
             || (notification->urgency() == LipstickNotification::Low && !notification->isTransient())
             || (notification->previewBody().isEmpty() && notification->previewSummary().isEmpty())) {
@@ -254,10 +258,11 @@ void NotificationPreviewPresenter::setCurrentNotification(LipstickNotification *
         if (notification) {
             // Ask mce to turn the screen on if requested
             const bool notificationIsCritical = notification->urgency() >= LipstickNotification::Critical;
-            const bool displayOnRequested = notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool()
-                    && !m_notificationFeedbackPlayer->doNotDisturbMode();
+            const bool shouldWakeScreen = (notificationIsCritical
+                    || notification->hints().value(LipstickNotification::HINT_DISPLAY_ON).toBool())
+                && !m_notificationFeedbackPlayer->doNotDisturbMode();
 
-            if (notificationIsCritical || displayOnRequested) {
+            if (shouldWakeScreen) {
                 QString mceIdToAdd = QString("lipstick_notification_") + QString::number(notification->id());
                 QDBusMessage msg = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,
                                                                   MCE_NOTIFICATION_BEGIN);
