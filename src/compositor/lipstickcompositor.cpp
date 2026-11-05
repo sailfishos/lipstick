@@ -434,6 +434,22 @@ void LipstickCompositor::setDisplayOff()
     HomeApplication::instance()->setDisplayOff();
 }
 
+void LipstickCompositor::sendKeyClick(int key, quint32 nativeScanCode)
+{
+    LipstickCompositorWindow *topmostWindow = qobject_cast<LipstickCompositorWindow *>(windowForId(topmostWindowId()));
+    const bool inProcess = topmostWindow && topmostWindow->isInProcess();
+
+    for (QEvent::Type type : { QEvent::KeyPress, QEvent::KeyRelease }) {
+        QKeyEvent event(type, static_cast<Qt::Key>(key), Qt::NoModifier, nativeScanCode, 0, 0);
+        // Through the window, which propagates a key the focus item leaves up to its parents.
+        if (inProcess) {
+            QCoreApplication::sendEvent(this, &event);
+        } else {
+            defaultInputDevice()->sendFullKeyEvent(&event);
+        }
+    }
+}
+
 void LipstickCompositor::surfaceDamaged(const QRegion &)
 {
     if (!isVisible()) {

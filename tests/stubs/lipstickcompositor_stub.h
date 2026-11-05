@@ -53,6 +53,7 @@ public:
     virtual void closeClientForWindowId(int);
     virtual void clearKeyboardFocus();
     virtual void setDisplayOff();
+    virtual void sendKeyClick(int key, quint32 nativeScanCode);
     virtual LipstickCompositorProcWindow *mapProcWindow(const QString &title, const QString &category, const QRect &, QQuickItem *);
     virtual QWaylandSurface *surfaceForId(int) const;
     virtual void surfaceMapped();
@@ -254,6 +255,14 @@ void LipstickCompositorStub::clearKeyboardFocus()
 void LipstickCompositorStub::setDisplayOff()
 {
     stubMethodEntered("setDisplayOff");
+}
+
+void LipstickCompositorStub::sendKeyClick(int key, quint32 nativeScanCode)
+{
+    QList<ParameterBase *> params;
+    params.append(new Parameter<int >(key));
+    params.append(new Parameter<quint32 >(nativeScanCode));
+    stubMethodEntered("sendKeyClick", params);
 }
 
 LipstickCompositorProcWindow *LipstickCompositorStub::mapProcWindow(const QString &title, const QString &category, const QRect &rect, QQuickItem *rootItem)
@@ -552,6 +561,11 @@ void LipstickCompositor::clearKeyboardFocus()
 void LipstickCompositor::setDisplayOff()
 {
     gLipstickCompositorStub->setDisplayOff();
+}
+
+void LipstickCompositor::sendKeyClick(int key, quint32 nativeScanCode)
+{
+    gLipstickCompositorStub->sendKeyClick(key, nativeScanCode);
 }
 
 LipstickCompositorProcWindow *LipstickCompositor::mapProcWindow(const QString &title, const QString &category,

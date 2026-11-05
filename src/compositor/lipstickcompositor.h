@@ -173,6 +173,7 @@ public:
     Q_INVOKABLE void closeClientForWindowId(int);
     Q_INVOKABLE void clearKeyboardFocus();
     Q_INVOKABLE void setDisplayOff();
+    Q_INVOKABLE void sendKeyClick(int key, quint32 nativeScanCode);
     Q_INVOKABLE QVariant settingsValue(const QString &key, const QVariant &defaultValue = QVariant()) const
     {
         return (key == "orientationLock") ? m_orientationLock->value(defaultValue)
