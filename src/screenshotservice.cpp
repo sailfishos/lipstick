@@ -174,7 +174,13 @@ ScreenshotResult *ScreenshotService::saveScreenshot(const QString &path)
         return result;
     }
 
-    QImage grab(compositor->grabWindow());
+    const QImage raw(compositor->grabWindow());
+
+    const QImage::Format opaque = raw.format() == QImage::Format_RGBA8888_Premultiplied
+            ? QImage::Format_RGBX8888
+            : QImage::Format_RGB32;
+
+    QImage grab(QImage(raw.constBits(), raw.width(), raw.height(), raw.bytesPerLine(), opaque).copy());
 
     const int rotation(QGuiApplication::primaryScreen()->angleBetween(
                 Qt::PrimaryOrientation, compositor->topmostWindowOrientation()));
